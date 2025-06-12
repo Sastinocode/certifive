@@ -266,32 +266,43 @@ export const payments = pgTable("payments", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const expenses = pgTable("expenses", {
+export const collections = pgTable("collections", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").references(() => users.id).notNull(),
   
+  // Basic collection information
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
-  description: text("description").notNull(),
-  category: varchar("category").notNull(), // travel, equipment, software, office, training, fuel, other
-  subcategory: varchar("subcategory"), // Subcategoría específica
-  expenseDate: timestamp("expense_date").notNull(),
+  concept: text("concept").notNull(), // Concepto del cobro
+  paymentMethod: varchar("payment_method").notNull(), // cash, card, bizum, transfer, stripe, other
+  paymentReference: varchar("payment_reference"), // Referencia de la transacción
+  collectionDate: timestamp("collection_date").notNull(),
   
-  // Receipt management
-  receiptUrl: varchar("receipt_url"),
-  receiptNumber: varchar("receipt_number"),
-  vendor: varchar("vendor"),
-  vendorNif: varchar("vendor_nif"),
+  // Invoice relationship (optional)
+  invoiceId: integer("invoice_id").references(() => invoices.id),
+  isInvoicePayment: boolean("is_invoice_payment").default(false),
+  
+  // Client information (for non-invoice collections)
+  clientName: varchar("client_name"),
+  clientEmail: varchar("client_email"),
+  clientPhone: varchar("client_phone"),
+  
+  // Payment details
+  bankAccount: varchar("bank_account"), // Para transferencias
+  cardLastFour: varchar("card_last_four"), // Últimos 4 dígitos de tarjeta
+  stripePaymentId: varchar("stripe_payment_id"), // ID de pago de Stripe
   
   // Tax information
-  isDeductible: boolean("is_deductible").default(true),
+  vatIncluded: boolean("vat_included").default(true),
   vatAmount: decimal("vat_amount", { precision: 10, scale: 2 }).default("0.00"),
   vatRate: decimal("vat_rate", { precision: 5, scale: 2 }).default("21.00"),
   
-  // Project assignment
-  certificationId: integer("certification_id").references(() => certifications.id),
+  // Status and validation
+  status: varchar("status").default("confirmed"), // confirmed, pending, cancelled
+  verificationCode: varchar("verification_code"), // Para verificar el cobro
   
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const insertPricingRateSchema = createInsertSchema(pricingRates).omit({
@@ -323,9 +334,10 @@ export const insertPaymentSchema = createInsertSchema(payments).omit({
   createdAt: true,
 });
 
-export const insertExpenseSchema = createInsertSchema(expenses).omit({
+export const insertCollectionSchema = createInsertSchema(collections).omit({
   id: true,
   createdAt: true,
+  updatedAt: true,
 });
 
 export type UpsertUser = typeof users.$inferInsert;
@@ -347,5 +359,5 @@ export type Invoice = typeof invoices.$inferSelect;
 export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;
 export type Payment = typeof payments.$inferSelect;
 export type InsertPayment = z.infer<typeof insertPaymentSchema>;
-export type Expense = typeof expenses.$inferSelect;
-export type InsertExpense = z.infer<typeof insertExpenseSchema>;
+export type Collection = typeof collections.$inferSelect;
+export type InsertCollection = z.infer<typeof insertCollectionSchema>;

@@ -8,7 +8,7 @@ import {
   whatsappMessages,
   invoices,
   payments,
-  expenses,
+  collections,
   type User, 
   type UpsertUser,
   type Folder,
@@ -28,8 +28,8 @@ import {
   type InsertInvoice,
   type Payment,
   type InsertPayment,
-  type Expense,
-  type InsertExpense
+  type Collection,
+  type InsertCollection
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, count, and, isNull } from "drizzle-orm";
@@ -97,11 +97,14 @@ export interface IStorage {
   getPaymentsByInvoice(invoiceId: number, userId: string): Promise<any[]>;
   recordPayment(data: any): Promise<any>;
   
-  // Expense operations
-  getExpenses(userId: string, dateRange?: string, category?: string): Promise<any[]>;
-  createExpense(data: any): Promise<any>;
-  updateExpense(id: number, userId: string, data: any): Promise<any | undefined>;
-  deleteExpense(id: number, userId: string): Promise<boolean>;
+  // Collection operations
+  getCollections(userId: string, dateRange?: string, paymentMethod?: string): Promise<Collection[]>;
+  getCollection(id: number, userId: string): Promise<Collection | undefined>;
+  createCollection(data: InsertCollection): Promise<Collection>;
+  updateCollection(id: number, userId: string, data: Partial<InsertCollection>): Promise<Collection | undefined>;
+  deleteCollection(id: number, userId: string): Promise<boolean>;
+  getInvoiceCollections(invoiceId: number, userId: string): Promise<Collection[]>;
+  recordInvoicePayment(invoiceId: number, collectionData: InsertCollection): Promise<Collection>;
 }
 
 export class DatabaseStorage implements IStorage {
