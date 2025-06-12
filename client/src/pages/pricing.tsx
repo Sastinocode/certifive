@@ -258,30 +258,8 @@ export default function Pricing() {
               </div>
               <div className="flex gap-2">
                 <Button
-                  onClick={async () => {
-                    try {
-                      await apiRequest("POST", "/api/create-sample-pricing");
-                      toast({
-                        title: "Datos de muestra creados",
-                        description: "Se han añadido tarifas de ejemplo para probar el generador",
-                      });
-                    } catch (error) {
-                      toast({
-                        title: "Error",
-                        description: "Error al crear datos de muestra",
-                        variant: "destructive",
-                      });
-                    }
-                  }}
-                  variant="outline"
-                  className="border-purple-300 text-purple-700 hover:bg-purple-50"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Crear Tarifas Demo
-                </Button>
-                <Button
                   onClick={() => {
-                    const url = `${window.location.origin}/generador-tarifas`;
+                    const url = `${window.location.origin}/cotizador-publico`;
                     navigator.clipboard.writeText(url);
                     toast({
                       title: "Enlace copiado",
@@ -297,7 +275,7 @@ export default function Pricing() {
             </div>
             <div className="mt-4 bg-white/60 rounded-lg p-3 border">
               <code className="text-sm text-gray-700 break-all">
-                {window.location.origin}/generador-tarifas
+                {window.location.origin}/cotizador-publico
               </code>
             </div>
           </div>
