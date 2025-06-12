@@ -1,6 +1,7 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import { 
   Home, 
   IdCard, 
@@ -11,7 +12,9 @@ import {
   User,
   LogOut,
   Euro,
-  MessageCircle
+  MessageCircle,
+  Menu,
+  ChevronLeft
 } from "lucide-react";
 
 interface SidebarProps {
@@ -20,6 +23,7 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ selectedTab, onTabChange }: SidebarProps) {
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const { user } = useAuth();
   const [location, setLocation] = useLocation();
 
@@ -38,7 +42,7 @@ export default function Sidebar({ selectedTab, onTabChange }: SidebarProps) {
   ];
 
   return (
-    <div className="hidden lg:flex lg:w-64 lg:flex-col">
+    <div className={`hidden lg:flex lg:flex-col transition-all duration-300 ${isCollapsed ? 'lg:w-20' : 'lg:w-64'}`}>
       <div className="flex flex-col flex-grow bg-white border-r border-gray-200 overflow-y-auto">
         {/* Logo */}
         <div className="flex items-center flex-shrink-0 px-6 py-4 border-b border-gray-200">
@@ -46,8 +50,16 @@ export default function Sidebar({ selectedTab, onTabChange }: SidebarProps) {
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center mr-3">
               <Leaf className="w-5 h-5 text-white" />
             </div>
-            <h1 className="text-xl font-bold text-gray-900">CertificoEnergia</h1>
+            {!isCollapsed && <h1 className="text-xl font-bold text-gray-900">CertificoEnergia</h1>}
           </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="ml-auto p-2 hover:bg-gray-100"
+          >
+            {isCollapsed ? <Menu className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          </Button>
         </div>
         
         {/* Navigation */}
@@ -67,10 +79,11 @@ export default function Sidebar({ selectedTab, onTabChange }: SidebarProps) {
                   isActive
                     ? "bg-primary text-white"
                     : "text-gray-700 hover:bg-gray-100"
-                }`}
+                } ${isCollapsed ? 'justify-center' : ''}`}
+                title={isCollapsed ? item.label : undefined}
               >
-                <Icon className="w-5 h-5 mr-3" />
-                {item.label}
+                <Icon className={`w-5 h-5 ${isCollapsed ? '' : 'mr-3'}`} />
+                {!isCollapsed && item.label}
               </button>
             );
           })}
@@ -78,28 +91,31 @@ export default function Sidebar({ selectedTab, onTabChange }: SidebarProps) {
 
         {/* User Profile */}
         <div className="flex-shrink-0 p-4 border-t border-gray-200">
-          <div className="flex items-center mb-3">
-            <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center mr-3">
-              <User className="w-5 h-5 text-gray-600" />
+          {!isCollapsed && (
+            <div className="flex items-center mb-3">
+              <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center mr-3">
+                <User className="w-5 h-5 text-gray-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">
+                  {user?.firstName && user?.lastName 
+                    ? `${user.firstName} ${user.lastName}`
+                    : user?.email || "Usuario"
+                  }
+                </p>
+                <p className="text-xs text-gray-500">Certificador</p>
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">
-                {user?.firstName && user?.lastName 
-                  ? `${user.firstName} ${user.lastName}`
-                  : user?.email || "Usuario"
-                }
-              </p>
-              <p className="text-xs text-gray-500">Certificador</p>
-            </div>
-          </div>
+          )}
           <Button 
             variant="ghost" 
             size="sm" 
             onClick={handleLogout}
-            className="w-full justify-start text-gray-600 hover:text-gray-900"
+            className={`w-full ${isCollapsed ? 'justify-center p-2' : 'justify-start'} text-gray-600 hover:text-gray-900`}
+            title={isCollapsed ? 'Cerrar Sesión' : undefined}
           >
-            <LogOut className="w-4 h-4 mr-2" />
-            Cerrar Sesión
+            <LogOut className={`w-4 h-4 ${isCollapsed ? '' : 'mr-2'}`} />
+            {!isCollapsed && 'Cerrar Sesión'}
           </Button>
         </div>
       </div>
