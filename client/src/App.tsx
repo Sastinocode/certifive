@@ -16,6 +16,7 @@ import Reports from "@/pages/reports";
 import Settings from "@/pages/settings";
 import Landing from "@/pages/landing";
 import PublicQuote from "@/pages/public-quote";
+import PublicTariffGenerator from "@/pages/public-tariff-generator";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -37,6 +38,7 @@ function Router() {
       {/* Public routes (no authentication required) */}
       <Route path="/presupuesto/:uniqueLink" component={PublicQuote} />
       <Route path="/certificacion-cliente/:uniqueLink" component={CertificationForm} />
+      <Route path="/generador-tarifas" component={PublicTariffGenerator} />
       
       {!isAuthenticated ? (
         <Route path="/" component={Landing} />

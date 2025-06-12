@@ -753,6 +753,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }
 
+  // Public API routes (no authentication required)
+  
+  // Get public pricing rates
+  app.get("/api/public/pricing-rates", async (req, res) => {
+    try {
+      // For now, we'll get rates from the first available user
+      // In a real scenario, you might want to implement a system where
+      // each certificador has their own public URL
+      const rates = await storage.getPublicPricingRates();
+      res.json(rates);
+    } catch (error) {
+      console.error("Error fetching public pricing rates:", error);
+      res.status(500).json({ message: "Error al obtener tarifas" });
+    }
+  });
+
+  // Create public quote request
+  app.post("/api/public/quote-request", async (req, res) => {
+    try {
+      const validatedData = insertQuoteRequestSchema.parse(req.body);
+      
+      // For now, assign to the first available user
+      // In production, you'd implement proper routing logic
+      const defaultUserId = "42776088"; // This should be dynamic
+      
+      const result = await storage.createQuoteRequest(defaultUserId);
+      
+      // Update the quote with the provided data
+      const updatedQuote = await storage.updateQuoteRequest(result.uniqueLink, {
+        ...validatedData,
+        status: 'pending'
+      });
+
+      res.json({
+        ...updatedQuote,
+        uniqueLink: result.uniqueLink
+      });
+    } catch (error) {
+      console.error("Error creating public quote request:", error);
+      res.status(500).json({ message: "Error al crear solicitud de presupuesto" });
+    }
+  });
+
+  // Process payment for public quote
+  app.post("/api/process-payment", async (req, res) => {
+    try {
+      if (!stripe) {
+        return res.status(500).json({ message: "Stripe no está configurado" });
+      }
+
+      const { paymentMethodId, quoteId, amount } = req.body;
+
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount, // Amount in cents
+        currency: 'eur',
+        payment_method: paymentMethodId,
+        confirm: true,
+        metadata: {
+          quoteId: quoteId.toString()
+        }
+      });
+
+      if (paymentIntent.status === 'succeeded') {
+        // Update quote status to paid
+        // You'll need to implement a method to find quote by ID
+        res.json({ success: true, paymentIntent });
+      } else {
+        res.status(400).json({ message: "El pago no se pudo completar" });
+      }
+    } catch (error) {
+      console.error("Error processing payment:", error);
+      res.status(500).json({ message: "Error al procesar el pago" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
