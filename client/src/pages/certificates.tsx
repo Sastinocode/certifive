@@ -28,7 +28,10 @@ import {
   MoveHorizontal,
   Building,
   Home,
-  Archive
+  Archive,
+  FileText,
+  Sheet,
+  File
 } from "lucide-react";
 
 interface Certification {
@@ -111,6 +114,53 @@ export default function Certificates() {
       toast({
         title: "Error",
         description: "Error al mover la certificación",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const downloadReportMutation = useMutation({
+    mutationFn: async ({ certificationId, format }: { certificationId: number; format: string }) => {
+      const response = await fetch(`/api/certifications/${certificationId}/report/${format}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al generar el reporte');
+      }
+
+      const blob = await response.blob();
+      const contentDisposition = response.headers.get('Content-Disposition');
+      const filename = contentDisposition
+        ? contentDisposition.split('filename=')[1]?.replace(/"/g, '')
+        : `certificacion_${certificationId}_${format}.${format === 'pdf' ? 'pdf' : format === 'word' ? 'docx' : 'xlsx'}`;
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      return { filename };
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Reporte generado",
+        description: `El archivo ${data.filename} se ha descargado correctamente`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Error al generar el reporte técnico",
         variant: "destructive",
       });
     },
@@ -528,6 +578,47 @@ export default function Certificates() {
                                   Editar
                                 </Button>
                               </Link>
+
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="outline" size="sm">
+                                    <Download className="w-4 h-4 mr-1" />
+                                    Reportes
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                  <DropdownMenuItem 
+                                    onClick={() => downloadReportMutation.mutate({ 
+                                      certificationId: cert.id, 
+                                      format: 'pdf' 
+                                    })}
+                                    disabled={downloadReportMutation.isPending}
+                                  >
+                                    <FileText className="w-4 h-4 mr-2" />
+                                    Descargar PDF
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
+                                    onClick={() => downloadReportMutation.mutate({ 
+                                      certificationId: cert.id, 
+                                      format: 'word' 
+                                    })}
+                                    disabled={downloadReportMutation.isPending}
+                                  >
+                                    <File className="w-4 h-4 mr-2" />
+                                    Descargar Word
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
+                                    onClick={() => downloadReportMutation.mutate({ 
+                                      certificationId: cert.id, 
+                                      format: 'excel' 
+                                    })}
+                                    disabled={downloadReportMutation.isPending}
+                                  >
+                                    <Sheet className="w-4 h-4 mr-2" />
+                                    Descargar Excel
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                               
                               {cert.status === 'completed' && (
                                 <Button variant="outline" size="sm" className="text-green-600">

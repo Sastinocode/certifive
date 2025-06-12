@@ -1184,6 +1184,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Certification Reports API - Generate downloadable technical reports
+  app.get('/api/certifications/:id/report/:format', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id, format } = req.params;
+      const userId = req.user.claims.sub;
+      const certificationId = parseInt(id);
+
+      if (!certificationId || isNaN(certificationId)) {
+        return res.status(400).json({ message: 'ID de certificación inválido' });
+      }
+
+      // Verify certification belongs to user
+      const certification = await storage.getCertification(certificationId, userId);
+      if (!certification) {
+        return res.status(404).json({ message: 'Certificación no encontrada' });
+      }
+
+      let buffer: Buffer;
+      let contentType: string;
+      let filename: string;
+      const timestamp = new Date().toISOString().split('T')[0];
+      const baseName = `certificacion_${certification.id}_${timestamp}`;
+
+      switch (format.toLowerCase()) {
+        case 'pdf':
+          buffer = await reportGenerator.generatePDFReport(certificationId, userId);
+          contentType = 'application/pdf';
+          filename = `${baseName}.pdf`;
+          break;
+        
+        case 'word':
+        case 'docx':
+          buffer = await reportGenerator.generateWordReport(certificationId, userId);
+          contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+          filename = `${baseName}.docx`;
+          break;
+        
+        case 'excel':
+        case 'xlsx':
+          buffer = await reportGenerator.generateExcelReport(certificationId, userId);
+          contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+          filename = `${baseName}.xlsx`;
+          break;
+        
+        default:
+          return res.status(400).json({ message: 'Formato no soportado. Use: pdf, word, excel' });
+      }
+
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.send(buffer);
+
+    } catch (error) {
+      console.error('Error generating report:', error);
+      res.status(500).json({ message: 'Error al generar el reporte' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
