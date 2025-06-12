@@ -258,31 +258,41 @@ export default function Reports() {
     },
   });
 
-  const createExpenseMutation = useMutation({
-    mutationFn: (data: any) => apiRequest("POST", "/api/expenses", data),
+  const createCollectionMutation = useMutation({
+    mutationFn: (data: any) => apiRequest("POST", "/api/collections", data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/expenses"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/collections"] });
       queryClient.invalidateQueries({ queryKey: ["/api/financial/summary"] });
-      setShowExpenseDialog(false);
+      setShowCollectionDialog(false);
       toast({
-        title: "Gasto registrado",
-        description: "El gasto se ha registrado correctamente",
+        title: "Cobro registrado",
+        description: "El cobro se ha registrado correctamente",
+      });
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Sesión expirada",
+          description: "Redirigiendo al login...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error al registrar cobro",
+        description: "No se pudo registrar el cobro. Inténtalo de nuevo.",
+        variant: "destructive",
       });
     },
   });
 
   const exportToExcelMutation = useMutation({
-    mutationFn: (type: 'invoices' | 'payments' | 'expenses' | 'complete') => 
+    mutationFn: (type: 'invoices' | 'payments' | 'collections' | 'complete') => 
       apiRequest("POST", `/api/export/${type}`, { dateRange }),
-    onSuccess: (data) => {
-      // Download the Excel file
-      const link = document.createElement('a');
-      link.href = data.downloadUrl;
-      link.download = data.filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
+    onSuccess: () => {
       toast({
         title: "Exportación completada",
         description: "El archivo Excel se ha descargado correctamente",
