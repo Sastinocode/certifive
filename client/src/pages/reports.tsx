@@ -80,23 +80,13 @@ interface Payment {
   status: string;
 }
 
-interface Expense {
-  id: number;
-  amount: string;
-  description: string;
-  category: string;
-  expenseDate: string;
-  vendor?: string;
-  receiptUrl?: string;
-  isDeductible: boolean;
-}
+
 
 interface FinancialSummary {
   totalInvoiced: number;
   totalPaid: number;
   totalPending: number;
   totalOverdue: number;
-  totalExpenses: number;
   netIncome: number;
   currentMonthRevenue: number;
   previousMonthRevenue: number;
@@ -109,12 +99,9 @@ export default function Reports() {
   const [activeTab, setActiveTab] = useState("overview");
   const [dateRange, setDateRange] = useState("current_month");
   const [paymentStatusFilter, setPaymentStatusFilter] = useState("all");
-  const [categoryFilter, setCategoryFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [showInvoiceDialog, setShowInvoiceDialog] = useState(false);
-  const [showExpenseDialog, setShowExpenseDialog] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
-  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
 
   // Data queries
   const { data: financialSummary, isLoading: summaryLoading } = useQuery({
@@ -127,10 +114,6 @@ export default function Reports() {
 
   const { data: payments = [], isLoading: paymentsLoading } = useQuery({
     queryKey: ["/api/payments", dateRange],
-  });
-
-  const { data: expenses = [], isLoading: expensesLoading } = useQuery({
-    queryKey: ["/api/expenses", dateRange, categoryFilter],
   });
 
   // Mutations
@@ -219,7 +202,6 @@ export default function Reports() {
     totalPaid: 0,
     totalPending: 0,
     totalOverdue: 0,
-    totalExpenses: 0,
     netIncome: 0,
     currentMonthRevenue: 0,
     previousMonthRevenue: 0,
@@ -228,26 +210,18 @@ export default function Reports() {
 
   // Prepare chart data based on real financial data
   const revenueData = [
-    { month: 'Ene', ingresos: 2400, gastos: 1800, beneficio: 600 },
-    { month: 'Feb', ingresos: 3200, gastos: 2100, beneficio: 1100 },
-    { month: 'Mar', ingresos: 2800, gastos: 1950, beneficio: 850 },
-    { month: 'Abr', ingresos: 3600, gastos: 2200, beneficio: 1400 },
-    { month: 'May', ingresos: 4200, gastos: 2800, beneficio: 1400 },
-    { month: 'Jun', ingresos: 3800, gastos: 2600, beneficio: 1200 }
+    { month: 'Ene', ingresos: 2400, beneficio: 2400 },
+    { month: 'Feb', ingresos: 3200, beneficio: 3200 },
+    { month: 'Mar', ingresos: 2800, beneficio: 2800 },
+    { month: 'Abr', ingresos: 3600, beneficio: 3600 },
+    { month: 'May', ingresos: 4200, beneficio: 4200 },
+    { month: 'Jun', ingresos: 3800, beneficio: 3800 }
   ];
 
   const invoiceStatusData = [
     { name: 'Pagadas', value: summary.totalPaid || 65, color: '#22c55e' },
     { name: 'Pendientes', value: summary.totalPending || 25, color: '#f59e0b' },
     { name: 'Vencidas', value: summary.totalOverdue || 10, color: '#ef4444' }
-  ];
-
-  const expenseCategories = [
-    { category: 'Equipos', amount: 1200, color: '#3b82f6' },
-    { category: 'Transporte', amount: 800, color: '#8b5cf6' },
-    { category: 'Software', amount: 450, color: '#06b6d4' },
-    { category: 'Marketing', amount: 600, color: '#10b981' },
-    { category: 'Otros', amount: 350, color: '#f59e0b' }
   ];
 
   const monthlyTrend = [
@@ -259,15 +233,9 @@ export default function Reports() {
     { month: 'Jun', facturas: 20, certificados: 16 }
   ];
 
-  const filteredInvoices = invoices.filter((invoice: Invoice) => {
+  const filteredInvoices = (invoices as Invoice[]).filter((invoice: Invoice) => {
     const matchesSearch = invoice.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesSearch;
-  });
-
-  const filteredExpenses = expenses.filter((expense: Expense) => {
-    const matchesSearch = expense.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (expense.vendor?.toLowerCase() || "").includes(searchTerm.toLowerCase());
     return matchesSearch;
   });
 
