@@ -1,0 +1,89 @@
+import {
+  pgTable,
+  text,
+  varchar,
+  timestamp,
+  jsonb,
+  index,
+  serial,
+  integer,
+  decimal,
+  boolean,
+} from "drizzle-orm/pg-core";
+import { createInsertSchema } from "drizzle-zod";
+import { z } from "zod";
+
+// Session storage table (mandatory for Replit Auth)
+export const sessions = pgTable(
+  "sessions",
+  {
+    sid: varchar("sid").primaryKey(),
+    sess: jsonb("sess").notNull(),
+    expire: timestamp("expire").notNull(),
+  },
+  (table) => [index("IDX_session_expire").on(table.expire)],
+);
+
+// User storage table (mandatory for Replit Auth)
+export const users = pgTable("users", {
+  id: varchar("id").primaryKey().notNull(),
+  email: varchar("email").unique(),
+  firstName: varchar("first_name"),
+  lastName: varchar("last_name"),
+  profileImageUrl: varchar("profile_image_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Certifications table
+export const certifications = pgTable("certifications", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  
+  // General data
+  dni: varchar("dni").notNull(),
+  fullName: varchar("full_name").notNull(),
+  cadastralRef: varchar("cadastral_ref").notNull(),
+  phone: varchar("phone"),
+  email: varchar("email"),
+  floors: integer("floors"),
+  rooms: integer("rooms"),
+  
+  // Housing details
+  facadeOrientation: text("facade_orientation"),
+  roofType: varchar("roof_type"),
+  windows: jsonb("windows"), // Array of window objects
+  
+  // Installations
+  hvacSystem: varchar("hvac_system"),
+  heatingSystem: varchar("heating_system"),
+  waterHeatingType: varchar("water_heating_type"),
+  waterHeatingCapacity: integer("water_heating_capacity"),
+  
+  // Energy calculations
+  energyRating: varchar("energy_rating", { length: 1 }),
+  energyConsumption: decimal("energy_consumption", { precision: 10, scale: 2 }),
+  co2Emissions: decimal("co2_emissions", { precision: 10, scale: 2 }),
+  
+  // Status and metadata
+  status: varchar("status").notNull().default("draft"), // draft, in_progress, completed
+  photos: jsonb("photos"), // Array of photo URLs
+  certificateUrl: varchar("certificate_url"),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertCertificationSchema = createInsertSchema(certifications).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const updateCertificationSchema = insertCertificationSchema.partial();
+
+export type UpsertUser = typeof users.$inferInsert;
+export type User = typeof users.$inferSelect;
+export type Certification = typeof certifications.$inferSelect;
+export type InsertCertification = z.infer<typeof insertCertificationSchema>;
+export type UpdateCertification = z.infer<typeof updateCertificationSchema>;
