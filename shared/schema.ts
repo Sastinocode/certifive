@@ -47,10 +47,22 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Folders for organizing certificates by client
+export const folders = pgTable("folders", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  name: varchar("name").notNull(),
+  description: text("description"),
+  color: varchar("color").default("#6366f1"), // Default color for folders
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Certifications table
 export const certifications = pgTable("certifications", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull().references(() => users.id),
+  folderId: integer("folder_id").references(() => folders.id, { onDelete: "set null" }),
   
   // General data
   dni: varchar("dni").notNull(),
@@ -184,8 +196,16 @@ export const insertQuoteRequestSchema = createInsertSchema(quoteRequests).omit({
   updatedAt: true,
 });
 
+export const insertFolderSchema = createInsertSchema(folders).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
+export type Folder = typeof folders.$inferSelect;
+export type InsertFolder = z.infer<typeof insertFolderSchema>;
 export type Certification = typeof certifications.$inferSelect;
 export type InsertCertification = z.infer<typeof insertCertificationSchema>;
 export type UpdateCertification = z.infer<typeof updateCertificationSchema>;
