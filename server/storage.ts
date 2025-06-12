@@ -1,5 +1,6 @@
 import { 
   users, 
+  folders,
   certifications,
   pricingRates,
   quoteRequests,
@@ -7,6 +8,8 @@ import {
   whatsappMessages,
   type User, 
   type UpsertUser,
+  type Folder,
+  type InsertFolder,
   type Certification,
   type InsertCertification,
   type UpdateCertification,
@@ -29,15 +32,24 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
   
+  // Folder operations
+  getFolders(userId: string): Promise<Folder[]>;
+  getFolder(id: number, userId: string): Promise<Folder | undefined>;
+  createFolder(data: InsertFolder): Promise<Folder>;
+  updateFolder(id: number, userId: string, data: Partial<InsertFolder>): Promise<Folder | undefined>;
+  deleteFolder(id: number, userId: string): Promise<boolean>;
+  getFolderWithCertifications(id: number, userId: string): Promise<{ folder: Folder; certifications: Certification[] } | undefined>;
+  
   // Certification operations
   getDashboardStats(userId: string): Promise<any>;
   getRecentCertifications(userId: string): Promise<any[]>;
-  getCertificationsByUser(userId: string): Promise<Certification[]>;
+  getCertificationsByUser(userId: string, folderId?: number): Promise<Certification[]>;
   getCertification(id: number, userId: string): Promise<Certification | undefined>;
   createCertification(data: InsertCertification): Promise<Certification>;
   updateCertification(id: number, userId: string, data: UpdateCertification): Promise<Certification | undefined>;
   addPhotos(id: number, userId: string, photos: string[]): Promise<Certification | undefined>;
   completeCertification(id: number, userId: string): Promise<Certification | undefined>;
+  moveCertificationToFolder(certificationId: number, folderId: number | null, userId: string): Promise<Certification | undefined>;
   
   // Pricing and quotes operations
   getPricingRates(userId: string): Promise<PricingRate[]>;
@@ -80,6 +92,58 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return user;
+  }
+
+  // Folder operations
+  async getFolders(userId: string): Promise<Folder[]> {
+    return await db.select().from(folders).where(eq(folders.userId, userId)).orderBy(folders.name);
+  }
+
+  async getFolder(id: number, userId: string): Promise<Folder | undefined> {
+    const [folder] = await db.select().from(folders).where(and(eq(folders.id, id), eq(folders.userId, userId)));
+    return folder;
+  }
+
+  async createFolder(data: InsertFolder): Promise<Folder> {
+    const [folder] = await db.insert(folders).values(data).returning();
+    return folder;
+  }
+
+  async updateFolder(id: number, userId: string, data: Partial<InsertFolder>): Promise<Folder | undefined> {
+    const [folder] = await db
+      .update(folders)
+      .set({ ...data, updatedAt: new Date() })
+      .where(and(eq(folders.id, id), eq(folders.userId, userId)))
+      .returning();
+    return folder;
+  }
+
+  async deleteFolder(id: number, userId: string): Promise<boolean> {
+    // First, move all certifications from this folder to "uncategorized" (null)
+    await db
+      .update(certifications)
+      .set({ folderId: null })
+      .where(and(eq(certifications.folderId, id), eq(certifications.userId, userId)));
+
+    // Then delete the folder
+    const result = await db
+      .delete(folders)
+      .where(and(eq(folders.id, id), eq(folders.userId, userId)));
+    
+    return result.rowCount > 0;
+  }
+
+  async getFolderWithCertifications(id: number, userId: string): Promise<{ folder: Folder; certifications: Certification[] } | undefined> {
+    const folder = await this.getFolder(id, userId);
+    if (!folder) return undefined;
+
+    const certificationsList = await db
+      .select()
+      .from(certifications)
+      .where(and(eq(certifications.folderId, id), eq(certifications.userId, userId)))
+      .orderBy(desc(certifications.createdAt));
+
+    return { folder, certifications: certificationsList };
   }
 
   // Dashboard stats
