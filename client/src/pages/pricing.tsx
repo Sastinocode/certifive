@@ -21,7 +21,9 @@ import {
   Store,
   Clock,
   Percent,
-  Share2
+  Share2,
+  Calculator,
+  Copy
 } from "lucide-react";
 
 interface PricingRate {
@@ -239,6 +241,64 @@ export default function Pricing() {
                   Nueva Tarifa
                 </Button>
               </div>
+            </div>
+          </div>
+
+          {/* Public Tariff Generator Section */}
+          <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-xl p-6 mb-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-xl flex items-center justify-center mr-4">
+                  <Calculator className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-900">Generador Público de Presupuestos</h4>
+                  <p className="text-sm text-gray-600">Comparte este enlace con tus clientes para que generen presupuestos automáticamente</p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  onClick={async () => {
+                    try {
+                      await apiRequest("POST", "/api/create-sample-pricing");
+                      toast({
+                        title: "Datos de muestra creados",
+                        description: "Se han añadido tarifas de ejemplo para probar el generador",
+                      });
+                    } catch (error) {
+                      toast({
+                        title: "Error",
+                        description: "Error al crear datos de muestra",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                  variant="outline"
+                  className="border-purple-300 text-purple-700 hover:bg-purple-50"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Crear Tarifas Demo
+                </Button>
+                <Button
+                  onClick={() => {
+                    const url = `${window.location.origin}/generador-tarifas`;
+                    navigator.clipboard.writeText(url);
+                    toast({
+                      title: "Enlace copiado",
+                      description: "El enlace del generador de tarifas se ha copiado al portapapeles",
+                    });
+                  }}
+                  className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+                >
+                  <Copy className="w-4 h-4 mr-2" />
+                  Copiar Enlace
+                </Button>
+              </div>
+            </div>
+            <div className="mt-4 bg-white/60 rounded-lg p-3 border">
+              <code className="text-sm text-gray-700 break-all">
+                {window.location.origin}/generador-tarifas
+              </code>
             </div>
           </div>
 
