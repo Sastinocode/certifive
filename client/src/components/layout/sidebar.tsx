@@ -1,4 +1,5 @@
 import { useAuth } from "@/hooks/useAuth";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { 
   Home, 
@@ -18,17 +19,18 @@ interface SidebarProps {
 
 export default function Sidebar({ selectedTab, onTabChange }: SidebarProps) {
   const { user } = useAuth();
+  const [location, setLocation] = useLocation();
 
   const handleLogout = () => {
     window.location.href = "/api/logout";
   };
 
   const navItems = [
-    { id: "dashboard", label: "Dashboard", icon: Home },
-    { id: "certificates", label: "Certificados", icon: IdCard },
-    { id: "properties", label: "Propiedades", icon: Building },
-    { id: "reports", label: "Informes", icon: BarChart },
-    { id: "settings", label: "Configuración", icon: Settings },
+    { id: "dashboard", label: "Dashboard", icon: Home, path: "/" },
+    { id: "certificates", label: "Certificados", icon: IdCard, path: "/certificados" },
+    { id: "properties", label: "Propiedades", icon: Building, path: "/propiedades" },
+    { id: "reports", label: "Informes", icon: BarChart, path: "/informes" },
+    { id: "settings", label: "Configuración", icon: Settings, path: "/configuracion" },
   ];
 
   return (
@@ -48,12 +50,15 @@ export default function Sidebar({ selectedTab, onTabChange }: SidebarProps) {
         <nav className="mt-6 flex-1 px-4 space-y-2">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = selectedTab === item.id;
+            const isActive = location === item.path || selectedTab === item.id;
             
             return (
               <button
                 key={item.id}
-                onClick={() => onTabChange(item.id)}
+                onClick={() => {
+                  setLocation(item.path);
+                  onTabChange(item.id);
+                }}
                 className={`w-full group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                   isActive
                     ? "bg-primary text-white"
