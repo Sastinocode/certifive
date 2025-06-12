@@ -226,37 +226,79 @@ export default function Dashboard() {
           </div>
 
           {/* Quick Actions */}
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>Acciones Rápidas</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Link href="/certificacion">
-                  <Button className="w-full bg-primary hover:bg-primary/90">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Nueva Certificación
-                  </Button>
-                </Link>
-                <Button variant="outline" className="w-full bg-success text-white hover:bg-success/90">
-                  <Download className="w-4 h-4 mr-2" />
-                  Descargar Informes
-                </Button>
-                <Button variant="outline" className="w-full">
-                  <Upload className="w-4 h-4 mr-2" />
-                  Importar Datos
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="glass-card p-6 mb-8">
+            <h3 className="text-xl font-semibold text-gray-900 mb-6">Acciones Rápidas</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Link href="/certificacion">
+                <div className="energy-card p-6 cursor-pointer group">
+                  <div className="flex items-center">
+                    <div className="w-12 h-12 energy-gradient-a rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+                      <Plus className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900">Nueva Certificación</h4>
+                      <p className="text-sm text-gray-600">Crear certificado</p>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+
+              <Link href="/whatsapp">
+                <div className="energy-card p-6 cursor-pointer group bg-gradient-to-br from-green-50 to-blue-50 border-green-200">
+                  <div className="flex items-center">
+                    <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-blue-500 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+                      <MessageCircle className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900">Gestión WhatsApp</h4>
+                      <p className="text-sm text-gray-600">Clientes y conversaciones</p>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+
+              <Link href="/demo-flujo">
+                <div className="energy-card p-6 cursor-pointer group bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200">
+                  <div className="flex items-center">
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+                      <Zap className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900">Demo Automatizado</h4>
+                      <p className="text-sm text-gray-600">Ver flujo completo</p>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+
+              <Link href="/tarifas">
+                <div className="energy-card p-6 cursor-pointer group">
+                  <div className="flex items-center">
+                    <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-yellow-500 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+                      <Settings className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900">Gestionar Tarifas</h4>
+                      <p className="text-sm text-gray-600">Configurar precios</p>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            </div>
+          </div>
 
           {/* Recent Certificates */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Certificados Recientes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {certificationsLoading ? (
+          <div className="glass-card p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-semibold text-gray-900">Certificados Recientes</h3>
+              <Link href="/certificados">
+                <Button variant="outline" className="border-green-300 text-green-700 hover:bg-green-50">
+                  Ver todos
+                  <ExternalLink className="w-4 h-4 ml-2" />
+                </Button>
+              </Link>
+            </div>
+            {certificationsLoading ? (
                 <div className="text-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
                   <p className="text-gray-600">Cargando certificaciones...</p>
@@ -330,8 +372,7 @@ export default function Dashboard() {
                   </table>
                 </div>
               )}
-            </CardContent>
-          </Card>
+          </div>
         </div>
       </div>
     </div>
