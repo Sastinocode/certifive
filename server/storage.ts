@@ -23,7 +23,7 @@ import {
   type InsertWhatsappMessage
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, count, and } from "drizzle-orm";
+import { eq, desc, count, and, isNull } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
 // Interface for storage operations
@@ -130,7 +130,7 @@ export class DatabaseStorage implements IStorage {
       .delete(folders)
       .where(and(eq(folders.id, id), eq(folders.userId, userId)));
     
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   async getFolderWithCertifications(id: number, userId: string): Promise<{ folder: Folder; certifications: Certification[] } | undefined> {
@@ -188,11 +188,23 @@ export class DatabaseStorage implements IStorage {
     return recentCerts;
   }
 
-  async getCertificationsByUser(userId: string): Promise<Certification[]> {
+  async getCertificationsByUser(userId: string, folderId?: number | null): Promise<Certification[]> {
+    const conditions = [eq(certifications.userId, userId)];
+    
+    if (folderId !== undefined) {
+      if (folderId === null) {
+        // Get uncategorized certificates (no folder)
+        conditions.push(isNull(certifications.folderId));
+      } else {
+        // Get certificates in specific folder
+        conditions.push(eq(certifications.folderId, folderId));
+      }
+    }
+    
     return await db
       .select()
       .from(certifications)
-      .where(eq(certifications.userId, userId))
+      .where(and(...conditions))
       .orderBy(desc(certifications.createdAt));
   }
 
@@ -270,6 +282,19 @@ export class DatabaseStorage implements IStorage {
       })
       .where(and(
         eq(certifications.id, id),
+        eq(certifications.userId, userId)
+      ))
+      .returning();
+    
+    return certification;
+  }
+
+  async moveCertificationToFolder(certificationId: number, folderId: number | null, userId: string): Promise<Certification | undefined> {
+    const [certification] = await db
+      .update(certifications)
+      .set({ folderId, updatedAt: new Date() })
+      .where(and(
+        eq(certifications.id, certificationId),
         eq(certifications.userId, userId)
       ))
       .returning();
