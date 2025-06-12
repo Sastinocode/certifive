@@ -1,10 +1,17 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 import { useState } from "react";
 import { Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import Sidebar from "@/components/layout/sidebar";
 import { 
   IdCard, 
@@ -13,7 +20,14 @@ import {
   Download, 
   Eye,
   Edit,
-  Filter
+  Filter,
+  Folder,
+  FolderPlus,
+  MoreVertical,
+  MoveHorizontal,
+  Building,
+  Home,
+  Archive
 } from "lucide-react";
 
 interface Certification {
@@ -25,14 +39,80 @@ interface Certification {
   createdAt: string;
   energyConsumption: string | null;
   co2Emissions: string | null;
+  folderId: number | null;
+}
+
+interface Folder {
+  id: number;
+  name: string;
+  description: string | null;
+  color: string;
+  icon: string | null;
+  createdAt: string;
 }
 
 export default function Certificates() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedFolder, setSelectedFolder] = useState<number | null>(null);
+  const [showCreateFolder, setShowCreateFolder] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
+  const [newFolderDescription, setNewFolderDescription] = useState("");
+  const [newFolderColor, setNewFolderColor] = useState("#3b82f6");
+  const [newFolderIcon, setNewFolderIcon] = useState("folder");
+  const { toast } = useToast();
 
   const { data: certifications = [], isLoading } = useQuery({
     queryKey: ["/api/certifications"],
+  });
+
+  const { data: folders = [] } = useQuery({
+    queryKey: ["/api/folders"],
+  });
+
+  const createFolderMutation = useMutation({
+    mutationFn: async (data: { name: string; description: string; color: string; icon: string }) => {
+      return await apiRequest("POST", "/api/folders", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/folders"] });
+      setShowCreateFolder(false);
+      setNewFolderName("");
+      setNewFolderDescription("");
+      setNewFolderColor("#3b82f6");
+      setNewFolderIcon("folder");
+      toast({
+        title: "Éxito",
+        description: "Carpeta creada correctamente",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Error al crear la carpeta",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const moveCertificationMutation = useMutation({
+    mutationFn: async ({ certificationId, folderId }: { certificationId: number; folderId: number | null }) => {
+      return await apiRequest("PUT", `/api/certifications/${certificationId}/move`, { folderId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/certifications"] });
+      toast({
+        title: "Éxito",
+        description: "Certificación movida correctamente",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Error al mover la certificación",
+        variant: "destructive",
+      });
+    },
   });
 
   const getStatusBadge = (status: string) => {
