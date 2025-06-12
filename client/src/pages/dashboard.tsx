@@ -1,9 +1,14 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import Sidebar from "@/components/layout/sidebar";
 import { 
   IdCard, 
@@ -14,7 +19,15 @@ import {
   Download, 
   Upload,
   Eye,
-  Edit
+  Edit,
+  MessageCircle,
+  Phone,
+  Share2,
+  Settings,
+  Zap,
+  Users,
+  CheckCircle,
+  ExternalLink
 } from "lucide-react";
 
 interface DashboardStats {

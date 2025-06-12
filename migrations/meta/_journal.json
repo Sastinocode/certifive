@@ -15,6 +15,13 @@
       "when": 1749717859460,
       "tag": "0001_dapper_luminals",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1749718601462,
+      "tag": "0002_aromatic_red_shift",
+      "breakpoints": true
     }
   ]
 }
