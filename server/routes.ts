@@ -431,10 +431,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const uniqueLink = paymentIntent.metadata.uniqueLink;
 
         if (uniqueLink) {
-          await storage.updateQuoteRequest(uniqueLink, {
+          const quote = await storage.updateQuoteRequest(uniqueLink, {
             status: 'paid',
             paidAt: new Date(),
           });
+
+          // Trigger automatic certification form sending via WhatsApp
+          if (quote && quote.whatsappConversationId) {
+            await sendCertificationFormToClient(quote);
+          }
         }
       }
 
@@ -444,6 +449,309 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Error al procesar webhook" });
     }
   });
+
+  // WhatsApp Business configuration routes
+  app.post("/api/whatsapp/configure", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const config = req.body;
+      
+      const user = await storage.updateWhatsAppConfig(userId, config);
+      
+      if (!user) {
+        return res.status(404).json({ message: "Usuario no encontrado" });
+      }
+      
+      res.json({ message: "Configuración de WhatsApp actualizada", user });
+    } catch (error) {
+      console.error("Error updating WhatsApp config:", error);
+      res.status(500).json({ message: "Error al configurar WhatsApp" });
+    }
+  });
+
+  app.get("/api/whatsapp/status", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "Usuario no encontrado" });
+      }
+      
+      res.json({
+        integrationActive: user.whatsappIntegrationActive || false,
+        phoneNumberId: user.whatsappPhoneNumberId,
+        businessAccountId: user.whatsappBusinessAccountId
+      });
+    } catch (error) {
+      console.error("Error fetching WhatsApp status:", error);
+      res.status(500).json({ message: "Error al obtener estado de WhatsApp" });
+    }
+  });
+
+  app.get("/api/whatsapp/conversations", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const conversations = await storage.getWhatsAppConversations(userId);
+      res.json(conversations);
+    } catch (error) {
+      console.error("Error fetching conversations:", error);
+      res.status(500).json({ message: "Error al obtener conversaciones" });
+    }
+  });
+
+  // WhatsApp webhook for receiving messages
+  app.get("/api/webhooks/whatsapp", (req, res) => {
+    const mode = req.query["hub.mode"];
+    const token = req.query["hub.verify_token"];
+    const challenge = req.query["hub.challenge"];
+
+    if (mode === "subscribe" && token === process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN) {
+      console.log("WhatsApp webhook verified");
+      res.status(200).send(challenge);
+    } else {
+      res.sendStatus(403);
+    }
+  });
+
+  app.post("/api/webhooks/whatsapp", async (req, res) => {
+    try {
+      const body = req.body;
+
+      if (body.object === "whatsapp_business_account") {
+        for (const entry of body.entry) {
+          for (const change of entry.changes) {
+            if (change.field === "messages") {
+              const messages = change.value.messages;
+              const metadata = change.value.metadata;
+
+              for (const message of messages || []) {
+                await handleIncomingWhatsAppMessage(message, metadata);
+              }
+            }
+          }
+        }
+      }
+
+      res.status(200).send("OK");
+    } catch (error) {
+      console.error("Error handling WhatsApp webhook:", error);
+      res.status(500).json({ message: "Error al procesar webhook de WhatsApp" });
+    }
+  });
+
+  // Public certification form routes
+  app.get("/api/public/certification-form/:uniqueLink", async (req, res) => {
+    try {
+      const { uniqueLink } = req.params;
+      
+      // Find quote by link to get delivery days and other info
+      const quote = await storage.getQuoteByLink(uniqueLink);
+      
+      if (!quote || quote.status !== 'paid') {
+        return res.status(404).json({ message: "Formulario no encontrado o pago no confirmado" });
+      }
+      
+      res.json({
+        deliveryDays: quote.deliveryDays,
+        clientName: quote.clientName,
+        propertyType: quote.propertyType
+      });
+    } catch (error) {
+      console.error("Error fetching certification form:", error);
+      res.status(500).json({ message: "Error al obtener formulario" });
+    }
+  });
+
+  app.post("/api/public/certification-form/:uniqueLink", async (req, res) => {
+    try {
+      const { uniqueLink } = req.params;
+      const formData = req.body;
+      
+      const quote = await storage.getQuoteByLink(uniqueLink);
+      
+      if (!quote || quote.status !== 'paid') {
+        return res.status(404).json({ message: "Formulario no encontrado o pago no confirmado" });
+      }
+      
+      // Create certification from form data
+      const certificationData = {
+        userId: quote.userId,
+        fullName: formData.fullName,
+        address: formData.address,
+        cadastralRef: formData.cadastralRef,
+        propertyType: formData.propertyType,
+        buildYear: formData.buildYear,
+        totalArea: formData.totalArea,
+        heatedArea: formData.heatedArea || formData.totalArea,
+        floors: formData.floors,
+        rooms: formData.rooms,
+        bathrooms: formData.bathrooms,
+        heatingSystem: formData.heatingSystem,
+        coolingSystem: formData.coolingSystem,
+        dhwSystem: formData.dhwSystem,
+        photos: formData.photos || [],
+        observations: formData.observations,
+        status: 'in_progress'
+      };
+      
+      const certification = await storage.createCertification(certificationData);
+      
+      // Update quote status
+      await storage.updateQuoteRequest(uniqueLink, {
+        status: 'certification_started'
+      });
+      
+      // Update WhatsApp conversation state
+      if (quote.whatsappConversationId) {
+        await storage.updateConversationState(
+          parseInt(quote.whatsappConversationId), 
+          'certification_form_completed'
+        );
+        
+        // Send confirmation message
+        await sendCertificationConfirmation(quote, certification);
+      }
+      
+      res.json({ 
+        message: "Formulario enviado correctamente",
+        certificationId: certification.id
+      });
+    } catch (error) {
+      console.error("Error processing certification form:", error);
+      res.status(500).json({ message: "Error al procesar formulario" });
+    }
+  });
+
+  // WhatsApp messaging functions
+  async function sendCertificationFormToClient(quote: any) {
+    try {
+      const user = await storage.getUser(quote.userId);
+      if (!user || !user.whatsappBusinessToken) return;
+
+      const formLink = `${process.env.BASE_URL || 'https://localhost:3000'}/certificacion-cliente/${quote.uniqueLink}`;
+      
+      const message = {
+        messaging_product: "whatsapp",
+        to: quote.clientPhone,
+        type: "template",
+        template: {
+          name: "certification_form",
+          language: { code: "es" },
+          components: [
+            {
+              type: "body",
+              parameters: [
+                { type: "text", text: quote.clientName || "Cliente" },
+                { type: "text", text: formLink }
+              ]
+            }
+          ]
+        }
+      };
+
+      await sendWhatsAppMessage(user.whatsappBusinessToken, user.whatsappPhoneNumberId, message);
+      
+      // Log message
+      if (quote.whatsappConversationId) {
+        await storage.logWhatsAppMessage({
+          conversationId: parseInt(quote.whatsappConversationId),
+          messageId: `cert_form_${Date.now()}`,
+          direction: 'outbound',
+          messageType: 'template',
+          content: `Formulario de certificación enviado: ${formLink}`
+        });
+      }
+    } catch (error) {
+      console.error("Error sending certification form:", error);
+    }
+  }
+
+  async function sendCertificationConfirmation(quote: any, certification: any) {
+    try {
+      const user = await storage.getUser(quote.userId);
+      if (!user || !user.whatsappBusinessToken) return;
+
+      const message = {
+        messaging_product: "whatsapp",
+        to: quote.clientPhone,
+        type: "text",
+        text: {
+          body: `¡Perfecto! Hemos recibido toda la información de tu certificación energética.\n\n📋 Número de certificación: #${certification.id}\n⏱️ Tiempo estimado: ${quote.deliveryDays} días laborables\n\nTe mantendremos informado del progreso. ¡Gracias por confiar en nosotros!`
+        }
+      };
+
+      await sendWhatsAppMessage(user.whatsappBusinessToken, user.whatsappPhoneNumberId, message);
+    } catch (error) {
+      console.error("Error sending confirmation:", error);
+    }
+  }
+
+  async function handleIncomingWhatsAppMessage(message: any, metadata: any) {
+    try {
+      const phoneNumberId = metadata.phone_number_id;
+      const from = message.from;
+      
+      // Find user by phone number ID
+      const users = await storage.getUserByWhatsAppPhone(phoneNumberId);
+      if (!users.length) return;
+      
+      const user = users[0];
+      
+      // Get or create conversation
+      let conversation = await storage.getConversationByPhone(user.id, from);
+      
+      if (!conversation) {
+        conversation = await storage.createWhatsAppConversation({
+          userId: user.id,
+          clientPhone: from,
+          conversationState: 'initial'
+        });
+      }
+      
+      // Log incoming message
+      await storage.logWhatsAppMessage({
+        conversationId: conversation.id,
+        messageId: message.id,
+        direction: 'inbound',
+        messageType: message.type,
+        content: message.text?.body || message.type
+      });
+      
+      // Handle conversation flow
+      await handleConversationFlow(conversation, message, user);
+      
+    } catch (error) {
+      console.error("Error handling incoming message:", error);
+    }
+  }
+
+  async function handleConversationFlow(conversation: any, message: any, user: any) {
+    // Implementation of automated conversation flow
+    // This would handle the different states and send appropriate responses
+  }
+
+  async function sendWhatsAppMessage(token: string, phoneNumberId: string, message: any) {
+    try {
+      const response = await fetch(`https://graph.facebook.com/v17.0/${phoneNumberId}/messages`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(message)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`WhatsApp API error: ${response.statusText}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error("Error sending WhatsApp message:", error);
+      throw error;
+    }
+  }
 
   const httpServer = createServer(app);
   return httpServer;
