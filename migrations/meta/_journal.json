@@ -22,6 +22,13 @@
       "when": 1749718601462,
       "tag": "0002_aromatic_red_shift",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1749728151774,
+      "tag": "0003_legal_the_stranger",
+      "breakpoints": true
     }
   ]
 }
