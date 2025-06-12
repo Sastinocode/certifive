@@ -31,6 +31,12 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
+  company: varchar("company"),
+  license: varchar("license"),
+  phone: varchar("phone"),
+  address: text("address"),
+  stripeAccountId: varchar("stripe_account_id"),
+  stripeOnboardingComplete: boolean("stripe_onboarding_complete").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -82,8 +88,73 @@ export const insertCertificationSchema = createInsertSchema(certifications).omit
 
 export const updateCertificationSchema = insertCertificationSchema.partial();
 
+// Pricing rates table
+export const pricingRates = pgTable("pricing_rates", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  propertyType: varchar("property_type").notNull(), // vivienda, local_comercial, chalet, edificio_completo
+  basePrice: decimal("base_price", { precision: 10, scale: 2 }).notNull(),
+  advancePercentage: integer("advance_percentage").notNull().default(50),
+  deliveryDays: integer("delivery_days").notNull(),
+  description: text("description"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Quote requests table
+export const quoteRequests = pgTable("quote_requests", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id), // certificador
+  uniqueLink: varchar("unique_link").notNull().unique(),
+  
+  // Client data
+  clientName: varchar("client_name"),
+  clientEmail: varchar("client_email"),
+  clientPhone: varchar("client_phone"),
+  
+  // Property data
+  propertyType: varchar("property_type"),
+  address: text("address"),
+  floors: integer("floors"),
+  rooms: integer("rooms"),
+  area: decimal("area", { precision: 10, scale: 2 }),
+  buildYear: integer("build_year"),
+  additionalInfo: text("additional_info"),
+  
+  // Quote data
+  basePrice: decimal("base_price", { precision: 10, scale: 2 }),
+  advanceAmount: decimal("advance_amount", { precision: 10, scale: 2 }),
+  deliveryDays: integer("delivery_days"),
+  
+  // Status and payments
+  status: varchar("status").notNull().default("pending"), // pending, quoted, accepted, paid, completed
+  acceptedAt: timestamp("accepted_at"),
+  paidAt: timestamp("paid_at"),
+  stripePaymentIntentId: varchar("stripe_payment_intent_id"),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertPricingRateSchema = createInsertSchema(pricingRates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertQuoteRequestSchema = createInsertSchema(quoteRequests).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type Certification = typeof certifications.$inferSelect;
 export type InsertCertification = z.infer<typeof insertCertificationSchema>;
 export type UpdateCertification = z.infer<typeof updateCertificationSchema>;
+export type PricingRate = typeof pricingRates.$inferSelect;
+export type InsertPricingRate = z.infer<typeof insertPricingRateSchema>;
+export type QuoteRequest = typeof quoteRequests.$inferSelect;
+export type InsertQuoteRequest = z.infer<typeof insertQuoteRequestSchema>;
