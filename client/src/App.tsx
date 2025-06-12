@@ -6,6 +6,10 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import Dashboard from "@/pages/dashboard";
 import CertificationWizard from "@/pages/certification-wizard";
+import Certificates from "@/pages/certificates";
+import Properties from "@/pages/properties";
+import Reports from "@/pages/reports";
+import Settings from "@/pages/settings";
 import Landing from "@/pages/landing";
 import NotFound from "@/pages/not-found";
 
@@ -31,6 +35,10 @@ function Router() {
         <>
           <Route path="/" component={Dashboard} />
           <Route path="/certificacion/:id?" component={CertificationWizard} />
+          <Route path="/certificados" component={Certificates} />
+          <Route path="/propiedades" component={Properties} />
+          <Route path="/informes" component={Reports} />
+          <Route path="/configuracion" component={Settings} />
         </>
       )}
       <Route component={NotFound} />
