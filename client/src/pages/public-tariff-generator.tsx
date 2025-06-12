@@ -591,12 +591,30 @@ export default function PublicTariffGenerator() {
 
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-4">Datos de Pago</h3>
-                  <Elements stripe={stripePromise}>
-                    <PaymentForm 
-                      quote={quote} 
-                      onSuccess={() => setStep('success')} 
-                    />
-                  </Elements>
+                  {stripePromise ? (
+                    <Elements stripe={stripePromise}>
+                      <PaymentForm 
+                        quote={quote} 
+                        onSuccess={() => setStep('success')} 
+                      />
+                    </Elements>
+                  ) : (
+                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-6">
+                      <div className="flex items-center mb-4">
+                        <Shield className="w-6 h-6 text-orange-600 mr-3" />
+                        <h4 className="font-semibold text-orange-900">Configuración de Pagos Pendiente</h4>
+                      </div>
+                      <p className="text-orange-800 mb-4">
+                        El sistema de pagos está siendo configurado. Por favor, contacta directamente para procesar tu solicitud.
+                      </p>
+                      <Button 
+                        onClick={() => setStep('success')}
+                        className="w-full bg-gradient-to-r from-orange-600 to-yellow-600 hover:from-orange-700 hover:to-yellow-700"
+                      >
+                        Continuar sin Pago Online
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

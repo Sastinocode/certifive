@@ -828,6 +828,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create sample pricing data (for testing purposes)
+  app.post("/api/create-sample-pricing", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      const sampleRates = [
+        {
+          userId,
+          propertyType: "vivienda",
+          basePrice: "350",
+          advancePercentage: 50,
+          deliveryDays: 7,
+          description: "Certificación energética para viviendas unifamiliares",
+          isActive: true
+        },
+        {
+          userId,
+          propertyType: "local",
+          basePrice: "450",
+          advancePercentage: 50,
+          deliveryDays: 10,
+          description: "Certificación energética para locales comerciales",
+          isActive: true
+        },
+        {
+          userId,
+          propertyType: "oficina",
+          basePrice: "400",
+          advancePercentage: 50,
+          deliveryDays: 8,
+          description: "Certificación energética para oficinas",
+          isActive: true
+        },
+        {
+          userId,
+          propertyType: "nave",
+          basePrice: "600",
+          advancePercentage: 50,
+          deliveryDays: 15,
+          description: "Certificación energética para naves industriales",
+          isActive: true
+        }
+      ];
+
+      for (const rate of sampleRates) {
+        await storage.createPricingRate(rate);
+      }
+
+      res.json({ message: "Datos de muestra creados correctamente", count: sampleRates.length });
+    } catch (error) {
+      console.error("Error creating sample pricing:", error);
+      res.status(500).json({ message: "Error al crear datos de muestra" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
