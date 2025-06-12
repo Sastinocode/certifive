@@ -9,7 +9,8 @@ import {
   Settings, 
   Leaf, 
   User,
-  LogOut
+  LogOut,
+  Euro
 } from "lucide-react";
 
 interface SidebarProps {
@@ -29,6 +30,7 @@ export default function Sidebar({ selectedTab, onTabChange }: SidebarProps) {
     { id: "dashboard", label: "Dashboard", icon: Home, path: "/" },
     { id: "certificates", label: "Certificados", icon: IdCard, path: "/certificados" },
     { id: "properties", label: "Propiedades", icon: Building, path: "/propiedades" },
+    { id: "pricing", label: "Tarifas", icon: Euro, path: "/tarifas" },
     { id: "reports", label: "Informes", icon: BarChart, path: "/informes" },
     { id: "settings", label: "Configuración", icon: Settings, path: "/configuracion" },
   ];

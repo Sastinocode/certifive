@@ -2,11 +2,12 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertCertificationSchema, updateCertificationSchema } from "@shared/schema";
+import { insertCertificationSchema, updateCertificationSchema, insertPricingRateSchema, insertQuoteRequestSchema } from "@shared/schema";
 import { z } from "zod";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import Stripe from "stripe";
 
 // Configure multer for file uploads
 const upload = multer({
@@ -204,6 +205,245 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.sendFile(filePath);
     } else {
       res.status(404).json({ message: "Archivo no encontrado" });
+    }
+  });
+
+  // Initialize Stripe (only if secret key is available)
+  let stripe: Stripe | null = null;
+  if (process.env.STRIPE_SECRET_KEY) {
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: "2023-10-16",
+    });
+  }
+
+  // Pricing rates routes
+  app.get("/api/pricing-rates", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const rates = await storage.getPricingRates(userId);
+      res.json(rates);
+    } catch (error) {
+      console.error("Error fetching pricing rates:", error);
+      res.status(500).json({ message: "Error al obtener tarifas" });
+    }
+  });
+
+  app.post("/api/pricing-rates", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const validatedData = insertPricingRateSchema.parse({
+        ...req.body,
+        userId,
+      });
+      
+      const rate = await storage.createPricingRate(validatedData);
+      res.json(rate);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Datos inválidos", errors: error.errors });
+      }
+      console.error("Error creating pricing rate:", error);
+      res.status(500).json({ message: "Error al crear tarifa" });
+    }
+  });
+
+  app.patch("/api/pricing-rates/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const rateId = parseInt(req.params.id);
+      const validatedData = insertPricingRateSchema.partial().parse(req.body);
+      
+      const rate = await storage.updatePricingRate(rateId, userId, validatedData);
+      
+      if (!rate) {
+        return res.status(404).json({ message: "Tarifa no encontrada" });
+      }
+      
+      res.json(rate);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Datos inválidos", errors: error.errors });
+      }
+      console.error("Error updating pricing rate:", error);
+      res.status(500).json({ message: "Error al actualizar tarifa" });
+    }
+  });
+
+  app.delete("/api/pricing-rates/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const rateId = parseInt(req.params.id);
+      
+      const success = await storage.deletePricingRate(rateId, userId);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Tarifa no encontrada" });
+      }
+      
+      res.json({ message: "Tarifa eliminada correctamente" });
+    } catch (error) {
+      console.error("Error deleting pricing rate:", error);
+      res.status(500).json({ message: "Error al eliminar tarifa" });
+    }
+  });
+
+  // Quote request routes
+  app.post("/api/quote-requests", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { quoteRequest, uniqueLink } = await storage.createQuoteRequest(userId);
+      
+      res.json({ quoteRequest, uniqueLink });
+    } catch (error) {
+      console.error("Error creating quote request:", error);
+      res.status(500).json({ message: "Error al crear solicitud de presupuesto" });
+    }
+  });
+
+  app.get("/api/quote-requests", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const quotes = await storage.getQuotesByUser(userId);
+      res.json(quotes);
+    } catch (error) {
+      console.error("Error fetching quotes:", error);
+      res.status(500).json({ message: "Error al obtener presupuestos" });
+    }
+  });
+
+  // Public quote routes (no authentication required)
+  app.get("/api/public/quotes/:uniqueLink", async (req, res) => {
+    try {
+      const { uniqueLink } = req.params;
+      const quote = await storage.getQuoteByLink(uniqueLink);
+      
+      if (!quote) {
+        return res.status(404).json({ message: "Presupuesto no encontrado" });
+      }
+      
+      res.json(quote);
+    } catch (error) {
+      console.error("Error fetching public quote:", error);
+      res.status(500).json({ message: "Error al obtener presupuesto" });
+    }
+  });
+
+  app.patch("/api/public/quotes/:uniqueLink", async (req, res) => {
+    try {
+      const { uniqueLink } = req.params;
+      const quote = await storage.getQuoteByLink(uniqueLink);
+      
+      if (!quote) {
+        return res.status(404).json({ message: "Presupuesto no encontrado" });
+      }
+
+      // Get pricing rates for this user to calculate quote
+      const rates = await storage.getPricingRates(quote.userId);
+      const selectedRate = rates.find(rate => rate.propertyType === req.body.propertyType && rate.isActive);
+      
+      if (!selectedRate) {
+        return res.status(400).json({ message: "No hay tarifa disponible para este tipo de propiedad" });
+      }
+
+      const basePrice = parseFloat(selectedRate.basePrice);
+      const advanceAmount = basePrice * (selectedRate.advancePercentage / 100);
+
+      const updateData = {
+        ...req.body,
+        basePrice: basePrice.toString(),
+        advanceAmount: advanceAmount.toString(),
+        deliveryDays: selectedRate.deliveryDays,
+        status: 'quoted'
+      };
+
+      const updatedQuote = await storage.updateQuoteRequest(uniqueLink, updateData);
+      res.json(updatedQuote);
+    } catch (error) {
+      console.error("Error updating public quote:", error);
+      res.status(500).json({ message: "Error al actualizar presupuesto" });
+    }
+  });
+
+  // Payment routes
+  app.post("/api/public/quotes/:uniqueLink/payment", async (req, res) => {
+    try {
+      if (!stripe) {
+        return res.status(500).json({ message: "Stripe no está configurado" });
+      }
+
+      const { uniqueLink } = req.params;
+      const quote = await storage.getQuoteByLink(uniqueLink);
+      
+      if (!quote || !quote.advanceAmount) {
+        return res.status(404).json({ message: "Presupuesto no encontrado o sin importe" });
+      }
+
+      // Get user info for Stripe Connect
+      const user = await storage.getUser(quote.userId);
+      if (!user || !user.stripeAccountId) {
+        return res.status(400).json({ message: "Certificador no tiene cuenta de pago configurada" });
+      }
+
+      const amount = Math.round(parseFloat(quote.advanceAmount) * 100); // Convert to cents
+
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount,
+        currency: "eur",
+        transfer_data: {
+          destination: user.stripeAccountId,
+        },
+        metadata: {
+          quoteId: quote.id.toString(),
+          uniqueLink,
+        },
+      });
+
+      // Update quote with payment intent ID
+      await storage.updateQuoteRequest(uniqueLink, {
+        stripePaymentIntentId: paymentIntent.id,
+        status: 'payment_pending'
+      });
+
+      res.json({ clientSecret: paymentIntent.client_secret });
+    } catch (error) {
+      console.error("Error creating payment intent:", error);
+      res.status(500).json({ message: "Error al crear pago" });
+    }
+  });
+
+  // Stripe webhook for payment confirmation
+  app.post("/api/webhooks/stripe", async (req, res) => {
+    try {
+      if (!stripe) {
+        return res.status(500).json({ message: "Stripe no está configurado" });
+      }
+
+      const sig = req.headers['stripe-signature'];
+      let event;
+
+      try {
+        event = stripe.webhooks.constructEvent(req.body, sig!, process.env.STRIPE_WEBHOOK_SECRET!);
+      } catch (err) {
+        console.error('Webhook signature verification failed:', err);
+        return res.status(400).send(`Webhook Error: ${err}`);
+      }
+
+      if (event.type === 'payment_intent.succeeded') {
+        const paymentIntent = event.data.object;
+        const uniqueLink = paymentIntent.metadata.uniqueLink;
+
+        if (uniqueLink) {
+          await storage.updateQuoteRequest(uniqueLink, {
+            status: 'paid',
+            paidAt: new Date(),
+          });
+        }
+      }
+
+      res.json({ received: true });
+    } catch (error) {
+      console.error("Error handling stripe webhook:", error);
+      res.status(500).json({ message: "Error al procesar webhook" });
     }
   });
 
