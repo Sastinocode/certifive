@@ -7,6 +7,8 @@ import { useAuth } from "@/hooks/useAuth";
 import Dashboard from "@/pages/dashboard";
 import CertificationWizard from "@/pages/certification-wizard";
 import CertificationForm from "@/pages/certification-form";
+import WhatsAppManagement from "@/pages/whatsapp-management";
+import WorkflowDemo from "@/pages/workflow-demo";
 import Certificates from "@/pages/certificates";
 import Properties from "@/pages/properties";
 import Pricing from "@/pages/pricing";
@@ -42,6 +44,8 @@ function Router() {
         <>
           <Route path="/" component={Dashboard} />
           <Route path="/certificacion/:id?" component={CertificationWizard} />
+          <Route path="/whatsapp" component={WhatsAppManagement} />
+          <Route path="/demo-flujo" component={WorkflowDemo} />
           <Route path="/certificados" component={Certificates} />
           <Route path="/propiedades" component={Properties} />
           <Route path="/tarifas" component={Pricing} />
