@@ -272,8 +272,8 @@ export default function Reports() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50">
       <Sidebar selectedTab="reports" onTabChange={() => {}} />
-      <div className="ml-64">
-        <div className="p-8">
+      <div className="ml-64 min-h-screen overflow-y-auto">
+        <div className="p-6 w-full">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               Informes Financieros
@@ -319,18 +319,18 @@ export default function Reports() {
             </Button>
           </div>
 
-          <div className="space-y-6">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="overview">Resumen</TabsTrigger>
-                <TabsTrigger value="invoices">Facturas</TabsTrigger>
-                <TabsTrigger value="payments">Pagos</TabsTrigger>
+          <div className="space-y-6 pb-8">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+              <TabsList className="grid w-full grid-cols-3 h-12">
+                <TabsTrigger value="overview" className="text-sm">Resumen</TabsTrigger>
+                <TabsTrigger value="invoices" className="text-sm">Facturas</TabsTrigger>
+                <TabsTrigger value="payments" className="text-sm">Pagos</TabsTrigger>
               </TabsList>
 
               {/* Overview Tab */}
               <TabsContent value="overview" className="space-y-6">
                 {/* KPI Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg">
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between">
@@ -400,7 +400,7 @@ export default function Reports() {
                 </div>
 
                 {/* Charts */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {/* Revenue Chart */}
                   <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg">
                     <CardHeader>
@@ -410,21 +410,23 @@ export default function Reports() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <ResponsiveContainer width="100%" height={300}>
-                        <AreaChart data={revenueData}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="month" />
-                          <YAxis />
-                          <Tooltip />
-                          <Area 
-                            type="monotone" 
-                            dataKey="ingresos" 
-                            stroke="#3b82f6" 
-                            fill="#3b82f6" 
-                            fillOpacity={0.3}
-                          />
-                        </AreaChart>
-                      </ResponsiveContainer>
+                      <div className="h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <AreaChart data={revenueData}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="month" />
+                            <YAxis />
+                            <Tooltip />
+                            <Area 
+                              type="monotone" 
+                              dataKey="ingresos" 
+                              stroke="#3b82f6" 
+                              fill="#3b82f6" 
+                              fillOpacity={0.3}
+                            />
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      </div>
                     </CardContent>
                   </Card>
 
