@@ -13,24 +13,34 @@
   --card-foreground: hsl(222, 84%, 4.9%);
   --border: hsl(214, 32%, 91%);
   --input: hsl(214, 32%, 91%);
-  --primary: hsl(217, 91%, 60%);
-  --primary-foreground: hsl(222, 84%, 4.9%);
+  --primary: hsl(142, 76%, 36%);
+  --primary-foreground: hsl(0, 0%, 100%);
   --secondary: hsl(210, 40%, 96%);
   --secondary-foreground: hsl(222, 84%, 4.9%);
   --accent: hsl(210, 40%, 96%);
   --accent-foreground: hsl(222, 84%, 4.9%);
   --destructive: hsl(0, 84%, 60%);
   --destructive-foreground: hsl(210, 40%, 98%);
-  --ring: hsl(222, 84%, 4.9%);
-  --radius: 0.5rem;
+  --ring: hsl(142, 76%, 36%);
+  --radius: 0.75rem;
   
-  /* Custom colors for energy certification */
-  --success: hsl(142, 76%, 36%);
-  --success-foreground: hsl(355, 7%, 97%);
-  --warning: hsl(32, 95%, 44%);
-  --warning-foreground: hsl(355, 7%, 97%);
-  --error: hsl(0, 84%, 60%);
-  --error-foreground: hsl(355, 7%, 97%);
+  /* Energy efficiency colors */
+  --energy-a: hsl(142, 76%, 36%);
+  --energy-b: hsl(85, 60%, 44%);
+  --energy-c: hsl(60, 100%, 50%);
+  --energy-d: hsl(45, 100%, 51%);
+  --energy-e: hsl(25, 95%, 53%);
+  --energy-f: hsl(14, 100%, 57%);
+  --energy-g: hsl(0, 84%, 60%);
+  
+  /* Gradient colors */
+  --gradient-green: hsl(142, 76%, 36%);
+  --gradient-blue: hsl(217, 91%, 60%);
+  --gradient-teal: hsl(173, 58%, 39%);
+  
+  /* Glass effect */
+  --glass-bg: hsla(0, 0%, 100%, 0.8);
+  --glass-border: hsla(0, 0%, 100%, 0.3);
 }
 
 .dark {
@@ -61,8 +71,10 @@
   }
 
   body {
-    @apply font-sans antialiased bg-background text-foreground;
+    @apply font-sans antialiased text-foreground;
     font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #f0f9ff 0%, #ecfdf5 50%, #f0f9ff 100%);
+    min-height: 100vh;
   }
 }
 
@@ -125,5 +137,65 @@
   
   .energy-rating-g {
     @apply bg-red-300 text-red-900;
+  }
+  
+  /* Glass effect cards */
+  .glass-card {
+    @apply backdrop-blur-md bg-white/70 border border-white/30 shadow-xl rounded-2xl;
+  }
+  
+  .energy-card {
+    @apply glass-card hover:bg-white/80 transition-all duration-300 hover:scale-105 hover:shadow-2xl;
+  }
+  
+  .stat-card {
+    @apply glass-card p-6 hover:bg-white/80 transition-all duration-300 hover:scale-105;
+  }
+  
+  /* Energy gradients */
+  .energy-gradient-a {
+    @apply bg-gradient-to-br from-green-500 to-green-600;
+  }
+  
+  .energy-gradient-b {
+    @apply bg-gradient-to-br from-lime-500 to-green-500;
+  }
+  
+  .energy-gradient-c {
+    @apply bg-gradient-to-br from-yellow-400 to-yellow-500;
+  }
+  
+  .energy-gradient-d {
+    @apply bg-gradient-to-br from-orange-400 to-orange-500;
+  }
+  
+  .energy-gradient-e {
+    @apply bg-gradient-to-br from-orange-500 to-red-500;
+  }
+  
+  .energy-gradient-f {
+    @apply bg-gradient-to-br from-red-500 to-red-600;
+  }
+  
+  .energy-gradient-g {
+    @apply bg-gradient-to-br from-red-600 to-red-700;
+  }
+  
+  /* Innovative card effects */
+  .floating-card {
+    @apply transform transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl;
+  }
+  
+  .glow-effect {
+    @apply relative before:absolute before:-inset-1 before:bg-gradient-to-r before:from-green-400 before:to-blue-400 before:rounded-lg before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-30;
+  }
+  
+  .modern-card {
+    @apply relative backdrop-blur-lg bg-gradient-to-br from-white/80 to-white/60 border border-white/20 shadow-xl rounded-2xl overflow-hidden;
+  }
+  
+  .modern-card::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-br from-transparent via-white/10 to-transparent pointer-events-none;
   }
 }

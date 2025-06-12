@@ -148,87 +148,81 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen">
       <Sidebar selectedTab={selectedTab} onTabChange={setSelectedTab} />
       
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile header */}
-        <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-3">
+        <div className="lg:hidden backdrop-blur-md bg-white/70 border-b border-white/30 px-4 py-3">
           <h1 className="text-lg font-semibold text-gray-900">CertificoEnergia</h1>
         </div>
 
         {/* Main content */}
         <div className="flex-1 overflow-auto p-6">
           <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Dashboard</h2>
-            <p className="text-gray-600">Gestiona tus certificaciones energéticas de forma eficiente</p>
+            <h2 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent mb-2">
+              Dashboard Energético
+            </h2>
+            <p className="text-gray-600">Gestiona tus certificaciones energéticas de forma eficiente y sostenible</p>
           </div>
 
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center">
-                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <IdCard className="w-6 h-6 text-primary" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Certificados Activos</p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {statsLoading ? "..." : stats.activeCertificates || 0}
-                    </p>
-                  </div>
+            <div className="stat-card floating-card">
+              <div className="flex items-center">
+                <div className="w-14 h-14 energy-gradient-a rounded-xl flex items-center justify-center shadow-lg">
+                  <IdCard className="w-7 h-7 text-white" />
                 </div>
-              </CardContent>
-            </Card>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Certificados Activos</p>
+                  <p className="text-3xl font-bold bg-gradient-to-r from-green-600 to-green-700 bg-clip-text text-transparent">
+                    {statsLoading ? "..." : stats.activeCertificates || 0}
+                  </p>
+                </div>
+              </div>
+            </div>
 
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center">
-                  <div className="w-12 h-12 bg-success/10 rounded-lg flex items-center justify-center">
-                    <Clock className="w-6 h-6 text-success" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">En Proceso</p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {statsLoading ? "..." : stats.inProgress || 0}
-                    </p>
-                  </div>
+            <div className="stat-card floating-card">
+              <div className="flex items-center">
+                <div className="w-14 h-14 energy-gradient-b rounded-xl flex items-center justify-center shadow-lg">
+                  <Clock className="w-7 h-7 text-white" />
                 </div>
-              </CardContent>
-            </Card>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">En Proceso</p>
+                  <p className="text-3xl font-bold bg-gradient-to-r from-lime-600 to-green-600 bg-clip-text text-transparent">
+                    {statsLoading ? "..." : stats.inProgress || 0}
+                  </p>
+                </div>
+              </div>
+            </div>
 
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center">
-                  <div className="w-12 h-12 bg-warning/10 rounded-lg flex items-center justify-center">
-                    <AlertTriangle className="w-6 h-6 text-warning" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Próximos a Vencer</p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {statsLoading ? "..." : stats.expiringSoon || 0}
-                    </p>
-                  </div>
+            <div className="stat-card floating-card">
+              <div className="flex items-center">
+                <div className="w-14 h-14 energy-gradient-c rounded-xl flex items-center justify-center shadow-lg">
+                  <AlertTriangle className="w-7 h-7 text-white" />
                 </div>
-              </CardContent>
-            </Card>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Próximos a Vencer</p>
+                  <p className="text-3xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
+                    {statsLoading ? "..." : stats.expiringSoon || 0}
+                  </p>
+                </div>
+              </div>
+            </div>
 
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center">
-                  <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
-                    <Leaf className="w-6 h-6 text-accent" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Ahorro CO₂ (t)</p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {statsLoading ? "..." : stats.co2Savings || 0}
-                    </p>
-                  </div>
+            <div className="stat-card floating-card">
+              <div className="flex items-center">
+                <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center shadow-lg">
+                  <Leaf className="w-7 h-7 text-white" />
                 </div>
-              </CardContent>
-            </Card>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Ahorro CO₂ (t)</p>
+                  <p className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+                    {statsLoading ? "..." : stats.co2Savings || 0}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Quick Actions */}
