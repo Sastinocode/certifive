@@ -58,12 +58,22 @@ import {
 interface Invoice {
   id: number;
   invoiceNumber: string;
+  series: string;
   clientName: string;
   clientEmail: string;
+  clientPhone?: string;
+  clientNif?: string;
+  clientAddress?: string;
+  clientCity?: string;
+  clientPostalCode?: string;
   subtotal: string;
+  vatRate: string;
   vatAmount: string;
+  irpfRate?: string;
+  irpfAmount?: string;
   total: string;
   paymentStatus: string;
+  paymentTerms?: number;
   issueDate: string;
   dueDate: string;
   paidDate?: string;
@@ -749,84 +759,297 @@ function InvoiceForm({ invoice, onSubmit, onCancel }: {
   onCancel: () => void;
 }) {
   const [formData, setFormData] = useState({
+    // Client personal data
     clientName: invoice?.clientName || "",
     clientEmail: invoice?.clientEmail || "",
+    clientPhone: invoice?.clientPhone || "",
+    clientNif: invoice?.clientNif || "",
+    
+    // Client address
+    clientAddress: invoice?.clientAddress || "",
+    clientCity: invoice?.clientCity || "",
+    clientPostalCode: invoice?.clientPostalCode || "",
+    
+    // Service details
     description: invoice?.description || "",
     subtotal: invoice?.subtotal || "",
-    vatRate: "21",
+    vatRate: invoice?.vatRate || "21",
+    irpfRate: invoice?.irpfRate || "0",
+    paymentTerms: invoice?.paymentTerms?.toString() || "30",
     dueDate: "",
+    series: invoice?.series || "CERT",
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const vatAmount = (parseFloat(formData.subtotal) * parseFloat(formData.vatRate)) / 100;
-    const total = parseFloat(formData.subtotal) + vatAmount;
+    
+    const subtotalValue = parseFloat(formData.subtotal);
+    const vatRateValue = parseFloat(formData.vatRate);
+    const irpfRateValue = parseFloat(formData.irpfRate);
+    
+    const vatAmount = (subtotalValue * vatRateValue) / 100;
+    const irpfAmount = (subtotalValue * irpfRateValue) / 100;
+    const total = subtotalValue + vatAmount - irpfAmount;
+    
+    // Calculate due date
+    const dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + parseInt(formData.paymentTerms));
     
     onSubmit({
       ...formData,
+      subtotal: subtotalValue.toFixed(2),
       vatAmount: vatAmount.toFixed(2),
+      irpfAmount: irpfAmount.toFixed(2),
       total: total.toFixed(2),
+      dueDate: formData.dueDate || dueDate.toISOString().split('T')[0],
     });
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Client Information Section */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Datos del Cliente</h3>
+        
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="clientName">Nombre y Apellidos *</Label>
+            <Input
+              id="clientName"
+              value={formData.clientName}
+              onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
+              placeholder="Nombre completo del cliente"
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="clientNif">CIF/NIF/NIE *</Label>
+            <Input
+              id="clientNif"
+              value={formData.clientNif}
+              onChange={(e) => setFormData({ ...formData, clientNif: e.target.value })}
+              placeholder="12345678Z / A12345678"
+              required
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="clientEmail">Email</Label>
+            <Input
+              id="clientEmail"
+              type="email"
+              value={formData.clientEmail}
+              onChange={(e) => setFormData({ ...formData, clientEmail: e.target.value })}
+              placeholder="cliente@email.com"
+            />
+          </div>
+          <div>
+            <Label htmlFor="clientPhone">Teléfono</Label>
+            <Input
+              id="clientPhone"
+              value={formData.clientPhone}
+              onChange={(e) => setFormData({ ...formData, clientPhone: e.target.value })}
+              placeholder="600 000 000"
+            />
+          </div>
+        </div>
+
         <div>
-          <Label htmlFor="clientName">Nombre del Cliente</Label>
+          <Label htmlFor="clientAddress">Dirección *</Label>
           <Input
-            id="clientName"
-            value={formData.clientName}
-            onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
+            id="clientAddress"
+            value={formData.clientAddress}
+            onChange={(e) => setFormData({ ...formData, clientAddress: e.target.value })}
+            placeholder="Calle, número, piso, puerta"
             required
           />
         </div>
-        <div>
-          <Label htmlFor="clientEmail">Email del Cliente</Label>
-          <Input
-            id="clientEmail"
-            type="email"
-            value={formData.clientEmail}
-            onChange={(e) => setFormData({ ...formData, clientEmail: e.target.value })}
-          />
-        </div>
-      </div>
-      
-      <div>
-        <Label htmlFor="description">Descripción del Servicio</Label>
-        <Textarea
-          id="description"
-          value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          required
-        />
-      </div>
-      
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="subtotal">Subtotal (€)</Label>
-          <Input
-            id="subtotal"
-            type="number"
-            step="0.01"
-            value={formData.subtotal}
-            onChange={(e) => setFormData({ ...formData, subtotal: e.target.value })}
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="dueDate">Fecha de Vencimiento</Label>
-          <Input
-            id="dueDate"
-            type="date"
-            value={formData.dueDate}
-            onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-            required
-          />
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="clientCity">Localidad/Municipio *</Label>
+            <Input
+              id="clientCity"
+              value={formData.clientCity}
+              onChange={(e) => setFormData({ ...formData, clientCity: e.target.value })}
+              placeholder="Madrid"
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="clientPostalCode">Código Postal *</Label>
+            <Input
+              id="clientPostalCode"
+              value={formData.clientPostalCode}
+              onChange={(e) => setFormData({ ...formData, clientPostalCode: e.target.value })}
+              placeholder="28001"
+              required
+            />
+          </div>
         </div>
       </div>
 
-      <div className="flex justify-end gap-2">
+      {/* Service Details Section */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Detalles del Servicio</h3>
+        
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="series">Serie de Facturación</Label>
+            <Select 
+              value={formData.series} 
+              onValueChange={(value) => setFormData({ ...formData, series: value })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="CERT">CERT - Certificaciones</SelectItem>
+                <SelectItem value="CONS">CONS - Consultoría</SelectItem>
+                <SelectItem value="SERV">SERV - Servicios</SelectItem>
+                <SelectItem value="RECT">RECT - Rectificativas</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-end">
+            <div className="bg-blue-50 p-3 rounded-lg border border-blue-200 w-full">
+              <span className="text-sm text-blue-700 font-medium">
+                Número: {formData.series}-{new Date().getFullYear()}-XXX
+              </span>
+              <p className="text-xs text-blue-600 mt-1">Se asignará automáticamente al crear</p>
+            </div>
+          </div>
+        </div>
+        
+        <div>
+          <Label htmlFor="description">Descripción del Servicio *</Label>
+          <Textarea
+            id="description"
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            placeholder="Certificación energética vivienda unifamiliar..."
+            required
+            rows={3}
+          />
+        </div>
+        
+        <div className="grid grid-cols-3 gap-4">
+          <div>
+            <Label htmlFor="subtotal">Base Imponible (€) *</Label>
+            <Input
+              id="subtotal"
+              type="number"
+              step="0.01"
+              min="0"
+              value={formData.subtotal}
+              onChange={(e) => setFormData({ ...formData, subtotal: e.target.value })}
+              placeholder="150.00"
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="vatRate">IVA (%)</Label>
+            <Select 
+              value={formData.vatRate} 
+              onValueChange={(value) => setFormData({ ...formData, vatRate: value })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="0">0% (Exento)</SelectItem>
+                <SelectItem value="4">4% (Reducido)</SelectItem>
+                <SelectItem value="10">10% (Reducido)</SelectItem>
+                <SelectItem value="21">21% (General)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="irpfRate">IRPF (%)</Label>
+            <Select 
+              value={formData.irpfRate} 
+              onValueChange={(value) => setFormData({ ...formData, irpfRate: value })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="0">0% (Sin retención)</SelectItem>
+                <SelectItem value="7">7%</SelectItem>
+                <SelectItem value="15">15%</SelectItem>
+                <SelectItem value="19">19%</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="paymentTerms">Plazo de Pago (días)</Label>
+            <Select 
+              value={formData.paymentTerms} 
+              onValueChange={(value) => setFormData({ ...formData, paymentTerms: value })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="0">Pago inmediato</SelectItem>
+                <SelectItem value="15">15 días</SelectItem>
+                <SelectItem value="30">30 días</SelectItem>
+                <SelectItem value="60">60 días</SelectItem>
+                <SelectItem value="90">90 días</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="dueDate">Fecha de Vencimiento (opcional)</Label>
+            <Input
+              id="dueDate"
+              type="date"
+              value={formData.dueDate}
+              onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Invoice Preview */}
+      {formData.subtotal && (
+        <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+          <h4 className="font-medium text-gray-900">Resumen de Facturación</h4>
+          <div className="space-y-1 text-sm">
+            <div className="flex justify-between">
+              <span>Base Imponible:</span>
+              <span>{parseFloat(formData.subtotal || "0").toFixed(2)} €</span>
+            </div>
+            <div className="flex justify-between">
+              <span>IVA ({formData.vatRate}%):</span>
+              <span>{((parseFloat(formData.subtotal || "0") * parseFloat(formData.vatRate)) / 100).toFixed(2)} €</span>
+            </div>
+            {parseFloat(formData.irpfRate) > 0 && (
+              <div className="flex justify-between text-red-600">
+                <span>IRPF (-{formData.irpfRate}%):</span>
+                <span>-{((parseFloat(formData.subtotal || "0") * parseFloat(formData.irpfRate)) / 100).toFixed(2)} €</span>
+              </div>
+            )}
+            <div className="flex justify-between font-semibold border-t pt-1">
+              <span>Total:</span>
+              <span>
+                {(
+                  parseFloat(formData.subtotal || "0") + 
+                  ((parseFloat(formData.subtotal || "0") * parseFloat(formData.vatRate)) / 100) -
+                  ((parseFloat(formData.subtotal || "0") * parseFloat(formData.irpfRate)) / 100)
+                ).toFixed(2)} €
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="flex justify-end gap-2 pt-4 border-t">
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancelar
         </Button>

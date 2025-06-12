@@ -557,12 +557,36 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createInvoice(data: any): Promise<any> {
-    const invoiceNumber = `${data.series || 'CERT'}-${Date.now()}`;
+    // Get the next invoice number for this user and series
+    const series = data.series || 'CERT';
+    const year = new Date().getFullYear();
+    
+    // Find the highest invoice number for this user, series, and year
+    const lastInvoice = await db
+      .select({ invoiceNumber: invoices.invoiceNumber })
+      .from(invoices)
+      .where(eq(invoices.userId, data.userId))
+      .orderBy(desc(invoices.createdAt))
+      .limit(1);
+    
+    let nextNumber = 1;
+    if (lastInvoice.length > 0) {
+      // Extract number from invoice format like "CERT-2024-001"
+      const match = lastInvoice[0].invoiceNumber.match(/-(\d+)$/);
+      if (match) {
+        nextNumber = parseInt(match[1]) + 1;
+      }
+    }
+    
+    // Format invoice number: SERIES-YEAR-NUMBER (e.g., CERT-2024-001)
+    const invoiceNumber = `${series}-${year}-${nextNumber.toString().padStart(3, '0')}`;
+    
     const [invoice] = await db
       .insert(invoices)
       .values({
         ...data,
         invoiceNumber,
+        series,
         issueDate: new Date(),
         updatedAt: new Date(),
       })
