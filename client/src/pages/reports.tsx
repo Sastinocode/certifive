@@ -92,15 +92,30 @@ interface Payment {
   status: string;
 }
 
-interface Expense {
+interface Collection {
   id: number;
+  userId: string;
   amount: string;
-  description: string;
-  category: string;
-  expenseDate: string;
-  vendor?: string;
-  receiptUrl?: string;
-  isDeductible: boolean;
+  concept: string;
+  paymentMethod: string;
+  paymentReference?: string;
+  collectionDate: string;
+  invoiceId?: number;
+  isInvoicePayment: boolean;
+  clientName?: string;
+  clientEmail?: string;
+  clientPhone?: string;
+  bankAccount?: string;
+  cardLastFour?: string;
+  stripePaymentId?: string;
+  vatIncluded: boolean;
+  vatAmount: string;
+  vatRate: string;
+  status: string;
+  verificationCode?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface FinancialSummary {
@@ -125,9 +140,9 @@ export default function Reports() {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [showInvoiceDialog, setShowInvoiceDialog] = useState(false);
-  const [showExpenseDialog, setShowExpenseDialog] = useState(false);
+  const [showCollectionDialog, setShowCollectionDialog] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
-  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [editingCollection, setEditingCollection] = useState<Collection | null>(null);
 
   // Handle authentication
   useEffect(() => {
@@ -327,9 +342,10 @@ export default function Reports() {
     return matchesSearch;
   });
 
-  const filteredExpenses = expenses.filter((expense: Expense) => {
-    const matchesSearch = expense.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (expense.vendor?.toLowerCase() || "").includes(searchTerm.toLowerCase());
+  const filteredCollections = collections.filter((collection: Collection) => {
+    const matchesSearch = collection.concept.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (collection.clientName?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+                         (collection.paymentReference?.toLowerCase() || "").includes(searchTerm.toLowerCase());
     return matchesSearch;
   });
 
@@ -792,7 +808,7 @@ export default function Reports() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <ExpensesTable expenses={filteredExpenses} />
+                    <CollectionsTable collections={filteredCollections} />
                   </CardContent>
                 </Card>
               </TabsContent>
