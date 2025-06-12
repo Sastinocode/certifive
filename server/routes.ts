@@ -1130,59 +1130,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Expense Management Routes
-  app.get('/api/expenses', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const { dateRange, category } = req.query;
-      const expenses = await storage.getExpenses(userId, dateRange, category);
-      res.json(expenses);
-    } catch (error) {
-      console.error("Error fetching expenses:", error);
-      res.status(500).json({ message: "Failed to fetch expenses" });
-    }
-  });
 
-  app.post('/api/expenses', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const expense = await storage.createExpense({ ...req.body, userId });
-      res.json(expense);
-    } catch (error) {
-      console.error("Error creating expense:", error);
-      res.status(500).json({ message: "Failed to create expense" });
-    }
-  });
-
-  app.patch('/api/expenses/:id', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const id = parseInt(req.params.id);
-      const expense = await storage.updateExpense(id, userId, req.body);
-      if (!expense) {
-        return res.status(404).json({ message: "Expense not found" });
-      }
-      res.json(expense);
-    } catch (error) {
-      console.error("Error updating expense:", error);
-      res.status(500).json({ message: "Failed to update expense" });
-    }
-  });
-
-  app.delete('/api/expenses/:id', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const id = parseInt(req.params.id);
-      const deleted = await storage.deleteExpense(id, userId);
-      if (!deleted) {
-        return res.status(404).json({ message: "Expense not found" });
-      }
-      res.json({ message: "Expense deleted successfully" });
-    } catch (error) {
-      console.error("Error deleting expense:", error);
-      res.status(500).json({ message: "Failed to delete expense" });
-    }
-  });
 
   // Certification Reports API - Generate downloadable technical reports
   app.get('/api/certifications/:id/report/:format', isAuthenticated, async (req: any, res) => {
