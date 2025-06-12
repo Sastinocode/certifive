@@ -377,7 +377,7 @@ export default function Certificates() {
                   {selectedFolder !== undefined && ` en esta ${selectedFolder === null ? 'categoría' : 'carpeta'}`}
                 </p>
               </div>
-              <Link to="/certification-form">
+              <Link to="/certificacion">
                 <Button className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700">
                   <Plus className="w-4 h-4 mr-2" />
                   Nueva Certificación
