@@ -6,8 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
@@ -21,14 +19,7 @@ import {
   Eye,
   Edit,
   Filter,
-  Folder,
-  FolderPlus,
-  FolderOpen,
   MoreVertical,
-  MoveHorizontal,
-  Building,
-  Home,
-  Archive,
   FileText,
   Sheet,
   File
@@ -46,77 +37,13 @@ interface Certification {
   folderId: number | null;
 }
 
-interface Folder {
-  id: number;
-  name: string;
-  description: string | null;
-  color: string;
-  icon: string | null;
-  createdAt: string;
-}
-
 export default function Certificates() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [selectedFolder, setSelectedFolder] = useState<number | null | undefined>(undefined);
-  const [showCreateFolder, setShowCreateFolder] = useState(false);
-  const [newFolderName, setNewFolderName] = useState("");
-  const [newFolderDescription, setNewFolderDescription] = useState("");
-  const [newFolderColor, setNewFolderColor] = useState("#3b82f6");
-  const [newFolderIcon, setNewFolderIcon] = useState("folder");
   const { toast } = useToast();
 
   const { data: certifications = [], isLoading } = useQuery({
     queryKey: ["/api/certifications"],
-  });
-
-  const { data: folders = [] } = useQuery({
-    queryKey: ["/api/folders"],
-  });
-
-  const createFolderMutation = useMutation({
-    mutationFn: async (data: { name: string; description: string; color: string; icon: string }) => {
-      return await apiRequest("POST", "/api/folders", data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/folders"] });
-      setShowCreateFolder(false);
-      setNewFolderName("");
-      setNewFolderDescription("");
-      setNewFolderColor("#3b82f6");
-      setNewFolderIcon("folder");
-      toast({
-        title: "Éxito",
-        description: "Carpeta creada correctamente",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Error al crear la carpeta",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const moveCertificationMutation = useMutation({
-    mutationFn: async ({ certificationId, folderId }: { certificationId: number; folderId: number | null }) => {
-      return await apiRequest("PUT", `/api/certifications/${certificationId}/move`, { folderId });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/certifications"] });
-      toast({
-        title: "Éxito",
-        description: "Certificación movida correctamente",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Error al mover la certificación",
-        variant: "destructive",
-      });
-    },
   });
 
   const downloadReportMutation = useMutation({
@@ -186,251 +113,81 @@ export default function Certificates() {
     return <Badge className={ratingClass}>{rating}</Badge>;
   };
 
-  const getIconComponent = (iconName: string) => {
-    switch (iconName) {
-      case "building":
-        return Building;
-      case "home":
-        return Home;
-      case "archive":
-        return Archive;
-      default:
-        return Folder;
-    }
-  };
-
-  const handleCreateFolder = () => {
-    if (!newFolderName.trim()) return;
-    
-    createFolderMutation.mutate({
-      name: newFolderName,
-      description: newFolderDescription,
-      color: newFolderColor,
-      icon: newFolderIcon,
-    });
-  };
-
   const filteredCertifications = (certifications as Certification[]).filter((cert: Certification) => {
     const matchesSearch = cert.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          cert.cadastralRef.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || cert.status === statusFilter;
     
-    // Filter by selected folder
-    const matchesFolder = selectedFolder === null ? 
-      cert.folderId === null : // Show uncategorized when "all" is selected
-      selectedFolder === undefined ? 
-        true : // Show all when no specific folder filter
-        cert.folderId === selectedFolder;
-    
-    return matchesSearch && matchesStatus && matchesFolder;
+    return matchesSearch && matchesStatus;
   });
-
-  const getCertificationsInFolder = (folderId: number | null) => {
-    return (certifications as Certification[]).filter(cert => cert.folderId === folderId).length;
-  };
 
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar selectedTab="certificates" onTabChange={() => {}} />
       
-      <div className="flex flex-1 overflow-hidden">
-        {/* Folder Sidebar */}
-        <div className="w-80 bg-white border-r border-gray-200 overflow-y-auto">
-          <div className="p-4 border-b border-gray-200">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold text-gray-900">Organización</h2>
-              <Dialog open={showCreateFolder} onOpenChange={setShowCreateFolder}>
-                <DialogTrigger asChild>
-                  <Button size="sm" variant="outline">
-                    <FolderPlus className="w-4 h-4" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Crear Nueva Carpeta</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium">Nombre</label>
-                      <Input
-                        value={newFolderName}
-                        onChange={(e) => setNewFolderName(e.target.value)}
-                        placeholder="Ej: Inmobiliaria ABC"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium">Descripción</label>
-                      <Input
-                        value={newFolderDescription}
-                        onChange={(e) => setNewFolderDescription(e.target.value)}
-                        placeholder="Descripción opcional"
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-sm font-medium">Color</label>
-                        <input
-                          type="color"
-                          value={newFolderColor}
-                          onChange={(e) => setNewFolderColor(e.target.value)}
-                          className="w-full h-10 rounded border"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium">Icono</label>
-                        <Select value={newFolderIcon} onValueChange={setNewFolderIcon}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="folder">📁 Carpeta</SelectItem>
-                            <SelectItem value="building">🏢 Inmobiliaria</SelectItem>
-                            <SelectItem value="home">🏠 Viviendas</SelectItem>
-                            <SelectItem value="archive">📋 Archivo</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button onClick={handleCreateFolder} disabled={createFolderMutation.isPending}>
-                        {createFolderMutation.isPending ? "Creando..." : "Crear Carpeta"}
-                      </Button>
-                      <Button variant="outline" onClick={() => setShowCreateFolder(false)}>
-                        Cancelar
-                      </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
+      <div className="flex-1 overflow-auto p-6">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Todas las Certificaciones</h1>
+              <p className="text-gray-600 mt-1">
+                {filteredCertifications.length} certificación{filteredCertifications.length !== 1 ? 'es' : ''}
+              </p>
+            </div>
+            <Link to="/certificacion">
+              <Button className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700">
+                <Plus className="w-4 h-4 mr-2" />
+                Nueva Certificación
+              </Button>
+            </Link>
+          </div>
+
+          {/* Search and Filters */}
+          <div className="mb-6 flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Buscar por nombre o referencia catastral..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
             </div>
             
-            {/* All Certificates */}
-            <Button
-              variant={selectedFolder === undefined ? "default" : "ghost"}
-              className="w-full justify-start mb-2"
-              onClick={() => setSelectedFolder(undefined)}
-            >
-              <Archive className="w-4 h-4 mr-2" />
-              Todas las certificaciones
-              <Badge variant="secondary" className="ml-auto">
-                {(certifications as Certification[]).length}
-              </Badge>
-            </Button>
-            
-            {/* Uncategorized */}
-            <Button
-              variant={selectedFolder === null ? "default" : "ghost"}
-              className="w-full justify-start mb-4"
-              onClick={() => setSelectedFolder(null)}
-            >
-              <Folder className="w-4 h-4 mr-2" />
-              Sin carpeta
-              <Badge variant="secondary" className="ml-auto">
-                {getCertificationsInFolder(null)}
-              </Badge>
-            </Button>
-          </div>
-          
-          {/* Folders List */}
-          <div className="p-4">
-            <h3 className="text-sm font-medium text-gray-700 mb-3">Carpetas</h3>
-            <div className="space-y-1">
-              {(folders as Folder[]).map((folder) => {
-                const IconComponent = getIconComponent(folder.icon || "folder");
-                return (
-                  <Button
-                    key={folder.id}
-                    variant={selectedFolder === folder.id ? "default" : "ghost"}
-                    className="w-full justify-start"
-                    onClick={() => setSelectedFolder(folder.id)}
-                  >
-                    <IconComponent 
-                      className="w-4 h-4 mr-2" 
-                      style={{ color: folder.color }}
-                    />
-                    <span className="truncate">{folder.name}</span>
-                    <Badge variant="secondary" className="ml-auto">
-                      {getCertificationsInFolder(folder.id)}
-                    </Badge>
-                  </Button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        {/* Main Content */}
-        <div className="flex-1 overflow-hidden">
-          <div className="p-6">
-            <div className="flex justify-between items-center mb-6">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">
-                  {selectedFolder === undefined 
-                    ? "Todas las Certificaciones"
-                    : selectedFolder === null 
-                      ? "Certificaciones sin carpeta"
-                      : (folders as Folder[]).find(f => f.id === selectedFolder)?.name || "Certificaciones"
-                  }
-                </h1>
-                <p className="text-gray-600 mt-1">
-                  {filteredCertifications.length} certificación{filteredCertifications.length !== 1 ? 'es' : ''} 
-                  {selectedFolder !== undefined && ` en esta ${selectedFolder === null ? 'categoría' : 'carpeta'}`}
-                </p>
-              </div>
-              <Link to="/certificacion">
-                <Button className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Nueva Certificación
-                </Button>
-              </Link>
-            </div>
-
-            {/* Search and Filter */}
-            <div className="flex flex-col sm:flex-row gap-4 mb-6">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="Buscar por nombre o referencia catastral..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              
-              <div className="flex gap-2">
-                <Button
-                  variant={statusFilter === "all" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setStatusFilter("all")}
-                >
-                  Todos
-                </Button>
-                <Button
-                  variant={statusFilter === "draft" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setStatusFilter("draft")}
-                >
-                  Borradores
-                </Button>
-                <Button
-                  variant={statusFilter === "in_progress" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setStatusFilter("in_progress")}
-                >
-                  En Proceso
-                </Button>
-                <Button
-                  variant={statusFilter === "completed" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setStatusFilter("completed")}
-                >
-                  Completados
-                </Button>
-              </div>
+            <div className="flex gap-2">
+              <Button
+                variant={statusFilter === "all" ? "default" : "outline"}
+                onClick={() => setStatusFilter("all")}
+                size="sm"
+              >
+                Todos
+              </Button>
+              <Button
+                variant={statusFilter === "draft" ? "default" : "outline"}
+                onClick={() => setStatusFilter("draft")}
+                size="sm"
+              >
+                Borradores
+              </Button>
+              <Button
+                variant={statusFilter === "in_progress" ? "default" : "outline"}
+                onClick={() => setStatusFilter("in_progress")}
+                size="sm"
+              >
+                En Proceso
+              </Button>
+              <Button
+                variant={statusFilter === "completed" ? "default" : "outline"}
+                onClick={() => setStatusFilter("completed")}
+                size="sm"
+              >
+                Completados
+              </Button>
             </div>
           </div>
 
-          {/* Certificates List */}
+          {/* Certifications List */}
           <Card>
             <CardHeader>
               <CardTitle>Lista de Certificados ({filteredCertifications.length})</CardTitle>
@@ -439,20 +196,26 @@ export default function Certificates() {
               {isLoading ? (
                 <div className="text-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                  <p className="text-gray-600">Cargando certificados...</p>
+                  <p className="text-gray-600">Cargando certificaciones...</p>
                 </div>
               ) : filteredCertifications.length === 0 ? (
-                <div className="text-center py-8">
+                <div className="text-center py-12">
                   <IdCard className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600 mb-4">
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
                     {searchTerm || statusFilter !== "all" 
-                      ? "No se encontraron certificados con los filtros aplicados" 
+                      ? "No se encontraron certificaciones" 
                       : "No hay certificados aún"
+                    }
+                  </h3>
+                  <p className="text-gray-600 mb-4">
+                    {searchTerm || statusFilter !== "all"
+                      ? "Intenta ajustar los filtros de búsqueda"
+                      : "Comienza creando tu primera certificación energética"
                     }
                   </p>
                   {!searchTerm && statusFilter === "all" && (
-                    <Link href="/certificacion">
-                      <Button>
+                    <Link to="/certificacion">
+                      <Button className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700">
                         <Plus className="w-4 h-4 mr-2" />
                         Crear primer certificado
                       </Button>
@@ -461,170 +224,84 @@ export default function Certificates() {
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Propiedad
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Carpeta
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Calificación
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Consumo (kWh/m²año)
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Estado
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Fecha
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Acciones
-                        </th>
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">Propietario</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">Referencia Catastral</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">Calificación</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">Estado</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">Fecha</th>
+                        <th className="text-right py-3 px-4 font-medium text-gray-700">Acciones</th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {filteredCertifications.map((cert: Certification) => (
-                        <tr key={cert.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">{cert.fullName}</div>
-                            <div className="text-sm text-gray-500">Ref: {cert.cadastralRef}</div>
+                    <tbody>
+                      {filteredCertifications.map((cert) => (
+                        <tr key={cert.id} className="border-b border-gray-100 hover:bg-gray-50">
+                          <td className="py-4 px-4">
+                            <div className="font-medium text-gray-900">{cert.fullName}</div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {cert.folderId ? (
-                              <div className="flex items-center space-x-2">
-                                {(() => {
-                                  const folder = (folders as Folder[]).find(f => f.id === cert.folderId);
-                                  if (!folder) return <span className="text-gray-400">-</span>;
-                                  const IconComponent = getIconComponent(folder.icon || "folder");
-                                  return (
-                                    <>
-                                      <IconComponent 
-                                        className="w-4 h-4" 
-                                        style={{ color: folder.color }}
-                                      />
-                                      <span className="text-sm text-gray-900">{folder.name}</span>
-                                    </>
-                                  );
-                                })()}
-                              </div>
-                            ) : (
-                              <span className="text-gray-400 text-sm">Sin carpeta</span>
-                            )}
+                          <td className="py-4 px-4">
+                            <span className="text-sm text-gray-600">{cert.cadastralRef}</span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="py-4 px-4">
                             {getEnergyRatingBadge(cert.energyRating)}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {cert.energyConsumption ? parseFloat(cert.energyConsumption).toFixed(1) : '-'}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {cert.co2Emissions ? `${parseFloat(cert.co2Emissions).toFixed(1)} kg/m²año` : '-'}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="py-4 px-4">
                             {getStatusBadge(cert.status)}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {new Date(cert.createdAt).toLocaleDateString('es-ES')}
+                          <td className="py-4 px-4">
+                            <span className="text-sm text-gray-600">
+                              {new Date(cert.createdAt).toLocaleDateString('es-ES')}
+                            </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div className="flex items-center space-x-2">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="outline" size="sm">
-                                    <FolderOpen className="w-4 h-4 mr-1" />
-                                    Mover
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent>
-                                  <DropdownMenuItem 
-                                    onClick={() => moveCertificationMutation.mutate({ 
-                                      certificationId: cert.id, 
-                                      folderId: null 
-                                    })}
-                                  >
-                                    <Folder className="w-4 h-4 mr-2" />
-                                    Sin carpeta
-                                  </DropdownMenuItem>
-                                  <DropdownMenuSeparator />
-                                  {(folders as Folder[]).map((folder) => {
-                                    const IconComponent = getIconComponent(folder.icon || "folder");
-                                    return (
-                                      <DropdownMenuItem 
-                                        key={folder.id}
-                                        onClick={() => moveCertificationMutation.mutate({ 
-                                          certificationId: cert.id, 
-                                          folderId: folder.id 
-                                        })}
-                                      >
-                                        <IconComponent 
-                                          className="w-4 h-4 mr-2" 
-                                          style={{ color: folder.color }}
-                                        />
-                                        {folder.name}
-                                      </DropdownMenuItem>
-                                    );
-                                  })}
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                              
-                              <Link to={`/certification-form?id=${cert.id}`}>
+                          <td className="py-4 px-4">
+                            <div className="flex items-center justify-end gap-2">
+                              <Link to={`/certificacion/${cert.id}`}>
                                 <Button variant="outline" size="sm">
-                                  <Edit className="w-4 h-4 mr-1" />
-                                  Editar
+                                  <Eye className="w-4 h-4 mr-1" />
+                                  Ver
                                 </Button>
                               </Link>
-
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="outline" size="sm">
-                                    <Download className="w-4 h-4 mr-1" />
-                                    Reportes
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent>
-                                  <DropdownMenuItem 
-                                    onClick={() => downloadReportMutation.mutate({ 
-                                      certificationId: cert.id, 
-                                      format: 'pdf' 
-                                    })}
-                                    disabled={downloadReportMutation.isPending}
-                                  >
-                                    <FileText className="w-4 h-4 mr-2" />
-                                    Descargar PDF
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem 
-                                    onClick={() => downloadReportMutation.mutate({ 
-                                      certificationId: cert.id, 
-                                      format: 'word' 
-                                    })}
-                                    disabled={downloadReportMutation.isPending}
-                                  >
-                                    <File className="w-4 h-4 mr-2" />
-                                    Descargar Word
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem 
-                                    onClick={() => downloadReportMutation.mutate({ 
-                                      certificationId: cert.id, 
-                                      format: 'excel' 
-                                    })}
-                                    disabled={downloadReportMutation.isPending}
-                                  >
-                                    <Sheet className="w-4 h-4 mr-2" />
-                                    Descargar Excel
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
                               
-                              {cert.status === 'completed' && (
-                                <Button variant="outline" size="sm" className="text-green-600">
-                                  <Download className="w-4 h-4 mr-1" />
-                                  PDF
-                                </Button>
+                              {cert.status === "completed" && (
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" size="sm">
+                                      <Download className="w-4 h-4 mr-1" />
+                                      Descargar
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem
+                                      onClick={() => downloadReportMutation.mutate({
+                                        certificationId: cert.id,
+                                        format: 'pdf'
+                                      })}
+                                    >
+                                      <FileText className="w-4 h-4 mr-2" />
+                                      Reporte PDF
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() => downloadReportMutation.mutate({
+                                        certificationId: cert.id,
+                                        format: 'word'
+                                      })}
+                                    >
+                                      <File className="w-4 h-4 mr-2" />
+                                      Documento Word
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() => downloadReportMutation.mutate({
+                                        certificationId: cert.id,
+                                        format: 'excel'
+                                      })}
+                                    >
+                                      <Sheet className="w-4 h-4 mr-2" />
+                                      Hoja Excel
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
                               )}
                             </div>
                           </td>
