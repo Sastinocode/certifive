@@ -41,6 +41,7 @@ export interface IStorage {
   
   // Pricing and quotes operations
   getPricingRates(userId: string): Promise<PricingRate[]>;
+  getPublicPricingRates(): Promise<PricingRate[]>;
   createPricingRate(data: InsertPricingRate): Promise<PricingRate>;
   updatePricingRate(id: number, userId: string, data: Partial<InsertPricingRate>): Promise<PricingRate | undefined>;
   deletePricingRate(id: number, userId: string): Promise<boolean>;
@@ -218,6 +219,15 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(pricingRates)
       .where(eq(pricingRates.userId, userId))
+      .orderBy(desc(pricingRates.createdAt));
+  }
+
+  async getPublicPricingRates(): Promise<PricingRate[]> {
+    // Get active pricing rates from all users for public access
+    return await db
+      .select()
+      .from(pricingRates)
+      .where(eq(pricingRates.isActive, true))
       .orderBy(desc(pricingRates.createdAt));
   }
 
