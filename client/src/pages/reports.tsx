@@ -172,8 +172,8 @@ export default function Reports() {
     queryKey: ["/api/payments", dateRange],
   });
 
-  const { data: expenses = [], isLoading: expensesLoading } = useQuery({
-    queryKey: ["/api/expenses", dateRange, categoryFilter],
+  const { data: collections = [], isLoading: collectionsLoading } = useQuery({
+    queryKey: ["/api/collections", dateRange, categoryFilter],
   });
 
   // Mutations
