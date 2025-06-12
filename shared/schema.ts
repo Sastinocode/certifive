@@ -184,6 +184,116 @@ export const whatsappMessages = pgTable("whatsapp_messages", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Financial Management Tables
+export const invoices = pgTable("invoices", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  certificationId: integer("certification_id").references(() => certifications.id),
+  quoteRequestId: integer("quote_request_id").references(() => quoteRequests.id),
+  
+  // Invoice identification
+  invoiceNumber: varchar("invoice_number").unique().notNull(),
+  series: varchar("series").default("CERT"), // Serie de facturación
+  
+  // Client information
+  clientName: varchar("client_name").notNull(),
+  clientEmail: varchar("client_email"),
+  clientPhone: varchar("client_phone"),
+  clientAddress: text("client_address"),
+  clientNif: varchar("client_nif"), // NIF/CIF del cliente
+  clientCity: varchar("client_city"),
+  clientPostalCode: varchar("client_postal_code"),
+  
+  // Financial details
+  subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
+  vatRate: decimal("vat_rate", { precision: 5, scale: 2 }).default("21.00"), // IVA español
+  vatAmount: decimal("vat_amount", { precision: 10, scale: 2 }).notNull(),
+  total: decimal("total", { precision: 10, scale: 2 }).notNull(),
+  irpfRate: decimal("irpf_rate", { precision: 5, scale: 2 }).default("0.00"), // Retención IRPF
+  irpfAmount: decimal("irpf_amount", { precision: 10, scale: 2 }).default("0.00"),
+  
+  // Payment details
+  paymentStatus: varchar("payment_status").default("pending"), // pending, paid, partial, overdue, cancelled
+  paymentMethod: varchar("payment_method"), // transfer, stripe, cash, check
+  paymentTerms: integer("payment_terms").default(30), // días de pago
+  dueDate: timestamp("due_date").notNull(),
+  paidDate: timestamp("paid_date"),
+  paidAmount: decimal("paid_amount", { precision: 10, scale: 2 }).default("0.00"),
+  
+  // Invoice content
+  description: text("description").notNull(),
+  lineItems: jsonb("line_items"), // Líneas de factura detalladas
+  notes: text("notes"),
+  
+  // Dates
+  issueDate: timestamp("issue_date").defaultNow(),
+  serviceDate: timestamp("service_date"), // Fecha del servicio
+  
+  // File management
+  pdfUrl: varchar("pdf_url"),
+  sentDate: timestamp("sent_date"),
+  sentCount: integer("sent_count").default(0),
+  
+  // Legal compliance
+  isRectification: boolean("is_rectification").default(false),
+  originalInvoiceId: integer("original_invoice_id").references(() => invoices.id),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const payments = pgTable("payments", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  invoiceId: integer("invoice_id").references(() => invoices.id).notNull(),
+  
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  paymentMethod: varchar("payment_method").notNull(), // transfer, stripe, cash, check
+  paymentReference: varchar("payment_reference"), // Número de transferencia, ID transacción
+  paymentDate: timestamp("payment_date").defaultNow(),
+  
+  // Bank details for transfers
+  bankAccount: varchar("bank_account"),
+  bankName: varchar("bank_name"),
+  
+  // Stripe integration
+  stripePaymentIntentId: varchar("stripe_payment_intent_id"),
+  stripeChargeId: varchar("stripe_charge_id"),
+  
+  notes: text("notes"),
+  status: varchar("status").default("completed"), // completed, pending, failed, refunded
+  
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const expenses = pgTable("expenses", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  description: text("description").notNull(),
+  category: varchar("category").notNull(), // travel, equipment, software, office, training, fuel, other
+  subcategory: varchar("subcategory"), // Subcategoría específica
+  expenseDate: timestamp("expense_date").notNull(),
+  
+  // Receipt management
+  receiptUrl: varchar("receipt_url"),
+  receiptNumber: varchar("receipt_number"),
+  vendor: varchar("vendor"),
+  vendorNif: varchar("vendor_nif"),
+  
+  // Tax information
+  isDeductible: boolean("is_deductible").default(true),
+  vatAmount: decimal("vat_amount", { precision: 10, scale: 2 }).default("0.00"),
+  vatRate: decimal("vat_rate", { precision: 5, scale: 2 }).default("21.00"),
+  
+  // Project assignment
+  certificationId: integer("certification_id").references(() => certifications.id),
+  
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const insertPricingRateSchema = createInsertSchema(pricingRates).omit({
   id: true,
   createdAt: true,
@@ -202,6 +312,22 @@ export const insertFolderSchema = createInsertSchema(folders).omit({
   updatedAt: true,
 });
 
+export const insertInvoiceSchema = createInsertSchema(invoices).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPaymentSchema = createInsertSchema(payments).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertExpenseSchema = createInsertSchema(expenses).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type Folder = typeof folders.$inferSelect;
@@ -217,3 +343,9 @@ export type WhatsappConversation = typeof whatsappConversations.$inferSelect;
 export type InsertWhatsappConversation = typeof whatsappConversations.$inferInsert;
 export type WhatsappMessage = typeof whatsappMessages.$inferSelect;
 export type InsertWhatsappMessage = typeof whatsappMessages.$inferInsert;
+export type Invoice = typeof invoices.$inferSelect;
+export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;
+export type Payment = typeof payments.$inferSelect;
+export type InsertPayment = z.infer<typeof insertPaymentSchema>;
+export type Expense = typeof expenses.$inferSelect;
+export type InsertExpense = z.infer<typeof insertExpenseSchema>;
