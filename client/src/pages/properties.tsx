@@ -20,7 +20,8 @@ import {
   Layers,
   Folder,
   FolderPlus,
-  Archive
+  Archive,
+  Building2
 } from "lucide-react";
 
 interface Property {
@@ -492,7 +493,7 @@ export default function Properties() {
                               Ver Detalles
                             </Button>
                             {property.status !== 'completed' && (
-                              <Link href={`/certificacion/${property.id}`}>
+                              <Link to={`/certificacion/${property.id}`}>
                                 <Button size="sm" className="flex-1">
                                   Continuar
                                 </Button>
