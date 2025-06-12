@@ -8,9 +8,11 @@ import Dashboard from "@/pages/dashboard";
 import CertificationWizard from "@/pages/certification-wizard";
 import Certificates from "@/pages/certificates";
 import Properties from "@/pages/properties";
+import Pricing from "@/pages/pricing";
 import Reports from "@/pages/reports";
 import Settings from "@/pages/settings";
 import Landing from "@/pages/landing";
+import PublicQuote from "@/pages/public-quote";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -29,6 +31,9 @@ function Router() {
 
   return (
     <Switch>
+      {/* Public routes (no authentication required) */}
+      <Route path="/presupuesto/:uniqueLink" component={PublicQuote} />
+      
       {!isAuthenticated ? (
         <Route path="/" component={Landing} />
       ) : (
@@ -37,6 +42,7 @@ function Router() {
           <Route path="/certificacion/:id?" component={CertificationWizard} />
           <Route path="/certificados" component={Certificates} />
           <Route path="/propiedades" component={Properties} />
+          <Route path="/tarifas" component={Pricing} />
           <Route path="/informes" component={Reports} />
           <Route path="/configuracion" component={Settings} />
         </>
