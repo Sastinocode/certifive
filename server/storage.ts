@@ -6,6 +6,9 @@ import {
   quoteRequests,
   whatsappConversations,
   whatsappMessages,
+  invoices,
+  payments,
+  expenses,
   type User, 
   type UpsertUser,
   type Folder,
@@ -20,7 +23,13 @@ import {
   type WhatsappConversation,
   type InsertWhatsappConversation,
   type WhatsappMessage,
-  type InsertWhatsappMessage
+  type InsertWhatsappMessage,
+  type Invoice,
+  type InsertInvoice,
+  type Payment,
+  type InsertPayment,
+  type Expense,
+  type InsertExpense
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, count, and, isNull } from "drizzle-orm";
@@ -70,6 +79,29 @@ export interface IStorage {
   updateConversationState(conversationId: number, state: string, metadata?: any): Promise<WhatsappConversation | undefined>;
   getConversationByPhone(userId: string, clientPhone: string): Promise<WhatsappConversation | undefined>;
   logWhatsAppMessage(data: InsertWhatsappMessage): Promise<WhatsappMessage>;
+
+  // Financial Management operations
+  getFinancialSummary(userId: string, dateRange?: string): Promise<any>;
+  
+  // Invoice operations
+  getInvoices(userId: string, dateRange?: string, paymentStatus?: string): Promise<any[]>;
+  getInvoice(id: number, userId: string): Promise<any | undefined>;
+  createInvoice(data: any): Promise<any>;
+  updateInvoice(id: number, userId: string, data: any): Promise<any | undefined>;
+  deleteInvoice(id: number, userId: string): Promise<boolean>;
+  generateInvoicePdf(id: number, userId: string): Promise<string>;
+  sendInvoiceEmail(id: number, userId: string): Promise<boolean>;
+  
+  // Payment operations
+  getPayments(userId: string, dateRange?: string): Promise<any[]>;
+  getPaymentsByInvoice(invoiceId: number, userId: string): Promise<any[]>;
+  recordPayment(data: any): Promise<any>;
+  
+  // Expense operations
+  getExpenses(userId: string, dateRange?: string, category?: string): Promise<any[]>;
+  createExpense(data: any): Promise<any>;
+  updateExpense(id: number, userId: string, data: any): Promise<any | undefined>;
+  deleteExpense(id: number, userId: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -489,6 +521,152 @@ export class DatabaseStorage implements IStorage {
     // Mock energy rating calculation based on Spanish CEE standards
     const ratings = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
     return ratings[Math.floor(Math.random() * ratings.length)];
+  }
+
+  // Financial Management operations
+  async getFinancialSummary(userId: string, dateRange?: string): Promise<any> {
+    return {
+      totalInvoiced: 0,
+      totalPaid: 0,
+      totalPending: 0,
+      totalOverdue: 0,
+      totalExpenses: 0,
+      netIncome: 0,
+      currentMonthRevenue: 0,
+      previousMonthRevenue: 0,
+      revenueGrowth: 0
+    };
+  }
+
+  async getInvoices(userId: string, dateRange?: string, paymentStatus?: string): Promise<any[]> {
+    let query = db.select().from(invoices).where(eq(invoices.userId, userId));
+    
+    if (paymentStatus && paymentStatus !== 'all') {
+      query = query.where(eq(invoices.paymentStatus, paymentStatus));
+    }
+    
+    return await query.orderBy(desc(invoices.createdAt));
+  }
+
+  async getInvoice(id: number, userId: string): Promise<any | undefined> {
+    const [invoice] = await db
+      .select()
+      .from(invoices)
+      .where(and(eq(invoices.id, id), eq(invoices.userId, userId)));
+    return invoice;
+  }
+
+  async createInvoice(data: any): Promise<any> {
+    const invoiceNumber = `${data.series || 'CERT'}-${Date.now()}`;
+    const [invoice] = await db
+      .insert(invoices)
+      .values({
+        ...data,
+        invoiceNumber,
+        issueDate: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+    return invoice;
+  }
+
+  async updateInvoice(id: number, userId: string, data: any): Promise<any | undefined> {
+    const [invoice] = await db
+      .update(invoices)
+      .set({ ...data, updatedAt: new Date() })
+      .where(and(eq(invoices.id, id), eq(invoices.userId, userId)))
+      .returning();
+    return invoice;
+  }
+
+  async deleteInvoice(id: number, userId: string): Promise<boolean> {
+    const result = await db
+      .delete(invoices)
+      .where(and(eq(invoices.id, id), eq(invoices.userId, userId)));
+    return result.rowCount > 0;
+  }
+
+  async generateInvoicePdf(id: number, userId: string): Promise<string> {
+    return `invoice-${id}.pdf`;
+  }
+
+  async sendInvoiceEmail(id: number, userId: string): Promise<boolean> {
+    await this.updateInvoice(id, userId, { 
+      sentDate: new Date(),
+      sentCount: 1
+    });
+    return true;
+  }
+
+  async getPayments(userId: string, dateRange?: string): Promise<any[]> {
+    return await db
+      .select()
+      .from(payments)
+      .where(eq(payments.userId, userId))
+      .orderBy(desc(payments.createdAt));
+  }
+
+  async getPaymentsByInvoice(invoiceId: number, userId: string): Promise<any[]> {
+    return await db
+      .select()
+      .from(payments)
+      .where(and(eq(payments.invoiceId, invoiceId), eq(payments.userId, userId)))
+      .orderBy(desc(payments.createdAt));
+  }
+
+  async recordPayment(data: any): Promise<any> {
+    const [payment] = await db
+      .insert(payments)
+      .values({
+        ...data,
+        paymentDate: new Date(),
+      })
+      .returning();
+    
+    await this.updateInvoice(data.invoiceId, data.userId, {
+      paymentStatus: 'paid',
+      paidDate: new Date(),
+      paidAmount: data.amount
+    });
+    
+    return payment;
+  }
+
+  async getExpenses(userId: string, dateRange?: string, category?: string): Promise<any[]> {
+    let query = db.select().from(expenses).where(eq(expenses.userId, userId));
+    
+    if (category && category !== 'all') {
+      query = query.where(eq(expenses.category, category));
+    }
+    
+    return await query.orderBy(desc(expenses.createdAt));
+  }
+
+  async createExpense(data: any): Promise<any> {
+    const [expense] = await db
+      .insert(expenses)
+      .values({
+        ...data,
+        expenseDate: new Date(data.expenseDate),
+      })
+      .returning();
+    return expense;
+  }
+
+  async updateExpense(id: number, userId: string, data: any): Promise<any | undefined> {
+    const [expense] = await db
+      .update(expenses)
+      .set(data)
+      .where(and(eq(expenses.id, id), eq(expenses.userId, userId)))
+      .returning();
+    return expense;
+  }
+
+  async deleteExpense(id: number, userId: string): Promise<boolean> {
+    const result = await db
+      .delete(expenses)
+      .where(and(eq(expenses.id, id), eq(expenses.userId, userId)));
+    return result.rowCount > 0;
   }
 }
 
