@@ -54,7 +54,7 @@ interface Folder {
 export default function Certificates() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [selectedFolder, setSelectedFolder] = useState<number | null>(null);
+  const [selectedFolder, setSelectedFolder] = useState<number | null | undefined>(undefined);
   const [showCreateFolder, setShowCreateFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [newFolderDescription, setNewFolderDescription] = useState("");
@@ -135,33 +135,201 @@ export default function Certificates() {
     return <Badge className={ratingClass}>{rating}</Badge>;
   };
 
-  const filteredCertifications = certifications.filter((cert: Certification) => {
+  const getIconComponent = (iconName: string) => {
+    switch (iconName) {
+      case "building":
+        return Building;
+      case "home":
+        return Home;
+      case "archive":
+        return Archive;
+      default:
+        return Folder;
+    }
+  };
+
+  const handleCreateFolder = () => {
+    if (!newFolderName.trim()) return;
+    
+    createFolderMutation.mutate({
+      name: newFolderName,
+      description: newFolderDescription,
+      color: newFolderColor,
+      icon: newFolderIcon,
+    });
+  };
+
+  const filteredCertifications = (certifications as Certification[]).filter((cert: Certification) => {
     const matchesSearch = cert.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          cert.cadastralRef.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || cert.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    
+    // Filter by selected folder
+    const matchesFolder = selectedFolder === null ? 
+      cert.folderId === null : // Show uncategorized when "all" is selected
+      selectedFolder === undefined ? 
+        true : // Show all when no specific folder filter
+        cert.folderId === selectedFolder;
+    
+    return matchesSearch && matchesStatus && matchesFolder;
   });
+
+  const getCertificationsInFolder = (folderId: number | null) => {
+    return (certifications as Certification[]).filter(cert => cert.folderId === folderId).length;
+  };
 
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar selectedTab="certificates" onTabChange={() => {}} />
       
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-3">
-          <h1 className="text-lg font-semibold text-gray-900">Certificados</h1>
+      <div className="flex flex-1 overflow-hidden">
+        {/* Folder Sidebar */}
+        <div className="w-80 bg-white border-r border-gray-200 overflow-y-auto">
+          <div className="p-4 border-b border-gray-200">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-semibold text-gray-900">Organización</h2>
+              <Dialog open={showCreateFolder} onOpenChange={setShowCreateFolder}>
+                <DialogTrigger asChild>
+                  <Button size="sm" variant="outline">
+                    <FolderPlus className="w-4 h-4" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Crear Nueva Carpeta</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium">Nombre</label>
+                      <Input
+                        value={newFolderName}
+                        onChange={(e) => setNewFolderName(e.target.value)}
+                        placeholder="Ej: Inmobiliaria ABC"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Descripción</label>
+                      <Input
+                        value={newFolderDescription}
+                        onChange={(e) => setNewFolderDescription(e.target.value)}
+                        placeholder="Descripción opcional"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium">Color</label>
+                        <input
+                          type="color"
+                          value={newFolderColor}
+                          onChange={(e) => setNewFolderColor(e.target.value)}
+                          className="w-full h-10 rounded border"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium">Icono</label>
+                        <Select value={newFolderIcon} onValueChange={setNewFolderIcon}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="folder">📁 Carpeta</SelectItem>
+                            <SelectItem value="building">🏢 Inmobiliaria</SelectItem>
+                            <SelectItem value="home">🏠 Viviendas</SelectItem>
+                            <SelectItem value="archive">📋 Archivo</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button onClick={handleCreateFolder} disabled={createFolderMutation.isPending}>
+                        {createFolderMutation.isPending ? "Creando..." : "Crear Carpeta"}
+                      </Button>
+                      <Button variant="outline" onClick={() => setShowCreateFolder(false)}>
+                        Cancelar
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+            
+            {/* All Certificates */}
+            <Button
+              variant={selectedFolder === undefined ? "default" : "ghost"}
+              className="w-full justify-start mb-2"
+              onClick={() => setSelectedFolder(undefined)}
+            >
+              <Archive className="w-4 h-4 mr-2" />
+              Todas las certificaciones
+              <Badge variant="secondary" className="ml-auto">
+                {(certifications as Certification[]).length}
+              </Badge>
+            </Button>
+            
+            {/* Uncategorized */}
+            <Button
+              variant={selectedFolder === null ? "default" : "ghost"}
+              className="w-full justify-start mb-4"
+              onClick={() => setSelectedFolder(null)}
+            >
+              <Folder className="w-4 h-4 mr-2" />
+              Sin carpeta
+              <Badge variant="secondary" className="ml-auto">
+                {getCertificationsInFolder(null)}
+              </Badge>
+            </Button>
+          </div>
+          
+          {/* Folders List */}
+          <div className="p-4">
+            <h3 className="text-sm font-medium text-gray-700 mb-3">Carpetas</h3>
+            <div className="space-y-1">
+              {(folders as Folder[]).map((folder) => {
+                const IconComponent = getIconComponent(folder.icon || "folder");
+                return (
+                  <Button
+                    key={folder.id}
+                    variant={selectedFolder === folder.id ? "default" : "ghost"}
+                    className="w-full justify-start"
+                    onClick={() => setSelectedFolder(folder.id)}
+                  >
+                    <IconComponent 
+                      className="w-4 h-4 mr-2" 
+                      style={{ color: folder.color }}
+                    />
+                    <span className="truncate">{folder.name}</span>
+                    <Badge variant="secondary" className="ml-auto">
+                      {getCertificationsInFolder(folder.id)}
+                    </Badge>
+                  </Button>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
-        <div className="flex-1 overflow-auto p-6">
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
+        {/* Main Content */}
+        <div className="flex-1 overflow-hidden">
+          <div className="p-6">
+            <div className="flex justify-between items-center mb-6">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">Certificados Energéticos</h2>
-                <p className="text-gray-600">Gestiona todos tus certificados de eficiencia energética</p>
+                <h1 className="text-3xl font-bold text-gray-900">
+                  {selectedFolder === undefined 
+                    ? "Todas las Certificaciones"
+                    : selectedFolder === null 
+                      ? "Certificaciones sin carpeta"
+                      : (folders as Folder[]).find(f => f.id === selectedFolder)?.name || "Certificaciones"
+                  }
+                </h1>
+                <p className="text-gray-600 mt-1">
+                  {filteredCertifications.length} certificación{filteredCertifications.length !== 1 ? 'es' : ''} 
+                  {selectedFolder !== undefined && ` en esta ${selectedFolder === null ? 'categoría' : 'carpeta'}`}
+                </p>
               </div>
-              <Link href="/certificacion">
-                <Button>
+              <Link to="/certification-form">
+                <Button className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700">
                   <Plus className="w-4 h-4 mr-2" />
-                  Nuevo Certificado
+                  Nueva Certificación
                 </Button>
               </Link>
             </div>
@@ -249,13 +417,13 @@ export default function Certificates() {
                           Propiedad
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Carpeta
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Calificación
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Consumo (kWh/m²año)
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Emisiones CO₂
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Estado
