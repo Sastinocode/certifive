@@ -32,7 +32,7 @@ import {
   type InsertCollection
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, count, and, isNull } from "drizzle-orm";
+import { eq, desc, count, and, isNull, gte } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
 // Interface for storage operations
@@ -659,41 +659,103 @@ export class DatabaseStorage implements IStorage {
     return payment;
   }
 
-  async getExpenses(userId: string, dateRange?: string, category?: string): Promise<any[]> {
-    let query = db.select().from(expenses).where(eq(expenses.userId, userId));
+  async getCollections(userId: string, dateRange?: string, paymentMethod?: string): Promise<Collection[]> {
+    let query = db.select().from(collections).where(eq(collections.userId, userId));
     
-    if (category && category !== 'all') {
-      query = query.where(eq(expenses.category, category));
+    if (dateRange && dateRange !== 'all') {
+      const now = new Date();
+      let startDate: Date;
+      
+      switch (dateRange) {
+        case 'current_month':
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          break;
+        case 'last_month':
+          startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+          break;
+        case 'current_year':
+          startDate = new Date(now.getFullYear(), 0, 1);
+          break;
+        default:
+          const days = parseInt(dateRange);
+          if (!isNaN(days)) {
+            startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+          } else {
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          }
+      }
+      
+      query = query.where(and(
+        eq(collections.userId, userId),
+        gte(collections.collectionDate, startDate)
+      ));
     }
     
-    return await query.orderBy(desc(expenses.createdAt));
+    if (paymentMethod && paymentMethod !== 'all') {
+      query = query.where(eq(collections.paymentMethod, paymentMethod));
+    }
+    
+    return await query.orderBy(desc(collections.collectionDate));
   }
 
-  async createExpense(data: any): Promise<any> {
-    const [expense] = await db
-      .insert(expenses)
+  async getCollection(id: number, userId: string): Promise<Collection | undefined> {
+    const [collection] = await db
+      .select()
+      .from(collections)
+      .where(and(eq(collections.id, id), eq(collections.userId, userId)));
+    return collection;
+  }
+
+  async createCollection(data: InsertCollection): Promise<Collection> {
+    const [collection] = await db
+      .insert(collections)
       .values({
         ...data,
-        expenseDate: new Date(data.expenseDate),
+        collectionDate: new Date(data.collectionDate),
       })
       .returning();
-    return expense;
+    return collection;
   }
 
-  async updateExpense(id: number, userId: string, data: any): Promise<any | undefined> {
-    const [expense] = await db
-      .update(expenses)
-      .set(data)
-      .where(and(eq(expenses.id, id), eq(expenses.userId, userId)))
+  async updateCollection(id: number, userId: string, data: Partial<InsertCollection>): Promise<Collection | undefined> {
+    const [collection] = await db
+      .update(collections)
+      .set({ ...data, updatedAt: new Date() })
+      .where(and(eq(collections.id, id), eq(collections.userId, userId)))
       .returning();
-    return expense;
+    return collection;
   }
 
-  async deleteExpense(id: number, userId: string): Promise<boolean> {
+  async deleteCollection(id: number, userId: string): Promise<boolean> {
     const result = await db
-      .delete(expenses)
-      .where(and(eq(expenses.id, id), eq(expenses.userId, userId)));
+      .delete(collections)
+      .where(and(eq(collections.id, id), eq(collections.userId, userId)));
     return result.rowCount > 0;
+  }
+
+  async getInvoiceCollections(invoiceId: number, userId: string): Promise<Collection[]> {
+    return await db
+      .select()
+      .from(collections)
+      .where(and(
+        eq(collections.userId, userId),
+        eq(collections.invoiceId, invoiceId),
+        eq(collections.isInvoicePayment, true)
+      ))
+      .orderBy(desc(collections.collectionDate));
+  }
+
+  async recordInvoicePayment(invoiceId: number, collectionData: InsertCollection): Promise<Collection> {
+    const [collection] = await db
+      .insert(collections)
+      .values({
+        ...collectionData,
+        invoiceId,
+        isInvoicePayment: true,
+        collectionDate: new Date(collectionData.collectionDate),
+      })
+      .returning();
+    return collection;
   }
 }
 

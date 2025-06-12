@@ -1130,57 +1130,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Expense Management Routes
-  app.get('/api/expenses', isAuthenticated, async (req: any, res) => {
+  // Collections Management Routes
+  app.get('/api/collections', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const { dateRange, category } = req.query;
-      const expenses = await storage.getExpenses(userId, dateRange, category);
-      res.json(expenses);
+      const { dateRange, paymentMethod } = req.query;
+      const collections = await storage.getCollections(userId, dateRange, paymentMethod);
+      res.json(collections);
     } catch (error) {
-      console.error("Error fetching expenses:", error);
-      res.status(500).json({ message: "Failed to fetch expenses" });
+      console.error("Error fetching collections:", error);
+      res.status(500).json({ message: "Error al obtener cobros" });
     }
   });
 
-  app.post('/api/expenses', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const expense = await storage.createExpense({ ...req.body, userId });
-      res.json(expense);
-    } catch (error) {
-      console.error("Error creating expense:", error);
-      res.status(500).json({ message: "Failed to create expense" });
-    }
-  });
-
-  app.patch('/api/expenses/:id', isAuthenticated, async (req: any, res) => {
+  app.get('/api/collections/:id', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const id = parseInt(req.params.id);
-      const expense = await storage.updateExpense(id, userId, req.body);
-      if (!expense) {
-        return res.status(404).json({ message: "Expense not found" });
+      const collection = await storage.getCollection(id, userId);
+      if (!collection) {
+        return res.status(404).json({ message: "Cobro no encontrado" });
       }
-      res.json(expense);
+      res.json(collection);
     } catch (error) {
-      console.error("Error updating expense:", error);
-      res.status(500).json({ message: "Failed to update expense" });
+      console.error("Error fetching collection:", error);
+      res.status(500).json({ message: "Error al obtener cobro" });
     }
   });
 
-  app.delete('/api/expenses/:id', isAuthenticated, async (req: any, res) => {
+  app.post('/api/collections', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const collection = await storage.createCollection({ ...req.body, userId });
+      res.json(collection);
+    } catch (error) {
+      console.error("Error creating collection:", error);
+      res.status(500).json({ message: "Error al crear cobro" });
+    }
+  });
+
+  app.patch('/api/collections/:id', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const id = parseInt(req.params.id);
-      const deleted = await storage.deleteExpense(id, userId);
+      const collection = await storage.updateCollection(id, userId, req.body);
+      if (!collection) {
+        return res.status(404).json({ message: "Cobro no encontrado" });
+      }
+      res.json(collection);
+    } catch (error) {
+      console.error("Error updating collection:", error);
+      res.status(500).json({ message: "Error al actualizar cobro" });
+    }
+  });
+
+  app.delete('/api/collections/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteCollection(id, userId);
       if (!deleted) {
-        return res.status(404).json({ message: "Expense not found" });
+        return res.status(404).json({ message: "Cobro no encontrado" });
       }
-      res.json({ message: "Expense deleted successfully" });
+      res.json({ message: "Cobro eliminado correctamente" });
     } catch (error) {
-      console.error("Error deleting expense:", error);
-      res.status(500).json({ message: "Failed to delete expense" });
+      console.error("Error deleting collection:", error);
+      res.status(500).json({ message: "Error al eliminar cobro" });
+    }
+  });
+
+  // Invoice payment routes
+  app.get('/api/invoices/:id/collections', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const invoiceId = parseInt(req.params.id);
+      const collections = await storage.getInvoiceCollections(invoiceId, userId);
+      res.json(collections);
+    } catch (error) {
+      console.error("Error fetching invoice collections:", error);
+      res.status(500).json({ message: "Error al obtener cobros de factura" });
+    }
+  });
+
+  app.post('/api/invoices/:id/collections', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const invoiceId = parseInt(req.params.id);
+      const collection = await storage.recordInvoicePayment(invoiceId, { ...req.body, userId });
+      res.json(collection);
+    } catch (error) {
+      console.error("Error recording invoice payment:", error);
+      res.status(500).json({ message: "Error al registrar pago de factura" });
     }
   });
 
