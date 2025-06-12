@@ -1,61 +1,45 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { queryClient, apiRequest } from "@/lib/queryClient";
+import { isUnauthorizedError } from "@/lib/authUtils";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import Sidebar from "@/components/layout/sidebar";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
-import { apiRequest } from "@/lib/queryClient";
-import { isUnauthorizedError } from "@/lib/authUtils";
-import {
-  LineChart,
-  Line,
-  AreaChart,
-  Area,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer
-} from "recharts";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import { 
+  Plus, 
+  Search, 
+  Download, 
   Euro, 
-  Download,
-  FileText,
-  Plus,
-  Edit,
-  Trash2,
-  Send,
-  Calendar,
-  TrendingUp,
+  FileText, 
+  Mail, 
+  Calendar as CalendarIcon, 
+  CreditCard, 
+  TrendingUp, 
   TrendingDown,
+  Users,
   Receipt,
-  CreditCard,
-  Building,
-  CheckCircle,
-  XCircle,
-  Clock,
   AlertCircle,
-  FileSpreadsheet,
-  Printer,
-  Mail,
-  Filter,
-  Search
+  CheckCircle,
+  Clock,
+  BarChart3,
+  PieChart,
+  Activity,
+  Banknote,
+  Smartphone,
+  Building2
 } from "lucide-react";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart as RechartsPieChart, Cell } from 'recharts';
 
 interface Invoice {
   id: number;
@@ -123,7 +107,7 @@ interface FinancialSummary {
   totalPaid: number;
   totalPending: number;
   totalOverdue: number;
-  totalExpenses: number;
+  totalCollections: number;
   netIncome: number;
   currentMonthRevenue: number;
   previousMonthRevenue: number;
@@ -131,10 +115,9 @@ interface FinancialSummary {
 }
 
 export default function Reports() {
-  const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
-  const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState("overview");
+  const { toast } = useToast();
+  
   const [dateRange, setDateRange] = useState("current_month");
   const [paymentStatusFilter, setPaymentStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -142,13 +125,12 @@ export default function Reports() {
   const [showInvoiceDialog, setShowInvoiceDialog] = useState(false);
   const [showCollectionDialog, setShowCollectionDialog] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
-  const [editingCollection, setEditingCollection] = useState<Collection | null>(null);
 
   // Handle authentication
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       toast({
-        title: "Acceso no autorizado",
+        title: "Sesión expirada",
         description: "Redirigiendo al login...",
         variant: "destructive",
       });
@@ -159,35 +141,20 @@ export default function Reports() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return null;
-  }
-
-  // Data queries
-  const { data: financialSummary, isLoading: summaryLoading } = useQuery({
+  // Queries
+  const { data: financialSummary } = useQuery({
     queryKey: ["/api/financial/summary", dateRange],
   });
 
-  const { data: invoices = [], isLoading: invoicesLoading } = useQuery({
+  const { data: invoices = [] } = useQuery({
     queryKey: ["/api/invoices", dateRange, paymentStatusFilter],
   });
 
-  const { data: payments = [], isLoading: paymentsLoading } = useQuery({
+  const { data: payments = [] } = useQuery({
     queryKey: ["/api/payments", dateRange],
   });
 
-  const { data: collections = [], isLoading: collectionsLoading } = useQuery({
+  const { data: collections = [] } = useQuery({
     queryKey: ["/api/collections", dateRange, categoryFilter],
   });
 
@@ -201,7 +168,7 @@ export default function Reports() {
       setEditingInvoice(null);
       toast({
         title: "Factura creada",
-        description: "La factura se ha creado correctamente con numeración automática",
+        description: "La factura se ha creado correctamente.",
       });
     },
     onError: (error) => {
@@ -224,23 +191,17 @@ export default function Reports() {
     },
   });
 
-  const generateInvoicePdfMutation = useMutation({
-    mutationFn: (invoiceId: number) => apiRequest("POST", `/api/invoices/${invoiceId}/generate-pdf`),
-    onSuccess: () => {
-      toast({
-        title: "PDF generado",
-        description: "El PDF de la factura se ha generado correctamente",
-      });
-    },
-  });
-
-  const sendInvoiceMutation = useMutation({
-    mutationFn: (invoiceId: number) => apiRequest("POST", `/api/invoices/${invoiceId}/send`),
+  const updateInvoiceMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: any }) => 
+      apiRequest("PUT", `/api/invoices/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/financial/summary"] });
+      setShowInvoiceDialog(false);
+      setEditingInvoice(null);
       toast({
-        title: "Factura enviada",
-        description: "La factura se ha enviado por email al cliente",
+        title: "Factura actualizada",
+        description: "La factura se ha actualizado correctamente.",
       });
     },
   });
@@ -266,7 +227,7 @@ export default function Reports() {
       setShowCollectionDialog(false);
       toast({
         title: "Cobro registrado",
-        description: "El cobro se ha registrado correctamente",
+        description: "El cobro se ha registrado correctamente.",
       });
     },
     onError: (error) => {
@@ -306,828 +267,478 @@ export default function Reports() {
     totalPaid: 0,
     totalPending: 0,
     totalOverdue: 0,
-    totalExpenses: 0,
+    totalCollections: 0,
     netIncome: 0,
     currentMonthRevenue: 0,
     previousMonthRevenue: 0,
     revenueGrowth: 0,
   };
 
-  // Prepare chart data based on real financial data
-  const revenueData = [
-    { month: 'Ene', ingresos: 2400, gastos: 1800, beneficio: 600 },
-    { month: 'Feb', ingresos: 3200, gastos: 2100, beneficio: 1100 },
-    { month: 'Mar', ingresos: 2800, gastos: 1950, beneficio: 850 },
-    { month: 'Abr', ingresos: 3600, gastos: 2200, beneficio: 1400 },
-    { month: 'May', ingresos: 4200, gastos: 2800, beneficio: 1400 },
-    { month: 'Jun', ingresos: 3800, gastos: 2600, beneficio: 1200 }
-  ];
-
-  const invoiceStatusData = [
-    { name: 'Pagadas', value: summary.totalPaid || 65, color: '#22c55e' },
-    { name: 'Pendientes', value: summary.totalPending || 25, color: '#f59e0b' },
-    { name: 'Vencidas', value: summary.totalOverdue || 10, color: '#ef4444' }
-  ];
-
-  const expenseCategories = [
-    { category: 'Equipos', amount: 1200, color: '#3b82f6' },
-    { category: 'Transporte', amount: 800, color: '#8b5cf6' },
-    { category: 'Software', amount: 450, color: '#06b6d4' },
-    { category: 'Marketing', amount: 600, color: '#10b981' },
-    { category: 'Otros', amount: 350, color: '#f59e0b' }
-  ];
-
-  const monthlyTrend = [
-    { month: 'Ene', facturas: 12, certificados: 8 },
-    { month: 'Feb', facturas: 16, certificados: 12 },
-    { month: 'Mar', facturas: 14, certificados: 10 },
-    { month: 'Abr', facturas: 18, certificados: 15 },
-    { month: 'May', facturas: 22, certificados: 18 },
-    { month: 'Jun', facturas: 20, certificados: 16 }
-  ];
-
-  const filteredInvoices = invoices.filter((invoice: Invoice) => {
+  // Filter data
+  const filteredInvoices = (invoices as Invoice[]).filter((invoice: Invoice) => {
     const matchesSearch = invoice.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase());
+                         invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         invoice.description.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesSearch;
   });
 
-  const filteredCollections = collections.filter((collection: Collection) => {
+  const filteredCollections = (collections as Collection[]).filter((collection: Collection) => {
     const matchesSearch = collection.concept.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (collection.clientName?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
                          (collection.paymentReference?.toLowerCase() || "").includes(searchTerm.toLowerCase());
     return matchesSearch;
   });
 
-  const getPaymentStatusBadge = (status: string) => {
-    const statusConfig = {
-      paid: { color: "bg-green-100 text-green-800", label: "Pagado", icon: CheckCircle },
-      pending: { color: "bg-yellow-100 text-yellow-800", label: "Pendiente", icon: Clock },
-      overdue: { color: "bg-red-100 text-red-800", label: "Vencido", icon: AlertCircle },
-      partial: { color: "bg-blue-100 text-blue-800", label: "Parcial", icon: Clock },
-      cancelled: { color: "bg-gray-100 text-gray-800", label: "Cancelado", icon: XCircle },
-    };
-    
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
-    const Icon = config.icon;
-    
+  if (isLoading) {
     return (
-      <Badge className={`${config.color} flex items-center gap-1`}>
-        <Icon className="w-3 h-3" />
-        {config.label}
-      </Badge>
+      <div className="h-screen flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+      </div>
     );
-  };
-
-  const formatCurrency = (amount: string | number) => {
-    const num = typeof amount === 'string' ? parseFloat(amount) : amount;
-    return new Intl.NumberFormat('es-ES', {
-      style: 'currency',
-      currency: 'EUR'
-    }).format(num);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-ES');
-  };
+  }
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      <Sidebar selectedTab="reports" onTabChange={() => {}} />
-      
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-3">
-          <h1 className="text-lg font-semibold text-gray-900">Informes Financieros</h1>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
+      <div className="container mx-auto p-6">
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-2">
+            Informes Financieros
+          </h1>
+          <p className="text-slate-600 dark:text-slate-400">
+            Gestión completa de facturas, pagos y cobros
+          </p>
         </div>
 
-        <div className="flex-1 overflow-auto p-6">
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">Gestión Financiera</h2>
-                <p className="text-gray-600">Control completo de facturación, pagos y gastos</p>
+        {/* Financial Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200 dark:border-green-800">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-green-600 dark:text-green-400 text-sm font-medium">Total Facturado</p>
+                  <p className="text-3xl font-bold text-green-700 dark:text-green-300">
+                    {summary.totalInvoiced.toLocaleString('es-ES', {
+                      style: 'currency',
+                      currency: 'EUR'
+                    })}
+                  </p>
+                </div>
+                <div className="p-3 bg-green-500 rounded-full">
+                  <FileText className="w-6 h-6 text-white" />
+                </div>
               </div>
-              <div className="flex gap-3">
-                <Select value={dateRange} onValueChange={setDateRange}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="current_month">Mes actual</SelectItem>
-                    <SelectItem value="last_month">Mes pasado</SelectItem>
-                    <SelectItem value="current_quarter">Trimestre actual</SelectItem>
-                    <SelectItem value="current_year">Año actual</SelectItem>
-                    <SelectItem value="all">Todo el tiempo</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button
-                  onClick={() => exportToExcelMutation.mutate('complete')}
-                  disabled={exportToExcelMutation.isPending}
-                  variant="outline"
-                >
-                  <FileSpreadsheet className="w-4 h-4 mr-2" />
-                  {exportToExcelMutation.isPending ? "Exportando..." : "Exportar Excel"}
-                </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200 dark:border-blue-800">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-blue-600 dark:text-blue-400 text-sm font-medium">Total Cobrado</p>
+                  <p className="text-3xl font-bold text-blue-700 dark:text-blue-300">
+                    {summary.totalPaid.toLocaleString('es-ES', {
+                      style: 'currency',
+                      currency: 'EUR'
+                    })}
+                  </p>
+                </div>
+                <div className="p-3 bg-blue-500 rounded-full">
+                  <CheckCircle className="w-6 h-6 text-white" />
+                </div>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 border-orange-200 dark:border-orange-800">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-orange-600 dark:text-orange-400 text-sm font-medium">Pendiente</p>
+                  <p className="text-3xl font-bold text-orange-700 dark:text-orange-300">
+                    {summary.totalPending.toLocaleString('es-ES', {
+                      style: 'currency',
+                      currency: 'EUR'
+                    })}
+                  </p>
+                </div>
+                <div className="p-3 bg-orange-500 rounded-full">
+                  <Clock className="w-6 h-6 text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 border-purple-200 dark:border-purple-800">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-purple-600 dark:text-purple-400 text-sm font-medium">Crecimiento</p>
+                  <p className="text-3xl font-bold text-purple-700 dark:text-purple-300">
+                    {summary.revenueGrowth > 0 ? '+' : ''}{summary.revenueGrowth.toFixed(1)}%
+                  </p>
+                </div>
+                <div className="p-3 bg-purple-500 rounded-full">
+                  {summary.revenueGrowth >= 0 ? (
+                    <TrendingUp className="w-6 h-6 text-white" />
+                  ) : (
+                    <TrendingDown className="w-6 h-6 text-white" />
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Filters */}
+        <div className="mb-6 flex flex-col sm:flex-row gap-4">
+          <div className="flex-1">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+              <Input
+                placeholder="Buscar facturas, cobros..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
             </div>
-
-            {/* Financial Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center">
-                    <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                      <Euro className="w-6 h-6 text-green-600" />
-                    </div>
-                    <div className="ml-4">
-                      <p className="text-sm font-medium text-gray-600">Ingresos Totales</p>
-                      <p className="text-2xl font-bold text-gray-900">{formatCurrency(summary.totalInvoiced)}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center">
-                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <CheckCircle className="w-6 h-6 text-blue-600" />
-                    </div>
-                    <div className="ml-4">
-                      <p className="text-sm font-medium text-gray-600">Cobrado</p>
-                      <p className="text-2xl font-bold text-gray-900">{formatCurrency(summary.totalPaid)}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center">
-                    <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                      <Clock className="w-6 h-6 text-yellow-600" />
-                    </div>
-                    <div className="ml-4">
-                      <p className="text-sm font-medium text-gray-600">Pendiente de Cobro</p>
-                      <p className="text-2xl font-bold text-gray-900">{formatCurrency(summary.totalPending)}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center">
-                    <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                      <TrendingUp className="w-6 h-6 text-purple-600" />
-                    </div>
-                    <div className="ml-4">
-                      <p className="text-sm font-medium text-gray-600">Beneficio Neto</p>
-                      <p className="text-2xl font-bold text-gray-900">{formatCurrency(summary.netIncome)}</p>
-                      <div className="flex items-center mt-1">
-                        {summary.revenueGrowth >= 0 ? (
-                          <TrendingUp className="w-3 h-3 text-green-500 mr-1" />
-                        ) : (
-                          <TrendingDown className="w-3 h-3 text-red-500 mr-1" />
-                        )}
-                        <span className={`text-xs ${summary.revenueGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {Math.abs(summary.revenueGrowth).toFixed(1)}%
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="overview">Resumen</TabsTrigger>
-                <TabsTrigger value="invoices">Facturas</TabsTrigger>
-                <TabsTrigger value="payments">Pagos</TabsTrigger>
-                <TabsTrigger value="expenses">Gastos</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="overview">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Recent Invoices */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center">
-                        <FileText className="w-5 h-5 mr-2" />
-                        Facturas Recientes
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        {filteredInvoices.slice(0, 5).map((invoice: Invoice) => (
-                          <div key={invoice.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                            <div>
-                              <p className="font-medium text-gray-900">{invoice.invoiceNumber}</p>
-                              <p className="text-sm text-gray-600">{invoice.clientName}</p>
-                            </div>
-                            <div className="text-right">
-                              <p className="font-medium text-gray-900">{formatCurrency(invoice.total)}</p>
-                              {getPaymentStatusBadge(invoice.paymentStatus)}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Revenue vs Expenses Chart */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center">
-                        <TrendingUp className="w-5 h-5 mr-2" />
-                        Evolución Ingresos vs Gastos
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ResponsiveContainer width="100%" height={300}>
-                        <AreaChart data={revenueData}>
-                          <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                          <XAxis dataKey="month" />
-                          <YAxis />
-                          <Tooltip 
-                            formatter={(value, name) => [`€${Number(value).toLocaleString()}`, name === 'ingresos' ? 'Ingresos' : name === 'gastos' ? 'Gastos' : 'Beneficio']}
-                            labelStyle={{ color: '#374151' }}
-                            contentStyle={{ backgroundColor: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '8px' }}
-                          />
-                          <Legend />
-                          <Area
-                            type="monotone"
-                            dataKey="ingresos"
-                            stackId="1"
-                            stroke="#22c55e"
-                            fill="#22c55e"
-                            fillOpacity={0.6}
-                            name="Ingresos"
-                          />
-                          <Area
-                            type="monotone"
-                            dataKey="gastos"
-                            stackId="2"
-                            stroke="#ef4444"
-                            fill="#ef4444"
-                            fillOpacity={0.6}
-                            name="Gastos"
-                          />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Additional Charts Row */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-                  {/* Invoice Status Distribution */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center">
-                        <FileText className="w-5 h-5 mr-2" />
-                        Estado de Facturas
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ResponsiveContainer width="100%" height={300}>
-                        <PieChart>
-                          <Pie
-                            data={invoiceStatusData}
-                            cx="50%"
-                            cy="50%"
-                            outerRadius={80}
-                            fill="#8884d8"
-                            dataKey="value"
-                            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                          >
-                            {invoiceStatusData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                          <Tooltip 
-                            formatter={(value) => [`${value}%`, 'Porcentaje']}
-                            contentStyle={{ backgroundColor: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '8px' }}
-                          />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </CardContent>
-                  </Card>
-
-                  {/* Expense Categories */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center">
-                        <Receipt className="w-5 h-5 mr-2" />
-                        Gastos por Categoría
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ResponsiveContainer width="100%" height={300}>
-                        <BarChart data={expenseCategories}>
-                          <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                          <XAxis dataKey="category" />
-                          <YAxis />
-                          <Tooltip 
-                            formatter={(value) => [`€${Number(value).toLocaleString()}`, 'Importe']}
-                            contentStyle={{ backgroundColor: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '8px' }}
-                          />
-                          <Bar dataKey="amount" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Monthly Performance Trend */}
-                <div className="mt-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center">
-                        <Building className="w-5 h-5 mr-2" />
-                        Rendimiento Mensual
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ResponsiveContainer width="100%" height={300}>
-                        <LineChart data={monthlyTrend}>
-                          <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                          <XAxis dataKey="month" />
-                          <YAxis />
-                          <Tooltip 
-                            formatter={(value, name) => [value, name === 'facturas' ? 'Facturas' : 'Certificados']}
-                            contentStyle={{ backgroundColor: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '8px' }}
-                          />
-                          <Legend />
-                          <Line
-                            type="monotone"
-                            dataKey="facturas"
-                            stroke="#3b82f6"
-                            strokeWidth={3}
-                            name="Facturas"
-                            dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
-                          />
-                          <Line
-                            type="monotone"
-                            dataKey="certificados"
-                            stroke="#10b981"
-                            strokeWidth={3}
-                            name="Certificados"
-                            dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
-                          />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </CardContent>
-                  </Card>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="invoices">
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="flex items-center">
-                        <FileText className="w-5 h-5 mr-2" />
-                        Gestión de Facturas
-                      </CardTitle>
-                      <div className="flex gap-2">
-                        <Dialog open={showInvoiceDialog} onOpenChange={setShowInvoiceDialog}>
-                          <DialogTrigger asChild>
-                            <Button>
-                              <Plus className="w-4 h-4 mr-2" />
-                              Nueva Factura
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-2xl">
-                            <DialogHeader>
-                              <DialogTitle>
-                                {editingInvoice ? "Editar Factura" : "Nueva Factura"}
-                              </DialogTitle>
-                            </DialogHeader>
-                            <InvoiceForm 
-                              invoice={editingInvoice} 
-                              onSubmit={createInvoiceMutation.mutate}
-                              onCancel={() => {
-                                setShowInvoiceDialog(false);
-                                setEditingInvoice(null);
-                              }}
-                            />
-                          </DialogContent>
-                        </Dialog>
-                        <Button
-                          onClick={() => exportToExcelMutation.mutate('invoices')}
-                          variant="outline"
-                        >
-                          <Download className="w-4 h-4 mr-2" />
-                          Exportar
-                        </Button>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    {/* Filters */}
-                    <div className="flex gap-4 mb-6">
-                      <div className="flex-1">
-                        <div className="relative">
-                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                          <Input
-                            placeholder="Buscar por cliente o número de factura..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-10"
-                          />
-                        </div>
-                      </div>
-                      <Select value={paymentStatusFilter} onValueChange={setPaymentStatusFilter}>
-                        <SelectTrigger className="w-48">
-                          <SelectValue placeholder="Estado de pago" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">Todos los estados</SelectItem>
-                          <SelectItem value="paid">Pagado</SelectItem>
-                          <SelectItem value="pending">Pendiente</SelectItem>
-                          <SelectItem value="overdue">Vencido</SelectItem>
-                          <SelectItem value="cancelled">Cancelado</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <InvoicesTable 
-                      invoices={filteredInvoices}
-                      onGeneratePdf={generateInvoicePdfMutation.mutate}
-                      onSendEmail={sendInvoiceMutation.mutate}
-                      onRecordPayment={recordPaymentMutation.mutate}
-                      onEdit={(invoice) => {
-                        setEditingInvoice(invoice);
-                        setShowInvoiceDialog(true);
-                      }}
-                    />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="payments">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <CreditCard className="w-5 h-5 mr-2" />
-                      Historial de Pagos
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <PaymentsTable payments={payments} />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="expenses">
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="flex items-center">
-                        <Receipt className="w-5 h-5 mr-2" />
-                        Gestión de Gastos
-                      </CardTitle>
-                      <div className="flex gap-2">
-                        <Dialog open={showExpenseDialog} onOpenChange={setShowExpenseDialog}>
-                          <DialogTrigger asChild>
-                            <Button>
-                              <Plus className="w-4 h-4 mr-2" />
-                              Nuevo Gasto
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Registrar Nuevo Gasto</DialogTitle>
-                            </DialogHeader>
-                            <ExpenseForm 
-                              onSubmit={createExpenseMutation.mutate}
-                              onCancel={() => setShowExpenseDialog(false)}
-                            />
-                          </DialogContent>
-                        </Dialog>
-                        <Button
-                          onClick={() => exportToExcelMutation.mutate('expenses')}
-                          variant="outline"
-                        >
-                          <Download className="w-4 h-4 mr-2" />
-                          Exportar
-                        </Button>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <CollectionsTable collections={filteredCollections} />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
           </div>
+          <Select value={dateRange} onValueChange={setDateRange}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Período" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="current_month">Mes actual</SelectItem>
+              <SelectItem value="last_month">Mes anterior</SelectItem>
+              <SelectItem value="current_year">Año actual</SelectItem>
+              <SelectItem value="30">Últimos 30 días</SelectItem>
+              <SelectItem value="90">Últimos 90 días</SelectItem>
+              <SelectItem value="all">Todos</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={paymentStatusFilter} onValueChange={setPaymentStatusFilter}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Estado de pago" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="paid">Pagado</SelectItem>
+              <SelectItem value="pending">Pendiente</SelectItem>
+              <SelectItem value="overdue">Vencido</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
+
+        <Tabs defaultValue="invoices" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="invoices">Facturas</TabsTrigger>
+            <TabsTrigger value="payments">Pagos</TabsTrigger>
+            <TabsTrigger value="collections">Cobros</TabsTrigger>
+            <TabsTrigger value="analytics">Analíticas</TabsTrigger>
+          </TabsList>
+
+          {/* Invoices Tab */}
+          <TabsContent value="invoices">
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-blue-500" />
+                    Facturas
+                  </CardTitle>
+                  <div className="flex gap-2">
+                    <Button onClick={() => setShowInvoiceDialog(true)}>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Nueva Factura
+                    </Button>
+                    <Button
+                      onClick={() => exportToExcelMutation.mutate('invoices')}
+                      variant="outline"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Exportar
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <InvoicesTable 
+                  invoices={filteredInvoices.slice(0, 10)} 
+                  onEdit={setEditingInvoice}
+                  onRecordPayment={(invoice) => {
+                    recordPaymentMutation.mutate({
+                      invoiceId: invoice.id,
+                      amount: parseFloat(invoice.total) - parseFloat(invoice.paidDate || "0"),
+                      paymentMethod: "transfer",
+                      paymentDate: new Date().toISOString().split('T')[0]
+                    });
+                  }}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Payments Tab */}
+          <TabsContent value="payments">
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <CardTitle className="flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5 text-green-500" />
+                    Pagos Recibidos
+                  </CardTitle>
+                  <Button
+                    onClick={() => exportToExcelMutation.mutate('payments')}
+                    variant="outline"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Exportar
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <PaymentsTable payments={payments as Payment[]} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Collections Tab */}
+          <TabsContent value="collections">
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <TrendingUp className="w-5 h-5 text-green-500" />
+                      Cobros
+                    </CardTitle>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                      Gestión de cobros e ingresos del negocio
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                      <SelectTrigger className="w-[160px]">
+                        <SelectValue placeholder="Método de pago" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos</SelectItem>
+                        <SelectItem value="cash">Efectivo</SelectItem>
+                        <SelectItem value="card">Tarjeta</SelectItem>
+                        <SelectItem value="transfer">Transferencia</SelectItem>
+                        <SelectItem value="bizum">Bizum</SelectItem>
+                        <SelectItem value="stripe">Stripe</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Dialog open={showCollectionDialog} onOpenChange={setShowCollectionDialog}>
+                      <DialogTrigger asChild>
+                        <Button>
+                          <Plus className="w-4 h-4 mr-2" />
+                          Nuevo Cobro
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-2xl">
+                        <DialogHeader>
+                          <DialogTitle>Registrar Nuevo Cobro</DialogTitle>
+                        </DialogHeader>
+                        <CollectionForm 
+                          onSubmit={createCollectionMutation.mutate}
+                          onCancel={() => setShowCollectionDialog(false)}
+                        />
+                      </DialogContent>
+                    </Dialog>
+                    <Button
+                      onClick={() => exportToExcelMutation.mutate('collections')}
+                      variant="outline"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Exportar
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <CollectionsTable collections={filteredCollections} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Analytics Tab */}
+          <TabsContent value="analytics">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5 text-blue-500" />
+                    Ingresos Mensuales
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={[]}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="month" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Bar dataKey="income" fill="#3b82f6" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <PieChart className="w-5 h-5 text-green-500" />
+                    Métodos de Pago
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px] flex items-center justify-center">
+                    <p className="text-slate-500">Datos de análisis disponibles próximamente</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
+
+        {/* Dialogs */}
+        <Dialog open={showInvoiceDialog} onOpenChange={setShowInvoiceDialog}>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle>
+                {editingInvoice ? "Editar Factura" : "Nueva Factura"}
+              </DialogTitle>
+            </DialogHeader>
+            <InvoiceForm 
+              invoice={editingInvoice}
+              onSubmit={(data) => {
+                if (editingInvoice) {
+                  updateInvoiceMutation.mutate({ id: editingInvoice.id, data });
+                } else {
+                  createInvoiceMutation.mutate(data);
+                }
+              }}
+              onCancel={() => {
+                setShowInvoiceDialog(false);
+                setEditingInvoice(null);
+              }}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
 }
 
-// Invoice Form Component
+// Component functions
 function InvoiceForm({ invoice, onSubmit, onCancel }: {
   invoice?: Invoice | null;
   onSubmit: (data: any) => void;
   onCancel: () => void;
 }) {
   const [formData, setFormData] = useState({
-    // Client personal data
     clientName: invoice?.clientName || "",
     clientEmail: invoice?.clientEmail || "",
     clientPhone: invoice?.clientPhone || "",
-    clientNif: invoice?.clientNif || "",
-    
-    // Client address
-    clientAddress: invoice?.clientAddress || "",
-    clientCity: invoice?.clientCity || "",
-    clientPostalCode: invoice?.clientPostalCode || "",
-    
-    // Service details
     description: invoice?.description || "",
     subtotal: invoice?.subtotal || "",
     vatRate: invoice?.vatRate || "21",
-    irpfRate: invoice?.irpfRate || "0",
-    paymentTerms: invoice?.paymentTerms?.toString() || "30",
-    dueDate: "",
-    series: invoice?.series || "CERT",
+    paymentTerms: invoice?.paymentTerms || 30,
+    issueDate: invoice?.issueDate || format(new Date(), "yyyy-MM-dd"),
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const subtotalValue = parseFloat(formData.subtotal);
-    const vatRateValue = parseFloat(formData.vatRate);
-    const irpfRateValue = parseFloat(formData.irpfRate);
-    
-    const vatAmount = (subtotalValue * vatRateValue) / 100;
-    const irpfAmount = (subtotalValue * irpfRateValue) / 100;
-    const total = subtotalValue + vatAmount - irpfAmount;
-    
-    // Calculate due date
-    const dueDate = new Date();
-    dueDate.setDate(dueDate.getDate() + parseInt(formData.paymentTerms));
-    
+    const subtotal = parseFloat(formData.subtotal);
+    const vatRate = parseFloat(formData.vatRate);
+    const vatAmount = (subtotal * vatRate) / 100;
+    const total = subtotal + vatAmount;
+
     onSubmit({
       ...formData,
-      subtotal: subtotalValue.toFixed(2),
+      subtotal: subtotal.toString(),
       vatAmount: vatAmount.toFixed(2),
-      irpfAmount: irpfAmount.toFixed(2),
       total: total.toFixed(2),
-      dueDate: formData.dueDate || dueDate.toISOString().split('T')[0],
+      dueDate: new Date(Date.now() + formData.paymentTerms * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      paymentStatus: "pending"
     });
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Client Information Section */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Datos del Cliente</h3>
-        
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="clientName">Nombre y Apellidos *</Label>
-            <Input
-              id="clientName"
-              value={formData.clientName}
-              onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
-              placeholder="Nombre completo del cliente"
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="clientNif">CIF/NIF/NIE *</Label>
-            <Input
-              id="clientNif"
-              value={formData.clientNif}
-              onChange={(e) => setFormData({ ...formData, clientNif: e.target.value })}
-              placeholder="12345678Z / A12345678"
-              required
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="clientEmail">Email</Label>
-            <Input
-              id="clientEmail"
-              type="email"
-              value={formData.clientEmail}
-              onChange={(e) => setFormData({ ...formData, clientEmail: e.target.value })}
-              placeholder="cliente@email.com"
-            />
-          </div>
-          <div>
-            <Label htmlFor="clientPhone">Teléfono</Label>
-            <Input
-              id="clientPhone"
-              value={formData.clientPhone}
-              onChange={(e) => setFormData({ ...formData, clientPhone: e.target.value })}
-              placeholder="600 000 000"
-            />
-          </div>
-        </div>
-
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="clientAddress">Dirección *</Label>
+          <Label htmlFor="clientName">Cliente *</Label>
           <Input
-            id="clientAddress"
-            value={formData.clientAddress}
-            onChange={(e) => setFormData({ ...formData, clientAddress: e.target.value })}
-            placeholder="Calle, número, piso, puerta"
+            id="clientName"
+            value={formData.clientName}
+            onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
             required
           />
         </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="clientCity">Localidad/Municipio *</Label>
-            <Input
-              id="clientCity"
-              value={formData.clientCity}
-              onChange={(e) => setFormData({ ...formData, clientCity: e.target.value })}
-              placeholder="Madrid"
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="clientPostalCode">Código Postal *</Label>
-            <Input
-              id="clientPostalCode"
-              value={formData.clientPostalCode}
-              onChange={(e) => setFormData({ ...formData, clientPostalCode: e.target.value })}
-              placeholder="28001"
-              required
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Service Details Section */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Detalles del Servicio</h3>
-        
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="series">Serie de Facturación</Label>
-            <Select 
-              value={formData.series} 
-              onValueChange={(value) => setFormData({ ...formData, series: value })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="CERT">CERT - Certificaciones</SelectItem>
-                <SelectItem value="CONS">CONS - Consultoría</SelectItem>
-                <SelectItem value="SERV">SERV - Servicios</SelectItem>
-                <SelectItem value="RECT">RECT - Rectificativas</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex items-end">
-            <div className="bg-blue-50 p-3 rounded-lg border border-blue-200 w-full">
-              <span className="text-sm text-blue-700 font-medium">
-                Número: {formData.series}-{new Date().getFullYear()}-XXX
-              </span>
-              <p className="text-xs text-blue-600 mt-1">Se asignará automáticamente al crear</p>
-            </div>
-          </div>
-        </div>
-        
         <div>
-          <Label htmlFor="description">Descripción del Servicio *</Label>
-          <Textarea
-            id="description"
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            placeholder="Certificación energética vivienda unifamiliar..."
-            required
-            rows={3}
+          <Label htmlFor="clientEmail">Email</Label>
+          <Input
+            id="clientEmail"
+            type="email"
+            value={formData.clientEmail}
+            onChange={(e) => setFormData({ ...formData, clientEmail: e.target.value })}
           />
-        </div>
-        
-        <div className="grid grid-cols-3 gap-4">
-          <div>
-            <Label htmlFor="subtotal">Base Imponible (€) *</Label>
-            <Input
-              id="subtotal"
-              type="number"
-              step="0.01"
-              min="0"
-              value={formData.subtotal}
-              onChange={(e) => setFormData({ ...formData, subtotal: e.target.value })}
-              placeholder="150.00"
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="vatRate">IVA (%)</Label>
-            <Select 
-              value={formData.vatRate} 
-              onValueChange={(value) => setFormData({ ...formData, vatRate: value })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="0">0% (Exento)</SelectItem>
-                <SelectItem value="4">4% (Reducido)</SelectItem>
-                <SelectItem value="10">10% (Reducido)</SelectItem>
-                <SelectItem value="21">21% (General)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label htmlFor="irpfRate">IRPF (%)</Label>
-            <Select 
-              value={formData.irpfRate} 
-              onValueChange={(value) => setFormData({ ...formData, irpfRate: value })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="0">0% (Sin retención)</SelectItem>
-                <SelectItem value="7">7%</SelectItem>
-                <SelectItem value="15">15%</SelectItem>
-                <SelectItem value="19">19%</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="paymentTerms">Plazo de Pago (días)</Label>
-            <Select 
-              value={formData.paymentTerms} 
-              onValueChange={(value) => setFormData({ ...formData, paymentTerms: value })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="0">Pago inmediato</SelectItem>
-                <SelectItem value="15">15 días</SelectItem>
-                <SelectItem value="30">30 días</SelectItem>
-                <SelectItem value="60">60 días</SelectItem>
-                <SelectItem value="90">90 días</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label htmlFor="dueDate">Fecha de Vencimiento (opcional)</Label>
-            <Input
-              id="dueDate"
-              type="date"
-              value={formData.dueDate}
-              onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-            />
-          </div>
         </div>
       </div>
 
-      {/* Invoice Preview */}
-      {formData.subtotal && (
-        <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-          <h4 className="font-medium text-gray-900">Resumen de Facturación</h4>
-          <div className="space-y-1 text-sm">
-            <div className="flex justify-between">
-              <span>Base Imponible:</span>
-              <span>{parseFloat(formData.subtotal || "0").toFixed(2)} €</span>
-            </div>
-            <div className="flex justify-between">
-              <span>IVA ({formData.vatRate}%):</span>
-              <span>{((parseFloat(formData.subtotal || "0") * parseFloat(formData.vatRate)) / 100).toFixed(2)} €</span>
-            </div>
-            {parseFloat(formData.irpfRate) > 0 && (
-              <div className="flex justify-between text-red-600">
-                <span>IRPF (-{formData.irpfRate}%):</span>
-                <span>-{((parseFloat(formData.subtotal || "0") * parseFloat(formData.irpfRate)) / 100).toFixed(2)} €</span>
-              </div>
-            )}
-            <div className="flex justify-between font-semibold border-t pt-1">
-              <span>Total:</span>
-              <span>
-                {(
-                  parseFloat(formData.subtotal || "0") + 
-                  ((parseFloat(formData.subtotal || "0") * parseFloat(formData.vatRate)) / 100) -
-                  ((parseFloat(formData.subtotal || "0") * parseFloat(formData.irpfRate)) / 100)
-                ).toFixed(2)} €
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
+      <div>
+        <Label htmlFor="description">Descripción *</Label>
+        <Textarea
+          id="description"
+          value={formData.description}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          required
+        />
+      </div>
 
-      <div className="flex justify-end gap-2 pt-4 border-t">
+      <div className="grid grid-cols-3 gap-4">
+        <div>
+          <Label htmlFor="subtotal">Subtotal *</Label>
+          <Input
+            id="subtotal"
+            type="number"
+            step="0.01"
+            value={formData.subtotal}
+            onChange={(e) => setFormData({ ...formData, subtotal: e.target.value })}
+            required
+          />
+        </div>
+        <div>
+          <Label htmlFor="vatRate">IVA (%)</Label>
+          <Select value={formData.vatRate} onValueChange={(value) => setFormData({ ...formData, vatRate: value })}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="0">0%</SelectItem>
+              <SelectItem value="4">4%</SelectItem>
+              <SelectItem value="10">10%</SelectItem>
+              <SelectItem value="21">21%</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor="paymentTerms">Vencimiento (días)</Label>
+          <Input
+            id="paymentTerms"
+            type="number"
+            value={formData.paymentTerms}
+            onChange={(e) => setFormData({ ...formData, paymentTerms: parseInt(e.target.value) })}
+          />
+        </div>
+      </div>
+
+      <div className="flex justify-end gap-2 pt-4">
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancelar
         </Button>
@@ -1139,48 +750,20 @@ function InvoiceForm({ invoice, onSubmit, onCancel }: {
   );
 }
 
-// Invoices Table Component
-function InvoicesTable({ invoices, onGeneratePdf, onSendEmail, onRecordPayment, onEdit }: {
+function InvoicesTable({ invoices, onEdit, onRecordPayment }: {
   invoices: Invoice[];
-  onGeneratePdf: (id: number) => void;
-  onSendEmail: (id: number) => void;
-  onRecordPayment: (data: any) => void;
   onEdit: (invoice: Invoice) => void;
+  onRecordPayment: (invoice: Invoice) => void;
 }) {
-  const getPaymentStatusBadge = (status: string) => {
-    const statusConfig = {
-      paid: { color: "bg-green-100 text-green-800", label: "Pagado" },
-      pending: { color: "bg-yellow-100 text-yellow-800", label: "Pendiente" },
-      overdue: { color: "bg-red-100 text-red-800", label: "Vencido" },
-      partial: { color: "bg-blue-100 text-blue-800", label: "Parcial" },
-      cancelled: { color: "bg-gray-100 text-gray-800", label: "Cancelado" },
-    };
-    
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
-    return <Badge className={config.color}>{config.label}</Badge>;
-  };
-
-  const formatCurrency = (amount: string) => {
-    return new Intl.NumberFormat('es-ES', {
-      style: 'currency',
-      currency: 'EUR'
-    }).format(parseFloat(amount));
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-ES');
-  };
-
   return (
     <Table>
       <TableHeader>
         <TableRow>
           <TableHead>Número</TableHead>
           <TableHead>Cliente</TableHead>
-          <TableHead>Importe</TableHead>
+          <TableHead>Fecha</TableHead>
+          <TableHead>Total</TableHead>
           <TableHead>Estado</TableHead>
-          <TableHead>Fecha Emisión</TableHead>
-          <TableHead>Vencimiento</TableHead>
           <TableHead>Acciones</TableHead>
         </TableRow>
       </TableHeader>
@@ -1189,32 +772,160 @@ function InvoicesTable({ invoices, onGeneratePdf, onSendEmail, onRecordPayment, 
           <TableRow key={invoice.id}>
             <TableCell className="font-medium">{invoice.invoiceNumber}</TableCell>
             <TableCell>{invoice.clientName}</TableCell>
-            <TableCell>{formatCurrency(invoice.total)}</TableCell>
-            <TableCell>{getPaymentStatusBadge(invoice.paymentStatus)}</TableCell>
-            <TableCell>{formatDate(invoice.issueDate)}</TableCell>
-            <TableCell>{formatDate(invoice.dueDate)}</TableCell>
             <TableCell>
-              <div className="flex gap-1">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => onGeneratePdf(invoice.id)}
-                >
-                  <Printer className="w-3 h-3" />
+              {format(new Date(invoice.issueDate), "dd/MM/yyyy", { locale: es })}
+            </TableCell>
+            <TableCell className="font-semibold">
+              {parseFloat(invoice.total).toLocaleString('es-ES', {
+                style: 'currency',
+                currency: 'EUR'
+              })}
+            </TableCell>
+            <TableCell>
+              <Badge 
+                variant={invoice.paymentStatus === 'paid' ? 'default' : 
+                        invoice.paymentStatus === 'overdue' ? 'destructive' : 'secondary'}
+              >
+                {invoice.paymentStatus === 'paid' ? 'Pagado' :
+                 invoice.paymentStatus === 'overdue' ? 'Vencido' : 'Pendiente'}
+              </Badge>
+            </TableCell>
+            <TableCell>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => onEdit(invoice)}>
+                  Editar
                 </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => onSendEmail(invoice.id)}
-                >
-                  <Mail className="w-3 h-3" />
+                {invoice.paymentStatus !== 'paid' && (
+                  <Button variant="outline" size="sm" onClick={() => onRecordPayment(invoice)}>
+                    Registrar Pago
+                  </Button>
+                )}
+              </div>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+}
+
+function PaymentsTable({ payments }: { payments: Payment[] }) {
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Fecha</TableHead>
+          <TableHead>Método</TableHead>
+          <TableHead>Referencia</TableHead>
+          <TableHead>Importe</TableHead>
+          <TableHead>Estado</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {payments.map((payment) => (
+          <TableRow key={payment.id}>
+            <TableCell>
+              {format(new Date(payment.paymentDate), "dd/MM/yyyy", { locale: es })}
+            </TableCell>
+            <TableCell className="capitalize">{payment.paymentMethod}</TableCell>
+            <TableCell>{payment.paymentReference || "-"}</TableCell>
+            <TableCell className="font-semibold">
+              {parseFloat(payment.amount).toLocaleString('es-ES', {
+                style: 'currency',
+                currency: 'EUR'
+              })}
+            </TableCell>
+            <TableCell>
+              <Badge variant="default">
+                {payment.status === 'confirmed' ? 'Confirmado' : 'Pendiente'}
+              </Badge>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+}
+
+function CollectionsTable({ collections }: { collections: Collection[] }) {
+  const getPaymentMethodBadge = (method: string) => {
+    const methodConfig = {
+      cash: { color: "bg-green-100 text-green-800", label: "Efectivo", icon: Euro },
+      card: { color: "bg-blue-100 text-blue-800", label: "Tarjeta", icon: CreditCard },
+      transfer: { color: "bg-purple-100 text-purple-800", label: "Transferencia", icon: Building2 },
+      bizum: { color: "bg-orange-100 text-orange-800", label: "Bizum", icon: Smartphone },
+      stripe: { color: "bg-indigo-100 text-indigo-800", label: "Stripe", icon: CreditCard },
+    };
+    
+    const config = methodConfig[method as keyof typeof methodConfig] || methodConfig.cash;
+    const Icon = config.icon;
+    
+    return (
+      <Badge variant="secondary" className={`${config.color} flex items-center gap-1`}>
+        <Icon className="w-3 h-3" />
+        {config.label}
+      </Badge>
+    );
+  };
+
+  const getStatusBadge = (status: string) => {
+    const statusConfig = {
+      confirmed: { color: "bg-green-100 text-green-800", label: "Confirmado", icon: CheckCircle },
+      pending: { color: "bg-yellow-100 text-yellow-800", label: "Pendiente", icon: Clock },
+      failed: { color: "bg-red-100 text-red-800", label: "Fallido", icon: AlertCircle },
+    };
+    
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
+    const Icon = config.icon;
+    
+    return (
+      <Badge variant="secondary" className={`${config.color} flex items-center gap-1`}>
+        <Icon className="w-3 h-3" />
+        {config.label}
+      </Badge>
+    );
+  };
+
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Fecha</TableHead>
+          <TableHead>Concepto</TableHead>
+          <TableHead>Cliente</TableHead>
+          <TableHead>Método</TableHead>
+          <TableHead>Importe</TableHead>
+          <TableHead>Estado</TableHead>
+          <TableHead>Acciones</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {collections.map((collection) => (
+          <TableRow key={collection.id}>
+            <TableCell>
+              {format(new Date(collection.collectionDate), "dd/MM/yyyy", { locale: es })}
+            </TableCell>
+            <TableCell className="font-medium">{collection.concept}</TableCell>
+            <TableCell>{collection.clientName || "-"}</TableCell>
+            <TableCell>
+              {getPaymentMethodBadge(collection.paymentMethod)}
+            </TableCell>
+            <TableCell className="font-semibold">
+              {parseFloat(collection.amount).toLocaleString('es-ES', {
+                style: 'currency',
+                currency: 'EUR'
+              })}
+            </TableCell>
+            <TableCell>
+              {getStatusBadge(collection.status)}
+            </TableCell>
+            <TableCell>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm">
+                  Ver detalles
                 </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => onEdit(invoice)}
-                >
-                  <Edit className="w-3 h-3" />
+                <Button variant="outline" size="sm">
+                  Editar
                 </Button>
               </div>
             </TableCell>
@@ -1225,185 +936,160 @@ function InvoicesTable({ invoices, onGeneratePdf, onSendEmail, onRecordPayment, 
   );
 }
 
-// Payments Table Component
-function PaymentsTable({ payments }: { payments: Payment[] }) {
-  const formatCurrency = (amount: string) => {
-    return new Intl.NumberFormat('es-ES', {
-      style: 'currency',
-      currency: 'EUR'
-    }).format(parseFloat(amount));
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-ES');
-  };
-
-  return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Fecha</TableHead>
-          <TableHead>Importe</TableHead>
-          <TableHead>Método</TableHead>
-          <TableHead>Referencia</TableHead>
-          <TableHead>Estado</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {payments.map((payment) => (
-          <TableRow key={payment.id}>
-            <TableCell>{formatDate(payment.paymentDate)}</TableCell>
-            <TableCell>{formatCurrency(payment.amount)}</TableCell>
-            <TableCell className="capitalize">{payment.paymentMethod}</TableCell>
-            <TableCell>{payment.paymentReference}</TableCell>
-            <TableCell>
-              <Badge className="bg-green-100 text-green-800">
-                {payment.status}
-              </Badge>
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-  );
-}
-
-// Expense Form Component
-function ExpenseForm({ onSubmit, onCancel }: {
+function CollectionForm({ onSubmit, onCancel }: {
   onSubmit: (data: any) => void;
   onCancel: () => void;
 }) {
   const [formData, setFormData] = useState({
     amount: "",
-    description: "",
-    category: "",
-    vendor: "",
-    expenseDate: "",
-    isDeductible: true,
+    concept: "",
+    paymentMethod: "cash",
+    paymentReference: "",
+    collectionDate: format(new Date(), "yyyy-MM-dd"),
+    clientName: "",
+    clientEmail: "",
+    clientPhone: "",
+    vatIncluded: true,
+    vatRate: "21.00",
+    notes: ""
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    
+    const amount = parseFloat(formData.amount);
+    if (isNaN(amount) || amount <= 0) {
+      return;
+    }
+
+    const vatAmount = formData.vatIncluded 
+      ? (amount * parseFloat(formData.vatRate)) / (100 + parseFloat(formData.vatRate))
+      : 0;
+
+    onSubmit({
+      ...formData,
+      amount: amount.toString(),
+      vatAmount: vatAmount.toFixed(2),
+      status: "confirmed"
+    });
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="amount">Importe (€)</Label>
+          <Label htmlFor="amount">Importe *</Label>
           <Input
             id="amount"
             type="number"
             step="0.01"
+            min="0"
             value={formData.amount}
             onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+            placeholder="0.00"
             required
           />
         </div>
         <div>
-          <Label htmlFor="category">Categoría</Label>
-          <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
+          <Label htmlFor="paymentMethod">Método de pago *</Label>
+          <Select value={formData.paymentMethod} onValueChange={(value) => setFormData({ ...formData, paymentMethod: value })}>
             <SelectTrigger>
-              <SelectValue placeholder="Seleccionar categoría" />
+              <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="travel">Viajes</SelectItem>
-              <SelectItem value="equipment">Equipamiento</SelectItem>
-              <SelectItem value="software">Software</SelectItem>
-              <SelectItem value="office">Oficina</SelectItem>
-              <SelectItem value="training">Formación</SelectItem>
-              <SelectItem value="fuel">Combustible</SelectItem>
-              <SelectItem value="other">Otros</SelectItem>
+              <SelectItem value="cash">Efectivo</SelectItem>
+              <SelectItem value="card">Tarjeta</SelectItem>
+              <SelectItem value="transfer">Transferencia</SelectItem>
+              <SelectItem value="bizum">Bizum</SelectItem>
+              <SelectItem value="stripe">Stripe</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
-      
+
       <div>
-        <Label htmlFor="description">Descripción</Label>
-        <Textarea
-          id="description"
-          value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+        <Label htmlFor="concept">Concepto *</Label>
+        <Input
+          id="concept"
+          value={formData.concept}
+          onChange={(e) => setFormData({ ...formData, concept: e.target.value })}
+          placeholder="Descripción del cobro"
           required
         />
       </div>
-      
+
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="vendor">Proveedor</Label>
+          <Label htmlFor="collectionDate">Fecha de cobro *</Label>
           <Input
-            id="vendor"
-            value={formData.vendor}
-            onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
+            id="collectionDate"
+            type="date"
+            value={formData.collectionDate}
+            onChange={(e) => setFormData({ ...formData, collectionDate: e.target.value })}
+            required
           />
         </div>
         <div>
-          <Label htmlFor="expenseDate">Fecha del Gasto</Label>
+          <Label htmlFor="paymentReference">Referencia</Label>
           <Input
-            id="expenseDate"
-            type="date"
-            value={formData.expenseDate}
-            onChange={(e) => setFormData({ ...formData, expenseDate: e.target.value })}
-            required
+            id="paymentReference"
+            value={formData.paymentReference}
+            onChange={(e) => setFormData({ ...formData, paymentReference: e.target.value })}
+            placeholder="Número de referencia"
           />
         </div>
       </div>
 
-      <div className="flex justify-end gap-2">
+      <div className="grid grid-cols-3 gap-4">
+        <div>
+          <Label htmlFor="clientName">Cliente</Label>
+          <Input
+            id="clientName"
+            value={formData.clientName}
+            onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
+            placeholder="Nombre del cliente"
+          />
+        </div>
+        <div>
+          <Label htmlFor="clientEmail">Email</Label>
+          <Input
+            id="clientEmail"
+            type="email"
+            value={formData.clientEmail}
+            onChange={(e) => setFormData({ ...formData, clientEmail: e.target.value })}
+            placeholder="email@ejemplo.com"
+          />
+        </div>
+        <div>
+          <Label htmlFor="clientPhone">Teléfono</Label>
+          <Input
+            id="clientPhone"
+            value={formData.clientPhone}
+            onChange={(e) => setFormData({ ...formData, clientPhone: e.target.value })}
+            placeholder="Teléfono del cliente"
+          />
+        </div>
+      </div>
+
+      <div>
+        <Label htmlFor="notes">Notas</Label>
+        <Textarea
+          id="notes"
+          value={formData.notes}
+          onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+          placeholder="Notas adicionales"
+          rows={3}
+        />
+      </div>
+
+      <div className="flex justify-end gap-2 pt-4">
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancelar
         </Button>
         <Button type="submit">
-          Registrar Gasto
+          Registrar Cobro
         </Button>
       </div>
     </form>
-  );
-}
-
-// Expenses Table Component
-function ExpensesTable({ expenses }: { expenses: Expense[] }) {
-  const formatCurrency = (amount: string) => {
-    return new Intl.NumberFormat('es-ES', {
-      style: 'currency',
-      currency: 'EUR'
-    }).format(parseFloat(amount));
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-ES');
-  };
-
-  return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Fecha</TableHead>
-          <TableHead>Descripción</TableHead>
-          <TableHead>Categoría</TableHead>
-          <TableHead>Proveedor</TableHead>
-          <TableHead>Importe</TableHead>
-          <TableHead>Deducible</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {expenses.map((expense) => (
-          <TableRow key={expense.id}>
-            <TableCell>{formatDate(expense.expenseDate)}</TableCell>
-            <TableCell>{expense.description}</TableCell>
-            <TableCell className="capitalize">{expense.category}</TableCell>
-            <TableCell>{expense.vendor}</TableCell>
-            <TableCell>{formatCurrency(expense.amount)}</TableCell>
-            <TableCell>
-              <Badge className={expense.isDeductible ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}>
-                {expense.isDeductible ? "Sí" : "No"}
-              </Badge>
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
   );
 }
