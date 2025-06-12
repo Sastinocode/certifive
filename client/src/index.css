@@ -76,7 +76,7 @@
   }
   
   .step-indicator.completed {
-    @apply bg-success text-white;
+    @apply bg-green-600 text-white;
   }
   
   .step-indicator.inactive {
@@ -88,7 +88,7 @@
   }
   
   .step-connector.completed {
-    @apply bg-success;
+    @apply bg-green-600;
   }
   
   .step-connector.inactive {
