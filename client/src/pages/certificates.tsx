@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import Sidebar from "@/components/layout/sidebar";
@@ -23,6 +23,7 @@ import {
   Filter,
   Folder,
   FolderPlus,
+  FolderOpen,
   MoreVertical,
   MoveHorizontal,
   Building,
@@ -444,6 +445,28 @@ export default function Certificates() {
                             <div className="text-sm text-gray-500">Ref: {cert.cadastralRef}</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
+                            {cert.folderId ? (
+                              <div className="flex items-center space-x-2">
+                                {(() => {
+                                  const folder = (folders as Folder[]).find(f => f.id === cert.folderId);
+                                  if (!folder) return <span className="text-gray-400">-</span>;
+                                  const IconComponent = getIconComponent(folder.icon || "folder");
+                                  return (
+                                    <>
+                                      <IconComponent 
+                                        className="w-4 h-4" 
+                                        style={{ color: folder.color }}
+                                      />
+                                      <span className="text-sm text-gray-900">{folder.name}</span>
+                                    </>
+                                  );
+                                })()}
+                              </div>
+                            ) : (
+                              <span className="text-gray-400 text-sm">Sin carpeta</span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
                             {getEnergyRatingBadge(cert.energyRating)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -458,25 +481,61 @@ export default function Certificates() {
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {new Date(cert.createdAt).toLocaleDateString('es-ES')}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                            <Button variant="ghost" size="sm">
-                              <Eye className="w-4 h-4 mr-1" />
-                              Ver
-                            </Button>
-                            {cert.status !== 'completed' && (
-                              <Link href={`/certificacion/${cert.id}`}>
-                                <Button variant="ghost" size="sm">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div className="flex items-center space-x-2">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="outline" size="sm">
+                                    <FolderOpen className="w-4 h-4 mr-1" />
+                                    Mover
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                  <DropdownMenuItem 
+                                    onClick={() => moveCertificationMutation.mutate({ 
+                                      certificationId: cert.id, 
+                                      folderId: null 
+                                    })}
+                                  >
+                                    <Folder className="w-4 h-4 mr-2" />
+                                    Sin carpeta
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  {(folders as Folder[]).map((folder) => {
+                                    const IconComponent = getIconComponent(folder.icon || "folder");
+                                    return (
+                                      <DropdownMenuItem 
+                                        key={folder.id}
+                                        onClick={() => moveCertificationMutation.mutate({ 
+                                          certificationId: cert.id, 
+                                          folderId: folder.id 
+                                        })}
+                                      >
+                                        <IconComponent 
+                                          className="w-4 h-4 mr-2" 
+                                          style={{ color: folder.color }}
+                                        />
+                                        {folder.name}
+                                      </DropdownMenuItem>
+                                    );
+                                  })}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                              
+                              <Link to={`/certification-form?id=${cert.id}`}>
+                                <Button variant="outline" size="sm">
                                   <Edit className="w-4 h-4 mr-1" />
                                   Editar
                                 </Button>
                               </Link>
-                            )}
-                            {cert.status === 'completed' && (
-                              <Button variant="ghost" size="sm" className="text-green-600">
-                                <Download className="w-4 h-4 mr-1" />
-                                Descargar
-                              </Button>
-                            )}
+                              
+                              {cert.status === 'completed' && (
+                                <Button variant="outline" size="sm" className="text-green-600">
+                                  <Download className="w-4 h-4 mr-1" />
+                                  PDF
+                                </Button>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       ))}
