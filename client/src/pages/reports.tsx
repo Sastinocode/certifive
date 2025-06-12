@@ -162,15 +162,34 @@ export default function Reports() {
   });
 
   const exportToExcelMutation = useMutation({
-    mutationFn: (type: string) => apiRequest("POST", "/api/export/excel", { type, dateRange }),
+    mutationFn: async (type: string) => {
+      const response = await fetch(`/api/export/excel`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ type, dateRange }),
+      });
+      
+      if (!response.ok) {
+        throw new Error("Error al exportar datos");
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const filename = `informes_${type}_${new Date().toISOString().split('T')[0]}.xlsx`;
+      
+      return { url, filename };
+    },
     onSuccess: (data) => {
       // Download the Excel file
       const link = document.createElement('a');
-      link.href = data.downloadUrl;
+      link.href = data.url;
       link.download = data.filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      window.URL.revokeObjectURL(data.url);
       
       toast({
         title: "Exportación completada",
@@ -180,7 +199,7 @@ export default function Reports() {
   });
 
   // Financial calculations
-  const summary: FinancialSummary = financialSummary || {
+  const summary: FinancialSummary = (financialSummary as FinancialSummary) || {
     totalInvoiced: 0,
     totalPaid: 0,
     totalPending: 0,
@@ -252,7 +271,7 @@ export default function Reports() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50">
-      <Sidebar />
+      <Sidebar selectedTab="reports" onTabChange={() => {}} />
       <div className="ml-64">
         <div className="p-8">
           <div className="mb-8">
