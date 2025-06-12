@@ -10,7 +10,8 @@ import {
   Leaf, 
   User,
   LogOut,
-  Euro
+  Euro,
+  MessageCircle
 } from "lucide-react";
 
 interface SidebarProps {
@@ -28,6 +29,7 @@ export default function Sidebar({ selectedTab, onTabChange }: SidebarProps) {
 
   const navItems = [
     { id: "dashboard", label: "Dashboard", icon: Home, path: "/" },
+    { id: "whatsapp", label: "Clientes WhatsApp", icon: MessageCircle, path: "/whatsapp" },
     { id: "certificates", label: "Certificados", icon: IdCard, path: "/certificados" },
     { id: "properties", label: "Propiedades", icon: Building, path: "/propiedades" },
     { id: "pricing", label: "Tarifas", icon: Euro, path: "/tarifas" },
