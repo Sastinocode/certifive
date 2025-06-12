@@ -81,6 +81,7 @@ const conversationStateColors = {
 
 export default function WhatsAppManagement() {
   const { toast } = useToast();
+  const [selectedTab, setSelectedTab] = useState("whatsapp");
   const [selectedConversation, setSelectedConversation] = useState<WhatsAppConversation | null>(null);
   const [messageText, setMessageText] = useState("");
   const [showConfigDialog, setShowConfigDialog] = useState(false);
@@ -202,8 +203,18 @@ export default function WhatsAppManagement() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Sidebar - Conversations List */}
+    <div className="flex h-screen">
+      <Sidebar selectedTab={selectedTab} onTabChange={setSelectedTab} />
+      
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Mobile header */}
+        <div className="lg:hidden backdrop-blur-md bg-white/70 border-b border-white/30 px-4 py-3">
+          <h1 className="text-lg font-semibold text-gray-900">Clientes WhatsApp</h1>
+        </div>
+
+        <div className="flex-1 overflow-auto bg-gray-50">
+          <div className="flex h-full">
+            {/* Sidebar - Conversations List */}
       <div className="w-1/3 bg-white border-r border-gray-200 flex flex-col">
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center justify-between mb-4">
@@ -522,6 +533,9 @@ export default function WhatsAppManagement() {
           </div>
         </DialogContent>
       </Dialog>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
