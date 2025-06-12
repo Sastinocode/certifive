@@ -37,6 +37,12 @@ export const users = pgTable("users", {
   address: text("address"),
   stripeAccountId: varchar("stripe_account_id"),
   stripeOnboardingComplete: boolean("stripe_onboarding_complete").default(false),
+  // WhatsApp Business integration
+  whatsappBusinessToken: varchar("whatsapp_business_token"),
+  whatsappPhoneNumberId: varchar("whatsapp_phone_number_id"),
+  whatsappBusinessAccountId: varchar("whatsapp_business_account_id"),
+  whatsappWebhookVerifyToken: varchar("whatsapp_webhook_verify_token"),
+  whatsappIntegrationActive: boolean("whatsapp_integration_active").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -133,8 +139,37 @@ export const quoteRequests = pgTable("quote_requests", {
   paidAt: timestamp("paid_at"),
   stripePaymentIntentId: varchar("stripe_payment_intent_id"),
   
+  // WhatsApp integration
+  whatsappConversationId: varchar("whatsapp_conversation_id"),
+  sentViaWhatsapp: boolean("sent_via_whatsapp").default(false),
+  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// WhatsApp conversations table
+export const whatsappConversations = pgTable("whatsapp_conversations", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id), // El certificador
+  clientPhone: varchar("client_phone").notNull(), // Teléfono del cliente
+  conversationState: varchar("conversation_state").notNull().default("initial"), // initial, awaiting_quote, quote_sent, paid, certification_form_sent, completed
+  currentQuoteId: integer("current_quote_id").references(() => quoteRequests.id),
+  currentCertificationId: integer("current_certification_id").references(() => certifications.id),
+  lastMessageAt: timestamp("last_message_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// WhatsApp messages log
+export const whatsappMessages = pgTable("whatsapp_messages", {
+  id: serial("id").primaryKey(),
+  conversationId: integer("conversation_id").notNull().references(() => whatsappConversations.id),
+  messageId: varchar("message_id").notNull(), // WhatsApp message ID
+  direction: varchar("direction").notNull(), // inbound, outbound
+  messageType: varchar("message_type").notNull(), // text, image, document, template
+  content: text("content"),
+  metadata: jsonb("metadata"), // Para datos adicionales del mensaje
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const insertPricingRateSchema = createInsertSchema(pricingRates).omit({
@@ -158,3 +193,7 @@ export type PricingRate = typeof pricingRates.$inferSelect;
 export type InsertPricingRate = z.infer<typeof insertPricingRateSchema>;
 export type QuoteRequest = typeof quoteRequests.$inferSelect;
 export type InsertQuoteRequest = z.infer<typeof insertQuoteRequestSchema>;
+export type WhatsappConversation = typeof whatsappConversations.$inferSelect;
+export type InsertWhatsappConversation = typeof whatsappConversations.$inferInsert;
+export type WhatsappMessage = typeof whatsappMessages.$inferSelect;
+export type InsertWhatsappMessage = typeof whatsappMessages.$inferInsert;
