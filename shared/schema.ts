@@ -70,16 +70,8 @@ export const certifications = pgTable("certifications", {
   cadastralRef: varchar("cadastral_ref").notNull(),
   phone: varchar("phone"),
   email: varchar("email"),
-  address: text("address"),
-  
-  // Property details
-  propertyType: varchar("property_type"),
-  totalArea: decimal("total_area", { precision: 10, scale: 2 }),
-  heatedArea: decimal("heated_area", { precision: 10, scale: 2 }),
-  buildYear: integer("build_year"),
   floors: integer("floors"),
   rooms: integer("rooms"),
-  bathrooms: integer("bathrooms"),
   
   // Housing details
   facadeOrientation: text("facade_orientation"),
@@ -89,8 +81,6 @@ export const certifications = pgTable("certifications", {
   // Installations
   hvacSystem: varchar("hvac_system"),
   heatingSystem: varchar("heating_system"),
-  coolingSystem: varchar("cooling_system"),
-  dhwSystem: varchar("dhw_system"),
   waterHeatingType: varchar("water_heating_type"),
   waterHeatingCapacity: integer("water_heating_capacity"),
   
@@ -276,7 +266,33 @@ export const payments = pgTable("payments", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-
+export const expenses = pgTable("expenses", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  description: text("description").notNull(),
+  category: varchar("category").notNull(), // travel, equipment, software, office, training, fuel, other
+  subcategory: varchar("subcategory"), // Subcategoría específica
+  expenseDate: timestamp("expense_date").notNull(),
+  
+  // Receipt management
+  receiptUrl: varchar("receipt_url"),
+  receiptNumber: varchar("receipt_number"),
+  vendor: varchar("vendor"),
+  vendorNif: varchar("vendor_nif"),
+  
+  // Tax information
+  isDeductible: boolean("is_deductible").default(true),
+  vatAmount: decimal("vat_amount", { precision: 10, scale: 2 }).default("0.00"),
+  vatRate: decimal("vat_rate", { precision: 5, scale: 2 }).default("21.00"),
+  
+  // Project assignment
+  certificationId: integer("certification_id").references(() => certifications.id),
+  
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
 
 export const insertPricingRateSchema = createInsertSchema(pricingRates).omit({
   id: true,
@@ -307,6 +323,11 @@ export const insertPaymentSchema = createInsertSchema(payments).omit({
   createdAt: true,
 });
 
+export const insertExpenseSchema = createInsertSchema(expenses).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type Folder = typeof folders.$inferSelect;
@@ -326,3 +347,5 @@ export type Invoice = typeof invoices.$inferSelect;
 export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;
 export type Payment = typeof payments.$inferSelect;
 export type InsertPayment = z.infer<typeof insertPaymentSchema>;
+export type Expense = typeof expenses.$inferSelect;
+export type InsertExpense = z.infer<typeof insertExpenseSchema>;
