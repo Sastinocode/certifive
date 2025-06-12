@@ -439,25 +439,27 @@ export default function Reports() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <ResponsiveContainer width="100%" height={300}>
-                        <PieChart>
-                          <Pie
-                            data={invoiceStatusData}
-                            cx="50%"
-                            cy="50%"
-                            outerRadius={80}
-                            fill="#8884d8"
-                            dataKey="value"
-                            label
-                          >
-                            {invoiceStatusData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                          <Tooltip />
-                          <Legend />
-                        </PieChart>
-                      </ResponsiveContainer>
+                      <div className="h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={invoiceStatusData}
+                              cx="50%"
+                              cy="50%"
+                              outerRadius={80}
+                              fill="#8884d8"
+                              dataKey="value"
+                              label
+                            >
+                              {invoiceStatusData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.color} />
+                              ))}
+                            </Pie>
+                            <Tooltip />
+                            <Legend />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
                     </CardContent>
                   </Card>
                 </div>
