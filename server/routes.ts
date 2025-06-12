@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { insertCertificationSchema, updateCertificationSchema, insertPricingRateSchema, insertQuoteRequestSchema } from "@shared/schema";
+import { insertCertificationSchema, updateCertificationSchema, insertPricingRateSchema, insertQuoteRequestSchema, insertFolderSchema } from "@shared/schema";
 import { z } from "zod";
 import multer from "multer";
 import path from "path";
@@ -65,6 +65,110 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching recent certifications:", error);
       res.status(500).json({ message: "Error al obtener certificaciones recientes" });
+    }
+  });
+
+  // Folder management routes
+  app.get("/api/folders", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const folders = await storage.getFolders(userId);
+      res.json(folders);
+    } catch (error) {
+      console.error("Error fetching folders:", error);
+      res.status(500).json({ message: "Error al obtener carpetas" });
+    }
+  });
+
+  app.post("/api/folders", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const validatedData = insertFolderSchema.parse({
+        ...req.body,
+        userId,
+      });
+      
+      const folder = await storage.createFolder(validatedData);
+      res.json(folder);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Datos inválidos", errors: error.errors });
+      }
+      console.error("Error creating folder:", error);
+      res.status(500).json({ message: "Error al crear carpeta" });
+    }
+  });
+
+  app.put("/api/folders/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const folderId = parseInt(req.params.id);
+      const validatedData = insertFolderSchema.partial().parse(req.body);
+      
+      const folder = await storage.updateFolder(folderId, userId, validatedData);
+      if (!folder) {
+        return res.status(404).json({ message: "Carpeta no encontrada" });
+      }
+      
+      res.json(folder);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Datos inválidos", errors: error.errors });
+      }
+      console.error("Error updating folder:", error);
+      res.status(500).json({ message: "Error al actualizar carpeta" });
+    }
+  });
+
+  app.delete("/api/folders/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const folderId = parseInt(req.params.id);
+      
+      const success = await storage.deleteFolder(folderId, userId);
+      if (!success) {
+        return res.status(404).json({ message: "Carpeta no encontrada" });
+      }
+      
+      res.json({ message: "Carpeta eliminada correctamente" });
+    } catch (error) {
+      console.error("Error deleting folder:", error);
+      res.status(500).json({ message: "Error al eliminar carpeta" });
+    }
+  });
+
+  app.get("/api/folders/:id/certifications", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const folderId = parseInt(req.params.id);
+      
+      const result = await storage.getFolderWithCertifications(folderId, userId);
+      if (!result) {
+        return res.status(404).json({ message: "Carpeta no encontrada" });
+      }
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Error fetching folder with certifications:", error);
+      res.status(500).json({ message: "Error al obtener carpeta y certificaciones" });
+    }
+  });
+
+  app.put("/api/certifications/:id/move", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const certificationId = parseInt(req.params.id);
+      const { folderId } = req.body;
+      
+      const certification = await storage.moveCertificationToFolder(certificationId, folderId, userId);
+      if (!certification) {
+        return res.status(404).json({ message: "Certificación no encontrada" });
+      }
+      
+      res.json(certification);
+    } catch (error) {
+      console.error("Error moving certification:", error);
+      res.status(500).json({ message: "Error al mover certificación" });
     }
   });
 

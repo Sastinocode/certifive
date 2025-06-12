@@ -43,7 +43,7 @@ export interface IStorage {
   // Certification operations
   getDashboardStats(userId: string): Promise<any>;
   getRecentCertifications(userId: string): Promise<any[]>;
-  getCertificationsByUser(userId: string, folderId?: number): Promise<Certification[]>;
+  getCertificationsByUser(userId: string, folderId?: number | null): Promise<Certification[]>;
   getCertification(id: number, userId: string): Promise<Certification | undefined>;
   createCertification(data: InsertCertification): Promise<Certification>;
   updateCertification(id: number, userId: string, data: UpdateCertification): Promise<Certification | undefined>;
