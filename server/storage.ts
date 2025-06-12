@@ -8,7 +8,6 @@ import {
   whatsappMessages,
   invoices,
   payments,
-  expenses,
   type User, 
   type UpsertUser,
   type Folder,
@@ -27,9 +26,7 @@ import {
   type Invoice,
   type InsertInvoice,
   type Payment,
-  type InsertPayment,
-  type Expense,
-  type InsertExpense
+  type InsertPayment
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, count, and, isNull } from "drizzle-orm";
@@ -97,11 +94,7 @@ export interface IStorage {
   getPaymentsByInvoice(invoiceId: number, userId: string): Promise<any[]>;
   recordPayment(data: any): Promise<any>;
   
-  // Expense operations
-  getExpenses(userId: string, dateRange?: string, category?: string): Promise<any[]>;
-  createExpense(data: any): Promise<any>;
-  updateExpense(id: number, userId: string, data: any): Promise<any | undefined>;
-  deleteExpense(id: number, userId: string): Promise<boolean>;
+
 }
 
 export class DatabaseStorage implements IStorage {
@@ -632,42 +625,7 @@ export class DatabaseStorage implements IStorage {
     return payment;
   }
 
-  async getExpenses(userId: string, dateRange?: string, category?: string): Promise<any[]> {
-    let query = db.select().from(expenses).where(eq(expenses.userId, userId));
-    
-    if (category && category !== 'all') {
-      query = query.where(eq(expenses.category, category));
-    }
-    
-    return await query.orderBy(desc(expenses.createdAt));
-  }
 
-  async createExpense(data: any): Promise<any> {
-    const [expense] = await db
-      .insert(expenses)
-      .values({
-        ...data,
-        expenseDate: new Date(data.expenseDate),
-      })
-      .returning();
-    return expense;
-  }
-
-  async updateExpense(id: number, userId: string, data: any): Promise<any | undefined> {
-    const [expense] = await db
-      .update(expenses)
-      .set(data)
-      .where(and(eq(expenses.id, id), eq(expenses.userId, userId)))
-      .returning();
-    return expense;
-  }
-
-  async deleteExpense(id: number, userId: string): Promise<boolean> {
-    const result = await db
-      .delete(expenses)
-      .where(and(eq(expenses.id, id), eq(expenses.userId, userId)));
-    return result.rowCount > 0;
-  }
 }
 
 export const storage = new DatabaseStorage();
