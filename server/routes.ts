@@ -1130,72 +1130,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Excel Export API for financial reports
-  app.post('/api/export/excel', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const { type, dateRange } = req.body;
-      
-      const XLSX = require('xlsx');
-      const workbook = XLSX.utils.book_new();
-      
-      if (type === 'invoices') {
-        const invoices = await storage.getInvoices(userId, dateRange);
-        const worksheetData = invoices.map(invoice => ({
-          'Número': invoice.invoiceNumber,
-          'Cliente': invoice.clientName,
-          'Email': invoice.clientEmail || '',
-          'Subtotal': invoice.subtotal,
-          'IVA': invoice.vatAmount,
-          'Total': invoice.total,
-          'Estado': invoice.paymentStatus,
-          'Fecha Emisión': invoice.issueDate?.toISOString().split('T')[0] || '',
-          'Fecha Vencimiento': invoice.dueDate?.toISOString().split('T')[0] || '',
-          'Fecha Pago': invoice.paidDate?.toISOString().split('T')[0] || '',
-          'Descripción': invoice.description || ''
-        }));
-        
-        const worksheet = XLSX.utils.json_to_sheet(worksheetData);
-        XLSX.utils.book_append_sheet(workbook, worksheet, 'Facturas');
-      } else if (type === 'payments') {
-        const payments = await storage.getPayments(userId, dateRange);
-        const worksheetData = payments.map(payment => ({
-          'ID Factura': payment.invoiceId,
-          'Importe': payment.amount,
-          'Método': payment.paymentMethod,
-          'Referencia': payment.paymentReference || '',
-          'Fecha': payment.paymentDate?.toISOString().split('T')[0] || '',
-          'Estado': payment.status,
-          'Notas': payment.notes || ''
-        }));
-        
-        const worksheet = XLSX.utils.json_to_sheet(worksheetData);
-        XLSX.utils.book_append_sheet(workbook, worksheet, 'Pagos');
-      } else if (type === 'summary') {
-        const summary = await storage.getFinancialSummary(userId, dateRange);
-        const worksheetData = [
-          { 'Concepto': 'Total Facturado', 'Importe': summary.totalInvoiced },
-          { 'Concepto': 'Total Pagado', 'Importe': summary.totalPaid },
-          { 'Concepto': 'Pendiente de Pago', 'Importe': summary.totalPending },
-          { 'Concepto': 'Vencido', 'Importe': summary.totalOverdue },
-          { 'Concepto': 'Ingresos Netos', 'Importe': summary.netIncome }
-        ];
-        
-        const worksheet = XLSX.utils.json_to_sheet(worksheetData);
-        XLSX.utils.book_append_sheet(workbook, worksheet, 'Resumen');
-      }
-      
-      // Generate Excel buffer
-      const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
-      
-      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-      res.setHeader('Content-Disposition', `attachment; filename="informe_${type}_${new Date().toISOString().split('T')[0]}.xlsx"`);
-      res.send(buffer);
-    } catch (error) {
-      console.error("Error generating Excel export:", error);
-      res.status(500).json({ message: "Error al generar exportación Excel" });
-    }
-  });
+
 
   // Certification Reports API - Generate downloadable technical reports
   app.get('/api/certifications/:id/report/:format', isAuthenticated, async (req: any, res) => {

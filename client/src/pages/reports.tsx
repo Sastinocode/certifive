@@ -162,34 +162,15 @@ export default function Reports() {
   });
 
   const exportToExcelMutation = useMutation({
-    mutationFn: async (type: string) => {
-      const response = await fetch(`/api/export/excel`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ type, dateRange }),
-      });
-      
-      if (!response.ok) {
-        throw new Error("Error al exportar datos");
-      }
-      
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const filename = `informes_${type}_${new Date().toISOString().split('T')[0]}.xlsx`;
-      
-      return { url, filename };
-    },
+    mutationFn: (type: string) => apiRequest("POST", "/api/export/excel", { type, dateRange }),
     onSuccess: (data) => {
       // Download the Excel file
       const link = document.createElement('a');
-      link.href = data.url;
+      link.href = data.downloadUrl;
       link.download = data.filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(data.url);
       
       toast({
         title: "Exportación completada",
@@ -199,7 +180,7 @@ export default function Reports() {
   });
 
   // Financial calculations
-  const summary: FinancialSummary = (financialSummary as FinancialSummary) || {
+  const summary: FinancialSummary = financialSummary || {
     totalInvoiced: 0,
     totalPaid: 0,
     totalPending: 0,
@@ -271,9 +252,9 @@ export default function Reports() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50">
-      <Sidebar selectedTab="reports" onTabChange={() => {}} />
-      <div className="ml-64 min-h-screen overflow-y-auto">
-        <div className="p-6 w-full">
+      <Sidebar />
+      <div className="ml-64">
+        <div className="p-8">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               Informes Financieros
@@ -319,18 +300,18 @@ export default function Reports() {
             </Button>
           </div>
 
-          <div className="space-y-6 pb-8">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-              <TabsList className="grid w-full grid-cols-3 h-12">
-                <TabsTrigger value="overview" className="text-sm">Resumen</TabsTrigger>
-                <TabsTrigger value="invoices" className="text-sm">Facturas</TabsTrigger>
-                <TabsTrigger value="payments" className="text-sm">Pagos</TabsTrigger>
+          <div className="space-y-6">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="overview">Resumen</TabsTrigger>
+                <TabsTrigger value="invoices">Facturas</TabsTrigger>
+                <TabsTrigger value="payments">Pagos</TabsTrigger>
               </TabsList>
 
               {/* Overview Tab */}
               <TabsContent value="overview" className="space-y-6">
                 {/* KPI Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg">
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between">
@@ -400,7 +381,7 @@ export default function Reports() {
                 </div>
 
                 {/* Charts */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Revenue Chart */}
                   <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg">
                     <CardHeader>
@@ -410,23 +391,21 @@ export default function Reports() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="h-64">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <AreaChart data={revenueData}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="month" />
-                            <YAxis />
-                            <Tooltip />
-                            <Area 
-                              type="monotone" 
-                              dataKey="ingresos" 
-                              stroke="#3b82f6" 
-                              fill="#3b82f6" 
-                              fillOpacity={0.3}
-                            />
-                          </AreaChart>
-                        </ResponsiveContainer>
-                      </div>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <AreaChart data={revenueData}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="month" />
+                          <YAxis />
+                          <Tooltip />
+                          <Area 
+                            type="monotone" 
+                            dataKey="ingresos" 
+                            stroke="#3b82f6" 
+                            fill="#3b82f6" 
+                            fillOpacity={0.3}
+                          />
+                        </AreaChart>
+                      </ResponsiveContainer>
                     </CardContent>
                   </Card>
 
@@ -439,27 +418,25 @@ export default function Reports() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="h-64">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie
-                              data={invoiceStatusData}
-                              cx="50%"
-                              cy="50%"
-                              outerRadius={80}
-                              fill="#8884d8"
-                              dataKey="value"
-                              label
-                            >
-                              {invoiceStatusData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.color} />
-                              ))}
-                            </Pie>
-                            <Tooltip />
-                            <Legend />
-                          </PieChart>
-                        </ResponsiveContainer>
-                      </div>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <PieChart>
+                          <Pie
+                            data={invoiceStatusData}
+                            cx="50%"
+                            cy="50%"
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="value"
+                            label
+                          >
+                            {invoiceStatusData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                          <Legend />
+                        </PieChart>
+                      </ResponsiveContainer>
                     </CardContent>
                   </Card>
                 </div>
