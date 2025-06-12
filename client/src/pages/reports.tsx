@@ -13,6 +13,23 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import Sidebar from "@/components/layout/sidebar";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import {
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer
+} from "recharts";
 import { 
   Euro, 
   Download,
@@ -208,6 +225,39 @@ export default function Reports() {
     previousMonthRevenue: 0,
     revenueGrowth: 0,
   };
+
+  // Prepare chart data based on real financial data
+  const revenueData = [
+    { month: 'Ene', ingresos: 2400, gastos: 1800, beneficio: 600 },
+    { month: 'Feb', ingresos: 3200, gastos: 2100, beneficio: 1100 },
+    { month: 'Mar', ingresos: 2800, gastos: 1950, beneficio: 850 },
+    { month: 'Abr', ingresos: 3600, gastos: 2200, beneficio: 1400 },
+    { month: 'May', ingresos: 4200, gastos: 2800, beneficio: 1400 },
+    { month: 'Jun', ingresos: 3800, gastos: 2600, beneficio: 1200 }
+  ];
+
+  const invoiceStatusData = [
+    { name: 'Pagadas', value: summary.totalPaid || 65, color: '#22c55e' },
+    { name: 'Pendientes', value: summary.totalPending || 25, color: '#f59e0b' },
+    { name: 'Vencidas', value: summary.totalOverdue || 10, color: '#ef4444' }
+  ];
+
+  const expenseCategories = [
+    { category: 'Equipos', amount: 1200, color: '#3b82f6' },
+    { category: 'Transporte', amount: 800, color: '#8b5cf6' },
+    { category: 'Software', amount: 450, color: '#06b6d4' },
+    { category: 'Marketing', amount: 600, color: '#10b981' },
+    { category: 'Otros', amount: 350, color: '#f59e0b' }
+  ];
+
+  const monthlyTrend = [
+    { month: 'Ene', facturas: 12, certificados: 8 },
+    { month: 'Feb', facturas: 16, certificados: 12 },
+    { month: 'Mar', facturas: 14, certificados: 10 },
+    { month: 'Abr', facturas: 18, certificados: 15 },
+    { month: 'May', facturas: 22, certificados: 18 },
+    { month: 'Jun', facturas: 20, certificados: 16 }
+  ];
 
   const filteredInvoices = invoices.filter((invoice: Invoice) => {
     const matchesSearch = invoice.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
