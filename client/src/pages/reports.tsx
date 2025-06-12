@@ -448,29 +448,148 @@ export default function Reports() {
                     </CardContent>
                   </Card>
 
-                  {/* Payment Methods Chart */}
+                  {/* Revenue vs Expenses Chart */}
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center">
-                        <CreditCard className="w-5 h-5 mr-2" />
-                        Métodos de Pago
+                        <TrendingUp className="w-5 h-5 mr-2" />
+                        Evolución Ingresos vs Gastos
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <span className="text-gray-600">Transferencia Bancaria</span>
-                          <span className="font-medium">65%</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-gray-600">Stripe</span>
-                          <span className="font-medium">30%</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-gray-600">Efectivo</span>
-                          <span className="font-medium">5%</span>
-                        </div>
-                      </div>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <AreaChart data={revenueData}>
+                          <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                          <XAxis dataKey="month" />
+                          <YAxis />
+                          <Tooltip 
+                            formatter={(value, name) => [`€${Number(value).toLocaleString()}`, name === 'ingresos' ? 'Ingresos' : name === 'gastos' ? 'Gastos' : 'Beneficio']}
+                            labelStyle={{ color: '#374151' }}
+                            contentStyle={{ backgroundColor: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                          />
+                          <Legend />
+                          <Area
+                            type="monotone"
+                            dataKey="ingresos"
+                            stackId="1"
+                            stroke="#22c55e"
+                            fill="#22c55e"
+                            fillOpacity={0.6}
+                            name="Ingresos"
+                          />
+                          <Area
+                            type="monotone"
+                            dataKey="gastos"
+                            stackId="2"
+                            stroke="#ef4444"
+                            fill="#ef4444"
+                            fillOpacity={0.6}
+                            name="Gastos"
+                          />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Additional Charts Row */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+                  {/* Invoice Status Distribution */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <FileText className="w-5 h-5 mr-2" />
+                        Estado de Facturas
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <PieChart>
+                          <Pie
+                            data={invoiceStatusData}
+                            cx="50%"
+                            cy="50%"
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="value"
+                            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          >
+                            {invoiceStatusData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip 
+                            formatter={(value) => [`${value}%`, 'Porcentaje']}
+                            contentStyle={{ backgroundColor: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+
+                  {/* Expense Categories */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <Receipt className="w-5 h-5 mr-2" />
+                        Gastos por Categoría
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <BarChart data={expenseCategories}>
+                          <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                          <XAxis dataKey="category" />
+                          <YAxis />
+                          <Tooltip 
+                            formatter={(value) => [`€${Number(value).toLocaleString()}`, 'Importe']}
+                            contentStyle={{ backgroundColor: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                          />
+                          <Bar dataKey="amount" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Monthly Performance Trend */}
+                <div className="mt-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <Building className="w-5 h-5 mr-2" />
+                        Rendimiento Mensual
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <LineChart data={monthlyTrend}>
+                          <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                          <XAxis dataKey="month" />
+                          <YAxis />
+                          <Tooltip 
+                            formatter={(value, name) => [value, name === 'facturas' ? 'Facturas' : 'Certificados']}
+                            contentStyle={{ backgroundColor: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                          />
+                          <Legend />
+                          <Line
+                            type="monotone"
+                            dataKey="facturas"
+                            stroke="#3b82f6"
+                            strokeWidth={3}
+                            name="Facturas"
+                            dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="certificados"
+                            stroke="#10b981"
+                            strokeWidth={3}
+                            name="Certificados"
+                            dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
                     </CardContent>
                   </Card>
                 </div>
