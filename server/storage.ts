@@ -3,6 +3,8 @@ import {
   certifications,
   pricingRates,
   quoteRequests,
+  whatsappConversations,
+  whatsappMessages,
   type User, 
   type UpsertUser,
   type Certification,
@@ -11,7 +13,11 @@ import {
   type PricingRate,
   type InsertPricingRate,
   type QuoteRequest,
-  type InsertQuoteRequest
+  type InsertQuoteRequest,
+  type WhatsappConversation,
+  type InsertWhatsappConversation,
+  type WhatsappMessage,
+  type InsertWhatsappMessage
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, count, and } from "drizzle-orm";
@@ -43,6 +49,14 @@ export interface IStorage {
   updateQuoteRequest(uniqueLink: string, data: Partial<InsertQuoteRequest>): Promise<QuoteRequest | undefined>;
   getQuotesByUser(userId: string): Promise<QuoteRequest[]>;
   updateUserStripeInfo(userId: string, stripeAccountId: string, onboardingComplete: boolean): Promise<User | undefined>;
+  
+  // WhatsApp Business operations
+  updateWhatsAppConfig(userId: string, config: any): Promise<User | undefined>;
+  getWhatsAppConversations(userId: string): Promise<WhatsappConversation[]>;
+  createWhatsAppConversation(data: InsertWhatsappConversation): Promise<WhatsappConversation>;
+  updateConversationState(conversationId: number, state: string, metadata?: any): Promise<WhatsappConversation | undefined>;
+  getConversationByPhone(userId: string, clientPhone: string): Promise<WhatsappConversation | undefined>;
+  logWhatsAppMessage(data: InsertWhatsappMessage): Promise<WhatsappMessage>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -300,6 +314,76 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return user;
+  }
+
+  // WhatsApp Business operations
+  async updateWhatsAppConfig(userId: string, config: any): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({
+        whatsappBusinessToken: config.businessToken,
+        whatsappPhoneNumberId: config.phoneNumberId,
+        whatsappBusinessAccountId: config.businessAccountId,
+        whatsappWebhookVerifyToken: config.webhookVerifyToken,
+        whatsappIntegrationActive: config.integrationActive,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    return user;
+  }
+
+  async getWhatsAppConversations(userId: string): Promise<WhatsappConversation[]> {
+    return await db
+      .select()
+      .from(whatsappConversations)
+      .where(eq(whatsappConversations.userId, userId))
+      .orderBy(desc(whatsappConversations.lastMessageAt));
+  }
+
+  async createWhatsAppConversation(data: InsertWhatsappConversation): Promise<WhatsappConversation> {
+    const [conversation] = await db
+      .insert(whatsappConversations)
+      .values(data)
+      .returning();
+    
+    return conversation;
+  }
+
+  async updateConversationState(conversationId: number, state: string, metadata?: any): Promise<WhatsappConversation | undefined> {
+    const [conversation] = await db
+      .update(whatsappConversations)
+      .set({
+        conversationState: state,
+        lastMessageAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(whatsappConversations.id, conversationId))
+      .returning();
+    
+    return conversation;
+  }
+
+  async getConversationByPhone(userId: string, clientPhone: string): Promise<WhatsappConversation | undefined> {
+    const [conversation] = await db
+      .select()
+      .from(whatsappConversations)
+      .where(and(
+        eq(whatsappConversations.userId, userId),
+        eq(whatsappConversations.clientPhone, clientPhone)
+      ));
+    
+    return conversation;
+  }
+
+  async logWhatsAppMessage(data: InsertWhatsappMessage): Promise<WhatsappMessage> {
+    const [message] = await db
+      .insert(whatsappMessages)
+      .values(data)
+      .returning();
+    
+    return message;
   }
 
   private calculateEnergyRating(): string {

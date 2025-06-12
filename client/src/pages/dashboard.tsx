@@ -48,6 +48,17 @@ interface RecentCertification {
 
 export default function Dashboard() {
   const [selectedTab, setSelectedTab] = useState("dashboard");
+  const [showWhatsAppConfig, setShowWhatsAppConfig] = useState(false);
+  const [whatsappConfig, setWhatsappConfig] = useState({
+    businessToken: "",
+    phoneNumberId: "",
+    businessAccountId: "",
+    webhookVerifyToken: "",
+    integrationActive: false
+  });
+  
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: stats = {} as DashboardStats, isLoading: statsLoading } = useQuery({
     queryKey: ["/api/dashboard/stats"],
@@ -56,6 +67,65 @@ export default function Dashboard() {
   const { data: recentCertifications = [], isLoading: certificationsLoading } = useQuery({
     queryKey: ["/api/certifications/recent"],
   });
+
+  const { data: whatsappStatus } = useQuery({
+    queryKey: ["/api/whatsapp/status"],
+  });
+
+  const { data: whatsappConversations = [] } = useQuery({
+    queryKey: ["/api/whatsapp/conversations"],
+  });
+
+  const whatsappConfigMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const response = await apiRequest("POST", "/api/whatsapp/configure", data);
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "WhatsApp configurado",
+        description: "La integración con WhatsApp Business ha sido configurada correctamente.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/whatsapp/status"] });
+      setShowWhatsAppConfig(false);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "No se pudo configurar WhatsApp Business.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const createQuoteLinkMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/quote-requests", {});
+      return response.json();
+    },
+    onSuccess: (data) => {
+      const link = `${window.location.origin}/presupuesto/${data.uniqueLink}`;
+      const whatsappMessage = `Hola! Aquí tienes el enlace para solicitar tu certificación energética: ${link}`;
+      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(whatsappMessage)}`;
+      window.open(whatsappUrl, '_blank');
+      toast({
+        title: "Enlace generado",
+        description: "Se ha abierto WhatsApp con el mensaje y enlace.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "No se pudo generar el enlace.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleWhatsAppConfig = (e: React.FormEvent) => {
+    e.preventDefault();
+    whatsappConfigMutation.mutate(whatsappConfig);
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {

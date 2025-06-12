@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import Dashboard from "@/pages/dashboard";
 import CertificationWizard from "@/pages/certification-wizard";
+import CertificationForm from "@/pages/certification-form";
 import Certificates from "@/pages/certificates";
 import Properties from "@/pages/properties";
 import Pricing from "@/pages/pricing";
@@ -33,6 +34,7 @@ function Router() {
     <Switch>
       {/* Public routes (no authentication required) */}
       <Route path="/presupuesto/:uniqueLink" component={PublicQuote} />
+      <Route path="/certificacion-cliente/:uniqueLink" component={CertificationForm} />
       
       {!isAuthenticated ? (
         <Route path="/" component={Landing} />
