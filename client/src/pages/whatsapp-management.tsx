@@ -215,52 +215,52 @@ export default function WhatsAppManagement() {
         <div className="flex-1 overflow-auto bg-gray-50">
           <div className="flex h-full">
             {/* Sidebar - Conversations List */}
-      <div className="w-1/3 bg-white border-r border-gray-200 flex flex-col">
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Conversaciones WhatsApp</h2>
-            <div className="flex gap-2">
-              <Button 
-                size="sm" 
-                variant="outline"
-                onClick={() => setShowConfigDialog(true)}
-              >
-                <Settings className="w-4 h-4" />
-              </Button>
-              <Button 
-                size="sm"
-                onClick={handleCreateAndSendQuote}
-                disabled={createQuoteLinkMutation.isPending}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                <Plus className="w-4 h-4 mr-1" />
-                Nuevo Cliente
-              </Button>
-            </div>
-          </div>
+            <div className="w-1/3 bg-white border-r border-gray-200 flex flex-col">
+              <div className="p-4 border-b border-gray-200">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold text-gray-900">Conversaciones WhatsApp</h2>
+                  <div className="flex gap-2">
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => setShowConfigDialog(true)}
+                    >
+                      <Settings className="w-4 h-4" />
+                    </Button>
+                    <Button 
+                      size="sm"
+                      onClick={handleCreateAndSendQuote}
+                      disabled={createQuoteLinkMutation.isPending}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Nuevo Cliente
+                    </Button>
+                  </div>
+                </div>
 
-          {/* WhatsApp Status */}
-          <div className="flex items-center space-x-2 text-sm">
-            <div className={`w-2 h-2 rounded-full ${
-              whatsappStatus?.integrationActive ? 'bg-green-500' : 'bg-red-500'
-            }`}></div>
-            <span className={whatsappStatus?.integrationActive ? 'text-green-700' : 'text-red-700'}>
-              {whatsappStatus?.integrationActive ? 'WhatsApp Conectado' : 'WhatsApp Desconectado'}
-            </span>
-          </div>
-        </div>
+                {/* WhatsApp Status */}
+                <div className="flex items-center space-x-2 text-sm">
+                  <div className={`w-2 h-2 rounded-full ${
+                    whatsappStatus?.integrationActive ? 'bg-green-500' : 'bg-red-500'
+                  }`}></div>
+                  <span className={whatsappStatus?.integrationActive ? 'text-green-700' : 'text-red-700'}>
+                    {whatsappStatus?.integrationActive ? 'WhatsApp Conectado' : 'WhatsApp Desconectado'}
+                  </span>
+                </div>
+              </div>
 
-        {/* Conversations */}
-        <div className="flex-1 overflow-y-auto">
-          {loadingConversations ? (
-            <div className="p-4 text-center text-gray-500">Cargando conversaciones...</div>
-          ) : conversations.length === 0 ? (
-            <div className="p-4 text-center text-gray-500">
-              <MessageCircle className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-              <p>No hay conversaciones</p>
-              <p className="text-xs mt-1">Los clientes aparecerán aquí cuando escriban</p>
-            </div>
-          ) : (
+              {/* Conversations */}
+              <div className="flex-1 overflow-y-auto">
+                {loadingConversations ? (
+                  <div className="p-4 text-center text-gray-500">Cargando conversaciones...</div>
+                ) : conversations.length === 0 ? (
+                  <div className="p-4 text-center text-gray-500">
+                    <MessageCircle className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                    <p>No hay conversaciones</p>
+                    <p className="text-xs mt-1">Los clientes aparecerán aquí cuando escriban</p>
+                  </div>
+                ) : (
             conversations.map((conversation: WhatsAppConversation) => {
               const quote = getQuoteForConversation(conversation);
               return (
