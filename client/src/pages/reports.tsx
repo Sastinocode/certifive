@@ -4,29 +4,34 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import Sidebar from "@/components/layout/sidebar";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   Plus, 
   Search, 
   Download, 
   Euro, 
+  FileText, 
+  CreditCard, 
   TrendingUp, 
   TrendingDown,
-  CreditCard,
-  Banknote,
-  Smartphone,
-  Building2,
+  Receipt,
+  AlertCircle,
   CheckCircle,
   Clock,
-  AlertCircle
+  BarChart3,
+  Banknote,
+  Smartphone,
+  Building2
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -57,10 +62,11 @@ interface Collection {
   updatedAt: string;
 }
 
-export default function ReportsCollections() {
+export default function Reports() {
   const { isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
   
+  const [selectedTab, setSelectedTab] = useState("reports");
   const [dateRange, setDateRange] = useState("current_month");
   const [paymentMethodFilter, setPaymentMethodFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
@@ -116,13 +122,128 @@ export default function ReportsCollections() {
     },
   });
 
-  const filteredCollections = collections.filter((collection: Collection) => {
+  const filteredCollections = (collections as Collection[]).filter((collection: Collection) => {
     const matchesSearch = collection.concept.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (collection.clientName?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
                          (collection.paymentReference?.toLowerCase() || "").includes(searchTerm.toLowerCase());
     return matchesSearch;
   });
 
+  if (isLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex h-screen">
+      <Sidebar selectedTab={selectedTab} onTabChange={setSelectedTab} />
+      
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Mobile header */}
+        <div className="lg:hidden backdrop-blur-md bg-white/70 border-b border-white/30 px-4 py-3">
+          <h1 className="text-lg font-semibold text-gray-900">Informes Financieros</h1>
+        </div>
+
+        <div className="flex-1 overflow-auto bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
+          <div className="container mx-auto p-6">
+            <div className="mb-8">
+              <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-2">
+                Gestión de Cobros
+              </h1>
+              <p className="text-slate-600 dark:text-slate-400">
+                Administra todos los cobros e ingresos de tu negocio
+              </p>
+            </div>
+
+            <div className="mb-6 flex flex-col sm:flex-row gap-4">
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+                  <Input
+                    placeholder="Buscar por concepto, cliente o referencia..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              <Select value={dateRange} onValueChange={setDateRange}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Período" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="current_month">Mes actual</SelectItem>
+                  <SelectItem value="last_month">Mes anterior</SelectItem>
+                  <SelectItem value="current_year">Año actual</SelectItem>
+                  <SelectItem value="30">Últimos 30 días</SelectItem>
+                  <SelectItem value="90">Últimos 90 días</SelectItem>
+                  <SelectItem value="all">Todos</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={paymentMethodFilter} onValueChange={setPaymentMethodFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Método de pago" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="cash">Efectivo</SelectItem>
+                  <SelectItem value="card">Tarjeta</SelectItem>
+                  <SelectItem value="transfer">Transferencia</SelectItem>
+                  <SelectItem value="bizum">Bizum</SelectItem>
+                  <SelectItem value="stripe">Stripe</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <CardTitle>Cobros Registrados</CardTitle>
+                  <Button onClick={() => setShowCollectionDialog(true)}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Nuevo Cobro
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {collectionsLoading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto" />
+                    <p className="mt-2 text-slate-600">Cargando cobros...</p>
+                  </div>
+                ) : filteredCollections.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Euro className="w-12 h-12 text-slate-400 mx-auto mb-4" />
+                    <p className="text-slate-600">No hay cobros registrados</p>
+                  </div>
+                ) : (
+                  <CollectionsTable collections={filteredCollections} />
+                )}
+              </CardContent>
+            </Card>
+
+            <Dialog open={showCollectionDialog} onOpenChange={setShowCollectionDialog}>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>Registrar Nuevo Cobro</DialogTitle>
+                </DialogHeader>
+                <CollectionForm 
+                  onSubmit={createCollectionMutation.mutate}
+                  onCancel={() => setShowCollectionDialog(false)}
+                />
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CollectionsTable({ collections }: { collections: Collection[] }) {
   const getPaymentMethodBadge = (method: string) => {
     const methodConfig = {
       cash: { color: "bg-green-100 text-green-800", label: "Efectivo", icon: Euro },
@@ -161,150 +282,53 @@ export default function ReportsCollections() {
     );
   };
 
-  if (isLoading) {
-    return (
-      <div className="h-screen flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
-      <div className="container mx-auto p-6">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-2">
-            Gestión de Cobros
-          </h1>
-          <p className="text-slate-600 dark:text-slate-400">
-            Administra todos los cobros e ingresos de tu negocio
-          </p>
-        </div>
-
-        <div className="mb-6 flex flex-col sm:flex-row gap-4">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
-              <Input
-                placeholder="Buscar por concepto, cliente o referencia..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </div>
-          <Select value={dateRange} onValueChange={setDateRange}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Período" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="current_month">Mes actual</SelectItem>
-              <SelectItem value="last_month">Mes anterior</SelectItem>
-              <SelectItem value="current_year">Año actual</SelectItem>
-              <SelectItem value="30">Últimos 30 días</SelectItem>
-              <SelectItem value="90">Últimos 90 días</SelectItem>
-              <SelectItem value="all">Todos</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={paymentMethodFilter} onValueChange={setPaymentMethodFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Método de pago" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="cash">Efectivo</SelectItem>
-              <SelectItem value="card">Tarjeta</SelectItem>
-              <SelectItem value="transfer">Transferencia</SelectItem>
-              <SelectItem value="bizum">Bizum</SelectItem>
-              <SelectItem value="stripe">Stripe</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <CardTitle>Cobros Registrados</CardTitle>
-              <Button onClick={() => setShowCollectionDialog(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Nuevo Cobro
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {collectionsLoading ? (
-              <div className="text-center py-8">
-                <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto" />
-                <p className="mt-2 text-slate-600">Cargando cobros...</p>
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Fecha</TableHead>
+          <TableHead>Concepto</TableHead>
+          <TableHead>Cliente</TableHead>
+          <TableHead>Método</TableHead>
+          <TableHead>Importe</TableHead>
+          <TableHead>Estado</TableHead>
+          <TableHead>Acciones</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {collections.map((collection) => (
+          <TableRow key={collection.id}>
+            <TableCell>
+              {format(new Date(collection.collectionDate), "dd/MM/yyyy", { locale: es })}
+            </TableCell>
+            <TableCell className="font-medium">{collection.concept}</TableCell>
+            <TableCell>{collection.clientName || "-"}</TableCell>
+            <TableCell>
+              {getPaymentMethodBadge(collection.paymentMethod)}
+            </TableCell>
+            <TableCell className="font-semibold">
+              {parseFloat(collection.amount).toLocaleString('es-ES', {
+                style: 'currency',
+                currency: 'EUR'
+              })}
+            </TableCell>
+            <TableCell>
+              {getStatusBadge(collection.status)}
+            </TableCell>
+            <TableCell>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm">
+                  Ver detalles
+                </Button>
+                <Button variant="outline" size="sm">
+                  Editar
+                </Button>
               </div>
-            ) : filteredCollections.length === 0 ? (
-              <div className="text-center py-8">
-                <Euro className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-                <p className="text-slate-600">No hay cobros registrados</p>
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Fecha</TableHead>
-                    <TableHead>Concepto</TableHead>
-                    <TableHead>Cliente</TableHead>
-                    <TableHead>Método</TableHead>
-                    <TableHead>Importe</TableHead>
-                    <TableHead>Estado</TableHead>
-                    <TableHead>Acciones</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredCollections.map((collection: Collection) => (
-                    <TableRow key={collection.id}>
-                      <TableCell>
-                        {format(new Date(collection.collectionDate), "dd/MM/yyyy", { locale: es })}
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {collection.concept}
-                      </TableCell>
-                      <TableCell>
-                        {collection.clientName || "-"}
-                      </TableCell>
-                      <TableCell>
-                        {getPaymentMethodBadge(collection.paymentMethod)}
-                      </TableCell>
-                      <TableCell className="font-semibold">
-                        {parseFloat(collection.amount).toLocaleString('es-ES', {
-                          style: 'currency',
-                          currency: 'EUR'
-                        })}
-                      </TableCell>
-                      <TableCell>
-                        {getStatusBadge(collection.status)}
-                      </TableCell>
-                      <TableCell>
-                        <Button variant="outline" size="sm">
-                          Ver detalles
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-
-        <Dialog open={showCollectionDialog} onOpenChange={setShowCollectionDialog}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Registrar Nuevo Cobro</DialogTitle>
-            </DialogHeader>
-            <CollectionForm 
-              onSubmit={createCollectionMutation.mutate}
-              onCancel={() => setShowCollectionDialog(false)}
-            />
-          </DialogContent>
-        </Dialog>
-      </div>
-    </div>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   );
 }
 
@@ -445,11 +469,12 @@ function CollectionForm({ onSubmit, onCancel }: {
 
       <div>
         <Label htmlFor="notes">Notas</Label>
-        <Input
+        <Textarea
           id="notes"
           value={formData.notes}
           onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
           placeholder="Notas adicionales"
+          rows={3}
         />
       </div>
 
