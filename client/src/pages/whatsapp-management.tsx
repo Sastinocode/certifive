@@ -245,15 +245,6 @@ export default function WhatsAppManagement() {
               >
                 <Settings className="w-4 h-4" />
               </Button>
-              <Button 
-                size="sm"
-                onClick={handleCreateAndSendQuote}
-                disabled={createQuoteLinkMutation.isPending}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                <Plus className="w-4 h-4 mr-1" />
-                Nuevo Cliente
-              </Button>
             </div>
           </div>
 
