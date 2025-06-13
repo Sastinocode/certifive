@@ -154,6 +154,59 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  // Local authentication operations
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async createUser(userData: Omit<UpsertUser, 'id'>): Promise<User> {
+    const userId = nanoid();
+    const [user] = await db
+      .insert(users)
+      .values({
+        ...userData,
+        id: userId,
+      })
+      .returning();
+    return user;
+  }
+
+  async updateUserPassword(userId: string, passwordHash: string): Promise<void> {
+    await db
+      .update(users)
+      .set({ passwordHash, updatedAt: new Date() })
+      .where(eq(users.id, userId));
+  }
+
+  async updateUserVerification(userId: string, isVerified: boolean): Promise<void> {
+    await db
+      .update(users)
+      .set({ isVerified, verificationToken: null, updatedAt: new Date() })
+      .where(eq(users.id, userId));
+  }
+
+  // Demo request operations
+  async createDemoRequest(data: InsertDemoRequest): Promise<DemoRequest> {
+    const [demoRequest] = await db.insert(demoRequests).values(data).returning();
+    return demoRequest;
+  }
+
+  async getDemoRequests(): Promise<DemoRequest[]> {
+    return await db.select().from(demoRequests).orderBy(desc(demoRequests.createdAt));
+  }
+
+  async updateDemoRequestStatus(id: number, status: string, processedBy?: string): Promise<void> {
+    await db
+      .update(demoRequests)
+      .set({ 
+        status, 
+        processedBy, 
+        processedAt: new Date() 
+      })
+      .where(eq(demoRequests.id, id));
+  }
+
   // Folder operations
   async getFolders(userId: string): Promise<Folder[]> {
     return await db.select().from(folders).where(eq(folders.userId, userId)).orderBy(folders.name);

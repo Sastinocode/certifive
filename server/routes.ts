@@ -3,7 +3,8 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { reportGenerator } from "./reportGenerator";
-import { insertCertificationSchema, updateCertificationSchema, insertPricingRateSchema, insertQuoteRequestSchema, insertFolderSchema, insertWhatsappFlowTemplateSchema } from "@shared/schema";
+import { authenticateToken, hashPassword, comparePassword, generateToken } from "./auth";
+import { insertCertificationSchema, updateCertificationSchema, insertPricingRateSchema, insertQuoteRequestSchema, insertFolderSchema, insertWhatsappFlowTemplateSchema, insertDemoRequestSchema } from "@shared/schema";
 import { z } from "zod";
 import multer from "multer";
 import path from "path";
@@ -33,7 +34,142 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   await setupAuth(app);
 
-  // Auth routes
+  // Local authentication routes
+  const registerSchema = z.object({
+    email: z.string().email("Email inválido"),
+    password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
+    firstName: z.string().min(1, "El nombre es requerido"),
+    lastName: z.string().min(1, "El apellido es requerido"),
+    company: z.string().optional(),
+    phone: z.string().optional(),
+  });
+
+  const loginSchema = z.object({
+    email: z.string().email("Email inválido"),
+    password: z.string().min(1, "La contraseña es requerida"),
+  });
+
+  // Register new user
+  app.post('/api/auth/register', async (req, res) => {
+    try {
+      const validatedData = registerSchema.parse(req.body);
+      
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(validatedData.email);
+      if (existingUser) {
+        return res.status(400).json({ message: "Este email ya está registrado" });
+      }
+
+      // Hash password and create user
+      const passwordHash = await hashPassword(validatedData.password);
+      const user = await storage.createUser({
+        ...validatedData,
+        passwordHash,
+        isVerified: true, // Auto-verify for now
+        role: "user",
+      });
+
+      // Generate token
+      const token = generateToken(user.id);
+      
+      res.status(201).json({
+        message: "Usuario registrado exitosamente",
+        token,
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          company: user.company,
+          role: user.role,
+        },
+      });
+    } catch (error: any) {
+      console.error("Error en registro:", error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  // Login user
+  app.post('/api/auth/login', async (req, res) => {
+    try {
+      const validatedData = loginSchema.parse(req.body);
+      
+      // Find user by email
+      const user = await storage.getUserByEmail(validatedData.email);
+      if (!user || !user.passwordHash) {
+        return res.status(401).json({ message: "Credenciales inválidas" });
+      }
+
+      // Verify password
+      const isValidPassword = await comparePassword(validatedData.password, user.passwordHash);
+      if (!isValidPassword) {
+        return res.status(401).json({ message: "Credenciales inválidas" });
+      }
+
+      // Update last login
+      await storage.updateUserPassword(user.id, user.passwordHash); // This will update the updatedAt field
+      
+      // Generate token
+      const token = generateToken(user.id);
+      
+      res.json({
+        message: "Inicio de sesión exitoso",
+        token,
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          company: user.company,
+          role: user.role,
+        },
+      });
+    } catch (error: any) {
+      console.error("Error en login:", error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  // Demo account request
+  app.post('/api/auth/demo-request', async (req, res) => {
+    try {
+      const validatedData = insertDemoRequestSchema.parse(req.body);
+      
+      const demoRequest = await storage.createDemoRequest(validatedData);
+      
+      res.status(201).json({
+        message: "Solicitud de cuenta demo enviada exitosamente",
+        id: demoRequest.id,
+      });
+    } catch (error: any) {
+      console.error("Error en solicitud demo:", error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  // Get current user (JWT-based)
+  app.get('/api/auth/me', authenticateToken, async (req: any, res) => {
+    res.json({
+      id: req.user.id,
+      email: req.user.email,
+      firstName: req.user.firstName,
+      lastName: req.user.lastName,
+      company: req.user.company,
+      role: req.user.role,
+    });
+  });
+
+  // Replit Auth routes (existing)
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
