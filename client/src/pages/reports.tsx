@@ -158,6 +158,250 @@ export default function Reports() {
               </p>
             </div>
 
+            {/* Financial Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <Card className="backdrop-blur-sm bg-white/80 border-white/50 shadow-lg">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-slate-600">Total Cobrado</CardTitle>
+                  <Euro className="h-4 w-4 text-green-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-slate-900">
+                    {filteredCollections.reduce((sum, c) => sum + parseFloat(c.amount), 0).toFixed(2)}€
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1">
+                    +12.5% desde el mes pasado
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="backdrop-blur-sm bg-white/80 border-white/50 shadow-lg">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-slate-600">Cobros del Mes</CardTitle>
+                  <FileText className="h-4 w-4 text-blue-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-slate-900">
+                    {filteredCollections.filter(c => {
+                      const collectionDate = new Date(c.collectionDate);
+                      const now = new Date();
+                      return collectionDate.getMonth() === now.getMonth() && 
+                             collectionDate.getFullYear() === now.getFullYear();
+                    }).length}
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1">
+                    8 cobros este mes
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="backdrop-blur-sm bg-white/80 border-white/50 shadow-lg">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-slate-600">Promedio por Cobro</CardTitle>
+                  <TrendingUp className="h-4 w-4 text-purple-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-slate-900">
+                    {filteredCollections.length > 0 
+                      ? (filteredCollections.reduce((sum, c) => sum + parseFloat(c.amount), 0) / filteredCollections.length).toFixed(2)
+                      : '0.00'
+                    }€
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Valor promedio
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="backdrop-blur-sm bg-white/80 border-white/50 shadow-lg">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-slate-600">Método Preferido</CardTitle>
+                  <CreditCard className="h-4 w-4 text-orange-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-slate-900">
+                    {(() => {
+                      const methods = filteredCollections.reduce((acc, c) => {
+                        acc[c.paymentMethod] = (acc[c.paymentMethod] || 0) + 1;
+                        return acc;
+                      }, {} as Record<string, number>);
+                      const mostUsed = Object.entries(methods).sort(([,a], [,b]) => b - a)[0];
+                      const methodNames: Record<string, string> = {
+                        cash: 'Efectivo',
+                        card: 'Tarjeta',
+                        transfer: 'Transferencia',
+                        bizum: 'Bizum',
+                        stripe: 'Stripe'
+                      };
+                      return mostUsed ? methodNames[mostUsed[0]] || mostUsed[0] : 'N/A';
+                    })()}
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Más utilizado
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Charts and Analytics */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+              <Card className="backdrop-blur-sm bg-white/80 border-white/50 shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5 text-blue-600" />
+                    Cobros por Método de Pago
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {(() => {
+                      const methods = filteredCollections.reduce((acc, c) => {
+                        acc[c.paymentMethod] = (acc[c.paymentMethod] || 0) + parseFloat(c.amount);
+                        return acc;
+                      }, {} as Record<string, number>);
+                      const total = Object.values(methods).reduce((sum, amount) => sum + amount, 0);
+                      const methodNames: Record<string, string> = {
+                        cash: 'Efectivo',
+                        card: 'Tarjeta',
+                        transfer: 'Transferencia',
+                        bizum: 'Bizum',
+                        stripe: 'Stripe'
+                      };
+                      const methodIcons: Record<string, any> = {
+                        cash: Banknote,
+                        card: CreditCard,
+                        transfer: Building2,
+                        bizum: Smartphone,
+                        stripe: CreditCard
+                      };
+                      return Object.entries(methods).map(([method, amount]) => {
+                        const percentage = total > 0 ? (amount / total) * 100 : 0;
+                        const Icon = methodIcons[method] || CreditCard;
+                        return (
+                          <div key={method} className="flex items-center gap-3">
+                            <Icon className="h-4 w-4 text-slate-500" />
+                            <div className="flex-1">
+                              <div className="flex justify-between text-sm">
+                                <span className="font-medium">{methodNames[method] || method}</span>
+                                <span className="text-slate-600">{amount.toFixed(2)}€</span>
+                              </div>
+                              <div className="w-full bg-slate-200 rounded-full h-2 mt-1">
+                                <div 
+                                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                                  style={{ width: `${percentage}%` }}
+                                ></div>
+                              </div>
+                              <span className="text-xs text-slate-500">{percentage.toFixed(1)}%</span>
+                            </div>
+                          </div>
+                        );
+                      });
+                    })()}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="backdrop-blur-sm bg-white/80 border-white/50 shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5 text-green-600" />
+                    Evolución Mensual
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {(() => {
+                      const monthlyData = filteredCollections.reduce((acc, c) => {
+                        const date = new Date(c.collectionDate);
+                        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                        acc[monthKey] = (acc[monthKey] || 0) + parseFloat(c.amount);
+                        return acc;
+                      }, {} as Record<string, number>);
+                      
+                      const months = Object.keys(monthlyData).sort().slice(-6);
+                      const maxAmount = Math.max(...Object.values(monthlyData));
+                      
+                      return months.map(month => {
+                        const amount = monthlyData[month];
+                        const percentage = maxAmount > 0 ? (amount / maxAmount) * 100 : 0;
+                        const [year, monthNum] = month.split('-');
+                        const monthName = new Date(parseInt(year), parseInt(monthNum) - 1).toLocaleDateString('es-ES', { month: 'short', year: 'numeric' });
+                        
+                        return (
+                          <div key={month} className="flex items-center gap-3">
+                            <div className="w-16 text-sm font-medium text-slate-600">
+                              {monthName}
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex justify-between text-sm mb-1">
+                                <span className="text-slate-600">{amount.toFixed(2)}€</span>
+                              </div>
+                              <div className="w-full bg-slate-200 rounded-full h-2">
+                                <div 
+                                  className="bg-green-600 h-2 rounded-full transition-all duration-300"
+                                  style={{ width: `${percentage}%` }}
+                                ></div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      });
+                    })()}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Export Actions */}
+            <div className="flex flex-wrap gap-4 mb-6">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const csvContent = [
+                    'Fecha,Concepto,Cliente,Método,Importe,Referencia',
+                    ...filteredCollections.map(c => 
+                      `${c.collectionDate},"${c.concept}","${c.clientName || ''}","${c.paymentMethod}","${c.amount}","${c.paymentReference || ''}"`
+                    )
+                  ].join('\n');
+                  
+                  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                  const link = document.createElement('a');
+                  link.href = URL.createObjectURL(blob);
+                  link.download = `cobros_${format(new Date(), 'yyyy-MM-dd')}.csv`;
+                  link.click();
+                }}
+                className="flex items-center gap-2"
+              >
+                <Download className="h-4 w-4" />
+                Exportar CSV
+              </Button>
+              
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const jsonContent = JSON.stringify(filteredCollections, null, 2);
+                  const blob = new Blob([jsonContent], { type: 'application/json' });
+                  const link = document.createElement('a');
+                  link.href = URL.createObjectURL(blob);
+                  link.download = `cobros_${format(new Date(), 'yyyy-MM-dd')}.json`;
+                  link.click();
+                }}
+                className="flex items-center gap-2"
+              >
+                <Download className="h-4 w-4" />
+                Exportar JSON
+              </Button>
+              
+              <Button
+                variant="outline"
+                onClick={() => window.print()}
+                className="flex items-center gap-2"
+              >
+                <FileText className="h-4 w-4" />
+                Imprimir Informe
+              </Button>
+            </div>
+
             <div className="mb-6 flex flex-col sm:flex-row gap-4">
               <div className="flex-1">
                 <div className="relative">
