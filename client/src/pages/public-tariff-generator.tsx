@@ -86,8 +86,8 @@ export default function PublicTariffGenerator() {
   };
 
   // Get available property types and locations from pricing rates
-  const availablePropertyTypes = [...new Set(pricingRates.map(rate => rate.propertyType))];
-  const availableLocations = [...new Set(pricingRates.map(rate => rate.location))];
+  const availablePropertyTypes = Array.from(new Set(pricingRates.map(rate => rate.propertyType)));
+  const availableLocations = Array.from(new Set(pricingRates.map(rate => rate.location)));
 
   // Get available services for selected rate
   const getAvailableServices = () => {
