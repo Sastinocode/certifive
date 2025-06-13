@@ -32,7 +32,7 @@ import {
   type InsertCollection
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, count, and, isNull, gte } from "drizzle-orm";
+import { eq, desc, count, and, isNull, gte, lte, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
 // Interface for storage operations
@@ -204,11 +204,21 @@ export class DatabaseStorage implements IStorage {
         eq(certifications.status, 'in_progress')
       ));
 
+    // Calculate monthly income from all collections for now
+    const allCollections = await db
+      .select()
+      .from(collections)
+      .where(eq(collections.userId, userId));
+
+    const monthlyIncome = allCollections.reduce((total, collection) => {
+      return total + parseFloat(collection.amount);
+    }, 0);
+
     return {
       activeCertificates: completedCerts?.count || 0,
       inProgress: inProgressCerts?.count || 0,
       expiringSoon: 0,
-      co2Savings: 0
+      monthlyIncome: monthlyIncome?.total || 0
     };
   }
 
