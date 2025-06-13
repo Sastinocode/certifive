@@ -1,126 +1,91 @@
-import { useState, useEffect } from "react";
-import { useParams } from "wouter";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { useState } from "react";
+import { useParams, useLocation } from "wouter";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import Sidebar from "@/components/layout/sidebar";
-import StepIndicators from "@/components/certification/step-indicators";
+import { CheckCircle, ArrowLeft, ArrowRight, Save, Home } from "lucide-react";
 import GeneralDataForm from "@/components/certification/general-data-form";
 import HousingDetailsForm from "@/components/certification/housing-details-form";
 import InstallationsForm from "@/components/certification/installations-form";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, ArrowRight, Check } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+
+interface CertificationData {
+  // Administrative data from Word template
+  dni: string;
+  fullName: string;
+  cadastralRef: string;
+  phone: string;
+  email: string;
+  
+  // Property data from Word template
+  habitableFloors: number;
+  rooms: number;
+  
+  // Facade and window details from Word template
+  facadeOrientation: string;
+  windowDetails: string;
+  
+  // Building structure from Word template
+  roofType: string;
+  
+  // HVAC systems from Word template
+  airConditioningSystem: string;
+  heatingSystem: string;
+  
+  // Water heating system from Word template
+  waterHeatingType: string;
+  waterHeatingCapacity?: number;
+  
+  // Photos
+  photos: string[];
+  
+  // Additional info
+  observations?: string;
+}
+
+const steps = [
+  { id: 1, title: "Datos Generales", component: "general" },
+  { id: 2, title: "Detalles de Vivienda", component: "housing" },
+  { id: 3, title: "Instalaciones", component: "installations" }
+];
 
 export default function CertificationWizard() {
-  const { id } = useParams<{ id?: string }>();
-  const [currentStep, setCurrentStep] = useState(1);
-  const [formData, setFormData] = useState({});
+  const { id } = useParams();
+  const [, navigate] = useLocation();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const [currentStep, setCurrentStep] = useState(1);
+  const [formData, setFormData] = useState<Partial<CertificationData>>({});
 
-  // Load existing certification if editing
-  const { data: certification } = useQuery({
-    queryKey: ["/api/certifications", id],
-    enabled: !!id,
-  });
-
-  useEffect(() => {
-    if (certification) {
-      setFormData(certification);
-    }
-  }, [certification]);
-
-  const createMutation = useMutation({
-    mutationFn: async (data: any) => {
-      const response = await apiRequest("POST", "/api/certifications", data);
-      return response.json();
+  const createCertificationMutation = useMutation({
+    mutationFn: async (data: CertificationData) => {
+      return apiRequest("POST", "/api/certifications", data);
     },
-    onSuccess: (newCertification) => {
+    onSuccess: (result) => {
       toast({
         title: "Certificación creada",
-        description: "Los datos generales han sido guardados correctamente.",
+        description: "La certificación se ha creado exitosamente."
       });
-      // Update URL to editing mode
-      window.history.replaceState({}, "", `/certificacion/${newCertification.id}`);
       queryClient.invalidateQueries({ queryKey: ["/api/certifications"] });
+      navigate("/certificados");
     },
     onError: (error) => {
       toast({
         title: "Error",
-        description: "No se pudo crear la certificación. Inténtalo de nuevo.",
-        variant: "destructive",
+        description: "Error al crear la certificación: " + error.message,
+        variant: "destructive"
       });
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: async (data: any) => {
-      const response = await apiRequest("PATCH", `/api/certifications/${id}`, data);
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Cambios guardados",
-        description: "La certificación ha sido actualizada correctamente.",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/certifications"] });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "No se pudieron guardar los cambios. Inténtalo de nuevo.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const completeMutation = useMutation({
-    mutationFn: async () => {
-      const response = await apiRequest("POST", `/api/certifications/${id}/complete`, {});
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Certificación completada",
-        description: "El certificado energético ha sido generado correctamente.",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/certifications"] });
-      // Redirect to dashboard
-      window.location.href = "/";
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "No se pudo completar la certificación. Inténtalo de nuevo.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleNext = async () => {
-    const currentStepData = getCurrentStepData();
-    
-    if (!validateCurrentStep(currentStepData)) {
-      return;
     }
+  });
 
-    const updatedFormData = { ...formData, ...currentStepData };
-    setFormData(updatedFormData);
+  const updateFormData = (stepData: Partial<CertificationData>) => {
+    setFormData(prev => ({ ...prev, ...stepData }));
+  };
 
-    // Save data to server
-    try {
-      if (id) {
-        await updateMutation.mutateAsync(currentStepData);
-      } else if (currentStep === 1) {
-        const newCertification = await createMutation.mutateAsync(updatedFormData);
-        setFormData(newCertification);
-      }
-
-      if (currentStep < 3) {
-        setCurrentStep(currentStep + 1);
-      }
-    } catch (error) {
-      // Error handling is done in mutation callbacks
+  const handleNext = () => {
+    if (currentStep < steps.length) {
+      setCurrentStep(currentStep + 1);
     }
   };
 
@@ -130,134 +95,135 @@ export default function CertificationWizard() {
     }
   };
 
-  const handleComplete = async () => {
-    const currentStepData = getCurrentStepData();
+  const handleSubmit = () => {
+    // Validate required fields
+    const requiredFields = ['dni', 'fullName', 'cadastralRef', 'phone', 'email'];
+    const missingFields = requiredFields.filter(field => !formData[field as keyof CertificationData]);
     
-    if (!validateCurrentStep(currentStepData)) {
+    if (missingFields.length > 0) {
+      toast({
+        title: "Campos requeridos",
+        description: "Por favor complete todos los campos obligatorios.",
+        variant: "destructive"
+      });
       return;
     }
 
-    const updatedFormData = { ...formData, ...currentStepData };
-    
-    try {
-      // First update with final data
-      if (id) {
-        await updateMutation.mutateAsync(currentStepData);
-        // Then complete the certification
-        await completeMutation.mutateAsync();
-      }
-    } catch (error) {
-      // Error handling is done in mutation callbacks
-    }
+    createCertificationMutation.mutate(formData as CertificationData);
   };
 
-  const getCurrentStepData = () => {
-    const stepForms = document.querySelectorAll('.step-form');
-    const currentForm = stepForms[currentStep - 1] as HTMLFormElement;
-    
-    if (!currentForm) return {};
-
-    const formData = new FormData(currentForm);
-    const data: any = {};
-    
-    for (const [key, value] of formData.entries()) {
-      data[key] = value;
-    }
-    
-    return data;
-  };
-
-  const validateCurrentStep = (data: any) => {
-    switch (currentStep) {
-      case 1:
-        return data.dni && data.fullName && data.cadastralRef;
-      case 2:
-        return data.facadeOrientation && data.roofType;
-      case 3:
-        return data.hvacSystem && data.heatingSystem && data.waterHeatingType;
-      default:
-        return true;
-    }
-  };
-
-  const updateFormData = (stepData: any) => {
-    setFormData(prev => ({ ...prev, ...stepData }));
-  };
+  const progress = (currentStep / steps.length) * 100;
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      <Sidebar selectedTab="certifications" onTabChange={() => {}} />
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 p-8">
+      {/* Header with back button */}
+      <div className="max-w-4xl mx-auto mb-8">
+        <Button
+          variant="outline"
+          onClick={() => navigate("/certificados")}
+          className="mb-4"
+        >
+          <Home className="w-4 h-4 mr-2" />
+          Volver a Certificados
+        </Button>
+      </div>
       
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Mobile header */}
-        <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-3">
-          <h1 className="text-lg font-semibold text-gray-900">Nueva Certificación</h1>
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            {id ? "Editar Certificación" : "Nueva Certificación Energética"}
+          </h1>
+          <p className="text-gray-600">
+            Complete los datos siguiendo el formulario oficial CEE
+          </p>
         </div>
 
-        {/* Main content */}
-        <div className="flex-1 overflow-auto p-6">
-          {/* Progress Steps */}
-          <StepIndicators currentStep={currentStep} />
+        {/* Progress indicator */}
+        <Card className="mb-6">
+            <CardContent className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                {steps.map((step, index) => (
+                  <div key={step.id} className="flex items-center">
+                    <div className={`
+                      w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
+                      ${currentStep > step.id ? 'bg-green-600 text-white' : 
+                        currentStep === step.id ? 'bg-blue-600 text-white' : 
+                        'bg-gray-200 text-gray-600'}
+                    `}>
+                      {currentStep > step.id ? <CheckCircle className="w-4 h-4" /> : step.id}
+                    </div>
+                    <span className={`ml-2 text-sm ${currentStep === step.id ? 'font-medium' : ''}`}>
+                      {step.title}
+                    </span>
+                    {index < steps.length - 1 && (
+                      <div className={`w-16 h-0.5 mx-4 ${currentStep > step.id ? 'bg-green-600' : 'bg-gray-200'}`} />
+                    )}
+                  </div>
+                ))}
+              </div>
+              <Progress value={progress} className="w-full" />
+            </CardContent>
+          </Card>
 
-          {/* Step Content */}
-          <div className="max-w-3xl mx-auto">
-            {currentStep === 1 && (
-              <GeneralDataForm 
-                data={formData} 
-                onDataChange={updateFormData}
-              />
-            )}
-            
-            {currentStep === 2 && (
-              <HousingDetailsForm 
-                data={formData} 
-                onDataChange={updateFormData}
-              />
-            )}
-            
-            {currentStep === 3 && (
-              <InstallationsForm 
-                data={formData} 
-                onDataChange={updateFormData}
-                certificationId={id}
-              />
-            )}
+          {/* Form content */}
+          <Card>
+            <CardHeader>
+              <CardTitle>{steps[currentStep - 1].title}</CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              {currentStep === 1 && (
+                <GeneralDataForm 
+                  data={formData} 
+                  onDataChange={updateFormData}
+                />
+              )}
+              {currentStep === 2 && (
+                <HousingDetailsForm 
+                  data={formData} 
+                  onDataChange={updateFormData}
+                />
+              )}
+              {currentStep === 3 && (
+                <InstallationsForm 
+                  data={formData} 
+                  onDataChange={updateFormData}
+                />
+              )}
 
-            {/* Navigation */}
-            <div className="flex justify-between mt-8">
-              {currentStep > 1 && (
-                <Button 
-                  variant="outline" 
+              {/* Navigation buttons */}
+              <div className="flex justify-between mt-8">
+                <Button
+                  variant="outline"
                   onClick={handlePrevious}
-                  disabled={updateMutation.isPending || createMutation.isPending}
+                  disabled={currentStep === 1}
                 >
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Anterior
                 </Button>
-              )}
-              
-              <div className="ml-auto">
-                {currentStep < 3 ? (
-                  <Button 
-                    onClick={handleNext}
-                    disabled={updateMutation.isPending || createMutation.isPending}
-                  >
-                    {updateMutation.isPending || createMutation.isPending ? "Guardando..." : "Siguiente"}
-                    <ArrowRight className="w-4 h-4 ml-2" />
+
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => navigate("/certificados")}>
+                    <Save className="w-4 h-4 mr-2" />
+                    Guardar Borrador
                   </Button>
-                ) : (
-                  <Button 
-                    onClick={handleComplete}
-                    disabled={completeMutation.isPending || updateMutation.isPending}
-                    className="bg-success hover:bg-success/90"
-                  >
-                    {completeMutation.isPending ? "Completando..." : "Completar Certificación"}
-                    <Check className="w-4 h-4 ml-2" />
-                  </Button>
-                )}
+                  
+                  {currentStep === steps.length ? (
+                    <Button 
+                      onClick={handleSubmit}
+                      disabled={createCertificationMutation.isPending}
+                    >
+                      {createCertificationMutation.isPending ? "Creando..." : "Crear Certificación"}
+                    </Button>
+                  ) : (
+                    <Button onClick={handleNext}>
+                      Siguiente
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  )}
+                </div>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
