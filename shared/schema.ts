@@ -326,6 +326,50 @@ export const collections = pgTable("collections", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// WhatsApp Conversation Flow Templates
+export const whatsappFlowTemplates = pgTable("whatsapp_flow_templates", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  
+  // Template identification
+  name: varchar("name").notNull(),
+  description: text("description"),
+  isActive: boolean("is_active").default(true),
+  
+  // Flow configuration
+  welcomeMessage: text("welcome_message").notNull(),
+  budgetCalculatorMessage: text("budget_calculator_message"),
+  budgetCalculatorLink: varchar("budget_calculator_link"),
+  
+  // FAQ responses
+  faqResponses: jsonb("faq_responses"), // Array of {question, answer}
+  
+  // Service information
+  serviceDescription: text("service_description"),
+  servicePolicies: text("service_policies"),
+  deliveryTimeInfo: text("delivery_time_info"),
+  
+  // Payment information
+  paymentMethods: text("payment_methods"),
+  paymentPolicies: text("payment_policies"),
+  paymentLinks: jsonb("payment_links"), // Array of {name, url, description}
+  
+  // Contact and scheduling
+  contactInfo: text("contact_info"),
+  schedulingInfo: text("scheduling_info"),
+  workingHours: text("working_hours"),
+  
+  // Automated responses
+  fallbackMessage: text("fallback_message"), // When user message is not understood
+  endConversationMessage: text("end_conversation_message"),
+  
+  // Flow triggers and keywords
+  triggerKeywords: jsonb("trigger_keywords"), // Array of keywords that trigger specific responses
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const insertPricingRateSchema = createInsertSchema(pricingRates).omit({
   id: true,
   createdAt: true,
@@ -361,6 +405,12 @@ export const insertCollectionSchema = createInsertSchema(collections).omit({
   updatedAt: true,
 });
 
+export const insertWhatsappFlowTemplateSchema = createInsertSchema(whatsappFlowTemplates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type Folder = typeof folders.$inferSelect;
@@ -382,3 +432,5 @@ export type Payment = typeof payments.$inferSelect;
 export type InsertPayment = z.infer<typeof insertPaymentSchema>;
 export type Collection = typeof collections.$inferSelect;
 export type InsertCollection = z.infer<typeof insertCollectionSchema>;
+export type WhatsappFlowTemplate = typeof whatsappFlowTemplates.$inferSelect;
+export type InsertWhatsappFlowTemplate = z.infer<typeof insertWhatsappFlowTemplateSchema>;
