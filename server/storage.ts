@@ -218,7 +218,7 @@ export class DatabaseStorage implements IStorage {
       activeCertificates: completedCerts?.count || 0,
       inProgress: inProgressCerts?.count || 0,
       expiringSoon: 0,
-      monthlyIncome: monthlyIncome?.total || 0
+      monthlyIncome: monthlyIncome || 0
     };
   }
 
