@@ -58,31 +58,37 @@ export const folders = pgTable("folders", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Certifications table
+// Certifications table - optimized for the Word document template
 export const certifications = pgTable("certifications", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull().references(() => users.id),
   folderId: integer("folder_id").references(() => folders.id, { onDelete: "set null" }),
   
-  // General data
+  // Administrative data (from template)
   dni: varchar("dni").notNull(),
   fullName: varchar("full_name").notNull(),
   cadastralRef: varchar("cadastral_ref").notNull(),
   phone: varchar("phone"),
   email: varchar("email"),
-  floors: integer("floors"),
-  rooms: integer("rooms"),
   
-  // Housing details
-  facadeOrientation: text("facade_orientation"),
-  roofType: varchar("roof_type"),
-  windows: jsonb("windows"), // Array of window objects
+  // Property structure data (from template)
+  habitableFloors: integer("habitable_floors"), // Nº de plantas habitables (sin contar sótano)
+  rooms: integer("rooms"), // Nº de habitaciones
   
-  // Installations
-  hvacSystem: varchar("hvac_system"),
-  heatingSystem: varchar("heating_system"),
-  waterHeatingType: varchar("water_heating_type"),
-  waterHeatingCapacity: integer("water_heating_capacity"),
+  // Facade and window details (from template)
+  facadeOrientation: text("facade_orientation"), // Orientación de fachadas y ventanas por estancia
+  windowDetails: text("window_details"), // Material, color, tipo vidrio, caja persiana
+  
+  // Building structure (from template)
+  roofType: varchar("roof_type"), // Tipo cubierta (plana/inclinada)
+  
+  // HVAC and heating systems (from template)
+  airConditioningSystem: varchar("air_conditioning_system"), // Equipos climatización
+  heatingSystem: varchar("heating_system"), // Equipos calefacción (radiadores si/no)
+  
+  // Water heating system (from template)
+  waterHeatingType: varchar("water_heating_type"), // Eléctrico, gas natural, gas butano
+  waterHeatingCapacity: integer("water_heating_capacity"), // Capacidad en litros si eléctrico
   
   // Energy calculations
   energyRating: varchar("energy_rating", { length: 1 }),
@@ -91,7 +97,7 @@ export const certifications = pgTable("certifications", {
   
   // Status and metadata
   status: varchar("status").notNull().default("draft"), // draft, in_progress, completed
-  photos: jsonb("photos"), // Array of photo URLs
+  photos: jsonb("photos"), // Array of photo URLs including facade photos
   certificateUrl: varchar("certificate_url"),
   
   createdAt: timestamp("created_at").defaultNow(),
