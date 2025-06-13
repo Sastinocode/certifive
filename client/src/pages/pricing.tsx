@@ -27,7 +27,8 @@ import {
   Car,
   Settings2,
   CheckSquare,
-  Copy
+  Copy,
+  Share
 } from "lucide-react";
 
 interface PricingRate {
@@ -447,7 +448,7 @@ export default function Pricing() {
   if (isLoading) {
     return (
       <div className="flex min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-green-900/20 dark:to-blue-900/20">
-        <Sidebar />
+        <Sidebar selectedTab="pricing" onTabChange={() => {}} />
         <div className="flex-1 p-8">
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
@@ -459,7 +460,7 @@ export default function Pricing() {
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-green-900/20 dark:to-blue-900/20">
-      <Sidebar />
+      <Sidebar selectedTab="pricing" onTabChange={() => {}} />
       <div className="flex-1 p-8 space-y-8">
         <div className="flex items-center justify-between">
           <div>
