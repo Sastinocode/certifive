@@ -24,10 +24,11 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
-// User storage table (mandatory for Replit Auth)
+// User storage table - Enhanced for local authentication
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().notNull(),
-  email: varchar("email").unique(),
+  email: varchar("email").unique().notNull(),
+  passwordHash: varchar("password_hash"), // For local authentication
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
@@ -35,6 +36,13 @@ export const users = pgTable("users", {
   license: varchar("license"),
   phone: varchar("phone"),
   address: text("address"),
+  role: varchar("role").default("user"), // user, admin, demo
+  isVerified: boolean("is_verified").default(false),
+  verificationToken: varchar("verification_token"),
+  resetToken: varchar("reset_token"),
+  resetTokenExpires: timestamp("reset_token_expires"),
+  lastLogin: timestamp("last_login"),
+  trialExpiresAt: timestamp("trial_expires_at"),
   stripeAccountId: varchar("stripe_account_id"),
   stripeOnboardingComplete: boolean("stripe_onboarding_complete").default(false),
   // WhatsApp Business integration
@@ -45,6 +53,21 @@ export const users = pgTable("users", {
   whatsappIntegrationActive: boolean("whatsapp_integration_active").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Demo account requests
+export const demoRequests = pgTable("demo_requests", {
+  id: serial("id").primaryKey(),
+  email: varchar("email").notNull(),
+  firstName: varchar("first_name").notNull(),
+  lastName: varchar("last_name").notNull(),
+  company: varchar("company"),
+  phone: varchar("phone"),
+  message: text("message"),
+  status: varchar("status").default("pending"), // pending, approved, rejected
+  createdAt: timestamp("created_at").defaultNow(),
+  processedAt: timestamp("processed_at"),
+  processedBy: varchar("processed_by"),
 });
 
 // Folders for organizing certificates by client
@@ -417,8 +440,17 @@ export const insertWhatsappFlowTemplateSchema = createInsertSchema(whatsappFlowT
   updatedAt: true,
 });
 
+export const insertDemoRequestSchema = createInsertSchema(demoRequests).omit({
+  id: true,
+  createdAt: true,
+  processedAt: true,
+  processedBy: true,
+});
+
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
+export type DemoRequest = typeof demoRequests.$inferSelect;
+export type InsertDemoRequest = z.infer<typeof insertDemoRequestSchema>;
 export type Folder = typeof folders.$inferSelect;
 export type InsertFolder = z.infer<typeof insertFolderSchema>;
 export type Certification = typeof certifications.$inferSelect;

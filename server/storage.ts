@@ -10,6 +10,7 @@ import {
   invoices,
   payments,
   collections,
+  demoRequests,
   type User, 
   type UpsertUser,
   type Folder,
@@ -32,7 +33,9 @@ import {
   type Payment,
   type InsertPayment,
   type Collection,
-  type InsertCollection
+  type InsertCollection,
+  type DemoRequest,
+  type InsertDemoRequest
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, count, and, isNull, gte, lte, sql } from "drizzle-orm";
@@ -43,6 +46,17 @@ export interface IStorage {
   // User operations (mandatory for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
+  
+  // Local authentication operations
+  getUserByEmail(email: string): Promise<User | undefined>;
+  createUser(userData: Omit<UpsertUser, 'id'>): Promise<User>;
+  updateUserPassword(userId: string, passwordHash: string): Promise<void>;
+  updateUserVerification(userId: string, isVerified: boolean): Promise<void>;
+  
+  // Demo request operations
+  createDemoRequest(data: InsertDemoRequest): Promise<DemoRequest>;
+  getDemoRequests(): Promise<DemoRequest[]>;
+  updateDemoRequestStatus(id: number, status: string, processedBy?: string): Promise<void>;
   
   // Folder operations
   getFolders(userId: string): Promise<Folder[]>;
