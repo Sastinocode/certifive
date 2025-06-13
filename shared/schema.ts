@@ -110,14 +110,29 @@ export const updateCertificationSchema = insertCertificationSchema.partial();
 export const pricingRates = pgTable("pricing_rates", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull().references(() => users.id),
-  propertyType: varchar("property_type").notNull(), // vivienda, local_comercial, chalet, edificio_completo
-  location: varchar("location").notNull(), // zona_urbana, zona_rural
+  propertyType: varchar("property_type").notNull(), // Vivienda, Local Comercial, Duplex, Chalet, Edificio completo
+  location: varchar("location").notNull(), // Zona Urbana, Zona Rural
   basePrice: decimal("base_price", { precision: 10, scale: 2 }).notNull(),
   pricePerM2: decimal("price_per_m2", { precision: 10, scale: 2 }).notNull().default("0"),
-  urgentSurcharge: decimal("urgent_surcharge", { precision: 10, scale: 2 }).notNull().default("0"),
-  photographySurcharge: decimal("photography_surcharge", { precision: 10, scale: 2 }).notNull().default("0"),
-  additionalMeasurementsSurcharge: decimal("additional_measurements_surcharge", { precision: 10, scale: 2 }).notNull().default("0"),
-  displacementCostPerKm: decimal("displacement_cost_per_km", { precision: 10, scale: 2 }).notNull().default("0"),
+  
+  // Location-based pricing
+  ruralSurchargePercentage: decimal("rural_surcharge_percentage", { precision: 5, scale: 2 }).notNull().default("15"),
+  
+  // Displacement costs
+  displacementCostPerKm: decimal("displacement_cost_per_km", { precision: 10, scale: 2 }).notNull().default("0.45"),
+  includeDisplacement: boolean("include_displacement").notNull().default(true),
+  
+  // Optional services - configurable prices and availability
+  urgentServicePrice: decimal("urgent_service_price", { precision: 10, scale: 2 }).notNull().default("0"),
+  urgentServiceAvailable: boolean("urgent_service_available").notNull().default(true),
+  
+  photographyServicePrice: decimal("photography_service_price", { precision: 10, scale: 2 }).notNull().default("0"),
+  photographyServiceAvailable: boolean("photography_service_available").notNull().default(true),
+  
+  additionalMeasurementsPrice: decimal("additional_measurements_price", { precision: 10, scale: 2 }).notNull().default("0"),
+  additionalMeasurementsAvailable: boolean("additional_measurements_available").notNull().default(true),
+  
+  // Business settings
   advancePercentage: integer("advance_percentage").notNull().default(50),
   deliveryDays: integer("delivery_days").notNull(),
   description: text("description"),
