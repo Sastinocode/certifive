@@ -3,7 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { useAuth } from "@/hooks/useAuth";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Dashboard from "@/pages/dashboard";
 import CertificationWizard from "@/pages/certification-wizard";
 import CertificationForm from "@/pages/certification-form";
@@ -16,6 +16,9 @@ import Pricing from "@/pages/pricing";
 import Reports from "@/pages/reports";
 import Settings from "@/pages/settings";
 import Landing from "@/pages/landing";
+import Login from "@/pages/login";
+import Register from "@/pages/register";
+import DemoRequest from "@/pages/demo-request";
 import PublicQuote from "@/pages/public-quote";
 import PublicTariffGenerator from "@/pages/public-tariff-generator";
 import NotFound from "@/pages/not-found";
@@ -40,6 +43,9 @@ function Router() {
       <Route path="/presupuesto/:uniqueLink" component={PublicQuote} />
       <Route path="/certificacion-cliente/:uniqueLink" component={CertificationForm} />
       <Route path="/generador-tarifas" component={PublicTariffGenerator} />
+      <Route path="/login" component={Login} />
+      <Route path="/registro" component={Register} />
+      <Route path="/solicitar-demo" component={DemoRequest} />
       
       {!isAuthenticated ? (
         <Route path="/" component={Landing} />
@@ -66,10 +72,12 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Router />
-      </TooltipProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Router />
+        </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
