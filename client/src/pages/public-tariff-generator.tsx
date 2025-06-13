@@ -362,6 +362,12 @@ export default function PublicTariffGenerator() {
                           <span>Superficie:</span>
                           <span className="font-medium">{formData.surface} m²</span>
                         </div>
+                        {formData.distance > 0 && (
+                          <div className="flex justify-between text-indigo-600">
+                            <span>Desplazamiento:</span>
+                            <span className="font-medium">{formData.distance} km</span>
+                          </div>
+                        )}
                         {formData.urgentService && (
                           <div className="flex justify-between text-orange-600">
                             <span>Servicio urgente:</span>
