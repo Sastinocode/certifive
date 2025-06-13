@@ -25,43 +25,31 @@ import {
 } from "lucide-react";
 
 interface CertificationFormData {
-  // Datos generales
-  fullName: string;
+  // Datos administrativos (from template)
   dni: string;
-  address: string;
-  postalCode: string;
-  city: string;
-  province: string;
+  fullName: string;
   cadastralRef: string;
+  phone: string;
+  email: string;
   
-  // Datos del inmueble
-  propertyType: string;
-  buildYear: number;
-  totalArea: number;
-  heatedArea: number;
-  floors: number;
-  rooms: number;
-  bathrooms: number;
+  // Datos de la propiedad (from template)
+  habitableFloors: number; // Nº de plantas habitables (sin contar sótano)
+  rooms: number; // Nº de habitaciones
   
-  // Envolvente térmica
-  wallType: string;
-  wallThickness: number;
-  insulationType: string;
-  roofType: string;
-  floorType: string;
+  // Fachadas y ventanas (from template)
+  facadeOrientation: string; // Orientación de fachadas y ventanas
+  windowDetails: string; // Material, color, tipo vidrio, caja persiana
   
-  // Ventanas y puertas
-  windowType: string;
-  glassType: string;
-  frameType: string;
-  hasShutters: boolean;
+  // Estructura del edificio (from template)
+  roofType: string; // Tipo cubierta (plana/inclinada)
   
-  // Instalaciones
-  heatingSystem: string;
-  coolingSystem: string;
-  dhwSystem: string;
-  ventilationSystem: string;
-  renewableEnergy: string;
+  // Sistemas HVAC (from template)
+  airConditioningSystem: string; // Equipos climatización
+  heatingSystem: string; // Equipos calefacción (radiadores si/no)
+  
+  // Sistema de agua caliente (from template)
+  waterHeatingType: string; // Eléctrico, gas natural, gas butano
+  waterHeatingCapacity: number; // Capacidad en litros si eléctrico
   
   // Fotos requeridas
   photos: string[];

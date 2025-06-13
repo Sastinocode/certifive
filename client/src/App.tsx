@@ -47,6 +47,7 @@ function Router() {
         <>
           <Route path="/" component={Dashboard} />
           <Route path="/certificacion/:id?" component={CertificationWizard} />
+          <Route path="/certificados/nuevo" component={CertificationWizard} />
           <Route path="/whatsapp" component={WhatsAppManagement} />
           <Route path="/whatsapp-flow-editor" component={WhatsAppFlowEditor} />
           <Route path="/demo-flujo" component={WorkflowDemo} />
