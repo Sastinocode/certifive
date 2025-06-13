@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { isUnauthorizedError } from "@/lib/authUtils";
+import Sidebar from "@/components/layout/sidebar";
 import { 
   MessageCircle, 
   Phone, 
@@ -79,10 +82,12 @@ const conversationStateColors = {
 };
 
 export default function WhatsAppManagement() {
+  const { isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
   const [selectedConversation, setSelectedConversation] = useState<WhatsAppConversation | null>(null);
   const [messageText, setMessageText] = useState("");
   const [showConfigDialog, setShowConfigDialog] = useState(false);
+  const [selectedTab, setSelectedTab] = useState("whatsapp");
   const [whatsappConfig, setWhatsappConfig] = useState({
     businessToken: "",
     phoneNumberId: "",
@@ -90,6 +95,21 @@ export default function WhatsAppManagement() {
     webhookVerifyToken: "",
     integrationActive: false
   });
+
+  // Handle authentication
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      toast({
+        title: "Sesión expirada",
+        description: "Redirigiendo al login...",
+        variant: "destructive",
+      });
+      setTimeout(() => {
+        window.location.href = "/api/login";
+      }, 500);
+      return;
+    }
+  }, [isAuthenticated, isLoading, toast]);
 
   // Fetch conversations
   const { data: conversations = [], isLoading: loadingConversations } = useQuery({
@@ -200,10 +220,20 @@ export default function WhatsAppManagement() {
     );
   };
 
+  if (isLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen bg-gray-50">
-      {/* Sidebar - Conversations List */}
-      <div className="w-1/3 bg-white border-r border-gray-200 flex flex-col">
+      <Sidebar selectedTab={selectedTab} onTabChange={setSelectedTab} />
+      <div className="flex-1 flex bg-gray-50">
+        {/* Conversations List */}
+        <div className="w-1/3 bg-white border-r border-gray-200 flex flex-col">
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900">Conversaciones WhatsApp</h2>
@@ -294,10 +324,10 @@ export default function WhatsAppManagement() {
             })
           )}
         </div>
-      </div>
+        </div>
 
-      {/* Main Content - Conversation Details */}
-      <div className="flex-1 flex flex-col">
+        {/* Main Content - Conversation Details */}
+        <div className="flex-1 flex flex-col">
         {selectedConversation ? (
           <>
             {/* Header */}
@@ -521,6 +551,7 @@ export default function WhatsAppManagement() {
           </div>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }
