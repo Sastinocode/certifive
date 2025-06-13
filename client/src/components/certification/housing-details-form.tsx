@@ -72,12 +72,12 @@ export default function HousingDetailsForm({ data, onDataChange }: HousingDetail
       <CardContent>
         <form className="step-form space-y-6">
           <div>
-            <Label htmlFor="facadeOrientation">Orientación de las Fachadas *</Label>
+            <Label htmlFor="facadeOrientation">Orientación de las Fachadas y Nº Ventanas en cada Fachada y Estancia *</Label>
             <Textarea
               id="facadeOrientation"
               name="facadeOrientation"
-              rows={3}
-              placeholder="Ej: Fachada sur 2 ventanas de las habitaciones cuadradas y puerta al comedor..."
+              rows={4}
+              placeholder="Ejemplo: Fachada Norte: 2 ventanas (salón y dormitorio) formato cuadrada. O indicar las calles: salón y dormitorio a Calle Alegría, cocina a patio interior paralelo a Calle Alegría, dormitorio 2 y aseo a Calle Muñoz"
               value={data.facadeOrientation || ""}
               onChange={(e) => handleInputChange("facadeOrientation", e.target.value)}
               required
@@ -101,90 +101,17 @@ export default function HousingDetailsForm({ data, onDataChange }: HousingDetail
             </Select>
           </div>
 
-          {/* Windows Section */}
-          <div className="border-t pt-6">
-            <div className="flex items-center justify-between mb-4">
-              <h4 className="text-lg font-medium text-gray-900">Detalles de Ventanas</h4>
-              <Button type="button" variant="outline" size="sm" onClick={addWindow}>
-                <Plus className="w-4 h-4 mr-1" />
-                Añadir Ventana
-              </Button>
-            </div>
-            
-            <div className="space-y-4">
-              {windows.map((window, index) => (
-                <div key={window.id} className="bg-gray-50 p-4 rounded-lg">
-                  <div className="flex items-center justify-between mb-3">
-                    <h5 className="text-sm font-medium text-gray-900">
-                      Ventana {index + 1}
-                    </h5>
-                    {windows.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeWindow(window.id)}
-                        className="text-red-600 hover:text-red-800"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    )}
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <Label>Material</Label>
-                      <Select
-                        value={window.material}
-                        onValueChange={(value) => handleWindowChange(window.id, "material", value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccionar..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="madera">Madera</SelectItem>
-                          <SelectItem value="aluminio">Aluminio</SelectItem>
-                          <SelectItem value="pvc">PVC</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div>
-                      <Label>Tipo de Vidrio</Label>
-                      <Select
-                        value={window.glassType}
-                        onValueChange={(value) => handleWindowChange(window.id, "glassType", value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccionar..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="simple">Simple</SelectItem>
-                          <SelectItem value="doble">Doble</SelectItem>
-                          <SelectItem value="triple">Triple</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div>
-                      <Label>Caja de Persiana</Label>
-                      <Select
-                        value={window.hasShutter}
-                        onValueChange={(value) => handleWindowChange(window.id, "hasShutter", value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccionar..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="si">Sí</SelectItem>
-                          <SelectItem value="no">No</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+          <div>
+            <Label htmlFor="windowDetails">Material Ventanas, Color, Tipo de Vidrio y Caja de Persiana *</Label>
+            <Textarea
+              id="windowDetails"
+              name="windowDetails"
+              rows={4}
+              placeholder="Ejemplo: VENTANA 1: MADERA BEIS VIDRIO SIMPLE, CAJA DE PERSIANA NO - VENTANA 2: ALUMINIO BLANCO VIDRIO DOBLE CAJA DE PERSIANA SI"
+              value={data.windowDetails || ""}
+              onChange={(e) => handleInputChange("windowDetails", e.target.value)}
+              required
+            />
           </div>
         </form>
       </CardContent>

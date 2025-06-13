@@ -86,14 +86,14 @@ export default function GeneralDataForm({ data, onDataChange }: GeneralDataFormP
             </div>
 
             <div>
-              <Label htmlFor="floors">Nº de Plantas Habitables</Label>
+              <Label htmlFor="habitableFloors">Nº de Plantas Habitables (sin contar sótano)</Label>
               <Input
-                id="floors"
-                name="floors"
+                id="habitableFloors"
+                name="habitableFloors"
                 type="number"
-                placeholder="9"
-                value={data.floors || ""}
-                onChange={(e) => handleInputChange("floors", parseInt(e.target.value) || 0)}
+                placeholder="1"
+                value={data.habitableFloors || ""}
+                onChange={(e) => handleInputChange("habitableFloors", parseInt(e.target.value) || 0)}
               />
             </div>
 
