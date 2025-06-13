@@ -6,6 +6,7 @@ import {
   quoteRequests,
   whatsappConversations,
   whatsappMessages,
+  whatsappFlowTemplates,
   invoices,
   payments,
   collections,
@@ -79,6 +80,14 @@ export interface IStorage {
   updateConversationState(conversationId: number, state: string, metadata?: any): Promise<WhatsappConversation | undefined>;
   getConversationByPhone(userId: string, clientPhone: string): Promise<WhatsappConversation | undefined>;
   logWhatsAppMessage(data: InsertWhatsappMessage): Promise<WhatsappMessage>;
+  
+  // WhatsApp Flow Templates operations
+  getWhatsappFlowTemplates(userId: string): Promise<WhatsappFlowTemplate[]>;
+  getWhatsappFlowTemplate(id: number, userId: string): Promise<WhatsappFlowTemplate | undefined>;
+  createWhatsappFlowTemplate(data: InsertWhatsappFlowTemplate): Promise<WhatsappFlowTemplate>;
+  updateWhatsappFlowTemplate(id: number, userId: string, data: Partial<InsertWhatsappFlowTemplate>): Promise<WhatsappFlowTemplate | undefined>;
+  deleteWhatsappFlowTemplate(id: number, userId: string): Promise<boolean>;
+  getActiveWhatsappFlowTemplate(userId: string): Promise<WhatsappFlowTemplate | undefined>;
 
   // Financial Management operations
   getFinancialSummary(userId: string, dateRange?: string): Promise<any>;
