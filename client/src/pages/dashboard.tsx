@@ -16,7 +16,7 @@ import {
   Calculator,
   Copy, 
   AlertTriangle, 
-  Leaf, 
+  Euro, 
   Plus, 
   Download, 
   Upload,
@@ -36,7 +36,7 @@ interface DashboardStats {
   activeCertificates: number;
   inProgress: number;
   expiringSoon: number;
-  co2Savings: number;
+  monthlyIncome: number;
 }
 
 interface RecentCertification {
@@ -215,12 +215,12 @@ export default function Dashboard() {
             <div className="stat-card floating-card">
               <div className="flex items-center">
                 <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center shadow-lg">
-                  <Leaf className="w-7 h-7 text-white" />
+                  <Euro className="w-7 h-7 text-white" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Ahorro CO₂ (t)</p>
+                  <p className="text-sm font-medium text-gray-600">Ingresos Mensuales</p>
                   <p className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-                    {statsLoading ? "..." : stats.co2Savings || 0}
+                    {statsLoading ? "..." : `€${(stats.monthlyIncome || 0).toLocaleString()}`}
                   </p>
                 </div>
               </div>
