@@ -8,6 +8,7 @@ import Dashboard from "@/pages/dashboard";
 import CertificationWizard from "@/pages/certification-wizard";
 import CertificationForm from "@/pages/certification-form";
 import WhatsAppManagement from "@/pages/whatsapp-management";
+import WhatsAppFlowEditor from "@/pages/whatsapp-flow-editor";
 import WorkflowDemo from "@/pages/workflow-demo";
 import Certificates from "@/pages/certificates";
 import Properties from "@/pages/properties";
@@ -47,6 +48,7 @@ function Router() {
           <Route path="/" component={Dashboard} />
           <Route path="/certificacion/:id?" component={CertificationWizard} />
           <Route path="/whatsapp" component={WhatsAppManagement} />
+          <Route path="/whatsapp-flow-editor" component={WhatsAppFlowEditor} />
           <Route path="/demo-flujo" component={WorkflowDemo} />
           <Route path="/certificados" component={Certificates} />
           <Route path="/propiedades" component={Properties} />

@@ -62,7 +62,7 @@ export default function WhatsAppFlowEditor() {
   const [editingTemplate, setEditingTemplate] = useState<WhatsAppFlowTemplate | null>(null);
 
   // Fetch flow templates
-  const { data: templates, isLoading } = useQuery({
+  const { data: templates = [], isLoading } = useQuery({
     queryKey: ["/api/whatsapp/flow-templates"],
   });
 
@@ -601,7 +601,7 @@ export default function WhatsAppFlowEditor() {
           </Button>
         </div>
 
-        {templates && templates.length > 0 ? (
+        {templates.length > 0 ? (
           <div className="grid gap-6">
             {templates.map((template: WhatsAppFlowTemplate) => (
               <Card key={template.id} className="relative">
