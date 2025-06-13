@@ -342,6 +342,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Generate public pricing link
+  app.post("/api/pricing-rates/public-link", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
+      const publicLink = `${baseUrl}/generador-presupuesto`;
+      
+      res.json({ publicLink });
+    } catch (error) {
+      console.error("Error generating public link:", error);
+      res.status(500).json({ message: "Error al generar enlace público" });
+    }
+  });
+
   app.post("/api/pricing-rates", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
