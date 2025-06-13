@@ -438,24 +438,13 @@ export default function WhatsAppManagement() {
               <p className="text-gray-600 mb-6 max-w-md">
                 Selecciona una conversación para ver los detalles del cliente y gestionar su proceso de certificación energética.
               </p>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Button 
-                  onClick={handleCreateAndSendQuote}
-                  disabled={createQuoteLinkMutation.isPending}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  {createQuoteLinkMutation.isPending ? "Creando..." : "Crear Nuevo Presupuesto"}
-                </Button>
-                <Button 
-                  onClick={() => window.location.href = '/whatsapp-flow-editor'}
-                  variant="outline"
-                  className="border-blue-500 text-blue-600 hover:bg-blue-50"
-                >
-                  <MessageCircle className="w-4 h-4 mr-2" />
-                  Configurar Flujo Conversacional
-                </Button>
-              </div>
+              <Button 
+                onClick={() => window.location.href = '/whatsapp-flow-editor'}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                <MessageCircle className="w-4 h-4 mr-2" />
+                Configurar Flujo Conversacional
+              </Button>
             </div>
           </div>
         )}
