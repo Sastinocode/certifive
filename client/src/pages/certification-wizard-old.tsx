@@ -12,21 +12,36 @@ import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
 interface CertificationData {
+  // Administrative data from Word template
   dni: string;
   fullName: string;
   cadastralRef: string;
   phone: string;
   email: string;
+  
+  // Property data from Word template
   habitableFloors: number;
   rooms: number;
+  
+  // Facade and window details from Word template
   facadeOrientation: string;
   windowDetails: string;
+  
+  // Building structure from Word template
   roofType: string;
+  
+  // HVAC systems from Word template
   airConditioningSystem: string;
   heatingSystem: string;
+  
+  // Water heating system from Word template
   waterHeatingType: string;
   waterHeatingCapacity?: number;
+  
+  // Photos
   photos: string[];
+  
+  // Additional info
   observations?: string;
 }
 
@@ -47,7 +62,7 @@ export default function CertificationWizard() {
     mutationFn: async (data: CertificationData) => {
       return apiRequest("POST", "/api/certifications", data);
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       toast({
         title: "Certificación creada",
         description: "La certificación se ha creado exitosamente."
@@ -81,6 +96,7 @@ export default function CertificationWizard() {
   };
 
   const handleSubmit = () => {
+    // Validate required fields
     const requiredFields = ['dni', 'fullName', 'cadastralRef', 'phone', 'email'];
     const missingFields = requiredFields.filter(field => !formData[field as keyof CertificationData]);
     
@@ -100,6 +116,7 @@ export default function CertificationWizard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 p-8">
+      {/* Header with back button */}
       <div className="max-w-4xl mx-auto mb-8">
         <Button
           variant="outline"
@@ -121,89 +138,93 @@ export default function CertificationWizard() {
           </p>
         </div>
 
+        {/* Progress indicator */}
         <Card className="mb-6">
-          <CardContent className="p-6">
-            <div className="flex justify-between items-center mb-4">
-              {steps.map((step, index) => (
-                <div key={step.id} className="flex items-center">
-                  <div className={`
-                    w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
-                    ${currentStep > step.id ? 'bg-green-600 text-white' : 
-                      currentStep === step.id ? 'bg-blue-600 text-white' : 
-                      'bg-gray-200 text-gray-600'}
-                  `}>
-                    {currentStep > step.id ? <CheckCircle className="w-4 h-4" /> : step.id}
+            <CardContent className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                {steps.map((step, index) => (
+                  <div key={step.id} className="flex items-center">
+                    <div className={`
+                      w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
+                      ${currentStep > step.id ? 'bg-green-600 text-white' : 
+                        currentStep === step.id ? 'bg-blue-600 text-white' : 
+                        'bg-gray-200 text-gray-600'}
+                    `}>
+                      {currentStep > step.id ? <CheckCircle className="w-4 h-4" /> : step.id}
+                    </div>
+                    <span className={`ml-2 text-sm ${currentStep === step.id ? 'font-medium' : ''}`}>
+                      {step.title}
+                    </span>
+                    {index < steps.length - 1 && (
+                      <div className={`w-16 h-0.5 mx-4 ${currentStep > step.id ? 'bg-green-600' : 'bg-gray-200'}`} />
+                    )}
                   </div>
-                  <span className={`ml-2 text-sm ${currentStep === step.id ? 'font-medium' : ''}`}>
-                    {step.title}
-                  </span>
-                  {index < steps.length - 1 && (
-                    <div className={`w-16 h-0.5 mx-4 ${currentStep > step.id ? 'bg-green-600' : 'bg-gray-200'}`} />
+                ))}
+              </div>
+              <Progress value={progress} className="w-full" />
+            </CardContent>
+          </Card>
+
+          {/* Form content */}
+          <Card>
+            <CardHeader>
+              <CardTitle>{steps[currentStep - 1].title}</CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              {currentStep === 1 && (
+                <GeneralDataForm 
+                  data={formData} 
+                  onDataChange={updateFormData}
+                />
+              )}
+              {currentStep === 2 && (
+                <HousingDetailsForm 
+                  data={formData} 
+                  onDataChange={updateFormData}
+                />
+              )}
+              {currentStep === 3 && (
+                <InstallationsForm 
+                  data={formData} 
+                  onDataChange={updateFormData}
+                />
+              )}
+
+              {/* Navigation buttons */}
+              <div className="flex justify-between mt-8">
+                <Button
+                  variant="outline"
+                  onClick={handlePrevious}
+                  disabled={currentStep === 1}
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Anterior
+                </Button>
+
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => navigate("/certificados")}>
+                    <Save className="w-4 h-4 mr-2" />
+                    Guardar Borrador
+                  </Button>
+                  
+                  {currentStep === steps.length ? (
+                    <Button 
+                      onClick={handleSubmit}
+                      disabled={createCertificationMutation.isPending}
+                    >
+                      {createCertificationMutation.isPending ? "Creando..." : "Crear Certificación"}
+                    </Button>
+                  ) : (
+                    <Button onClick={handleNext}>
+                      Siguiente
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
                   )}
                 </div>
-              ))}
-            </div>
-            <Progress value={progress} className="w-full" />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>{steps[currentStep - 1].title}</CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            {currentStep === 1 && (
-              <GeneralDataForm 
-                data={formData} 
-                onDataChange={updateFormData}
-              />
-            )}
-            {currentStep === 2 && (
-              <HousingDetailsForm 
-                data={formData} 
-                onDataChange={updateFormData}
-              />
-            )}
-            {currentStep === 3 && (
-              <InstallationsForm 
-                data={formData} 
-                onDataChange={updateFormData}
-              />
-            )}
-
-            <div className="flex justify-between mt-8">
-              <Button
-                variant="outline"
-                onClick={handlePrevious}
-                disabled={currentStep === 1}
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Anterior
-              </Button>
-
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={() => navigate("/certificados")}>
-                  <Save className="w-4 h-4 mr-2" />
-                  Guardar Borrador
-                </Button>
-                
-                {currentStep === steps.length ? (
-                  <Button 
-                    onClick={handleSubmit}
-                    disabled={createCertificationMutation.isPending}
-                  >
-                    {createCertificationMutation.isPending ? "Creando..." : "Crear Certificación"}
-                  </Button>
-                ) : (
-                  <Button onClick={handleNext}>
-                    Siguiente
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                )}
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
