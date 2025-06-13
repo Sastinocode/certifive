@@ -139,7 +139,7 @@ export default function Pricing() {
 
   const generatePublicLink = () => {
     const baseUrl = window.location.origin;
-    const publicLink = `${baseUrl}/generador-presupuesto`;
+    const publicLink = `${baseUrl}/generador-tarifas`;
     navigator.clipboard.writeText(publicLink);
     toast({
       title: "Enlace copiado",
