@@ -17,6 +17,7 @@ interface PricingRate {
   urgentSurcharge: number;
   photographySurcharge: number;
   additionalMeasurementsSurcharge: number;
+  displacementCostPerKm: number;
   isActive: boolean;
 }
 
@@ -25,6 +26,7 @@ interface BudgetFormData {
   location: string;
   surface: number;
   constructionYear: number;
+  distance: number;
   urgentService: boolean;
   photographyService: boolean;
   additionalMeasurements: boolean;
@@ -36,6 +38,7 @@ export default function PublicTariffGenerator() {
     location: "",
     surface: 0,
     constructionYear: 2000,
+    distance: 0,
     urgentService: false,
     photographyService: false,
     additionalMeasurements: false,
@@ -78,11 +81,11 @@ export default function PublicTariffGenerator() {
     // If no specific rate found, use default pricing based on property type
     if (!matchingRate) {
       const defaultPricing = {
-        "Vivienda": { base: 180, perM2: 2.5, urgent: 50, photography: 40, measurements: 30 },
-        "Local Comercial": { base: 220, perM2: 3.0, urgent: 60, photography: 50, measurements: 40 },
-        "Duplex": { base: 250, perM2: 3.2, urgent: 70, photography: 60, measurements: 45 },
-        "Chalet": { base: 280, perM2: 3.5, urgent: 80, photography: 70, measurements: 50 },
-        "Edificio completo": { base: 450, perM2: 4.0, urgent: 120, photography: 100, measurements: 80 }
+        "Vivienda": { base: 180, perM2: 2.5, urgent: 50, photography: 40, measurements: 30, displacementPerKm: 0.45 },
+        "Local Comercial": { base: 220, perM2: 3.0, urgent: 60, photography: 50, measurements: 40, displacementPerKm: 0.45 },
+        "Duplex": { base: 250, perM2: 3.2, urgent: 70, photography: 60, measurements: 45, displacementPerKm: 0.45 },
+        "Chalet": { base: 280, perM2: 3.5, urgent: 80, photography: 70, measurements: 50, displacementPerKm: 0.45 },
+        "Edificio completo": { base: 450, perM2: 4.0, urgent: 120, photography: 100, measurements: 80, displacementPerKm: 0.45 }
       };
 
       const pricing = defaultPricing[formData.propertyType as keyof typeof defaultPricing];
@@ -92,6 +95,11 @@ export default function PublicTariffGenerator() {
       const locationMultiplier = formData.location === "Zona Rural" ? 1.15 : 1.0;
 
       let totalPrice = (pricing.base + (pricing.perM2 * formData.surface)) * locationMultiplier;
+
+      // Add displacement cost
+      if (formData.distance > 0) {
+        totalPrice += formData.distance * pricing.displacementPerKm;
+      }
 
       // Add surcharges
       if (formData.urgentService) {
@@ -111,6 +119,11 @@ export default function PublicTariffGenerator() {
 
     // Use configured pricing rate
     let totalPrice = matchingRate.basePrice + (matchingRate.pricePerM2 * formData.surface);
+
+    // Add displacement cost
+    if (formData.distance > 0 && matchingRate.displacementCostPerKm) {
+      totalPrice += formData.distance * matchingRate.displacementCostPerKm;
+    }
 
     // Add surcharges
     if (formData.urgentService) {
@@ -133,6 +146,7 @@ export default function PublicTariffGenerator() {
       location: "",
       surface: 0,
       constructionYear: 2000,
+      distance: 0,
       urgentService: false,
       photographyService: false,
       additionalMeasurements: false,
@@ -224,8 +238,8 @@ export default function PublicTariffGenerator() {
                 </div>
               </div>
 
-              {/* Surface and Construction Year */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Surface, Construction Year, and Distance */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="surface">Superficie (m²)</Label>
                   <Input
@@ -246,6 +260,20 @@ export default function PublicTariffGenerator() {
                     value={formData.constructionYear}
                     onChange={(e) => setFormData({ ...formData, constructionYear: parseInt(e.target.value) || 2000 })}
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="distance">Distancia (km)</Label>
+                  <Input
+                    id="distance"
+                    type="number"
+                    placeholder="0"
+                    value={formData.distance || ""}
+                    onChange={(e) => setFormData({ ...formData, distance: parseInt(e.target.value) || 0 })}
+                  />
+                  <p className="text-xs text-gray-500">
+                    Distancia desde la oficina del certificador
+                  </p>
                 </div>
               </div>
 

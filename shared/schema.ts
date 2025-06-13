@@ -111,7 +111,13 @@ export const pricingRates = pgTable("pricing_rates", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull().references(() => users.id),
   propertyType: varchar("property_type").notNull(), // vivienda, local_comercial, chalet, edificio_completo
+  location: varchar("location").notNull(), // zona_urbana, zona_rural
   basePrice: decimal("base_price", { precision: 10, scale: 2 }).notNull(),
+  pricePerM2: decimal("price_per_m2", { precision: 10, scale: 2 }).notNull().default("0"),
+  urgentSurcharge: decimal("urgent_surcharge", { precision: 10, scale: 2 }).notNull().default("0"),
+  photographySurcharge: decimal("photography_surcharge", { precision: 10, scale: 2 }).notNull().default("0"),
+  additionalMeasurementsSurcharge: decimal("additional_measurements_surcharge", { precision: 10, scale: 2 }).notNull().default("0"),
+  displacementCostPerKm: decimal("displacement_cost_per_km", { precision: 10, scale: 2 }).notNull().default("0"),
   advancePercentage: integer("advance_percentage").notNull().default(50),
   deliveryDays: integer("delivery_days").notNull(),
   description: text("description"),
