@@ -13,22 +13,8 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import Sidebar from "@/components/layout/sidebar";
 import { 
   MessageCircle, 
-  Phone, 
-  Clock, 
-  CheckCircle, 
-  AlertTriangle,
   Send,
-  Settings,
-  Plus,
-  Eye,
-  Euro,
-  Calendar,
-  User,
-  Building,
-  Map,
-  CreditCard,
-  FileText,
-  Zap
+  Settings
 } from "lucide-react";
 
 interface WhatsAppConversation {
@@ -93,44 +79,21 @@ export default function WhatsAppManagement() {
   };
 
   // Fetch conversations
-  const { data: conversations, isLoading: loadingConversations } = useQuery({
+  const { data: conversations = [], isLoading: loadingConversations } = useQuery({
     queryKey: ["/api/whatsapp/conversations"],
   });
 
   // Fetch quote requests
-  const { data: quoteRequests } = useQuery({
+  const { data: quoteRequests = [] } = useQuery({
     queryKey: ["/api/quote-requests"],
   });
 
   // Fetch WhatsApp status
-  const { data: whatsappStatus } = useQuery({
+  const { data: whatsappStatus = {} } = useQuery({
     queryKey: ["/api/whatsapp/status"],
   });
 
-  // Create quote link mutation
-  const createQuoteLinkMutation = useMutation({
-    mutationFn: async () => {
-      const response = await apiRequest("POST", "/api/quote-requests/create");
-      return await response.json();
-    },
-    onSuccess: (data) => {
-      const uniqueLink = data.uniqueLink;
-      const whatsappUrl = `https://wa.me/?text=Hola! Te comparto el enlace para solicitar tu certificado energético: ${window.location.origin}/quote/${uniqueLink}`;
-      window.open(whatsappUrl, '_blank');
-      queryClient.invalidateQueries({ queryKey: ["/api/quote-requests"] });
-      toast({
-        title: "Enlace creado",
-        description: "Se abrió WhatsApp con el enlace para enviar al cliente",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "No se pudo crear el enlace de presupuesto",
-        variant: "destructive",
-      });
-    },
-  });
+
 
   // Send message mutation
   const sendMessageMutation = useMutation({
@@ -185,9 +148,7 @@ export default function WhatsAppManagement() {
     });
   };
 
-  const handleCreateAndSendQuote = () => {
-    createQuoteLinkMutation.mutate();
-  };
+
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('es-ES', {
@@ -200,7 +161,7 @@ export default function WhatsAppManagement() {
   };
 
   const getQuoteForConversation = (conversation: WhatsAppConversation) => {
-    return quoteRequests?.find((q: QuoteRequest) => 
+    return (quoteRequests as QuoteRequest[])?.find((q: QuoteRequest) => 
       q.clientPhone === conversation.clientPhone
     );
   };
@@ -230,25 +191,16 @@ export default function WhatsAppManagement() {
                     >
                       <Settings className="w-4 h-4" />
                     </Button>
-                    <Button 
-                      size="sm"
-                      onClick={handleCreateAndSendQuote}
-                      disabled={createQuoteLinkMutation.isPending}
-                      className="bg-green-600 hover:bg-green-700"
-                    >
-                      <Plus className="w-4 h-4 mr-1" />
-                      Nuevo Cliente
-                    </Button>
                   </div>
                 </div>
 
                 {/* WhatsApp Status */}
                 <div className="flex items-center space-x-2 text-sm">
                   <div className={`w-2 h-2 rounded-full ${
-                    whatsappStatus?.integrationActive ? 'bg-green-500' : 'bg-red-500'
+                    (whatsappStatus as any)?.integrationActive ? 'bg-green-500' : 'bg-red-500'
                   }`}></div>
-                  <span className={whatsappStatus?.integrationActive ? 'text-green-700' : 'text-red-700'}>
-                    {whatsappStatus?.integrationActive ? 'WhatsApp Conectado' : 'WhatsApp Desconectado'}
+                  <span className={(whatsappStatus as any)?.integrationActive ? 'text-green-700' : 'text-red-700'}>
+                    {(whatsappStatus as any)?.integrationActive ? 'WhatsApp Conectado' : 'WhatsApp Desconectado'}
                   </span>
                 </div>
               </div>
