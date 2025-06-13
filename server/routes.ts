@@ -331,6 +331,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public pricing rates endpoint (no authentication required)
+  app.get("/api/pricing-rates/public", async (req, res) => {
+    try {
+      const rates = await storage.getPublicPricingRates();
+      res.json(rates);
+    } catch (error) {
+      console.error("Error fetching public pricing rates:", error);
+      res.status(500).json({ message: "Error al obtener tarifas públicas" });
+    }
+  });
+
   app.post("/api/pricing-rates", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
