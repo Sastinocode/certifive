@@ -79,7 +79,7 @@ export default function WhatsAppManagement() {
   };
 
   // Fetch conversations
-  const { data: conversations = [], isLoading: loadingConversations } = useQuery({
+  const { data: conversations = [], isLoading: loadingConversations } = useQuery<WhatsAppConversation[]>({
     queryKey: ["/api/whatsapp/conversations"],
   });
 
@@ -209,14 +209,14 @@ export default function WhatsAppManagement() {
               <div className="flex-1 overflow-y-auto">
                 {loadingConversations ? (
                   <div className="p-4 text-center text-gray-500">Cargando conversaciones...</div>
-                ) : conversations?.length === 0 ? (
+                ) : conversations.length === 0 ? (
                   <div className="p-4 text-center text-gray-500">
                     <MessageCircle className="w-12 h-12 mx-auto mb-2 text-gray-300" />
                     <p>No hay conversaciones</p>
                     <p className="text-xs mt-1">Los clientes aparecerán aquí cuando escriban</p>
                   </div>
                 ) : (
-                  conversations?.map((conversation: WhatsAppConversation) => {
+                  conversations.map((conversation: WhatsAppConversation) => {
                     const quote = getQuoteForConversation(conversation);
                     return (
                       <div
