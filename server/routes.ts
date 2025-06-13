@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { reportGenerator } from "./reportGenerator";
-import { insertCertificationSchema, updateCertificationSchema, insertPricingRateSchema, insertQuoteRequestSchema, insertFolderSchema } from "@shared/schema";
+import { insertCertificationSchema, updateCertificationSchema, insertPricingRateSchema, insertQuoteRequestSchema, insertFolderSchema, insertWhatsappFlowTemplateSchema } from "@shared/schema";
 import { z } from "zod";
 import multer from "multer";
 import path from "path";
@@ -1034,6 +1034,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating sample pricing:", error);
       res.status(500).json({ message: "Error al crear datos de muestra" });
+    }
+  });
+
+  // WhatsApp Flow Templates API Routes
+  app.get('/api/whatsapp/flow-templates', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const templates = await storage.getWhatsappFlowTemplates(userId);
+      res.json(templates);
+    } catch (error) {
+      console.error("Error fetching flow templates:", error);
+      res.status(500).json({ message: "Error al obtener plantillas de flujo" });
+    }
+  });
+
+  app.get('/api/whatsapp/flow-templates/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const id = parseInt(req.params.id);
+      const template = await storage.getWhatsappFlowTemplate(id, userId);
+      if (!template) {
+        return res.status(404).json({ message: "Plantilla no encontrada" });
+      }
+      res.json(template);
+    } catch (error) {
+      console.error("Error fetching flow template:", error);
+      res.status(500).json({ message: "Error al obtener plantilla" });
+    }
+  });
+
+  app.post('/api/whatsapp/flow-templates', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const validatedData = insertWhatsappFlowTemplateSchema.parse({
+        ...req.body,
+        userId,
+      });
+      
+      const template = await storage.createWhatsappFlowTemplate(validatedData);
+      res.json(template);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Datos inválidos", errors: error.errors });
+      }
+      console.error("Error creating flow template:", error);
+      res.status(500).json({ message: "Error al crear plantilla de flujo" });
+    }
+  });
+
+  app.patch('/api/whatsapp/flow-templates/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const id = parseInt(req.params.id);
+      const validatedData = insertWhatsappFlowTemplateSchema.partial().parse(req.body);
+      
+      const template = await storage.updateWhatsappFlowTemplate(id, userId, validatedData);
+      
+      if (!template) {
+        return res.status(404).json({ message: "Plantilla no encontrada" });
+      }
+      
+      res.json(template);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Datos inválidos", errors: error.errors });
+      }
+      console.error("Error updating flow template:", error);
+      res.status(500).json({ message: "Error al actualizar plantilla" });
+    }
+  });
+
+  app.delete('/api/whatsapp/flow-templates/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const id = parseInt(req.params.id);
+      
+      const success = await storage.deleteWhatsappFlowTemplate(id, userId);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Plantilla no encontrada" });
+      }
+      
+      res.json({ message: "Plantilla eliminada correctamente" });
+    } catch (error) {
+      console.error("Error deleting flow template:", error);
+      res.status(500).json({ message: "Error al eliminar plantilla" });
+    }
+  });
+
+  app.get('/api/whatsapp/active-flow-template', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const template = await storage.getActiveWhatsappFlowTemplate(userId);
+      res.json(template || null);
+    } catch (error) {
+      console.error("Error fetching active flow template:", error);
+      res.status(500).json({ message: "Error al obtener plantilla activa" });
     }
   });
 

@@ -25,6 +25,8 @@ import {
   type InsertWhatsappConversation,
   type WhatsappMessage,
   type InsertWhatsappMessage,
+  type WhatsappFlowTemplate,
+  type InsertWhatsappFlowTemplate,
   type Invoice,
   type InsertInvoice,
   type Payment,
@@ -775,6 +777,56 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return collection;
+  }
+
+  // WhatsApp Flow Templates operations
+  async getWhatsappFlowTemplates(userId: string): Promise<WhatsappFlowTemplate[]> {
+    return await db
+      .select()
+      .from(whatsappFlowTemplates)
+      .where(eq(whatsappFlowTemplates.userId, userId))
+      .orderBy(desc(whatsappFlowTemplates.createdAt));
+  }
+
+  async getWhatsappFlowTemplate(id: number, userId: string): Promise<WhatsappFlowTemplate | undefined> {
+    const [template] = await db
+      .select()
+      .from(whatsappFlowTemplates)
+      .where(and(eq(whatsappFlowTemplates.id, id), eq(whatsappFlowTemplates.userId, userId)));
+    return template;
+  }
+
+  async createWhatsappFlowTemplate(data: InsertWhatsappFlowTemplate): Promise<WhatsappFlowTemplate> {
+    const [template] = await db
+      .insert(whatsappFlowTemplates)
+      .values(data)
+      .returning();
+    return template;
+  }
+
+  async updateWhatsappFlowTemplate(id: number, userId: string, data: Partial<InsertWhatsappFlowTemplate>): Promise<WhatsappFlowTemplate | undefined> {
+    const [template] = await db
+      .update(whatsappFlowTemplates)
+      .set({ ...data, updatedAt: new Date() })
+      .where(and(eq(whatsappFlowTemplates.id, id), eq(whatsappFlowTemplates.userId, userId)))
+      .returning();
+    return template;
+  }
+
+  async deleteWhatsappFlowTemplate(id: number, userId: string): Promise<boolean> {
+    const result = await db
+      .delete(whatsappFlowTemplates)
+      .where(and(eq(whatsappFlowTemplates.id, id), eq(whatsappFlowTemplates.userId, userId)));
+    return result.rowCount > 0;
+  }
+
+  async getActiveWhatsappFlowTemplate(userId: string): Promise<WhatsappFlowTemplate | undefined> {
+    const [template] = await db
+      .select()
+      .from(whatsappFlowTemplates)
+      .where(and(eq(whatsappFlowTemplates.userId, userId), eq(whatsappFlowTemplates.isActive, true)))
+      .orderBy(desc(whatsappFlowTemplates.updatedAt));
+    return template;
   }
 }
 
