@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import Sidebar from "@/components/layout/sidebar";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -125,6 +126,7 @@ export default function Reports() {
   const [showInvoiceDialog, setShowInvoiceDialog] = useState(false);
   const [showCollectionDialog, setShowCollectionDialog] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
+  const [selectedTab, setSelectedTab] = useState("reports");
 
   // Handle authentication
   useEffect(() => {
@@ -298,8 +300,10 @@ export default function Reports() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
-      <div className="container mx-auto p-6">
+    <div className="flex h-screen bg-gray-50">
+      <Sidebar selectedTab={selectedTab} onTabChange={setSelectedTab} />
+      <div className="flex-1 overflow-auto bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
+        <div className="container mx-auto p-6">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-2">
             Informes Financieros
@@ -629,6 +633,7 @@ export default function Reports() {
             />
           </DialogContent>
         </Dialog>
+        </div>
       </div>
     </div>
   );
