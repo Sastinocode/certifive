@@ -707,21 +707,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create certification from form data
       const certificationData = {
         userId: quote.userId,
+        dni: formData.dni,
         fullName: formData.fullName,
-        address: formData.address,
         cadastralRef: formData.cadastralRef,
-        propertyType: formData.propertyType,
-        buildYear: formData.buildYear,
-        totalArea: formData.totalArea,
-        heatedArea: formData.heatedArea || formData.totalArea,
-        floors: formData.floors,
+        phone: formData.phone,
+        email: formData.email,
+        habitableFloors: formData.habitableFloors,
         rooms: formData.rooms,
-        bathrooms: formData.bathrooms,
+        facadeOrientation: formData.facadeOrientation,
+        windowDetails: formData.windowDetails,
+        roofType: formData.roofType,
+        airConditioningSystem: formData.airConditioningSystem,
         heatingSystem: formData.heatingSystem,
-        coolingSystem: formData.coolingSystem,
-        dhwSystem: formData.dhwSystem,
+        waterHeatingType: formData.waterHeatingType,
+        waterHeatingCapacity: formData.waterHeatingCapacity,
         photos: formData.photos || [],
-        observations: formData.observations,
         status: 'in_progress'
       };
       

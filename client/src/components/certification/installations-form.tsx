@@ -24,11 +24,11 @@ export default function InstallationsForm({ data, onDataChange, certificationId 
       <CardContent>
         <form className="step-form space-y-6">
           <div>
-            <Label htmlFor="hvacSystem">Equipos de Climatización *</Label>
+            <Label htmlFor="airConditioningSystem">Equipos de Climatización *</Label>
             <Select
-              name="hvacSystem"
-              value={data.hvacSystem || ""}
-              onValueChange={(value) => handleInputChange("hvacSystem", value)}
+              name="airConditioningSystem"
+              value={data.airConditioningSystem || ""}
+              onValueChange={(value) => handleInputChange("airConditioningSystem", value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Seleccionar..." />
@@ -42,7 +42,7 @@ export default function InstallationsForm({ data, onDataChange, certificationId 
           </div>
 
           <div>
-            <Label htmlFor="heatingSystem">Sistema de Calefacción *</Label>
+            <Label htmlFor="heatingSystem">Equipos de Calefacción (Radiadores Si/No) *</Label>
             <Select
               name="heatingSystem"
               value={data.heatingSystem || ""}
@@ -52,16 +52,16 @@ export default function InstallationsForm({ data, onDataChange, certificationId 
                 <SelectValue placeholder="Seleccionar..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="radiadores">Radiadores</SelectItem>
-                <SelectItem value="suelo_radiante">Suelo radiante</SelectItem>
-                <SelectItem value="sin_calefaccion">Sin calefacción</SelectItem>
+                <SelectItem value="radiadores_si">Radiadores Sí</SelectItem>
+                <SelectItem value="radiadores_no">Radiadores No</SelectItem>
+                <SelectItem value="nada">Nada</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="waterHeatingType">Equipo ACS (Agua Caliente) *</Label>
+              <Label htmlFor="waterHeatingType">Equipo de ACS (Calentador) *</Label>
               <Select
                 name="waterHeatingType"
                 value={data.waterHeatingType || ""}
@@ -72,8 +72,8 @@ export default function InstallationsForm({ data, onDataChange, certificationId 
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="electrico">Eléctrico</SelectItem>
-                  <SelectItem value="gas_natural">Gas natural</SelectItem>
-                  <SelectItem value="gas_butano">Gas butano</SelectItem>
+                  <SelectItem value="gas_natural">Gas Natural</SelectItem>
+                  <SelectItem value="gas_butano">Gas Butano</SelectItem>
                 </SelectContent>
               </Select>
             </div>
