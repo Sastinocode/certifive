@@ -57,7 +57,7 @@ export default function PublicTariffGenerator() {
 
   // Fetch public pricing rates
   const { data: pricingRates = [], isLoading } = useQuery<PricingRate[]>({
-    queryKey: ["/api/pricing-rates/public"],
+    queryKey: ["/api/public/pricing-rates"],
   });
 
   // Property type mapping
@@ -185,6 +185,37 @@ export default function PublicTariffGenerator() {
   }
 
   const availableServices = getAvailableServices();
+
+  // Show empty state if no pricing rates are configured
+  if (pricingRates.length === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-green-900/20 dark:to-blue-900/20">
+        <div className="container mx-auto px-4 py-12">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+              Generador de Presupuestos
+            </h1>
+            <p className="text-xl text-gray-600 dark:text-gray-300">
+              Calcula el precio de tu certificación energética de forma inmediata
+            </p>
+          </div>
+          
+          <Card className="max-w-2xl mx-auto text-center py-12">
+            <CardContent>
+              <Calculator className="h-16 w-16 mx-auto text-gray-400 mb-4" />
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                Generador de Presupuestos No Disponible
+              </h3>
+              <p className="text-gray-600 dark:text-gray-300 mb-6">
+                El certificador aún no ha configurado las tarifas para el generador público de presupuestos.
+                Por favor, contacta directamente para solicitar un presupuesto personalizado.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-green-900/20 dark:to-blue-900/20">
