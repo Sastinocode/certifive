@@ -49,26 +49,67 @@ export default function PublicTariffGenerator() {
     queryKey: ["/api/pricing-rates/public"],
   });
 
-  // Get unique property types and locations from pricing rates
-  const propertyTypes = Array.from(new Set(pricingRates.map(rate => rate.propertyType)));
-  const locations = Array.from(new Set(pricingRates.map(rate => rate.location)));
+  // Define property types and locations
+  const propertyTypes = [
+    "Vivienda",
+    "Local Comercial", 
+    "Duplex",
+    "Chalet",
+    "Edificio completo"
+  ];
+  
+  const locations = [
+    "Zona Urbana",
+    "Zona Rural"
+  ];
 
   const calculateBudget = () => {
     if (!formData.propertyType || !formData.location || !formData.surface) {
       return;
     }
 
-    // Find matching pricing rate
-    const matchingRate = pricingRates.find(
+    // Find matching pricing rate or use default pricing
+    let matchingRate = pricingRates.find(
       rate => rate.propertyType === formData.propertyType && 
               rate.location === formData.location &&
               rate.isActive
     );
 
+    // If no specific rate found, use default pricing based on property type
     if (!matchingRate) {
+      const defaultPricing = {
+        "Vivienda": { base: 180, perM2: 2.5, urgent: 50, photography: 40, measurements: 30 },
+        "Local Comercial": { base: 220, perM2: 3.0, urgent: 60, photography: 50, measurements: 40 },
+        "Duplex": { base: 250, perM2: 3.2, urgent: 70, photography: 60, measurements: 45 },
+        "Chalet": { base: 280, perM2: 3.5, urgent: 80, photography: 70, measurements: 50 },
+        "Edificio completo": { base: 450, perM2: 4.0, urgent: 120, photography: 100, measurements: 80 }
+      };
+
+      const pricing = defaultPricing[formData.propertyType as keyof typeof defaultPricing];
+      if (!pricing) return;
+
+      // Apply location multiplier
+      const locationMultiplier = formData.location === "Zona Rural" ? 1.15 : 1.0;
+
+      let totalPrice = (pricing.base + (pricing.perM2 * formData.surface)) * locationMultiplier;
+
+      // Add surcharges
+      if (formData.urgentService) {
+        totalPrice += pricing.urgent;
+      }
+      if (formData.photographyService) {
+        totalPrice += pricing.photography;
+      }
+      if (formData.additionalMeasurements) {
+        totalPrice += pricing.measurements;
+      }
+
+      setCalculatedBudget(totalPrice);
+      setShowResult(true);
       return;
     }
 
+    // Use configured pricing rate
     let totalPrice = matchingRate.basePrice + (matchingRate.pricePerM2 * formData.surface);
 
     // Add surcharges
