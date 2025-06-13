@@ -6,18 +6,25 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Calculator, Home, MapPin, Calendar, CheckCircle, Euro } from "lucide-react";
+import { Calculator, Home, MapPin, Calendar, CheckCircle, Euro, Camera, Clock, Ruler, Car, Building, Store } from "lucide-react";
 
 interface PricingRate {
   id: number;
   propertyType: string;
   location: string;
-  basePrice: number;
-  pricePerM2: number;
-  urgentSurcharge: number;
-  photographySurcharge: number;
-  additionalMeasurementsSurcharge: number;
-  displacementCostPerKm: number;
+  basePrice: string;
+  pricePerM2: string;
+  ruralSurchargePercentage: string;
+  displacementCostPerKm: string;
+  includeDisplacement: boolean;
+  urgentServicePrice: string;
+  urgentServiceAvailable: boolean;
+  photographyServicePrice: string;
+  photographyServiceAvailable: boolean;
+  additionalMeasurementsPrice: string;
+  additionalMeasurementsAvailable: boolean;
+  advancePercentage: number;
+  deliveryDays: number;
   isActive: boolean;
 }
 
@@ -46,400 +53,463 @@ export default function PublicTariffGenerator() {
 
   const [calculatedBudget, setCalculatedBudget] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
+  const [selectedRate, setSelectedRate] = useState<PricingRate | null>(null);
 
   // Fetch public pricing rates
   const { data: pricingRates = [], isLoading } = useQuery<PricingRate[]>({
     queryKey: ["/api/pricing-rates/public"],
   });
 
-  // Define property types and locations
-  const propertyTypes = [
-    "Vivienda",
-    "Local Comercial", 
-    "Duplex",
-    "Chalet",
-    "Edificio completo"
-  ];
-  
-  const locations = [
-    "Zona Urbana",
-    "Zona Rural"
-  ];
+  // Property type mapping
+  const propertyTypeMapping = {
+    "vivienda": "Vivienda Residencial",
+    "local_comercial": "Local Comercial", 
+    "duplex": "Dúplex",
+    "chalet": "Chalet/Casa Unifamiliar",
+    "edificio_completo": "Edificio Completo"
+  };
+
+  const locationMapping = {
+    "zona_urbana": "Zona Urbana",
+    "zona_rural": "Zona Rural"
+  };
+
+  const getPropertyIcon = (propertyType: string) => {
+    switch (propertyType) {
+      case "vivienda": return Home;
+      case "local_comercial": return Store;
+      case "duplex": return Building;
+      case "chalet": return Building;
+      case "edificio_completo": return Building;
+      default: return Home;
+    }
+  };
+
+  // Get available property types and locations from pricing rates
+  const availablePropertyTypes = [...new Set(pricingRates.map(rate => rate.propertyType))];
+  const availableLocations = [...new Set(pricingRates.map(rate => rate.location))];
+
+  // Get available services for selected rate
+  const getAvailableServices = () => {
+    if (!selectedRate) return { urgent: false, photography: false, measurements: false };
+    
+    return {
+      urgent: selectedRate.urgentServiceAvailable,
+      photography: selectedRate.photographyServiceAvailable,
+      measurements: selectedRate.additionalMeasurementsAvailable
+    };
+  };
 
   const calculateBudget = () => {
     if (!formData.propertyType || !formData.location || !formData.surface) {
       return;
     }
 
-    // Find matching pricing rate or use default pricing
-    let matchingRate = pricingRates.find(
+    // Find matching pricing rate
+    const matchingRate = pricingRates.find(
       rate => rate.propertyType === formData.propertyType && 
               rate.location === formData.location &&
               rate.isActive
     );
 
-    // If no specific rate found, use default pricing based on property type
     if (!matchingRate) {
-      const defaultPricing = {
-        "Vivienda": { base: 180, perM2: 2.5, urgent: 50, photography: 40, measurements: 30, displacementPerKm: 0.45 },
-        "Local Comercial": { base: 220, perM2: 3.0, urgent: 60, photography: 50, measurements: 40, displacementPerKm: 0.45 },
-        "Duplex": { base: 250, perM2: 3.2, urgent: 70, photography: 60, measurements: 45, displacementPerKm: 0.45 },
-        "Chalet": { base: 280, perM2: 3.5, urgent: 80, photography: 70, measurements: 50, displacementPerKm: 0.45 },
-        "Edificio completo": { base: 450, perM2: 4.0, urgent: 120, photography: 100, measurements: 80, displacementPerKm: 0.45 }
-      };
-
-      const pricing = defaultPricing[formData.propertyType as keyof typeof defaultPricing];
-      if (!pricing) return;
-
-      // Apply location multiplier
-      const locationMultiplier = formData.location === "Zona Rural" ? 1.15 : 1.0;
-
-      let totalPrice = (pricing.base + (pricing.perM2 * formData.surface)) * locationMultiplier;
-
-      // Add displacement cost
-      if (formData.distance > 0) {
-        totalPrice += formData.distance * pricing.displacementPerKm;
-      }
-
-      // Add surcharges
-      if (formData.urgentService) {
-        totalPrice += pricing.urgent;
-      }
-      if (formData.photographyService) {
-        totalPrice += pricing.photography;
-      }
-      if (formData.additionalMeasurements) {
-        totalPrice += pricing.measurements;
-      }
-
-      setCalculatedBudget(totalPrice);
-      setShowResult(true);
+      setCalculatedBudget(null);
+      setSelectedRate(null);
       return;
     }
 
-    // Use configured pricing rate
-    let totalPrice = matchingRate.basePrice + (matchingRate.pricePerM2 * formData.surface);
+    setSelectedRate(matchingRate);
+
+    // Calculate base price
+    let totalPrice = parseFloat(matchingRate.basePrice) + (parseFloat(matchingRate.pricePerM2) * formData.surface);
+
+    // Apply rural surcharge if needed
+    if (formData.location === "zona_rural") {
+      const ruralSurcharge = parseFloat(matchingRate.ruralSurchargePercentage) / 100;
+      totalPrice = totalPrice * (1 + ruralSurcharge);
+    }
 
     // Add displacement cost
-    if (formData.distance > 0 && matchingRate.displacementCostPerKm) {
-      totalPrice += formData.distance * matchingRate.displacementCostPerKm;
+    if (formData.distance > 0 && matchingRate.includeDisplacement) {
+      totalPrice += formData.distance * parseFloat(matchingRate.displacementCostPerKm);
     }
 
-    // Add surcharges
-    if (formData.urgentService) {
-      totalPrice += matchingRate.urgentSurcharge;
+    // Add optional services
+    if (formData.urgentService && matchingRate.urgentServiceAvailable) {
+      totalPrice += parseFloat(matchingRate.urgentServicePrice);
     }
-    if (formData.photographyService) {
-      totalPrice += matchingRate.photographySurcharge;
+    if (formData.photographyService && matchingRate.photographyServiceAvailable) {
+      totalPrice += parseFloat(matchingRate.photographyServicePrice);
     }
-    if (formData.additionalMeasurements) {
-      totalPrice += matchingRate.additionalMeasurementsSurcharge;
+    if (formData.additionalMeasurements && matchingRate.additionalMeasurementsAvailable) {
+      totalPrice += parseFloat(matchingRate.additionalMeasurementsPrice);
     }
 
     setCalculatedBudget(totalPrice);
     setShowResult(true);
   };
 
-  const resetForm = () => {
-    setFormData({
-      propertyType: "",
-      location: "",
-      surface: 0,
-      constructionYear: 2000,
-      distance: 0,
-      urgentService: false,
-      photographyService: false,
-      additionalMeasurements: false,
-    });
-    setCalculatedBudget(null);
-    setShowResult(false);
-  };
+  useEffect(() => {
+    if (formData.propertyType && formData.location) {
+      const rate = pricingRates.find(
+        rate => rate.propertyType === formData.propertyType && 
+                rate.location === formData.location &&
+                rate.isActive
+      );
+      setSelectedRate(rate || null);
+      
+      // Reset optional services if they're not available
+      if (rate) {
+        const availableServices = {
+          urgent: rate.urgentServiceAvailable,
+          photography: rate.photographyServiceAvailable,
+          measurements: rate.additionalMeasurementsAvailable
+        };
+        
+        setFormData(prev => ({
+          ...prev,
+          urgentService: prev.urgentService && availableServices.urgent,
+          photographyService: prev.photographyService && availableServices.photography,
+          additionalMeasurements: prev.additionalMeasurements && availableServices.measurements
+        }));
+      }
+    }
+  }, [formData.propertyType, formData.location, pricingRates]);
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando calculadora de presupuestos...</p>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-green-900/20 dark:to-blue-900/20 flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-4xl mx-auto px-4 py-6">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
-              <Calculator className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Calculadora de Presupuesto</h1>
-              <p className="text-gray-600">Complete los datos de la propiedad para recibir un presupuesto instantáneo para su certificado energético.</p>
-            </div>
-          </div>
-        </div>
-      </div>
+  const availableServices = getAvailableServices();
 
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Form Card */}
-          <Card className="h-fit">
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-green-900/20 dark:to-blue-900/20">
+      <div className="container mx-auto px-4 py-12">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+            Generador de Presupuestos
+          </h1>
+          <p className="text-xl text-gray-600 dark:text-gray-300">
+            Calcula el precio de tu certificación energética de forma inmediata
+          </p>
+        </div>
+
+        <div className="max-w-4xl mx-auto grid gap-8 lg:grid-cols-2">
+          {/* Form Section */}
+          <Card className="backdrop-blur-sm bg-white/80 dark:bg-gray-800/80 border border-white/20">
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Home className="w-5 h-5 text-green-600" />
-                <span>Datos de la Propiedad</span>
+              <CardTitle className="flex items-center gap-2">
+                <Calculator className="h-5 w-5" />
+                Datos de la Propiedad
               </CardTitle>
               <CardDescription>
-                Ingrese la información sobre la propiedad que necesita certificar
+                Completa los datos para calcular tu presupuesto
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Property Type and Location */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="propertyType">Tipo de Inmueble</Label>
-                  <Select
-                    value={formData.propertyType}
-                    onValueChange={(value) => setFormData({ ...formData, propertyType: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar tipo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {propertyTypes.map((type) => (
+              {/* Property Type */}
+              <div>
+                <Label htmlFor="propertyType">Tipo de Propiedad</Label>
+                <Select
+                  value={formData.propertyType}
+                  onValueChange={(value) => setFormData({ ...formData, propertyType: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar tipo de propiedad" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availablePropertyTypes.map((type) => {
+                      const Icon = getPropertyIcon(type);
+                      return (
                         <SelectItem key={type} value={type}>
-                          {type}
+                          <div className="flex items-center gap-2">
+                            <Icon className="h-4 w-4" />
+                            {propertyTypeMapping[type as keyof typeof propertyTypeMapping]}
+                          </div>
                         </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="location">Ubicación</Label>
-                  <Select
-                    value={formData.location}
-                    onValueChange={(value) => setFormData({ ...formData, location: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar ubicación" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {locations.map((location) => (
-                        <SelectItem key={location} value={location}>
-                          {location}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
               </div>
 
-              {/* Surface, Construction Year, and Distance */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="surface">Superficie (m²)</Label>
-                  <Input
-                    id="surface"
-                    type="number"
-                    placeholder="80"
-                    value={formData.surface || ""}
-                    onChange={(e) => setFormData({ ...formData, surface: parseInt(e.target.value) || 0 })}
-                  />
-                </div>
+              {/* Location */}
+              <div>
+                <Label htmlFor="location">Ubicación</Label>
+                <Select
+                  value={formData.location}
+                  onValueChange={(value) => setFormData({ ...formData, location: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar ubicación" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableLocations.map((location) => (
+                      <SelectItem key={location} value={location}>
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-4 w-4" />
+                          {locationMapping[location as keyof typeof locationMapping]}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="constructionYear">Año de Construcción</Label>
-                  <Input
-                    id="constructionYear"
-                    type="number"
-                    placeholder="2000"
-                    value={formData.constructionYear}
-                    onChange={(e) => setFormData({ ...formData, constructionYear: parseInt(e.target.value) || 2000 })}
-                  />
-                </div>
+              {/* Surface */}
+              <div>
+                <Label htmlFor="surface">Superficie (m²)</Label>
+                <Input
+                  id="surface"
+                  type="number"
+                  min="1"
+                  value={formData.surface || ""}
+                  onChange={(e) => setFormData({ ...formData, surface: parseInt(e.target.value) || 0 })}
+                  placeholder="Ej: 85"
+                />
+              </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="distance">Distancia (km)</Label>
+              {/* Construction Year */}
+              <div>
+                <Label htmlFor="constructionYear">Año de Construcción</Label>
+                <Input
+                  id="constructionYear"
+                  type="number"
+                  min="1900"
+                  max={new Date().getFullYear()}
+                  value={formData.constructionYear}
+                  onChange={(e) => setFormData({ ...formData, constructionYear: parseInt(e.target.value) })}
+                />
+              </div>
+
+              {/* Distance */}
+              {selectedRate?.includeDisplacement && (
+                <div>
+                  <Label htmlFor="distance">Distancia de Desplazamiento (km)</Label>
                   <Input
                     id="distance"
                     type="number"
-                    placeholder="0"
+                    min="0"
+                    step="0.1"
                     value={formData.distance || ""}
-                    onChange={(e) => setFormData({ ...formData, distance: parseInt(e.target.value) || 0 })}
+                    onChange={(e) => setFormData({ ...formData, distance: parseFloat(e.target.value) || 0 })}
+                    placeholder="Ej: 15.5"
                   />
-                  <p className="text-xs text-gray-500">
-                    Distancia desde la oficina del certificador
+                  <p className="text-sm text-gray-500 mt-1">
+                    Coste: {selectedRate ? parseFloat(selectedRate.displacementCostPerKm).toFixed(2) : 0}€/km
                   </p>
                 </div>
-              </div>
+              )}
 
-              {/* Additional Services */}
+              {/* Optional Services */}
               <div className="space-y-4">
-                <Label>Servicios Adicionales</Label>
+                <Label>Servicios Opcionales</Label>
                 
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="urgent"
-                    checked={formData.urgentService}
-                    onCheckedChange={(checked) => setFormData({ ...formData, urgentService: checked as boolean })}
-                  />
-                  <Label htmlFor="urgent" className="text-sm font-normal">
-                    Servicio urgente (entrega en 48h)
-                  </Label>
-                </div>
+                {/* Urgent Service */}
+                {availableServices.urgent && (
+                  <div className="flex items-center space-x-2 p-3 border rounded-lg">
+                    <Checkbox
+                      id="urgentService"
+                      checked={formData.urgentService}
+                      onCheckedChange={(checked) => setFormData({ ...formData, urgentService: checked as boolean })}
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4" />
+                        <Label htmlFor="urgentService" className="cursor-pointer">
+                          Servicio Urgente
+                        </Label>
+                      </div>
+                      <p className="text-sm text-gray-500">
+                        +{selectedRate ? parseFloat(selectedRate.urgentServicePrice).toFixed(0) : 0}€
+                      </p>
+                    </div>
+                  </div>
+                )}
 
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="photography"
-                    checked={formData.photographyService}
-                    onCheckedChange={(checked) => setFormData({ ...formData, photographyService: checked as boolean })}
-                  />
-                  <Label htmlFor="photography" className="text-sm font-normal">
-                    Servicio de fotografía profesional
-                  </Label>
-                </div>
+                {/* Photography Service */}
+                {availableServices.photography && (
+                  <div className="flex items-center space-x-2 p-3 border rounded-lg">
+                    <Checkbox
+                      id="photographyService"
+                      checked={formData.photographyService}
+                      onCheckedChange={(checked) => setFormData({ ...formData, photographyService: checked as boolean })}
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <Camera className="h-4 w-4" />
+                        <Label htmlFor="photographyService" className="cursor-pointer">
+                          Diseño Fotográfico
+                        </Label>
+                      </div>
+                      <p className="text-sm text-gray-500">
+                        +{selectedRate ? parseFloat(selectedRate.photographyServicePrice).toFixed(0) : 0}€
+                      </p>
+                    </div>
+                  </div>
+                )}
 
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="measurements"
-                    checked={formData.additionalMeasurements}
-                    onCheckedChange={(checked) => setFormData({ ...formData, additionalMeasurements: checked as boolean })}
-                  />
-                  <Label htmlFor="measurements" className="text-sm font-normal">
-                    Mediciones de eficiencia adicionales
-                  </Label>
-                </div>
+                {/* Additional Measurements */}
+                {availableServices.measurements && (
+                  <div className="flex items-center space-x-2 p-3 border rounded-lg">
+                    <Checkbox
+                      id="additionalMeasurements"
+                      checked={formData.additionalMeasurements}
+                      onCheckedChange={(checked) => setFormData({ ...formData, additionalMeasurements: checked as boolean })}
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <Ruler className="h-4 w-4" />
+                        <Label htmlFor="additionalMeasurements" className="cursor-pointer">
+                          Mediciones Adicionales
+                        </Label>
+                      </div>
+                      <p className="text-sm text-gray-500">
+                        +{selectedRate ? parseFloat(selectedRate.additionalMeasurementsPrice).toFixed(0) : 0}€
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {/* Calculate Button */}
               <Button 
-                onClick={calculateBudget}
-                className="w-full bg-green-600 hover:bg-green-700"
+                onClick={calculateBudget} 
+                className="w-full"
                 disabled={!formData.propertyType || !formData.location || !formData.surface}
               >
-                <Calculator className="w-4 h-4 mr-2" />
+                <Calculator className="h-4 w-4 mr-2" />
                 Calcular Presupuesto
               </Button>
             </CardContent>
           </Card>
 
-          {/* Result Card */}
-          <div className="space-y-6">
-            {showResult && calculatedBudget && (
-              <Card className="border-green-200 bg-green-50">
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2 text-green-800">
-                    <CheckCircle className="w-5 h-5" />
-                    <span>Presupuesto Calculado</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center">
-                    <div className="text-4xl font-bold text-green-600 mb-2">
+          {/* Results Section */}
+          <Card className="backdrop-blur-sm bg-white/80 dark:bg-gray-800/80 border border-white/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Euro className="h-5 w-5" />
+                Presupuesto
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {!showResult ? (
+                <div className="text-center py-12">
+                  <Calculator className="h-16 w-16 mx-auto text-gray-400 mb-4" />
+                  <p className="text-gray-500">
+                    Completa el formulario para ver tu presupuesto
+                  </p>
+                </div>
+              ) : calculatedBudget === null ? (
+                <div className="text-center py-12">
+                  <p className="text-red-500 font-medium">
+                    No hay tarifas disponibles para esta combinación
+                  </p>
+                  <p className="text-sm text-gray-500 mt-2">
+                    Por favor, contacta directamente para obtener un presupuesto personalizado
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Total Price */}
+                  <div className="text-center p-6 bg-gradient-to-r from-green-100 to-blue-100 dark:from-green-900/30 dark:to-blue-900/30 rounded-lg">
+                    <div className="text-4xl font-bold text-green-700 dark:text-green-300 mb-2">
                       {calculatedBudget.toFixed(2)}€
                     </div>
-                    <p className="text-gray-600 mb-4">
-                      Precio estimado para su certificado energético
-                    </p>
-                    
-                    {/* Breakdown */}
-                    <div className="bg-white rounded-lg p-4 space-y-2 text-left">
-                      <h4 className="font-semibold text-gray-800 mb-2">Desglose del presupuesto:</h4>
-                      <div className="space-y-1 text-sm">
+                    <div className="text-sm text-gray-600 dark:text-gray-300">
+                      Precio total estimado
+                    </div>
+                  </div>
+
+                  {/* Breakdown */}
+                  {selectedRate && (
+                    <div className="space-y-3">
+                      <h4 className="font-semibold">Desglose del presupuesto:</h4>
+                      
+                      <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
-                          <span>Tipo de propiedad:</span>
-                          <span className="font-medium">{formData.propertyType}</span>
+                          <span>Precio base:</span>
+                          <span>{parseFloat(selectedRate.basePrice).toFixed(2)}€</span>
                         </div>
-                        <div className="flex justify-between">
-                          <span>Ubicación:</span>
-                          <span className="font-medium">{formData.location}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Superficie:</span>
-                          <span className="font-medium">{formData.surface} m²</span>
-                        </div>
-                        {formData.distance > 0 && (
-                          <div className="flex justify-between text-indigo-600">
-                            <span>Desplazamiento:</span>
-                            <span className="font-medium">{formData.distance} km</span>
+                        
+                        {formData.surface > 0 && parseFloat(selectedRate.pricePerM2) > 0 && (
+                          <div className="flex justify-between">
+                            <span>Por m² ({formData.surface}m² × {parseFloat(selectedRate.pricePerM2).toFixed(2)}€):</span>
+                            <span>{(formData.surface * parseFloat(selectedRate.pricePerM2)).toFixed(2)}€</span>
                           </div>
                         )}
-                        {formData.urgentService && (
-                          <div className="flex justify-between text-orange-600">
+
+                        {formData.location === "zona_rural" && (
+                          <div className="flex justify-between">
+                            <span>Recargo zona rural ({parseFloat(selectedRate.ruralSurchargePercentage)}%):</span>
+                            <span>Incluido</span>
+                          </div>
+                        )}
+
+                        {formData.distance > 0 && selectedRate.includeDisplacement && (
+                          <div className="flex justify-between">
+                            <span>Desplazamiento ({formData.distance}km):</span>
+                            <span>{(formData.distance * parseFloat(selectedRate.displacementCostPerKm)).toFixed(2)}€</span>
+                          </div>
+                        )}
+
+                        {formData.urgentService && selectedRate.urgentServiceAvailable && (
+                          <div className="flex justify-between">
                             <span>Servicio urgente:</span>
-                            <span className="font-medium">Incluido</span>
+                            <span>+{parseFloat(selectedRate.urgentServicePrice).toFixed(2)}€</span>
                           </div>
                         )}
-                        {formData.photographyService && (
-                          <div className="flex justify-between text-blue-600">
-                            <span>Fotografía profesional:</span>
-                            <span className="font-medium">Incluido</span>
+
+                        {formData.photographyService && selectedRate.photographyServiceAvailable && (
+                          <div className="flex justify-between">
+                            <span>Diseño fotográfico:</span>
+                            <span>+{parseFloat(selectedRate.photographyServicePrice).toFixed(2)}€</span>
                           </div>
                         )}
-                        {formData.additionalMeasurements && (
-                          <div className="flex justify-between text-purple-600">
+
+                        {formData.additionalMeasurements && selectedRate.additionalMeasurementsAvailable && (
+                          <div className="flex justify-between">
                             <span>Mediciones adicionales:</span>
-                            <span className="font-medium">Incluido</span>
+                            <span>+{parseFloat(selectedRate.additionalMeasurementsPrice).toFixed(2)}€</span>
                           </div>
                         )}
                       </div>
-                    </div>
 
-                    <div className="flex space-x-3 mt-6">
-                      <Button 
-                        onClick={resetForm}
-                        variant="outline"
-                        className="flex-1"
-                      >
-                        Nueva Consulta
-                      </Button>
-                      <Button 
-                        className="flex-1 bg-green-600 hover:bg-green-700"
-                        onClick={() => window.open('tel:+34-XXX-XXX-XXX', '_self')}
-                      >
-                        Solicitar Certificado
-                      </Button>
+                      <div className="pt-3 border-t">
+                        <div className="flex justify-between items-center">
+                          <span className="font-medium">Anticipo ({selectedRate.advancePercentage}%):</span>
+                          <span className="font-bold text-green-600">
+                            {(calculatedBudget * selectedRate.advancePercentage / 100).toFixed(2)}€
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center mt-1">
+                          <span className="text-sm text-gray-500">Plazo de entrega:</span>
+                          <span className="text-sm">{selectedRate.deliveryDays} días</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <div className="flex items-start gap-2">
+                      <CheckCircle className="h-5 w-5 text-blue-600 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium text-blue-800 dark:text-blue-300">
+                          Presupuesto válido por 30 días
+                        </p>
+                        <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                          Contacta para confirmar tu certificación energética
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Info Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">¿Qué incluye el certificado energético?</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2 text-sm">
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                    <span>Certificado oficial válido para venta o alquiler</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                    <span>Informe detallado de eficiencia energética</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                    <span>Recomendaciones de mejora</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                    <span>Registro en organismo oficial</span>
-                  </li>
-                  <li className="flex items-start space-x-2">
-                    <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                    <span>Asesoramiento técnico personalizado</span>
-                  </li>
-                </ul>
-              </CardContent>
-            </Card>
-          </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

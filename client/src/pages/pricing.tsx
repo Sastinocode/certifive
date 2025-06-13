@@ -21,15 +21,30 @@ import {
   Store,
   Clock,
   Percent,
-  Share2,
-  Calculator,
+  Camera,
+  Ruler,
+  MapPin,
+  Car,
+  Settings2,
+  CheckSquare,
   Copy
 } from "lucide-react";
 
 interface PricingRate {
   id: number;
   propertyType: string;
+  location: string;
   basePrice: string;
+  pricePerM2: string;
+  ruralSurchargePercentage: string;
+  displacementCostPerKm: string;
+  includeDisplacement: boolean;
+  urgentServicePrice: string;
+  urgentServiceAvailable: boolean;
+  photographyServicePrice: string;
+  photographyServiceAvailable: boolean;
+  additionalMeasurementsPrice: string;
+  additionalMeasurementsAvailable: boolean;
   advancePercentage: number;
   deliveryDays: number;
   description: string | null;
@@ -39,8 +54,14 @@ interface PricingRate {
 const propertyTypes = [
   { value: "vivienda", label: "Vivienda Residencial", icon: Home },
   { value: "local_comercial", label: "Local Comercial", icon: Store },
+  { value: "duplex", label: "Dúplex", icon: Building },
   { value: "chalet", label: "Chalet/Casa Unifamiliar", icon: Building },
   { value: "edificio_completo", label: "Edificio Completo", icon: Building },
+];
+
+const locations = [
+  { value: "zona_urbana", label: "Zona Urbana" },
+  { value: "zona_rural", label: "Zona Rural" },
 ];
 
 export default function Pricing() {
@@ -48,59 +69,48 @@ export default function Pricing() {
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState<number | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [formData, setFormData] = useState({
-    propertyType: "",
-    basePrice: "",
-    advancePercentage: 50,
-    deliveryDays: 7,
-    description: "",
-    isActive: true
-  });
 
-  const { data: pricingRates = [], isLoading } = useQuery({
+  const { data: pricingRates, isLoading } = useQuery<PricingRate[]>({
     queryKey: ["/api/pricing-rates"],
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data: any) => {
-      const response = await apiRequest("POST", "/api/pricing-rates", data);
-      return response.json();
+    mutationFn: async (data: Omit<PricingRate, "id">) => {
+      return apiRequest("POST", "/api/pricing-rates", data);
     },
     onSuccess: () => {
-      toast({
-        title: "Tarifa creada",
-        description: "La nueva tarifa ha sido añadida correctamente.",
-      });
       queryClient.invalidateQueries({ queryKey: ["/api/pricing-rates"] });
       setShowAddForm(false);
-      resetForm();
+      toast({
+        title: "Tarifa creada",
+        description: "La nueva configuración de tarifas se ha guardado correctamente",
+      });
     },
     onError: () => {
       toast({
         title: "Error",
-        description: "No se pudo crear la tarifa. Inténtalo de nuevo.",
+        description: "No se pudo crear la tarifa",
         variant: "destructive",
       });
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      const response = await apiRequest("PATCH", `/api/pricing-rates/${id}`, data);
-      return response.json();
+    mutationFn: async ({ id, data }: { id: number; data: Partial<PricingRate> }) => {
+      return apiRequest("PATCH", `/api/pricing-rates/${id}`, data);
     },
     onSuccess: () => {
-      toast({
-        title: "Tarifa actualizada",
-        description: "Los cambios han sido guardados correctamente.",
-      });
       queryClient.invalidateQueries({ queryKey: ["/api/pricing-rates"] });
       setIsEditing(null);
+      toast({
+        title: "Tarifa actualizada",
+        description: "La configuración se ha actualizado correctamente",
+      });
     },
     onError: () => {
       toast({
         title: "Error",
-        description: "No se pudieron guardar los cambios.",
+        description: "No se pudo actualizar la tarifa",
         variant: "destructive",
       });
     },
@@ -108,395 +118,550 @@ export default function Pricing() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      await apiRequest("DELETE", `/api/pricing-rates/${id}`, {});
+      return apiRequest("DELETE", `/api/pricing-rates/${id}`);
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/pricing-rates"] });
       toast({
         title: "Tarifa eliminada",
-        description: "La tarifa ha sido eliminada correctamente.",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/pricing-rates"] });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "No se pudo eliminar la tarifa.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const createQuoteLinkMutation = useMutation({
-    mutationFn: async () => {
-      const response = await apiRequest("POST", "/api/quote-requests", {});
-      return response.json();
-    },
-    onSuccess: (data) => {
-      const link = `${window.location.origin}/presupuesto/${data.uniqueLink}`;
-      navigator.clipboard.writeText(link);
-      toast({
-        title: "Enlace generado",
-        description: "El enlace ha sido copiado al portapapeles.",
+        description: "La configuración se ha eliminado correctamente",
       });
     },
     onError: () => {
       toast({
         title: "Error",
-        description: "No se pudo generar el enlace.",
+        description: "No se pudo eliminar la tarifa",
         variant: "destructive",
       });
     },
   });
 
-  const resetForm = () => {
-    setFormData({
-      propertyType: "",
-      basePrice: "",
-      advancePercentage: 50,
-      deliveryDays: 7,
-      description: "",
-      isActive: true
+  const generatePublicLink = () => {
+    const baseUrl = window.location.origin;
+    const publicLink = `${baseUrl}/presupuesto`;
+    navigator.clipboard.writeText(publicLink);
+    toast({
+      title: "Enlace copiado",
+      description: "El enlace público del generador de presupuestos se ha copiado al portapapeles",
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.propertyType || !formData.basePrice) {
-      toast({
-        title: "Campos requeridos",
-        description: "Por favor completa todos los campos obligatorios.",
-        variant: "destructive",
-      });
-      return;
-    }
+  const PricingForm = ({ 
+    initialData, 
+    onSubmit, 
+    onCancel, 
+    isLoading 
+  }: {
+    initialData?: Partial<PricingRate>;
+    onSubmit: (data: any) => void;
+    onCancel: () => void;
+    isLoading: boolean;
+  }) => {
+    const [formData, setFormData] = useState({
+      propertyType: initialData?.propertyType || "",
+      location: initialData?.location || "",
+      basePrice: initialData?.basePrice || "",
+      pricePerM2: initialData?.pricePerM2 || "0",
+      ruralSurchargePercentage: initialData?.ruralSurchargePercentage || "15",
+      displacementCostPerKm: initialData?.displacementCostPerKm || "0.45",
+      includeDisplacement: initialData?.includeDisplacement ?? true,
+      urgentServicePrice: initialData?.urgentServicePrice || "0",
+      urgentServiceAvailable: initialData?.urgentServiceAvailable ?? true,
+      photographyServicePrice: initialData?.photographyServicePrice || "0",
+      photographyServiceAvailable: initialData?.photographyServiceAvailable ?? true,
+      additionalMeasurementsPrice: initialData?.additionalMeasurementsPrice || "0",
+      additionalMeasurementsAvailable: initialData?.additionalMeasurementsAvailable ?? true,
+      advancePercentage: initialData?.advancePercentage || 50,
+      deliveryDays: initialData?.deliveryDays || 7,
+      description: initialData?.description || "",
+      isActive: initialData?.isActive ?? true,
+    });
 
-    const data = {
-      ...formData,
-      basePrice: parseFloat(formData.basePrice)
+    const handleSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+      onSubmit(formData);
     };
 
-    if (isEditing) {
-      updateMutation.mutate({ id: isEditing, data });
-    } else {
-      createMutation.mutate(data);
-    }
+    return (
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Basic Configuration */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <Settings2 className="h-5 w-5" />
+              Configuración Básica
+            </h3>
+            
+            <div>
+              <Label htmlFor="propertyType">Tipo de Propiedad</Label>
+              <Select
+                value={formData.propertyType}
+                onValueChange={(value) => setFormData({ ...formData, propertyType: value })}
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  {propertyTypes.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      <div className="flex items-center gap-2">
+                        <type.icon className="h-4 w-4" />
+                        {type.label}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="location">Ubicación</Label>
+              <Select
+                value={formData.location}
+                onValueChange={(value) => setFormData({ ...formData, location: value })}
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar ubicación" />
+                </SelectTrigger>
+                <SelectContent>
+                  {locations.map((location) => (
+                    <SelectItem key={location.value} value={location.value}>
+                      {location.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="basePrice">Precio Base (€)</Label>
+              <Input
+                id="basePrice"
+                type="number"
+                step="0.01"
+                value={formData.basePrice}
+                onChange={(e) => setFormData({ ...formData, basePrice: e.target.value })}
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="pricePerM2">Precio por m² (€)</Label>
+              <Input
+                id="pricePerM2"
+                type="number"
+                step="0.01"
+                value={formData.pricePerM2}
+                onChange={(e) => setFormData({ ...formData, pricePerM2: e.target.value })}
+              />
+            </div>
+          </div>
+
+          {/* Location & Displacement */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <MapPin className="h-5 w-5" />
+              Ubicación y Desplazamiento
+            </h3>
+
+            <div>
+              <Label htmlFor="ruralSurchargePercentage">Recargo Zona Rural (%)</Label>
+              <Input
+                id="ruralSurchargePercentage"
+                type="number"
+                step="0.01"
+                value={formData.ruralSurchargePercentage}
+                onChange={(e) => setFormData({ ...formData, ruralSurchargePercentage: e.target.value })}
+              />
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="includeDisplacement"
+                checked={formData.includeDisplacement}
+                onCheckedChange={(checked) => setFormData({ ...formData, includeDisplacement: checked })}
+              />
+              <Label htmlFor="includeDisplacement">Incluir costes de desplazamiento</Label>
+            </div>
+
+            <div>
+              <Label htmlFor="displacementCostPerKm">Coste por Km (€)</Label>
+              <Input
+                id="displacementCostPerKm"
+                type="number"
+                step="0.01"
+                value={formData.displacementCostPerKm}
+                onChange={(e) => setFormData({ ...formData, displacementCostPerKm: e.target.value })}
+                disabled={!formData.includeDisplacement}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Optional Services */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            <CheckSquare className="h-5 w-5" />
+            Servicios Opcionales
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Urgent Service */}
+            <div className="space-y-3 p-4 border rounded-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  <span className="font-medium">Servicio Urgente</span>
+                </div>
+                <Switch
+                  checked={formData.urgentServiceAvailable}
+                  onCheckedChange={(checked) => setFormData({ ...formData, urgentServiceAvailable: checked })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="urgentServicePrice">Precio (€)</Label>
+                <Input
+                  id="urgentServicePrice"
+                  type="number"
+                  step="0.01"
+                  value={formData.urgentServicePrice}
+                  onChange={(e) => setFormData({ ...formData, urgentServicePrice: e.target.value })}
+                  disabled={!formData.urgentServiceAvailable}
+                />
+              </div>
+            </div>
+
+            {/* Photography Service */}
+            <div className="space-y-3 p-4 border rounded-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Camera className="h-4 w-4" />
+                  <span className="font-medium">Diseño Fotográfico</span>
+                </div>
+                <Switch
+                  checked={formData.photographyServiceAvailable}
+                  onCheckedChange={(checked) => setFormData({ ...formData, photographyServiceAvailable: checked })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="photographyServicePrice">Precio (€)</Label>
+                <Input
+                  id="photographyServicePrice"
+                  type="number"
+                  step="0.01"
+                  value={formData.photographyServicePrice}
+                  onChange={(e) => setFormData({ ...formData, photographyServicePrice: e.target.value })}
+                  disabled={!formData.photographyServiceAvailable}
+                />
+              </div>
+            </div>
+
+            {/* Additional Measurements */}
+            <div className="space-y-3 p-4 border rounded-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Ruler className="h-4 w-4" />
+                  <span className="font-medium">Mediciones Adicionales</span>
+                </div>
+                <Switch
+                  checked={formData.additionalMeasurementsAvailable}
+                  onCheckedChange={(checked) => setFormData({ ...formData, additionalMeasurementsAvailable: checked })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="additionalMeasurementsPrice">Precio (€)</Label>
+                <Input
+                  id="additionalMeasurementsPrice"
+                  type="number"
+                  step="0.01"
+                  value={formData.additionalMeasurementsPrice}
+                  onChange={(e) => setFormData({ ...formData, additionalMeasurementsPrice: e.target.value })}
+                  disabled={!formData.additionalMeasurementsAvailable}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Business Settings */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <Label htmlFor="advancePercentage">Porcentaje de Anticipo (%)</Label>
+            <Input
+              id="advancePercentage"
+              type="number"
+              min="0"
+              max="100"
+              value={formData.advancePercentage}
+              onChange={(e) => setFormData({ ...formData, advancePercentage: parseInt(e.target.value) })}
+              required
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="deliveryDays">Días de Entrega</Label>
+            <Input
+              id="deliveryDays"
+              type="number"
+              min="1"
+              value={formData.deliveryDays}
+              onChange={(e) => setFormData({ ...formData, deliveryDays: parseInt(e.target.value) })}
+              required
+            />
+          </div>
+        </div>
+
+        <div>
+          <Label htmlFor="description">Descripción (Opcional)</Label>
+          <Textarea
+            id="description"
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            placeholder="Descripción adicional de esta configuración de tarifa..."
+          />
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="isActive"
+            checked={formData.isActive}
+            onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
+          />
+          <Label htmlFor="isActive">Tarifa activa</Label>
+        </div>
+
+        <div className="flex gap-3">
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? "Guardando..." : initialData ? "Actualizar" : "Crear Tarifa"}
+          </Button>
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancelar
+          </Button>
+        </div>
+      </form>
+    );
   };
 
-  const startEdit = (rate: PricingRate) => {
-    setFormData({
-      propertyType: rate.propertyType,
-      basePrice: rate.basePrice,
-      advancePercentage: rate.advancePercentage,
-      deliveryDays: rate.deliveryDays,
-      description: rate.description || "",
-      isActive: rate.isActive
-    });
-    setIsEditing(rate.id);
-    setShowAddForm(true);
-  };
-
-  const cancelEdit = () => {
-    setIsEditing(null);
-    setShowAddForm(false);
-    resetForm();
-  };
-
-  const getPropertyTypeLabel = (type: string) => {
-    return propertyTypes.find(pt => pt.value === type)?.label || type;
-  };
-
-  const getPropertyTypeIcon = (type: string) => {
-    const PropertyIcon = propertyTypes.find(pt => pt.value === type)?.icon || Home;
-    return <PropertyIcon className="w-4 h-4" />;
-  };
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-green-900/20 dark:to-blue-900/20">
+        <Sidebar />
+        <div className="flex-1 p-8">
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      <Sidebar selectedTab="pricing" onTabChange={() => {}} />
-      
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-3">
-          <h1 className="text-lg font-semibold text-gray-900">Tarifas</h1>
+    <div className="flex min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-green-900/20 dark:to-blue-900/20">
+      <Sidebar />
+      <div className="flex-1 p-8 space-y-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+              Configuración de Tarifas
+            </h1>
+            <p className="text-gray-600 dark:text-gray-300 mt-2">
+              Configura precios base y servicios opcionales para el generador público de presupuestos
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <Button onClick={generatePublicLink} variant="outline" className="flex items-center gap-2">
+              <Copy className="h-4 w-4" />
+              Copiar Enlace Público
+            </Button>
+            <Button onClick={() => setShowAddForm(true)} className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              Nueva Tarifa
+            </Button>
+          </div>
         </div>
 
-        <div className="flex-1 overflow-auto p-6">
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">Gestión de Tarifas</h2>
-                <p className="text-gray-600">Configura tus precios por tipo de certificación</p>
-              </div>
-              <div className="flex gap-3">
-                <Button
-                  onClick={() => createQuoteLinkMutation.mutate()}
-                  variant="outline"
-                  disabled={createQuoteLinkMutation.isPending}
-                >
-                  <Share2 className="w-4 h-4 mr-2" />
-                  {createQuoteLinkMutation.isPending ? "Generando..." : "Generar Enlace"}
-                </Button>
-                <Button onClick={() => setShowAddForm(true)}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Nueva Tarifa
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Public Tariff Generator Section */}
-          <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-xl p-6 mb-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-xl flex items-center justify-center mr-4">
-                  <Calculator className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-gray-900">Generador Público de Presupuestos</h4>
-                  <p className="text-sm text-gray-600">Comparte este enlace con tus clientes para que generen presupuestos automáticamente</p>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => {
-                    const url = `${window.location.origin}/cotizador-publico`;
-                    navigator.clipboard.writeText(url);
-                    toast({
-                      title: "Enlace copiado",
-                      description: "El enlace del generador de tarifas se ha copiado al portapapeles",
-                    });
-                  }}
-                  className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
-                >
-                  <Copy className="w-4 h-4 mr-2" />
-                  Copiar Enlace
-                </Button>
-              </div>
-            </div>
-            <div className="mt-4 bg-white/60 rounded-lg p-3 border">
-              <code className="text-sm text-gray-700 break-all">
-                {window.location.origin}/cotizador-publico
-              </code>
-            </div>
-          </div>
-
-          {/* Add/Edit Form */}
-          {showAddForm && (
-            <Card className="mb-8">
-              <CardHeader>
-                <CardTitle>
-                  {isEditing ? "Editar Tarifa" : "Nueva Tarifa"}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <Label htmlFor="propertyType">Tipo de Propiedad *</Label>
-                      <Select
-                        value={formData.propertyType}
-                        onValueChange={(value) => setFormData(prev => ({ ...prev, propertyType: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccionar tipo..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {propertyTypes.map(type => (
-                            <SelectItem key={type.value} value={type.value}>
-                              <div className="flex items-center">
-                                <type.icon className="w-4 h-4 mr-2" />
-                                {type.label}
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="basePrice">Precio Base (€) *</Label>
-                      <div className="relative">
-                        <Euro className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                        <Input
-                          id="basePrice"
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          value={formData.basePrice}
-                          onChange={(e) => setFormData(prev => ({ ...prev, basePrice: e.target.value }))}
-                          className="pl-10"
-                          placeholder="250.00"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="advancePercentage">Anticipo (%)</Label>
-                      <div className="relative">
-                        <Percent className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                        <Input
-                          id="advancePercentage"
-                          type="number"
-                          min="0"
-                          max="100"
-                          value={formData.advancePercentage}
-                          onChange={(e) => setFormData(prev => ({ ...prev, advancePercentage: parseInt(e.target.value) || 0 }))}
-                          className="pl-10"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="deliveryDays">Días de Entrega</Label>
-                      <div className="relative">
-                        <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                        <Input
-                          id="deliveryDays"
-                          type="number"
-                          min="1"
-                          value={formData.deliveryDays}
-                          onChange={(e) => setFormData(prev => ({ ...prev, deliveryDays: parseInt(e.target.value) || 1 }))}
-                          className="pl-10"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="description">Descripción</Label>
-                    <Textarea
-                      id="description"
-                      value={formData.description}
-                      onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                      placeholder="Descripción detallada del servicio incluido..."
-                      rows={3}
-                    />
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="isActive"
-                      checked={formData.isActive}
-                      onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isActive: checked }))}
-                    />
-                    <Label htmlFor="isActive">Tarifa activa</Label>
-                  </div>
-
-                  <div className="flex gap-3">
-                    <Button
-                      type="submit"
-                      disabled={createMutation.isPending || updateMutation.isPending}
-                    >
-                      {createMutation.isPending || updateMutation.isPending
-                        ? "Guardando..."
-                        : isEditing
-                        ? "Actualizar Tarifa"
-                        : "Crear Tarifa"
-                      }
-                    </Button>
-                    <Button type="button" variant="outline" onClick={cancelEdit}>
-                      Cancelar
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Pricing Rates List */}
+        {showAddForm && (
           <Card>
             <CardHeader>
-              <CardTitle>Tarifas Configuradas</CardTitle>
+              <CardTitle>Nueva Configuración de Tarifa</CardTitle>
             </CardHeader>
             <CardContent>
-              {isLoading ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                  <p className="text-gray-600">Cargando tarifas...</p>
-                </div>
-              ) : pricingRates.length === 0 ? (
-                <div className="text-center py-8">
-                  <Euro className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600 mb-4">No hay tarifas configuradas aún</p>
-                  <Button onClick={() => setShowAddForm(true)}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Crear primera tarifa
-                  </Button>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {pricingRates.map((rate: PricingRate) => (
-                    <Card key={rate.id} className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-6">
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex items-center">
-                            {getPropertyTypeIcon(rate.propertyType)}
-                            <div className="ml-3">
-                              <h3 className="font-semibold text-gray-900 text-sm">
-                                {getPropertyTypeLabel(rate.propertyType)}
-                              </h3>
-                              <div className="flex items-center mt-1">
-                                {rate.isActive ? (
-                                  <Badge className="bg-green-100 text-green-800 text-xs">Activa</Badge>
-                                ) : (
-                                  <Badge className="bg-gray-100 text-gray-800 text-xs">Inactiva</Badge>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex gap-1">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => startEdit(rate)}
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => deleteMutation.mutate(rate.id)}
-                              className="text-red-600 hover:text-red-800"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </div>
-
-                        <div className="space-y-3">
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-600">Precio Base</span>
-                            <span className="text-lg font-bold text-gray-900">
-                              {parseFloat(rate.basePrice).toFixed(2)}€
-                            </span>
-                          </div>
-
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-600">Anticipo</span>
-                            <span className="text-sm text-gray-900">
-                              {rate.advancePercentage}% ({(parseFloat(rate.basePrice) * rate.advancePercentage / 100).toFixed(2)}€)
-                            </span>
-                          </div>
-
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-600">Entrega</span>
-                            <span className="text-sm text-gray-900">{rate.deliveryDays} días</span>
-                          </div>
-
-                          {rate.description && (
-                            <div className="pt-2 border-t border-gray-100">
-                              <p className="text-xs text-gray-600">{rate.description}</p>
-                            </div>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
+              <PricingForm
+                onSubmit={(data) => createMutation.mutate(data)}
+                onCancel={() => setShowAddForm(false)}
+                isLoading={createMutation.isPending}
+              />
             </CardContent>
           </Card>
+        )}
+
+        <div className="grid gap-6">
+          {pricingRates?.map((rate) => (
+            <Card key={rate.id} className="overflow-hidden backdrop-blur-sm bg-white/80 dark:bg-gray-800/80 border border-white/20">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    {propertyTypes.find(type => type.value === rate.propertyType)?.icon && (
+                      <div className="p-2 rounded-lg bg-gradient-to-r from-green-500 to-blue-500">
+                        {(() => {
+                          const IconComponent = propertyTypes.find(type => type.value === rate.propertyType)?.icon;
+                          return IconComponent ? <IconComponent className="h-5 w-5 text-white" /> : null;
+                        })()}
+                      </div>
+                    )}
+                    <div>
+                      <CardTitle className="text-xl">
+                        {propertyTypes.find(type => type.value === rate.propertyType)?.label}
+                      </CardTitle>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                        {locations.find(loc => loc.value === rate.location)?.label}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={rate.isActive ? "default" : "secondary"}>
+                      {rate.isActive ? "Activa" : "Inactiva"}
+                    </Badge>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setIsEditing(rate.id)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => deleteMutation.mutate(rate.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {isEditing === rate.id ? (
+                  <PricingForm
+                    initialData={rate}
+                    onSubmit={(data) => updateMutation.mutate({ id: rate.id, data })}
+                    onCancel={() => setIsEditing(null)}
+                    isLoading={updateMutation.isPending}
+                  />
+                ) : (
+                  <div className="space-y-6">
+                    {/* Pricing Overview */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="text-center p-3 bg-gradient-to-r from-green-100 to-blue-100 dark:from-green-900/30 dark:to-blue-900/30 rounded-lg">
+                        <div className="text-2xl font-bold text-green-700 dark:text-green-300">
+                          {parseFloat(rate.basePrice).toLocaleString()}€
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-300">Precio Base</div>
+                      </div>
+                      <div className="text-center p-3 bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 rounded-lg">
+                        <div className="text-2xl font-bold text-blue-700 dark:text-blue-300">
+                          {parseFloat(rate.pricePerM2).toLocaleString()}€
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-300">Por m²</div>
+                      </div>
+                      <div className="text-center p-3 bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 rounded-lg">
+                        <div className="text-2xl font-bold text-purple-700 dark:text-purple-300">
+                          {rate.advancePercentage}%
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-300">Anticipo</div>
+                      </div>
+                      <div className="text-center p-3 bg-gradient-to-r from-orange-100 to-red-100 dark:from-orange-900/30 dark:to-red-900/30 rounded-lg">
+                        <div className="text-2xl font-bold text-orange-700 dark:text-orange-300">
+                          {rate.deliveryDays}
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-300">Días</div>
+                      </div>
+                    </div>
+
+                    {/* Optional Services */}
+                    <div>
+                      <h4 className="font-semibold mb-3">Servicios Opcionales</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className={`p-3 rounded-lg border ${rate.urgentServiceAvailable ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'}`}>
+                          <div className="flex items-center gap-2 mb-1">
+                            <Clock className="h-4 w-4" />
+                            <span className="font-medium">Servicio Urgente</span>
+                          </div>
+                          <div className="text-lg font-bold">
+                            {rate.urgentServiceAvailable ? `${parseFloat(rate.urgentServicePrice).toLocaleString()}€` : 'No disponible'}
+                          </div>
+                        </div>
+                        
+                        <div className={`p-3 rounded-lg border ${rate.photographyServiceAvailable ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'}`}>
+                          <div className="flex items-center gap-2 mb-1">
+                            <Camera className="h-4 w-4" />
+                            <span className="font-medium">Diseño Fotográfico</span>
+                          </div>
+                          <div className="text-lg font-bold">
+                            {rate.photographyServiceAvailable ? `${parseFloat(rate.photographyServicePrice).toLocaleString()}€` : 'No disponible'}
+                          </div>
+                        </div>
+                        
+                        <div className={`p-3 rounded-lg border ${rate.additionalMeasurementsAvailable ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'}`}>
+                          <div className="flex items-center gap-2 mb-1">
+                            <Ruler className="h-4 w-4" />
+                            <span className="font-medium">Mediciones Adicionales</span>
+                          </div>
+                          <div className="text-lg font-bold">
+                            {rate.additionalMeasurementsAvailable ? `${parseFloat(rate.additionalMeasurementsPrice).toLocaleString()}€` : 'No disponible'}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Displacement */}
+                    {rate.includeDisplacement && (
+                      <div>
+                        <h4 className="font-semibold mb-2">Configuración de Desplazamiento</h4>
+                        <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-300">
+                          <div className="flex items-center gap-2">
+                            <Car className="h-4 w-4" />
+                            <span>{parseFloat(rate.displacementCostPerKm).toFixed(2)}€ por km</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Percent className="h-4 w-4" />
+                            <span>{parseFloat(rate.ruralSurchargePercentage)}% recargo zona rural</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {rate.description && (
+                      <div>
+                        <h4 className="font-semibold mb-2">Descripción</h4>
+                        <p className="text-gray-600 dark:text-gray-300">{rate.description}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
         </div>
+
+        {(!pricingRates || pricingRates.length === 0) && !showAddForm && (
+          <Card className="text-center py-12">
+            <CardContent>
+              <Euro className="h-16 w-16 mx-auto text-gray-400 mb-4" />
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                No hay tarifas configuradas
+              </h3>
+              <p className="text-gray-600 dark:text-gray-300 mb-6">
+                Comienza creando tu primera configuración de tarifa para el generador público de presupuestos
+              </p>
+              <Button onClick={() => setShowAddForm(true)} className="flex items-center gap-2 mx-auto">
+                <Plus className="h-4 w-4" />
+                Crear Primera Tarifa
+              </Button>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
