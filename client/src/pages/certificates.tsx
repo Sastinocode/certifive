@@ -127,6 +127,26 @@ export default function Certificates() {
     },
   });
 
+  const deleteCertificationMutation = useMutation({
+    mutationFn: async (certificationId: number) => {
+      return await apiRequest("DELETE", `/api/certifications/${certificationId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/certifications"] });
+      toast({
+        title: "Certificación eliminada",
+        description: "La certificación ha sido eliminada permanentemente",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Error al eliminar la certificación",
+        variant: "destructive",
+      });
+    },
+  });
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "completed":
@@ -290,57 +310,81 @@ export default function Certificates() {
                                 </Button>
                               </Link>
                               
-                              {cert.status === "completed" && (
-                                <>
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                      <Button variant="outline" size="sm">
-                                        <Download className="w-4 h-4 mr-1" />
-                                        Descargar
-                                      </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                      <DropdownMenuItem
-                                        onClick={() => downloadReportMutation.mutate({
-                                          certificationId: cert.id,
-                                          format: 'pdf'
-                                        })}
-                                      >
-                                        <FileText className="w-4 h-4 mr-2" />
-                                        Reporte PDF
-                                      </DropdownMenuItem>
-                                      <DropdownMenuItem
-                                        onClick={() => downloadReportMutation.mutate({
-                                          certificationId: cert.id,
-                                          format: 'word'
-                                        })}
-                                      >
-                                        <File className="w-4 h-4 mr-2" />
-                                        Documento Word
-                                      </DropdownMenuItem>
-                                      <DropdownMenuItem
-                                        onClick={() => downloadReportMutation.mutate({
-                                          certificationId: cert.id,
-                                          format: 'excel'
-                                        })}
-                                      >
-                                        <Sheet className="w-4 h-4 mr-2" />
-                                        Hoja Excel
-                                      </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
-                                  
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
                                   <Button 
                                     variant="outline" 
                                     size="sm"
-                                    onClick={() => archiveCertificationMutation.mutate(cert.id)}
-                                    disabled={archiveCertificationMutation.isPending}
+                                    disabled={cert.status !== "completed" && downloadReportMutation.isPending}
                                   >
-                                    <Archive className="w-4 h-4 mr-1" />
-                                    Archivar
+                                    <Download className="w-4 h-4 mr-1" />
+                                    Descargar
                                   </Button>
-                                </>
-                              )}
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem
+                                    onClick={() => downloadReportMutation.mutate({
+                                      certificationId: cert.id,
+                                      format: 'pdf'
+                                    })}
+                                    disabled={cert.status !== "completed"}
+                                  >
+                                    <FileText className="w-4 h-4 mr-2" />
+                                    Reporte PDF
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => downloadReportMutation.mutate({
+                                      certificationId: cert.id,
+                                      format: 'word'
+                                    })}
+                                    disabled={cert.status !== "completed"}
+                                  >
+                                    <File className="w-4 h-4 mr-2" />
+                                    Documento Word
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => downloadReportMutation.mutate({
+                                      certificationId: cert.id,
+                                      format: 'excel'
+                                    })}
+                                    disabled={cert.status !== "completed"}
+                                  >
+                                    <Sheet className="w-4 h-4 mr-2" />
+                                    Hoja Excel
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                              
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => archiveCertificationMutation.mutate(cert.id)}
+                                disabled={archiveCertificationMutation.isPending}
+                              >
+                                <Archive className="w-4 h-4 mr-1" />
+                                Archivar
+                              </Button>
+
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="outline" size="sm">
+                                    <MoreVertical className="w-4 h-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem
+                                    onClick={() => {
+                                      if (confirm('¿Estás seguro de que quieres eliminar esta certificación? Esta acción no se puede deshacer.')) {
+                                        deleteCertificationMutation.mutate(cert.id);
+                                      }
+                                    }}
+                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  >
+                                    <FileText className="w-4 h-4 mr-2" />
+                                    Eliminar
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </div>
                           </td>
                         </tr>
