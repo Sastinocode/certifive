@@ -30,14 +30,20 @@ import CertificateUploadDialog from "@/components/certificates/CertificateUpload
 
 interface Property {
   id: number;
-  fullName: string;
+  ownerName: string;
+  ownerDni: string;
+  propertyAddress: string;
   cadastralRef: string;
-  floors: number | null;
+  buildingFloors: number | null;
+  propertyFloors: number | null;
   rooms: number | null;
   roofType: string | null;
   status: string;
   energyRating: string | null;
-  certificationCount: number;
+  folderId: number | null;
+  userId: string;
+  createdAt: Date | null;
+  updatedAt: Date | null;
 }
 
 interface Folder {
@@ -53,11 +59,16 @@ interface Folder {
 
 interface Certification {
   id: number;
-  fullName: string;
+  ownerName: string;
+  ownerDni: string;
+  propertyAddress: string;
   cadastralRef: string;
   status: string;
   folderId: number | null;
   energyRating: string | null;
+  userId: string;
+  createdAt: Date | null;
+  updatedAt: Date | null;
 }
 
 export default function Properties() {
@@ -150,7 +161,6 @@ export default function Properties() {
     const existingProperty = acc.find(p => p.cadastralRef === cert.cadastralRef);
     
     if (existingProperty) {
-      existingProperty.certificationCount += 1;
       // Update with latest certification data
       if (cert.status === 'completed' && !existingProperty.energyRating) {
         existingProperty.energyRating = cert.energyRating;
@@ -159,14 +169,20 @@ export default function Properties() {
     } else {
       acc.push({
         id: cert.id,
-        fullName: cert.fullName,
+        ownerName: cert.ownerName,
+        ownerDni: cert.ownerDni,
+        propertyAddress: cert.propertyAddress,
         cadastralRef: cert.cadastralRef,
-        floors: cert.floors,
+        buildingFloors: cert.buildingFloors,
+        propertyFloors: cert.propertyFloors,
         rooms: cert.rooms,
         roofType: cert.roofType,
         status: cert.status,
         energyRating: cert.energyRating,
-        certificationCount: 1
+        folderId: cert.folderId,
+        userId: cert.userId,
+        createdAt: cert.createdAt,
+        updatedAt: cert.updatedAt
       });
     }
     
@@ -174,8 +190,8 @@ export default function Properties() {
   }, []);
 
   const filteredProperties = properties.filter((property: Property) => {
-    return property.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-           property.cadastralRef.toLowerCase().includes(searchTerm.toLowerCase());
+    return (property.ownerName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+           (property.cadastralRef || '').toLowerCase().includes(searchTerm.toLowerCase());
   });
 
   const getEnergyRatingBadge = (rating: string | null) => {
@@ -505,10 +521,17 @@ export default function Properties() {
                             {getEnergyRatingBadge(property.energyRating)}
                           </div>
 
-                          {property.floors && (
+                          {property.buildingFloors && (
                             <div className="flex justify-between items-center">
-                              <span className="text-sm text-gray-600">Plantas</span>
-                              <span className="text-sm text-gray-900">{property.floors}</span>
+                              <span className="text-sm text-gray-600">Plantas del Edificio</span>
+                              <span className="text-sm text-gray-900">{property.buildingFloors}</span>
+                            </div>
+                          )}
+                          
+                          {property.propertyFloors && (
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-gray-600">Plantas del Inmueble</span>
+                              <span className="text-sm text-gray-900">{property.propertyFloors}</span>
                             </div>
                           )}
 
