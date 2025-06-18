@@ -130,15 +130,15 @@ export default function Certificates() {
           {/* Header */}
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Todas las Certificaciones</h1>
+              <h1 className="text-3xl font-bold text-gray-900">Solicitudes de Certificación</h1>
               <p className="text-gray-600 mt-1">
-                {filteredCertifications.length} certificación{filteredCertifications.length !== 1 ? 'es' : ''}
+                Información recibida de formularios de clientes - {filteredCertifications.length} solicitud{filteredCertifications.length !== 1 ? 'es' : ''}
               </p>
             </div>
             <Link to="/certificacion">
               <Button className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700">
                 <Plus className="w-4 h-4 mr-2" />
-                Nueva Certificación
+                Procesar Nueva Solicitud
               </Button>
             </Link>
           </div>
