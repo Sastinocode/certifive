@@ -1297,6 +1297,77 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // Client folder document management methods
+  
+  async getFolderDocuments(folderId: number, userId: string): Promise<any[]> {
+    try {
+      const result = await pool.query(`
+        SELECT * FROM folder_documents 
+        WHERE folder_id = $1 AND user_id = $2 
+        ORDER BY uploaded_at DESC
+      `, [folderId, userId]);
+      
+      return result.rows;
+    } catch (error) {
+      console.error("Error fetching folder documents:", error);
+      return [];
+    }
+  }
+
+  async getCertificationByFolderId(folderId: number, userId: string): Promise<any | undefined> {
+    const [certification] = await db
+      .select()
+      .from(certifications)
+      .where(and(
+        eq(certifications.folderId, folderId),
+        eq(certifications.userId, userId)
+      ));
+    return certification;
+  }
+
+  async createFolderDocument(data: any): Promise<any> {
+    try {
+      const result = await pool.query(`
+        INSERT INTO folder_documents (user_id, folder_id, file_name, original_name, file_path, file_size, file_type, category, description)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        RETURNING *
+      `, [data.userId, data.folderId, data.fileName, data.originalName, data.filePath, data.fileSize, data.fileType, data.category, data.description]);
+      
+      return result.rows[0];
+    } catch (error) {
+      console.error("Error creating folder document:", error);
+      throw error;
+    }
+  }
+
+  async getFolderDocument(documentId: number, folderId: number, userId: string): Promise<any | undefined> {
+    try {
+      const result = await pool.query(`
+        SELECT * FROM folder_documents 
+        WHERE id = $1 AND folder_id = $2 AND user_id = $3
+      `, [documentId, folderId, userId]);
+      
+      return result.rows[0];
+    } catch (error) {
+      console.error("Error fetching folder document:", error);
+      return undefined;
+    }
+  }
+
+  async deleteFolderDocument(documentId: number, folderId: number, userId: string): Promise<boolean> {
+    try {
+      const result = await pool.query(`
+        DELETE FROM folder_documents 
+        WHERE id = $1 AND folder_id = $2 AND user_id = $3
+      `, [documentId, folderId, userId]);
+      
+      return (result.rowCount || 0) > 0;
+    } catch (error) {
+      console.error("Error deleting folder document:", error);
+      return false;
+    }
+  }
+
   async sendCertificateViaWhatsApp(certificateId: number, userId: string, recipientPhone: string): Promise<boolean> {
     try {
       const certificate = await this.getUploadedCertificate(certificateId, userId);
