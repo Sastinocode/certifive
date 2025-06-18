@@ -120,8 +120,8 @@ export default function Certificates() {
 
 
   const filteredCertifications = (certifications as Certification[]).filter((cert: Certification) => {
-    const matchesSearch = cert.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         cert.cadastralRef.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (cert.ownerName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (cert.cadastralRef || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || cert.status === statusFilter;
     
     return matchesSearch && matchesStatus;
@@ -244,8 +244,8 @@ export default function Certificates() {
                       {filteredCertifications.map((cert) => (
                         <tr key={cert.id} className="border-b border-gray-100 hover:bg-gray-50">
                           <td className="py-4 px-4">
-                            <div className="font-medium text-gray-900">{cert.fullName}</div>
-                            <div className="text-sm text-gray-500">{cert.dni}</div>
+                            <div className="font-medium text-gray-900">{cert.ownerName}</div>
+                            <div className="text-sm text-gray-500">{cert.ownerDni}</div>
                           </td>
                           <td className="py-4 px-4">
                             <span className="text-sm text-gray-600">{cert.cadastralRef}</span>
