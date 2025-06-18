@@ -27,21 +27,25 @@ import {
 
 interface Certification {
   id: number;
-  full_name: string;
+  fullName: string;
   dni: string;
   email: string;
   phone: string;
-  cadastral_ref: string;
-  energy_rating: string | null;
+  cadastralRef: string;
+  energyRating: string | null;
   status: string;
-  created_at: string;
-  energy_consumption: string | null;
-  co2_emissions: string | null;
-  folder_id: number | null;
+  createdAt: string;
+  energyConsumption: string | null;
+  co2Emissions: string | null;
+  folderId: number | null;
   rooms: number;
-  facade_orientation: string;
-  heating_system: string;
-  water_heating_type: string;
+  facadeOrientation: string;
+  heatingSystem: string;
+  waterHeatingType: string;
+  habitableFloors: number;
+  windowDetails: string;
+  roofType: string;
+  airConditioningSystem: string;
 }
 
 export default function Certificates() {
