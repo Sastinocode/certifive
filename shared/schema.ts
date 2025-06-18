@@ -81,39 +81,64 @@ export const folders = pgTable("folders", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Certifications table - optimized for the Word document template
+// Certifications table - based on official CEE form requirements
 export const certifications = pgTable("certifications", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").notNull().references(() => users.id),
   folderId: integer("folder_id").references(() => folders.id, { onDelete: "set null" }),
   
-  // Administrative data (from template)
-  dni: varchar("dni").notNull(),
-  fullName: varchar("full_name").notNull(),
-  cadastralRef: varchar("cadastral_ref").notNull(),
-  phone: varchar("phone"),
-  email: varchar("email"),
+  // Propiedad - Property Information
+  propertyAddress: text("property_address").notNull(), // PROPIEDAD: Dirección completa
   
-  // Property structure data (from template)
-  habitableFloors: integer("habitable_floors"), // Nº de plantas habitables (sin contar sótano)
-  rooms: integer("rooms"), // Nº de habitaciones
+  // Datos del titular - Owner Information
+  ownerName: varchar("owner_name").notNull(), // NOMBRE TITULAR
+  ownerDni: varchar("owner_dni").notNull(), // DNI/NIE
+  cadastralRef: varchar("cadastral_ref").notNull(), // REFERENCIA CATASTRAL
+  phone: varchar("phone"), // TELÉFONO
+  email: varchar("email"), // EMAIL
   
-  // Facade and window details (from template)
-  facadeOrientation: text("facade_orientation"), // Orientación de fachadas y ventanas por estancia
-  windowDetails: text("window_details"), // Material, color, tipo vidrio, caja persiana
+  // Estructura del edificio - Building Structure
+  buildingFloors: integer("building_floors"), // Nº DE PLANTAS HABITABLES DEL EDIFICIO (Sin contar sótano)
+  propertyFloors: integer("property_floors"), // Plantas que corresponden a la vivienda
+  rooms: integer("rooms"), // Nº DE HABITACIONES (ESTANCIAS)
   
-  // Building structure (from template)
-  roofType: varchar("roof_type"), // Tipo cubierta (plana/inclinada)
+  // Orientación de fachadas - Facade Orientation
+  facadeNorthwest: boolean("facade_northwest").default(false), // NOROESTE
+  facadeSoutheast: boolean("facade_southeast").default(false), // SURESTE  
+  facadeEast: boolean("facade_east").default(false), // ESTE
+  facadeWest: boolean("facade_west").default(false), // OESTE
   
-  // HVAC and heating systems (from template)
-  airConditioningSystem: varchar("air_conditioning_system"), // Equipos climatización
-  heatingSystem: varchar("heating_system"), // Equipos calefacción (radiadores si/no)
+  // Distribución de ventanas por fachada - Window Distribution by Facade
+  windowsNorthwest: text("windows_northwest"), // Descripción ventanas orientación noroeste
+  windowsSoutheast: text("windows_southeast"), // Descripción ventanas orientación sureste
+  windowsEast: text("windows_east"), // Descripción ventanas orientación este
+  windowsWest: text("windows_west"), // Descripción ventanas orientación oeste
   
-  // Water heating system (from template)
-  waterHeatingType: varchar("water_heating_type"), // Eléctrico, gas natural, gas butano
-  waterHeatingCapacity: integer("water_heating_capacity"), // Capacidad en litros si eléctrico
+  // Detalles de ventanas - Window Details
+  windowType: varchar("window_type"), // TIPO DE VENTANA (Cuadrada, rectangular, redonda)
+  windowMaterial: varchar("window_material"), // MATERIAL VENTANAS (Aluminio, PVC, etc.)
+  windowColor: varchar("window_color"), // Color del material
+  glassType: varchar("glass_type"), // TIPO DE VIDRIO (Simple, doble, etc.)
+  windowLocation: text("window_location"), // INDICAR A DONDE DA (descripción vistas)
+  hasShutters: boolean("has_shutters").default(false), // TIENEN PERSIANAS
+  shutterType: varchar("shutter_type"), // Tipo de persianas/contraventanas
   
-  // Energy calculations
+  // Tipo de cubierta - Roof Type
+  roofType: varchar("roof_type"), // TIPO DE CUBIERTAS (Plana/Inclinada)
+  
+  // Equipos de climatización - Air Conditioning Equipment
+  airConditioningType: varchar("air_conditioning_type"), // Split/por conductos
+  airConditioningRooms: text("air_conditioning_rooms"), // Estancias climatizadas
+  
+  // Equipos de calefacción - Heating Equipment
+  heatingType: varchar("heating_type"), // Radiadores, chimenea, etc.
+  heatingDescription: text("heating_description"), // Descripción detallada del sistema
+  
+  // Calentador - Water Heater
+  waterHeaterType: varchar("water_heater_type"), // Gas ciudad, butano, eléctrico
+  waterHeaterCapacity: integer("water_heater_capacity"), // Capacidad en litros si eléctrico
+  
+  // Energy calculations (assigned by certificator)
   energyRating: varchar("energy_rating", { length: 1 }),
   energyConsumption: decimal("energy_consumption", { precision: 10, scale: 2 }),
   co2Emissions: decimal("co2_emissions", { precision: 10, scale: 2 }),
@@ -129,11 +154,18 @@ export const certifications = pgTable("certifications", {
 
 export const insertCertificationSchema = createInsertSchema(certifications).omit({
   id: true,
+  userId: true,
+  energyRating: true,
+  energyConsumption: true,
+  co2Emissions: true,
+  certificateUrl: true,
   createdAt: true,
   updatedAt: true,
 });
 
 export const updateCertificationSchema = insertCertificationSchema.partial();
+
+
 
 // Pricing rates table
 export const pricingRates = pgTable("pricing_rates", {
