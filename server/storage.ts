@@ -41,7 +41,7 @@ import {
   type InsertUploadedCertificate
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, count, and, isNull, gte, lte, sql } from "drizzle-orm";
+import { eq, desc, count, and, isNull, gte, lte, sql, ne } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
 // Interface for storage operations
@@ -455,7 +455,7 @@ export class DatabaseStorage implements IStorage {
       .from(certifications)
       .where(and(
         eq(certifications.userId, userId),
-        ne(certifications.status, 'archived')
+        sql`${certifications.status} != 'archived'`
       ));
   }
 
