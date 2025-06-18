@@ -130,6 +130,16 @@ export interface IStorage {
   deleteCollection(id: number, userId: string): Promise<boolean>;
   getInvoiceCollections(invoiceId: number, userId: string): Promise<Collection[]>;
   recordInvoicePayment(invoiceId: number, collectionData: InsertCollection): Promise<Collection>;
+  
+  // Manager financial records operations
+  getManagerFinancialRecords(userId: string, filters: {
+    searchType?: string;
+    paymentMethodFilter?: string;
+    invoiceStatusFilter?: string;
+    dateFrom?: string;
+    dateTo?: string;
+  }): Promise<any[]>;
+  createInvoiceFromCollection(collectionId: number, userId: string): Promise<Invoice | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -963,6 +973,240 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(whatsappFlowTemplates.userId, userId), eq(whatsappFlowTemplates.isActive, true)))
       .orderBy(desc(whatsappFlowTemplates.updatedAt));
     return template;
+  }
+
+  // Manager Financial Records Implementation
+  async getManagerFinancialRecords(userId: string, filters: {
+    searchType?: string;
+    paymentMethodFilter?: string;
+    invoiceStatusFilter?: string;
+    dateFrom?: string;
+    dateTo?: string;
+  }): Promise<any[]> {
+    try {
+      // Base query for invoices with LEFT JOIN to get payment data
+      let invoiceQuery = db
+        .select({
+          id: invoices.id,
+          type: sql<string>`'invoice'`,
+          clientName: invoices.clientName,
+          clientEmail: invoices.clientEmail,
+          amount: invoices.total,
+          paymentMethod: invoices.paymentMethod,
+          paymentDate: invoices.paidDate,
+          invoiceDate: invoices.issueDate,
+          concept: invoices.description,
+          invoiceId: invoices.id,
+          collectionDate: sql<string>`NULL`
+        })
+        .from(invoices)
+        .where(eq(invoices.userId, userId));
+
+      // Base query for collections
+      let collectionQuery = db
+        .select({
+          id: collections.id,
+          type: sql<string>`'collection'`,
+          clientName: collections.clientName,
+          clientEmail: collections.clientEmail,
+          amount: collections.amount,
+          paymentMethod: collections.paymentMethod,
+          paymentDate: collections.collectionDate,
+          invoiceDate: sql<string>`NULL`,
+          concept: collections.concept,
+          invoiceId: collections.invoiceId,
+          collectionDate: collections.collectionDate
+        })
+        .from(collections)
+        .where(eq(collections.userId, userId));
+
+      // Apply date filters
+      if (filters.dateFrom) {
+        const fromDate = new Date(filters.dateFrom);
+        if (filters.searchType === 'payment_date') {
+          invoiceQuery = invoiceQuery.where(and(
+            eq(invoices.userId, userId),
+            gte(invoices.paidDate, fromDate)
+          ));
+          collectionQuery = collectionQuery.where(and(
+            eq(collections.userId, userId),
+            gte(collections.collectionDate, fromDate)
+          ));
+        } else if (filters.searchType === 'invoice_date') {
+          invoiceQuery = invoiceQuery.where(and(
+            eq(invoices.userId, userId),
+            gte(invoices.issueDate, fromDate)
+          ));
+        }
+      }
+
+      if (filters.dateTo) {
+        const toDate = new Date(filters.dateTo);
+        if (filters.searchType === 'payment_date') {
+          invoiceQuery = invoiceQuery.where(and(
+            eq(invoices.userId, userId),
+            lte(invoices.paidDate, toDate)
+          ));
+          collectionQuery = collectionQuery.where(and(
+            eq(collections.userId, userId),
+            lte(collections.collectionDate, toDate)
+          ));
+        } else if (filters.searchType === 'invoice_date') {
+          invoiceQuery = invoiceQuery.where(and(
+            eq(invoices.userId, userId),
+            lte(invoices.issueDate, toDate)
+          ));
+        }
+      }
+
+      // Apply payment method filter
+      if (filters.paymentMethodFilter && filters.paymentMethodFilter !== 'all') {
+        invoiceQuery = invoiceQuery.where(and(
+          eq(invoices.userId, userId),
+          eq(invoices.paymentMethod, filters.paymentMethodFilter)
+        ));
+        collectionQuery = collectionQuery.where(and(
+          eq(collections.userId, userId),
+          eq(collections.paymentMethod, filters.paymentMethodFilter)
+        ));
+      }
+
+      // Apply invoice status filter
+      if (filters.invoiceStatusFilter === 'invoiced') {
+        // Only get invoices or collections that have invoice IDs
+        collectionQuery = collectionQuery.where(and(
+          eq(collections.userId, userId),
+          sql`${collections.invoiceId} IS NOT NULL`
+        ));
+      } else if (filters.invoiceStatusFilter === 'not_invoiced') {
+        // Only get collections without invoice IDs
+        collectionQuery = collectionQuery.where(and(
+          eq(collections.userId, userId),
+          isNull(collections.invoiceId)
+        ));
+        // Exclude invoices from this filter
+        invoiceQuery = db
+          .select({
+            id: sql<number>`NULL`,
+            type: sql<string>`'none'`,
+            clientName: sql<string>`''`,
+            clientEmail: sql<string>`''`,
+            amount: sql<string>`'0'`,
+            paymentMethod: sql<string>`''`,
+            paymentDate: sql<string>`NULL`,
+            invoiceDate: sql<string>`NULL`,
+            concept: sql<string>`''`,
+            invoiceId: sql<number>`NULL`,
+            collectionDate: sql<string>`NULL`
+          })
+          .from(invoices)
+          .where(sql`1 = 0`); // This will return no results
+      }
+
+      // Execute both queries
+      const [invoiceResults, collectionResults] = await Promise.all([
+        invoiceQuery,
+        collectionQuery
+      ]);
+
+      // Combine and sort results
+      const allResults = [
+        ...invoiceResults.filter(record => record.type !== 'none'),
+        ...collectionResults
+      ];
+
+      // Sort by payment date or collection date descending
+      allResults.sort((a, b) => {
+        const dateA = new Date(a.paymentDate || a.collectionDate || 0);
+        const dateB = new Date(b.paymentDate || b.collectionDate || 0);
+        return dateB.getTime() - dateA.getTime();
+      });
+
+      return allResults;
+    } catch (error) {
+      console.error("Error getting manager financial records:", error);
+      return [];
+    }
+  }
+
+  async createInvoiceFromCollection(collectionId: number, userId: string): Promise<Invoice | undefined> {
+    try {
+      // Get the collection data
+      const [collection] = await db
+        .select()
+        .from(collections)
+        .where(and(
+          eq(collections.id, collectionId), 
+          eq(collections.userId, userId),
+          eq(collections.paymentMethod, 'cash'),
+          isNull(collections.invoiceId)
+        ));
+
+      if (!collection) {
+        return undefined;
+      }
+
+      // Create invoice from collection data
+      const invoiceData = {
+        userId,
+        invoiceNumber: `INV-${Date.now()}`,
+        series: 'A',
+        clientName: collection.clientName || 'Cliente',
+        clientEmail: collection.clientEmail || '',
+        clientPhone: collection.clientPhone,
+        subtotal: collection.amount,
+        vatRate: collection.vatRate,
+        vatAmount: collection.vatAmount,
+        total: collection.amount,
+        paymentStatus: 'paid',
+        paymentMethod: 'cash',
+        issueDate: new Date(),
+        dueDate: new Date(),
+        paidDate: new Date(collection.collectionDate),
+        description: collection.concept || 'Certificación energética',
+        isAccountingRegistered: false,
+        manualAccountingRequired: true
+      };
+
+      const [invoice] = await db
+        .insert(invoices)
+        .values(invoiceData)
+        .returning();
+
+      // Update collection to link it to the invoice
+      await db
+        .update(collections)
+        .set({ 
+          invoiceId: invoice.id,
+          isInvoicePayment: true,
+          updatedAt: new Date()
+        })
+        .where(eq(collections.id, collectionId));
+
+      return invoice;
+    } catch (error) {
+      console.error("Error creating invoice from collection:", error);
+      return undefined;
+    }
+  }
+
+  async deleteCollection(id: number, userId: string): Promise<boolean> {
+    try {
+      // Only allow deletion of cash collections without invoices
+      const result = await db
+        .delete(collections)
+        .where(and(
+          eq(collections.id, id),
+          eq(collections.userId, userId),
+          eq(collections.paymentMethod, 'cash'),
+          isNull(collections.invoiceId)
+        ));
+      
+      return (result.rowCount || 0) > 0;
+    } catch (error) {
+      console.error("Error deleting collection:", error);
+      return false;
+    }
   }
 }
 
