@@ -512,7 +512,6 @@ export default function Properties() {
                               </div>
                             </div>
                           </div>
-                          {getStatusBadge(property.status)}
                         </div>
 
                         <div className="space-y-3">
@@ -550,8 +549,8 @@ export default function Properties() {
                           )}
 
                           <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-600">Certificaciones</span>
-                            <Badge variant="secondary">{property.certificationCount}</Badge>
+                            <span className="text-sm text-gray-600">Estado</span>
+                            {getStatusBadge(property.status)}
                           </div>
                         </div>
 
