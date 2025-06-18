@@ -1996,6 +1996,128 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Client folder management endpoints
+  
+  // Get folder documents
+  app.get("/api/folders/:folderId/documents", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const folderId = parseInt(req.params.folderId);
+      
+      const documents = await storage.getFolderDocuments(folderId, userId);
+      res.json(documents);
+    } catch (error) {
+      console.error("Error fetching folder documents:", error);
+      res.status(500).json({ message: "Error al obtener documentos" });
+    }
+  });
+
+  // Get certification data for folder
+  app.get("/api/folders/:folderId/certification", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const folderId = parseInt(req.params.folderId);
+      
+      const certification = await storage.getCertificationByFolderId(folderId, userId);
+      res.json(certification);
+    } catch (error) {
+      console.error("Error fetching certification data:", error);
+      res.status(500).json({ message: "Error al obtener datos de certificación" });
+    }
+  });
+
+  // Upload documents to folder
+  app.post("/api/folders/:folderId/upload", isAuthenticated, upload.array('files', 10), async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const folderId = parseInt(req.params.folderId);
+      const { category = 'document', description = '' } = req.body;
+      
+      if (!req.files || req.files.length === 0) {
+        return res.status(400).json({ message: "No se subieron archivos" });
+      }
+
+      const uploadedDocuments = [];
+      
+      for (const file of req.files) {
+        const document = await storage.createFolderDocument({
+          userId,
+          folderId,
+          fileName: file.filename,
+          originalName: file.originalname,
+          filePath: file.path,
+          fileSize: file.size,
+          fileType: file.mimetype,
+          category,
+          description
+        });
+        uploadedDocuments.push(document);
+      }
+      
+      res.json({
+        message: "Archivos subidos correctamente",
+        documents: uploadedDocuments
+      });
+    } catch (error) {
+      console.error("Error uploading documents:", error);
+      res.status(500).json({ message: "Error al subir archivos" });
+    }
+  });
+
+  // Download document
+  app.get("/api/folders/:folderId/documents/:documentId/download", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const folderId = parseInt(req.params.folderId);
+      const documentId = parseInt(req.params.documentId);
+      
+      const document = await storage.getFolderDocument(documentId, folderId, userId);
+      if (!document) {
+        return res.status(404).json({ message: "Documento no encontrado" });
+      }
+
+      res.download(document.filePath, document.originalName);
+    } catch (error) {
+      console.error("Error downloading document:", error);
+      res.status(500).json({ message: "Error al descargar documento" });
+    }
+  });
+
+  // View document (for images/PDFs)
+  app.get("/api/folders/:folderId/documents/:documentId/view", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const folderId = parseInt(req.params.folderId);
+      const documentId = parseInt(req.params.documentId);
+      
+      const document = await storage.getFolderDocument(documentId, folderId, userId);
+      if (!document) {
+        return res.status(404).json({ message: "Documento no encontrado" });
+      }
+
+      res.setHeader('Content-Type', document.fileType);
+      res.sendFile(path.resolve(document.filePath));
+    } catch (error) {
+      console.error("Error viewing document:", error);
+      res.status(500).json({ message: "Error al visualizar documento" });
+    }
+  });
+
+  // Delete document
+  app.delete("/api/folders/:folderId/documents/:documentId", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const folderId = parseInt(req.params.folderId);
+      const documentId = parseInt(req.params.documentId);
+      
+      await storage.deleteFolderDocument(documentId, folderId, userId);
+      res.json({ message: "Documento eliminado correctamente" });
+    } catch (error) {
+      console.error("Error deleting document:", error);
+      res.status(500).json({ message: "Error al eliminar documento" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
