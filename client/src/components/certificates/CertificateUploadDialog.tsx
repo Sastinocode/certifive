@@ -232,7 +232,7 @@ export default function CertificateUploadDialog({
                             </SelectItem>
                           ))
                         ) : (
-                          <SelectItem value="" disabled>
+                          <SelectItem value="no-folders" disabled>
                             No hay carpetas disponibles - Crea una carpeta primero en la pestaña "Propiedades"
                           </SelectItem>
                         )}
