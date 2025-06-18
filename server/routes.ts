@@ -952,6 +952,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update certification status endpoint
+  app.patch("/api/certifications/:id/status", isAuthenticated, async (req, res) => {
+    try {
+      const certificationId = parseInt(req.params.id);
+      const userId = req.user?.claims?.sub;
+      const { status } = req.body;
+
+      if (!userId) {
+        return res.status(401).json({ message: "Usuario no autenticado" });
+      }
+
+      if (!status) {
+        return res.status(400).json({ message: "Estado requerido" });
+      }
+
+      // Get certification to verify ownership
+      const certification = await storage.getCertification(certificationId, userId);
+      if (!certification) {
+        return res.status(404).json({ message: "Certificación no encontrada" });
+      }
+
+      // Update certification status
+      const updatedCertification = await storage.updateCertification(certificationId, userId, {
+        status: status
+      });
+
+      res.json({ message: "Estado actualizado correctamente", certification: updatedCertification });
+    } catch (error) {
+      console.error("Error updating certification status:", error);
+      res.status(500).json({ message: "Error al actualizar estado" });
+    }
+  });
+
   // WhatsApp messaging functions
   async function sendCertificationFormToClient(quote: any) {
     try {

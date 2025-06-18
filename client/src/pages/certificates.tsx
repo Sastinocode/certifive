@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import Sidebar from "@/components/layout/sidebar";
@@ -147,17 +148,70 @@ export default function Certificates() {
     },
   });
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "completed":
-        return <Badge className="bg-green-100 text-green-800">Completado</Badge>;
-      case "pending":
-        return <Badge className="bg-yellow-100 text-yellow-800">Pendiente</Badge>;
-      case "draft":
-        return <Badge className="bg-gray-100 text-gray-800">Borrador</Badge>;
-      default:
-        return <Badge className="bg-gray-100 text-gray-800">{status}</Badge>;
-    }
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ certificationId, status }: { certificationId: number; status: string }) => {
+      return await apiRequest("PATCH", `/api/certifications/${certificationId}/status`, { status });
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/certifications"] });
+      
+      // Si el estado es "finalizado", archivar automáticamente
+      if (variables.status === "finalizado") {
+        archiveCertificationMutation.mutate(variables.certificationId);
+      } else {
+        toast({
+          title: "Estado actualizado",
+          description: `El estado ha sido cambiado a ${variables.status}`,
+        });
+      }
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Error al actualizar el estado",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const getStatusSelect = (cert: Certification) => {
+    const statusOptions = [
+      { value: "nuevo", label: "Nuevo", color: "bg-blue-100 text-blue-800" },
+      { value: "en_proceso", label: "En Proceso", color: "bg-yellow-100 text-yellow-800" },
+      { value: "finalizado", label: "Finalizado", color: "bg-green-100 text-green-800" }
+    ];
+
+    const currentStatus = cert.status || "nuevo";
+    const currentOption = statusOptions.find(opt => opt.value === currentStatus) || statusOptions[0];
+
+    return (
+      <div className="flex items-center">
+        <select
+          value={currentStatus}
+          onChange={(e) => {
+            const newStatus = e.target.value;
+            if (newStatus === "finalizado") {
+              const confirmFinalize = confirm(
+                "Al marcar como 'Finalizado', la certificación se archivará automáticamente. ¿Continuar?"
+              );
+              if (!confirmFinalize) return;
+            }
+            updateStatusMutation.mutate({ certificationId: cert.id, status: newStatus });
+          }}
+          className="bg-transparent border-none text-sm font-medium focus:outline-none cursor-pointer"
+          disabled={updateStatusMutation.isPending}
+        >
+          {statusOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        <Badge className={currentOption.color}>
+          {currentOption.label}
+        </Badge>
+      </div>
+    );
   };
 
 
@@ -294,7 +348,7 @@ export default function Certificates() {
                             <span className="text-sm text-gray-600">{cert.cadastralRef}</span>
                           </td>
                           <td className="py-4 px-4">
-                            {getStatusBadge(cert.status)}
+                            {getStatusSelect(cert)}
                           </td>
                           <td className="py-4 px-4">
                             <span className="text-sm text-gray-600">
