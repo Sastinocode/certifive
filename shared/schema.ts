@@ -245,6 +245,16 @@ export const invoices = pgTable("invoices", {
   invoiceNumber: varchar("invoice_number").unique().notNull(),
   series: varchar("series").default("CERT"), // Serie de facturación
   
+  // Invoice type
+  invoiceType: varchar("invoice_type").default("invoice").notNull(), // invoice, proforma
+  isProforma: boolean("is_proforma").default(false),
+  
+  // Accounting control
+  isAccountingRegistered: boolean("is_accounting_registered").default(false),
+  accountingRegisteredAt: timestamp("accounting_registered_at"),
+  accountingRegisteredBy: varchar("accounting_registered_by").references(() => users.id),
+  manualAccountingRequired: boolean("manual_accounting_required").default(false), // Para cobros en efectivo
+  
   // Client information
   clientName: varchar("client_name").notNull(),
   clientEmail: varchar("client_email"),
@@ -302,6 +312,12 @@ export const payments = pgTable("payments", {
   paymentReference: varchar("payment_reference"), // Número de transferencia, ID transacción
   paymentDate: timestamp("payment_date").defaultNow(),
   
+  // Accounting control
+  isAccountingRegistered: boolean("is_accounting_registered").default(false),
+  accountingRegisteredAt: timestamp("accounting_registered_at"),
+  accountingRegisteredBy: varchar("accounting_registered_by").references(() => users.id),
+  requiresManualAccounting: boolean("requires_manual_accounting").default(false), // Para cobros en efectivo
+  
   // Bank details for transfers
   bankAccount: varchar("bank_account"),
   bankName: varchar("bank_name"),
@@ -327,8 +343,15 @@ export const collections = pgTable("collections", {
   paymentReference: varchar("payment_reference"), // Referencia de la transacción
   collectionDate: timestamp("collection_date").notNull(),
   
-  // Invoice relationship (optional)
+  // Accounting control
+  isAccountingRegistered: boolean("is_accounting_registered").default(false),
+  accountingRegisteredAt: timestamp("accounting_registered_at"),
+  accountingRegisteredBy: varchar("accounting_registered_by").references(() => users.id),
+  requiresManualAccounting: boolean("requires_manual_accounting").default(false), // Para cobros en efectivo
+  invoiceGenerated: boolean("invoice_generated").default(false),
   invoiceId: integer("invoice_id").references(() => invoices.id),
+  
+  // Invoice relationship (optional)
   isInvoicePayment: boolean("is_invoice_payment").default(false),
   
   // Client information (for non-invoice collections)
