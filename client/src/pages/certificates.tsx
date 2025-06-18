@@ -260,7 +260,7 @@ export default function Certificates() {
                           </td>
                           <td className="py-4 px-4">
                             <div className="flex items-center justify-end gap-2">
-                              <Link to={`/certificacion/${cert.id}`}>
+                              <Link to={`/certificacion-request/${cert.id}`}>
                                 <Button variant="outline" size="sm">
                                   <Eye className="w-4 h-4 mr-1" />
                                   Ver
