@@ -21,8 +21,11 @@ import {
   Folder,
   FolderPlus,
   Archive,
-  Building2
+  Building2,
+  Upload,
+  FileText
 } from "lucide-react";
+import CertificateManagement from "@/components/certificates/CertificateManagement";
 
 interface Property {
   id: number;
@@ -63,6 +66,7 @@ export default function Properties() {
   const [newFolderDescription, setNewFolderDescription] = useState("");
   const [newFolderColor, setNewFolderColor] = useState("#059669");
   const [newFolderIcon, setNewFolderIcon] = useState("folder");
+  const [activeTab, setActiveTab] = useState<'properties' | 'certificates'>('properties');
   const { toast } = useToast();
 
   const { data: certifications = [], isLoading } = useQuery({
@@ -196,9 +200,37 @@ export default function Properties() {
     <div className="flex h-screen bg-gray-50">
       <Sidebar selectedTab="properties" onTabChange={() => {}} />
       
-      <div className="flex flex-1 overflow-hidden">
-        {/* Folder Sidebar */}
-        <div className="w-80 bg-white border-r border-gray-200 overflow-y-auto">
+      <div className="flex flex-1 flex-col overflow-hidden">
+        {/* Header with Tabs */}
+        <div className="bg-white border-b border-gray-200 px-6 py-4">
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-2xl font-bold text-gray-900">Propiedades y Certificados</h1>
+          </div>
+          <div className="flex space-x-1">
+            <Button
+              variant={activeTab === 'properties' ? 'default' : 'ghost'}
+              onClick={() => setActiveTab('properties')}
+              className="flex items-center gap-2"
+            >
+              <Building2 className="h-4 w-4" />
+              Propiedades
+            </Button>
+            <Button
+              variant={activeTab === 'certificates' ? 'default' : 'ghost'}
+              onClick={() => setActiveTab('certificates')}
+              className="flex items-center gap-2"
+            >
+              <FileText className="h-4 w-4" />
+              Certificados
+            </Button>
+          </div>
+        </div>
+
+        {/* Content based on active tab */}
+        {activeTab === 'properties' ? (
+          <div className="flex flex-1 overflow-hidden">
+            {/* Folder Sidebar */}
+            <div className="w-80 bg-white border-r border-gray-200 overflow-y-auto">
           <div className="p-4 border-b border-gray-200">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold text-gray-900">Gestión de Clientes</h2>
@@ -508,7 +540,16 @@ export default function Properties() {
               )}
             </CardContent>
           </Card>
-        </div>
+          </div>
+        ) : (
+          // Certificate Management Tab
+          <div className="flex-1 overflow-hidden p-6">
+            <CertificateManagement 
+              folders={folders} 
+              selectedFolderId={selectedFolder === null || selectedFolder === undefined ? undefined : selectedFolder}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
