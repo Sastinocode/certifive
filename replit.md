@@ -120,3 +120,4 @@ Preferred communication style: Simple, everyday language.
 
 Changelog:
 - June 18, 2025. Initial setup
+- June 18, 2025. Certificate upload system fully integrated with folder management - certificates now properly link to existing property folders with preselection, visual folder indicators, and proper validation
