@@ -22,7 +22,8 @@ import {
   MoreVertical,
   FileText,
   Sheet,
-  File
+  File,
+  Archive
 } from "lucide-react";
 
 interface Certification {
@@ -101,6 +102,26 @@ export default function Certificates() {
       toast({
         title: "Error",
         description: "Error al generar el reporte técnico",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const archiveCertificationMutation = useMutation({
+    mutationFn: async (certificationId: number) => {
+      return await apiRequest("POST", `/api/certifications/${certificationId}/archive`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/certifications"] });
+      toast({
+        title: "Certificación archivada",
+        description: "La certificación se ha movido a la sección Propiedades",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Error al archivar la certificación",
         variant: "destructive",
       });
     },
@@ -257,7 +278,7 @@ export default function Certificates() {
                           </td>
                           <td className="py-4 px-4">
                             <span className="text-sm text-gray-600">
-                              {new Date(cert.createdAt).toLocaleDateString('es-ES')}
+                              {cert.createdAt ? new Date(cert.createdAt).toLocaleDateString('es-ES') : 'N/A'}
                             </span>
                           </td>
                           <td className="py-4 px-4">
@@ -270,43 +291,55 @@ export default function Certificates() {
                               </Link>
                               
                               {cert.status === "completed" && (
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" size="sm">
-                                      <Download className="w-4 h-4 mr-1" />
-                                      Descargar
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end">
-                                    <DropdownMenuItem
-                                      onClick={() => downloadReportMutation.mutate({
-                                        certificationId: cert.id,
-                                        format: 'pdf'
-                                      })}
-                                    >
-                                      <FileText className="w-4 h-4 mr-2" />
-                                      Reporte PDF
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      onClick={() => downloadReportMutation.mutate({
-                                        certificationId: cert.id,
-                                        format: 'word'
-                                      })}
-                                    >
-                                      <File className="w-4 h-4 mr-2" />
-                                      Documento Word
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      onClick={() => downloadReportMutation.mutate({
-                                        certificationId: cert.id,
-                                        format: 'excel'
-                                      })}
-                                    >
-                                      <Sheet className="w-4 h-4 mr-2" />
-                                      Hoja Excel
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
+                                <>
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button variant="outline" size="sm">
+                                        <Download className="w-4 h-4 mr-1" />
+                                        Descargar
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                      <DropdownMenuItem
+                                        onClick={() => downloadReportMutation.mutate({
+                                          certificationId: cert.id,
+                                          format: 'pdf'
+                                        })}
+                                      >
+                                        <FileText className="w-4 h-4 mr-2" />
+                                        Reporte PDF
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem
+                                        onClick={() => downloadReportMutation.mutate({
+                                          certificationId: cert.id,
+                                          format: 'word'
+                                        })}
+                                      >
+                                        <File className="w-4 h-4 mr-2" />
+                                        Documento Word
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem
+                                        onClick={() => downloadReportMutation.mutate({
+                                          certificationId: cert.id,
+                                          format: 'excel'
+                                        })}
+                                      >
+                                        <Sheet className="w-4 h-4 mr-2" />
+                                        Hoja Excel
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                  
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => archiveCertificationMutation.mutate(cert.id)}
+                                    disabled={archiveCertificationMutation.isPending}
+                                  >
+                                    <Archive className="w-4 h-4 mr-1" />
+                                    Archivar
+                                  </Button>
+                                </>
                               )}
                             </div>
                           </td>
