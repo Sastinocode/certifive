@@ -11,6 +11,7 @@ import {
   payments,
   collections,
   demoRequests,
+  uploadedCertificates,
   type User, 
   type UpsertUser,
   type Folder,
@@ -35,7 +36,9 @@ import {
   type Collection,
   type InsertCollection,
   type DemoRequest,
-  type InsertDemoRequest
+  type InsertDemoRequest,
+  type UploadedCertificate,
+  type InsertUploadedCertificate
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, count, and, isNull, gte, lte, sql } from "drizzle-orm";
@@ -140,6 +143,15 @@ export interface IStorage {
     dateTo?: string;
   }): Promise<any[]>;
   createInvoiceFromCollection(collectionId: number, userId: string): Promise<Invoice | undefined>;
+  
+  // Uploaded certificates operations
+  getUploadedCertificates(userId: string, folderId?: number): Promise<UploadedCertificate[]>;
+  getUploadedCertificate(id: number, userId: string): Promise<UploadedCertificate | undefined>;
+  createUploadedCertificate(data: InsertUploadedCertificate): Promise<UploadedCertificate>;
+  updateUploadedCertificate(id: number, userId: string, data: Partial<InsertUploadedCertificate>): Promise<UploadedCertificate | undefined>;
+  deleteUploadedCertificate(id: number, userId: string): Promise<boolean>;
+  sendCertificateViaEmail(certificateId: number, userId: string, recipientEmail: string): Promise<boolean>;
+  sendCertificateViaWhatsApp(certificateId: number, userId: string, recipientPhone: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
