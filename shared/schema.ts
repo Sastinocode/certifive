@@ -422,6 +422,39 @@ export const whatsappFlowTemplates = pgTable("whatsapp_flow_templates", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Uploaded certificates table for client folders
+export const uploadedCertificates = pgTable("uploaded_certificates", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  certificationId: integer("certification_id").references(() => certifications.id),
+  folderId: integer("folder_id").references(() => folders.id),
+  
+  // File information
+  fileName: varchar("file_name").notNull(),
+  originalFileName: varchar("original_file_name").notNull(),
+  filePath: varchar("file_path").notNull(),
+  fileSize: integer("file_size").notNull(),
+  mimeType: varchar("mime_type").notNull(),
+  
+  // Client information
+  clientName: varchar("client_name").notNull(),
+  clientEmail: varchar("client_email"),
+  clientPhone: varchar("client_phone"),
+  
+  // Send status
+  sentViaEmail: boolean("sent_via_email").default(false),
+  emailSentAt: timestamp("email_sent_at"),
+  sentViaWhatsapp: boolean("sent_via_whatsapp").default(false),
+  whatsappSentAt: timestamp("whatsapp_sent_at"),
+  
+  // Metadata
+  description: text("description"),
+  tags: jsonb("tags"), // Array of tags for categorization
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const insertPricingRateSchema = createInsertSchema(pricingRates).omit({
   id: true,
   createdAt: true,
@@ -463,6 +496,12 @@ export const insertWhatsappFlowTemplateSchema = createInsertSchema(whatsappFlowT
   updatedAt: true,
 });
 
+export const insertUploadedCertificateSchema = createInsertSchema(uploadedCertificates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertDemoRequestSchema = createInsertSchema(demoRequests).omit({
   id: true,
   createdAt: true,
@@ -495,3 +534,5 @@ export type Collection = typeof collections.$inferSelect;
 export type InsertCollection = z.infer<typeof insertCollectionSchema>;
 export type WhatsappFlowTemplate = typeof whatsappFlowTemplates.$inferSelect;
 export type InsertWhatsappFlowTemplate = z.infer<typeof insertWhatsappFlowTemplateSchema>;
+export type UploadedCertificate = typeof uploadedCertificates.$inferSelect;
+export type InsertUploadedCertificate = z.infer<typeof insertUploadedCertificateSchema>;
