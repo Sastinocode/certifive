@@ -1376,6 +1376,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Convert proforma invoice to regular invoice
+  app.post('/api/invoices/:id/convert-to-invoice', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const id = parseInt(req.params.id);
+      const invoice = await storage.convertProformaToInvoice(id, userId);
+      res.json(invoice);
+    } catch (error) {
+      console.error("Error converting proforma to invoice:", error);
+      res.status(500).json({ message: "Error al convertir factura proforma" });
+    }
+  });
+
+  // Register invoice in accounting (for cash payments)
+  app.post('/api/invoices/:id/register-accounting', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const id = parseInt(req.params.id);
+      const invoice = await storage.registerInvoiceInAccounting(id, userId);
+      res.json(invoice);
+    } catch (error) {
+      console.error("Error registering invoice in accounting:", error);
+      res.status(500).json({ message: "Error al registrar en contabilidad" });
+    }
+  });
+
   // Payment Management Routes
   app.get('/api/payments', isAuthenticated, async (req: any, res) => {
     try {
