@@ -1020,87 +1020,54 @@ export class DatabaseStorage implements IStorage {
         .from(collections)
         .where(eq(collections.userId, userId));
 
+      // Build combined WHERE conditions for each query
+      const invoiceConditions = [eq(invoices.userId, userId)];
+      const collectionConditions = [eq(collections.userId, userId)];
+
       // Apply date filters
       if (filters.dateFrom) {
         const fromDate = new Date(filters.dateFrom);
         if (filters.searchType === 'payment_date') {
-          invoiceQuery = invoiceQuery.where(and(
-            eq(invoices.userId, userId),
-            gte(invoices.paidDate, fromDate)
-          ));
-          collectionQuery = collectionQuery.where(and(
-            eq(collections.userId, userId),
-            gte(collections.collectionDate, fromDate)
-          ));
+          invoiceConditions.push(gte(invoices.paidDate, fromDate));
+          collectionConditions.push(gte(collections.collectionDate, fromDate));
         } else if (filters.searchType === 'invoice_date') {
-          invoiceQuery = invoiceQuery.where(and(
-            eq(invoices.userId, userId),
-            gte(invoices.issueDate, fromDate)
-          ));
+          invoiceConditions.push(gte(invoices.issueDate, fromDate));
         }
       }
 
       if (filters.dateTo) {
         const toDate = new Date(filters.dateTo);
         if (filters.searchType === 'payment_date') {
-          invoiceQuery = invoiceQuery.where(and(
-            eq(invoices.userId, userId),
-            lte(invoices.paidDate, toDate)
-          ));
-          collectionQuery = collectionQuery.where(and(
-            eq(collections.userId, userId),
-            lte(collections.collectionDate, toDate)
-          ));
+          invoiceConditions.push(lte(invoices.paidDate, toDate));
+          collectionConditions.push(lte(collections.collectionDate, toDate));
         } else if (filters.searchType === 'invoice_date') {
-          invoiceQuery = invoiceQuery.where(and(
-            eq(invoices.userId, userId),
-            lte(invoices.issueDate, toDate)
-          ));
+          invoiceConditions.push(lte(invoices.issueDate, toDate));
         }
       }
 
       // Apply payment method filter
       if (filters.paymentMethodFilter && filters.paymentMethodFilter !== 'all') {
-        invoiceQuery = invoiceQuery.where(and(
-          eq(invoices.userId, userId),
-          eq(invoices.paymentMethod, filters.paymentMethodFilter)
-        ));
-        collectionQuery = collectionQuery.where(and(
-          eq(collections.userId, userId),
-          eq(collections.paymentMethod, filters.paymentMethodFilter)
-        ));
+        invoiceConditions.push(eq(invoices.paymentMethod, filters.paymentMethodFilter));
+        collectionConditions.push(eq(collections.paymentMethod, filters.paymentMethodFilter));
       }
 
       // Apply invoice status filter
       if (filters.invoiceStatusFilter === 'invoiced') {
         // Only get invoices or collections that have invoice IDs
-        collectionQuery = collectionQuery.where(and(
-          eq(collections.userId, userId),
-          sql`${collections.invoiceId} IS NOT NULL`
-        ));
+        collectionConditions.push(sql`${collections.invoiceId} IS NOT NULL`);
       } else if (filters.invoiceStatusFilter === 'not_invoiced') {
         // Only get collections without invoice IDs
-        collectionQuery = collectionQuery.where(and(
-          eq(collections.userId, userId),
-          isNull(collections.invoiceId)
-        ));
-        // Exclude invoices from this filter
-        invoiceQuery = db
-          .select({
-            id: sql<number>`NULL`,
-            type: sql<string>`'none'`,
-            clientName: sql<string>`''`,
-            clientEmail: sql<string>`''`,
-            amount: sql<string>`'0'`,
-            paymentMethod: sql<string>`''`,
-            paymentDate: sql<string>`NULL`,
-            invoiceDate: sql<string>`NULL`,
-            concept: sql<string>`''`,
-            invoiceId: sql<number>`NULL`,
-            collectionDate: sql<string>`NULL`
-          })
-          .from(invoices)
-          .where(sql`1 = 0`); // This will return no results
+        collectionConditions.push(isNull(collections.invoiceId));
+        // Don't get any invoices for this filter
+        invoiceConditions.push(sql`1 = 0`);
+      }
+
+      // Apply the conditions to the queries
+      if (invoiceConditions.length > 1) {
+        invoiceQuery = invoiceQuery.where(and(...invoiceConditions));
+      }
+      if (collectionConditions.length > 1) {
+        collectionQuery = collectionQuery.where(and(...collectionConditions));
       }
 
       // Execute both queries
