@@ -234,6 +234,7 @@ export default function CertificateManagement({
             </div>
             <CertificateUploadDialog 
               folders={folders}
+              preselectedFolderId={selectedFolderId}
               onSuccess={() => queryClient.invalidateQueries({ queryKey: ["/api/uploaded-certificates"] })}
             />
           </div>

@@ -48,12 +48,14 @@ interface CertificateUploadDialogProps {
   folders: Folder[];
   trigger?: React.ReactNode;
   onSuccess?: () => void;
+  preselectedFolderId?: number;
 }
 
 export default function CertificateUploadDialog({
   folders,
   trigger,
   onSuccess,
+  preselectedFolderId,
 }: CertificateUploadDialogProps) {
   const [open, setOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -66,7 +68,7 @@ export default function CertificateUploadDialog({
       clientName: "",
       clientEmail: "",
       clientPhone: "",
-      folderId: "",
+      folderId: preselectedFolderId ? preselectedFolderId.toString() : "",
       description: "",
       tags: "",
     },
@@ -217,11 +219,23 @@ export default function CertificateUploadDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {folders.map((folder) => (
-                          <SelectItem key={folder.id} value={folder.id.toString()}>
-                            {folder.name}
+                        {folders.length > 0 ? (
+                          folders.map((folder) => (
+                            <SelectItem key={folder.id} value={folder.id.toString()}>
+                              <div className="flex items-center gap-2">
+                                <div 
+                                  className="w-3 h-3 rounded-full" 
+                                  style={{ backgroundColor: folder.color || '#059669' }}
+                                />
+                                {folder.name}
+                              </div>
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="" disabled>
+                            No hay carpetas disponibles - Crea una carpeta primero en la pestaña "Propiedades"
                           </SelectItem>
-                        ))}
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />
