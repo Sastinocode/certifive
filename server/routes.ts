@@ -2118,6 +2118,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Serve uploaded photos from certification forms
+  app.get("/uploads/:filename", (req, res) => {
+    const filename = req.params.filename;
+    const filepath = path.join(process.cwd(), "uploads", filename);
+    
+    // Check if file exists
+    if (fs.existsSync(filepath)) {
+      res.sendFile(filepath);
+    } else {
+      res.status(404).json({ message: "Archivo no encontrado" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

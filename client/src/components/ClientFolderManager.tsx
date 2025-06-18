@@ -531,7 +531,7 @@ export default function ClientFolderManager({ folderId, folderName, isOpen, onCl
           <TabsContent value="photos" className="space-y-4">
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-semibold">
-                Fotos ({groupedDocuments.photo?.length || 0})
+                Fotos ({(groupedDocuments.photo?.length || 0) + (certificationData?.photos?.length || 0)})
               </h3>
               <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
                 <DialogTrigger asChild>
@@ -579,63 +579,133 @@ export default function ClientFolderManager({ folderId, folderName, isOpen, onCl
               </Dialog>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {groupedDocuments.photo?.map((photo: Document) => (
-                <Card key={photo.id} className="overflow-hidden">
-                  <div className="aspect-video bg-gray-100 flex items-center justify-center">
-                    <img
-                      src={`/api/folders/${folderId}/documents/${photo.id}/view`}
-                      alt={photo.originalName}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                        (e.target as HTMLImageElement).nextElementSibling!.classList.remove('hidden');
-                      }}
-                    />
-                    <div className="hidden">
-                      <Image className="w-8 h-8 text-gray-400" />
-                    </div>
-                  </div>
-                  <CardContent className="p-3">
-                    <p className="text-sm font-medium truncate">{photo.originalName}</p>
-                    <p className="text-xs text-gray-500">
-                      {formatFileSize(photo.fileSize)} • {new Date(photo.uploadedAt).toLocaleDateString()}
-                    </p>
-                    <div className="flex gap-1 mt-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDownload(photo)}
-                      >
-                        <Download className="w-3 h-3" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => window.open(`/api/folders/${folderId}/documents/${photo.id}/view`, '_blank')}
-                      >
-                        <Eye className="w-3 h-3" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => deleteMutation.mutate(photo.id)}
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )) || []}
-              
-              {(!groupedDocuments.photo || groupedDocuments.photo.length === 0) && (
-                <div className="col-span-full text-center py-8 text-gray-500">
-                  <Camera className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>No hay fotos en esta carpeta</p>
-                  <p className="text-sm">Sube algunas fotos para comenzar</p>
+            {/* Fotos del formulario de certificación */}
+            {certificationData?.photos && certificationData.photos.length > 0 && (
+              <div className="space-y-4">
+                <div className="border-b pb-2">
+                  <h4 className="font-medium text-green-700">Fotos del Formulario de Certificación</h4>
+                  <p className="text-sm text-gray-600">Fotos subidas por el cliente en el formulario</p>
                 </div>
-              )}
-            </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {certificationData.photos.map((photoPath: string, index: number) => (
+                    <Card key={`form-photo-${index}`} className="overflow-hidden">
+                      <div className="aspect-video bg-gray-100 flex items-center justify-center">
+                        <img
+                          src={`/uploads/${photoPath}`}
+                          alt={`Foto ${index + 1} del formulario`}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                            (e.target as HTMLImageElement).nextElementSibling!.classList.remove('hidden');
+                          }}
+                        />
+                        <div className="hidden flex items-center justify-center">
+                          <Image className="w-8 h-8 text-gray-400" />
+                        </div>
+                      </div>
+                      <CardContent className="p-3">
+                        <p className="text-sm font-medium">Foto del formulario {index + 1}</p>
+                        <p className="text-xs text-gray-500">Subida por el cliente</p>
+                        <div className="flex gap-2 mt-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => window.open(`/uploads/${photoPath}`, '_blank')}
+                          >
+                            <Eye className="w-3 h-3 mr-1" />
+                            Ver
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              const a = document.createElement('a');
+                              a.href = `/uploads/${photoPath}`;
+                              a.download = `foto-formulario-${index + 1}.jpg`;
+                              document.body.appendChild(a);
+                              a.click();
+                              document.body.removeChild(a);
+                            }}
+                          >
+                            <Download className="w-3 h-3 mr-1" />
+                            Descargar
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Fotos adicionales subidas manualmente */}
+            {groupedDocuments.photo && groupedDocuments.photo.length > 0 && (
+              <div className="space-y-4">
+                <div className="border-b pb-2">
+                  <h4 className="font-medium text-blue-700">Fotos Adicionales</h4>
+                  <p className="text-sm text-gray-600">Fotos subidas adicionalmente por el certificador</p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {groupedDocuments.photo?.map((photo: Document) => (
+                    <Card key={photo.id} className="overflow-hidden">
+                      <div className="aspect-video bg-gray-100 flex items-center justify-center">
+                        <img
+                          src={`/api/folders/${folderId}/documents/${photo.id}/view`}
+                          alt={photo.originalName}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                            (e.target as HTMLImageElement).nextElementSibling!.classList.remove('hidden');
+                          }}
+                        />
+                        <div className="hidden">
+                          <Image className="w-8 h-8 text-gray-400" />
+                        </div>
+                      </div>
+                      <CardContent className="p-3">
+                        <p className="text-sm font-medium truncate">{photo.originalName}</p>
+                        <p className="text-xs text-gray-500">
+                          {formatFileSize(photo.fileSize)} • {new Date(photo.uploadedAt).toLocaleDateString()}
+                        </p>
+                        <div className="flex gap-1 mt-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDownload(photo)}
+                          >
+                            <Download className="w-3 h-3" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.open(`/api/folders/${folderId}/documents/${photo.id}/view`, '_blank')}
+                          >
+                            <Eye className="w-3 h-3" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => deleteMutation.mutate(photo.id)}
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Mensaje cuando no hay fotos */}
+            {(!certificationData?.photos || certificationData.photos.length === 0) && 
+             (!groupedDocuments.photo || groupedDocuments.photo.length === 0) && (
+              <div className="text-center py-8 text-gray-500">
+                <Camera className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>No hay fotos en esta carpeta</p>
+                <p className="text-sm">Sube algunas fotos para comenzar</p>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </DialogContent>
