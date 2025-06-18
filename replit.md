@@ -123,3 +123,4 @@ Changelog:
 - June 18, 2025. Certificate upload system fully integrated with folder management - certificates now properly link to existing property folders with preselection, visual folder indicators, and proper validation
 - June 18, 2025. Reorganized system workflow: Properties section now serves as "Final Certificate Archive" for storing completed certificates with upload functionality, while Certificates section handles "Client Form Information Reception" for processing new requests
 - June 18, 2025. Created sample certification data for system preview: Added 3 complete certificate examples with different states (completed/pending/draft) and full form data including energy ratings, contact details, and property specifications
+- June 18, 2025. Fixed certification display system: Resolved authentication and data mapping issues to properly show sample certification data in the "Solicitudes de Certificación" section with correct filtering and search functionality
