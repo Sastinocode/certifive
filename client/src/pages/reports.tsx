@@ -37,7 +37,11 @@ import {
   Banknote,
   Smartphone,
   Building2,
-  AlertTriangle
+  AlertTriangle,
+  Edit,
+  Trash2,
+  Eye,
+  XCircle
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -61,11 +65,17 @@ interface Invoice {
   irpfAmount?: string;
   total: string;
   paymentStatus: string;
+  paymentMethod?: string;
   paymentTerms?: number;
   issueDate: string;
   dueDate: string;
   paidDate?: string;
   description: string;
+  isProforma?: boolean;
+  invoiceType?: string;
+  isAccountingRegistered?: boolean;
+  accountingRegisteredAt?: string;
+  manualAccountingRequired?: boolean;
 }
 
 interface Payment {
@@ -815,15 +825,54 @@ function InvoicesTable({ invoices, onEdit, onRecordPayment }: {
   onEdit: (invoice: Invoice) => void;
   onRecordPayment: (invoice: Invoice) => void;
 }) {
+  const { toast } = useToast();
+
+  const registerAccountingMutation = useMutation({
+    mutationFn: (invoiceId: number) => apiRequest("POST", `/api/invoices/${invoiceId}/register-accounting`),
+    onSuccess: () => {
+      toast({
+        title: "Registro contable completado",
+        description: "La factura se ha registrado en contabilidad correctamente",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error al registrar",
+        description: "No se pudo registrar la factura en contabilidad",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const convertProformaMutation = useMutation({
+    mutationFn: (invoiceId: number) => apiRequest("POST", `/api/invoices/${invoiceId}/convert-to-invoice`),
+    onSuccess: () => {
+      toast({
+        title: "Factura convertida",
+        description: "La factura proforma se ha convertido a factura oficial",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error al convertir",
+        description: "No se pudo convertir la factura proforma",
+        variant: "destructive",
+      });
+    },
+  });
   return (
     <Table>
       <TableHeader>
         <TableRow>
           <TableHead>Número</TableHead>
+          <TableHead>Tipo</TableHead>
           <TableHead>Cliente</TableHead>
           <TableHead>Fecha</TableHead>
           <TableHead>Total</TableHead>
           <TableHead>Estado</TableHead>
+          <TableHead>Contabilidad</TableHead>
           <TableHead>Acciones</TableHead>
         </TableRow>
       </TableHeader>
@@ -831,6 +880,11 @@ function InvoicesTable({ invoices, onEdit, onRecordPayment }: {
         {invoices.map((invoice) => (
           <TableRow key={invoice.id}>
             <TableCell className="font-medium">{invoice.invoiceNumber}</TableCell>
+            <TableCell>
+              <Badge variant={invoice.isProforma ? "outline" : "default"}>
+                {invoice.isProforma ? "Proforma" : "Factura"}
+              </Badge>
+            </TableCell>
             <TableCell>{invoice.clientName}</TableCell>
             <TableCell>
               {format(new Date(invoice.issueDate), "dd/MM/yyyy", { locale: es })}
@@ -851,15 +905,62 @@ function InvoicesTable({ invoices, onEdit, onRecordPayment }: {
               </Badge>
             </TableCell>
             <TableCell>
+              {invoice.isAccountingRegistered ? (
+                <Badge variant="default" className="bg-green-100 text-green-800">
+                  <CheckCircle className="w-3 h-3 mr-1" />
+                  Registrado
+                </Badge>
+              ) : invoice.manualAccountingRequired ? (
+                <div className="flex items-center gap-1">
+                  <Badge variant="outline" className="bg-yellow-50 text-yellow-800 border-yellow-200">
+                    <Clock className="w-3 h-3 mr-1" />
+                    Pendiente
+                  </Badge>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-6 px-2 text-xs"
+                    onClick={() => registerAccountingMutation.mutate(invoice.id)}
+                    disabled={registerAccountingMutation.isPending}
+                  >
+                    Registrar
+                  </Button>
+                </div>
+              ) : (
+                <Badge variant="default" className="bg-blue-100 text-blue-800">
+                  <CheckCircle className="w-3 h-3 mr-1" />
+                  Automático
+                </Badge>
+              )}
+            </TableCell>
+            <TableCell>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={() => onEdit(invoice)}>
+                  <Edit className="w-3 h-3 mr-1" />
                   Editar
                 </Button>
-                {invoice.paymentStatus !== 'paid' && (
-                  <Button variant="outline" size="sm" onClick={() => onRecordPayment(invoice)}>
-                    Registrar Pago
+                {invoice.isProforma && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => convertProformaMutation.mutate(invoice.id)}
+                    disabled={convertProformaMutation.isPending}
+                    className="text-blue-600 hover:text-blue-800"
+                  >
+                    <FileText className="w-3 h-3 mr-1" />
+                    Convertir
                   </Button>
                 )}
+                {invoice.paymentStatus !== 'paid' && !invoice.isProforma && (
+                  <Button variant="outline" size="sm" onClick={() => onRecordPayment(invoice)}>
+                    <CreditCard className="w-3 h-3 mr-1" />
+                    Pago
+                  </Button>
+                )}
+                <Button variant="outline" size="sm">
+                  <Download className="w-3 h-3 mr-1" />
+                  PDF
+                </Button>
               </div>
             </TableCell>
           </TableRow>
