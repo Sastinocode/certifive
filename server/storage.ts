@@ -81,6 +81,7 @@ export interface IStorage {
   addPhotos(id: number, userId: string, photos: string[]): Promise<Certification | undefined>;
   completeCertification(id: number, userId: string): Promise<Certification | undefined>;
   moveCertificationToFolder(certificationId: number, folderId: number | null, userId: string): Promise<Certification | undefined>;
+  deleteCertification(id: number, userId: string): Promise<boolean>;
   
   // Pricing and quotes operations
   getPricingRates(userId: string): Promise<PricingRate[]>;
@@ -447,6 +448,17 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return certification;
+  }
+
+  async deleteCertification(id: number, userId: string): Promise<boolean> {
+    const result = await db
+      .delete(certifications)
+      .where(and(
+        eq(certifications.id, id),
+        eq(certifications.userId, userId)
+      ));
+    
+    return (result.rowCount ?? 0) > 0;
   }
 
   async getCertificationsByUserExcludingArchived(userId: string): Promise<Certification[]> {

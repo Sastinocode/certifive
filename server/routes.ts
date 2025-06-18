@@ -926,6 +926,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete certification endpoint
+  app.delete("/api/certifications/:id", isAuthenticated, async (req, res) => {
+    try {
+      const certificationId = parseInt(req.params.id);
+      const userId = req.user?.claims?.sub;
+
+      if (!userId) {
+        return res.status(401).json({ message: "Usuario no autenticado" });
+      }
+
+      // Get certification to verify ownership
+      const certification = await storage.getCertification(certificationId, userId);
+      if (!certification) {
+        return res.status(404).json({ message: "Certificación no encontrada" });
+      }
+
+      // Delete certification permanently
+      await storage.deleteCertification(certificationId, userId);
+
+      res.json({ message: "Certificación eliminada correctamente" });
+    } catch (error) {
+      console.error("Error deleting certification:", error);
+      res.status(500).json({ message: "Error al eliminar certificación" });
+    }
+  });
+
   // WhatsApp messaging functions
   async function sendCertificationFormToClient(quote: any) {
     try {
