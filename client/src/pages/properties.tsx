@@ -132,8 +132,8 @@ export default function Properties() {
   };
 
   const filteredCertifications = (certifications as Certification[]).filter((cert: Certification) => {
-    const matchesSearch = cert.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         cert.cadastralRef.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (cert.ownerName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (cert.cadastralRef || '').toLowerCase().includes(searchTerm.toLowerCase());
     
     // Filter by selected folder
     const matchesFolder = selectedFolder === null ? 
@@ -489,7 +489,7 @@ export default function Properties() {
                               <Building className="w-5 h-5 text-primary" />
                             </div>
                             <div>
-                              <h3 className="font-semibold text-gray-900 text-sm">{property.fullName}</h3>
+                              <h3 className="font-semibold text-gray-900 text-sm">{property.ownerName}</h3>
                               <div className="flex items-center text-xs text-gray-500 mt-1">
                                 <MapPin className="w-3 h-3 mr-1" />
                                 {property.cadastralRef}
