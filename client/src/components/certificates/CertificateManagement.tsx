@@ -279,7 +279,7 @@ export default function CertificateManagement({
                         )}
                         {certificate.tags && Array.isArray(certificate.tags) && certificate.tags.length > 0 && (
                           <div className="flex gap-1 mt-1">
-                            {certificate.tags.map((tag: string, index: number) => (
+                            {(certificate.tags as string[]).map((tag: string, index: number) => (
                               <Badge key={index} variant="secondary" className="text-xs">
                                 {tag}
                               </Badge>
@@ -326,7 +326,7 @@ export default function CertificateManagement({
                     </TableCell>
                     <TableCell>
                       <span className="text-xs text-muted-foreground">
-                        {formatDistanceToNow(new Date(certificate.createdAt), { addSuffix: true, locale: es })}
+                        {certificate.createdAt ? formatDistanceToNow(new Date(certificate.createdAt), { addSuffix: true, locale: es }) : 'Fecha no disponible'}
                       </span>
                     </TableCell>
                     <TableCell>

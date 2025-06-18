@@ -43,10 +43,11 @@ interface Folder {
   id: number;
   name: string;
   description: string | null;
-  color: string;
+  color: string | null;
   icon: string | null;
   userId: string;
-  createdAt: Date;
+  createdAt: Date | null;
+  updatedAt: Date | null;
 }
 
 interface Certification {
@@ -231,7 +232,7 @@ export default function Properties() {
           <div className="flex flex-1 overflow-hidden">
             {/* Folder Sidebar */}
             <div className="w-80 bg-white border-r border-gray-200 overflow-y-auto">
-          <div className="p-4 border-b border-gray-200">
+              <div className="p-4 border-b border-gray-200">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold text-gray-900">Gestión de Clientes</h2>
               <Dialog open={showCreateFolder} onOpenChange={setShowCreateFolder}>
@@ -540,6 +541,7 @@ export default function Properties() {
               )}
             </CardContent>
           </Card>
+        </div>
           </div>
         ) : (
           // Certificate Management Tab
