@@ -648,40 +648,110 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createInvoice(data: any): Promise<any> {
-    // Get the next invoice number for this user and series
-    const series = data.series || 'CERT';
-    const year = new Date().getFullYear();
+    // Generate invoice number
+    const invoiceNumber = await this.generateInvoiceNumber(data.userId, data.series || "CERT", data.isProforma);
     
-    // Find the highest invoice number for this user, series, and year
-    const lastInvoice = await db
-      .select({ invoiceNumber: invoices.invoiceNumber })
+    // Determine if accounting registration is required
+    const requiresManualAccounting = data.paymentMethod === 'cash';
+    const isAccountingRegistered = !requiresManualAccounting; // Auto-register unless cash payment
+    
+    const invoiceData = {
+      ...data,
+      invoiceNumber,
+      isAccountingRegistered,
+      accountingRegisteredAt: isAccountingRegistered ? new Date() : null,
+      accountingRegisteredBy: isAccountingRegistered ? data.userId : null,
+      manualAccountingRequired: requiresManualAccounting,
+      dueDate: data.dueDate || new Date(Date.now() + (data.paymentTerms || 30) * 24 * 60 * 60 * 1000)
+    };
+
+    const [invoice] = await db
+      .insert(invoices)
+      .values(invoiceData)
+      .returning();
+    
+    return invoice;
+  }
+
+  async generateInvoiceNumber(userId: string, series: string = "CERT", isProforma: boolean = false): Promise<string> {
+    const currentYear = new Date().getFullYear();
+    const prefix = isProforma ? `PRO-${series}` : series;
+    
+    // Get the last invoice number for this user and series
+    const lastInvoices = await db
+      .select()
       .from(invoices)
-      .where(eq(invoices.userId, data.userId))
+      .where(and(
+        eq(invoices.userId, userId),
+        eq(invoices.series, series)
+      ))
       .orderBy(desc(invoices.createdAt))
       .limit(1);
-    
+
     let nextNumber = 1;
-    if (lastInvoice.length > 0) {
-      // Extract number from invoice format like "CERT-2024-001"
-      const match = lastInvoice[0].invoiceNumber.match(/-(\d+)$/);
-      if (match) {
-        nextNumber = parseInt(match[1]) + 1;
-      }
+    if (lastInvoices.length > 0) {
+      const lastNumber = lastInvoices[0].invoiceNumber.split('-').pop();
+      nextNumber = parseInt(lastNumber || '0') + 1;
     }
+
+    return `${prefix}-${currentYear}-${nextNumber.toString().padStart(4, '0')}`;
+  }
+
+  async registerInvoiceInAccounting(invoiceId: number, userId: string): Promise<any> {
+    const [invoice] = await db
+      .update(invoices)
+      .set({
+        isAccountingRegistered: true,
+        accountingRegisteredAt: new Date(),
+        accountingRegisteredBy: userId,
+        manualAccountingRequired: false
+      })
+      .where(and(
+        eq(invoices.id, invoiceId),
+        eq(invoices.userId, userId)
+      ))
+      .returning();
     
-    // Format invoice number: SERIES-YEAR-NUMBER (e.g., CERT-2024-001)
-    const invoiceNumber = `${series}-${year}-${nextNumber.toString().padStart(3, '0')}`;
+    return invoice;
+  }
+
+  async convertProformaToInvoice(proformaId: number, userId: string): Promise<any> {
+    // Get the proforma invoice
+    const [proforma] = await db
+      .select()
+      .from(invoices)
+      .where(and(
+        eq(invoices.id, proformaId),
+        eq(invoices.userId, userId),
+        eq(invoices.isProforma, true)
+      ));
+
+    if (!proforma) {
+      throw new Error('Factura proforma no encontrada');
+    }
+
+    // Generate new invoice number for the regular invoice
+    const invoiceNumber = await this.generateInvoiceNumber(userId, proforma.series);
+    
+    // Create new invoice based on proforma
+    const invoiceData = {
+      ...proforma,
+      invoiceNumber,
+      isProforma: false,
+      invoiceType: 'invoice',
+      isAccountingRegistered: proforma.paymentMethod !== 'cash',
+      accountingRegisteredAt: proforma.paymentMethod !== 'cash' ? new Date() : null,
+      accountingRegisteredBy: proforma.paymentMethod !== 'cash' ? userId : null,
+      manualAccountingRequired: proforma.paymentMethod === 'cash'
+    };
+
+    delete invoiceData.id; // Remove ID to create new record
     
     const [invoice] = await db
       .insert(invoices)
-      .values({
-        ...data,
-        invoiceNumber,
-        series,
-        issueDate: new Date(),
-        updatedAt: new Date(),
-      })
+      .values(invoiceData)
       .returning();
+    
     return invoice;
   }
 

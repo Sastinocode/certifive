@@ -653,7 +653,11 @@ function InvoiceForm({ invoice, onSubmit, onCancel }: {
     subtotal: invoice?.subtotal || "",
     vatRate: invoice?.vatRate || "21",
     paymentTerms: invoice?.paymentTerms || 30,
+    paymentMethod: invoice?.paymentMethod || "transfer",
     issueDate: invoice?.issueDate || format(new Date(), "yyyy-MM-dd"),
+    isProforma: invoice?.isProforma || false,
+    invoiceType: invoice?.invoiceType || "invoice",
+    series: invoice?.series || "CERT",
   });
 
   const handleSubmit = (e: React.FormEvent) => {
