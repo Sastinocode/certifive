@@ -731,12 +731,13 @@ export class DatabaseStorage implements IStorage {
     }
 
     // Generate new invoice number for the regular invoice
-    const invoiceNumber = await this.generateInvoiceNumber(userId, proforma.series);
+    const newInvoiceNumber = await this.generateInvoiceNumber(userId, proforma.series, false);
     
     // Create new invoice based on proforma
+    const { id, ...proformaWithoutId } = proforma;
     const invoiceData = {
-      ...proforma,
-      invoiceNumber,
+      ...proformaWithoutId,
+      invoiceNumber: newInvoiceNumber,
       isProforma: false,
       invoiceType: 'invoice',
       isAccountingRegistered: proforma.paymentMethod !== 'cash',
@@ -744,15 +745,13 @@ export class DatabaseStorage implements IStorage {
       accountingRegisteredBy: proforma.paymentMethod !== 'cash' ? userId : null,
       manualAccountingRequired: proforma.paymentMethod === 'cash'
     };
-
-    delete invoiceData.id; // Remove ID to create new record
     
-    const [invoice] = await db
+    const [newInvoice] = await db
       .insert(invoices)
       .values(invoiceData)
       .returning();
     
-    return invoice;
+    return newInvoice;
   }
 
   async updateInvoice(id: number, userId: string, data: any): Promise<any | undefined> {
