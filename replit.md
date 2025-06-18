@@ -121,3 +121,4 @@ Preferred communication style: Simple, everyday language.
 Changelog:
 - June 18, 2025. Initial setup
 - June 18, 2025. Certificate upload system fully integrated with folder management - certificates now properly link to existing property folders with preselection, visual folder indicators, and proper validation
+- June 18, 2025. Reorganized system workflow: Properties section now serves as "Final Certificate Archive" for storing completed certificates with upload functionality, while Certificates section handles "Client Form Information Reception" for processing new requests
