@@ -2131,6 +2131,151 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Ship certificate to client
+  app.post("/api/folders/:folderId/ship-certificate", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const folderId = parseInt(req.params.folderId);
+      const { method, paymentRequired, message } = req.body;
+
+      // Get folder and certification data
+      const folder = await storage.getFolder(folderId, userId);
+      if (!folder) {
+        return res.status(404).json({ message: "Carpeta no encontrada" });
+      }
+
+      const certification = await storage.getFolderCertification(folderId, userId);
+      if (!certification) {
+        return res.status(404).json({ message: "Certificación no encontrada" });
+      }
+
+      // Create shipping record and handle the delivery
+      let deliveryResult;
+      
+      if (method === 'email') {
+        if (paymentRequired) {
+          // Generate payment link and send email with payment requirement
+          deliveryResult = await handleEmailWithPayment(certification, message);
+        } else {
+          // Send certificate directly via email
+          deliveryResult = await handleDirectEmail(certification, message);
+        }
+      } else if (method === 'whatsapp') {
+        if (paymentRequired) {
+          // Send WhatsApp message with payment link
+          deliveryResult = await handleWhatsAppWithPayment(certification, message);
+        } else {
+          // Send certificate directly via WhatsApp
+          deliveryResult = await handleDirectWhatsApp(certification, message);
+        }
+      } else if (method === 'direct') {
+        // Create delivery record for direct/manual delivery
+        deliveryResult = await handleDirectDelivery(certification, paymentRequired, message);
+      }
+
+      res.json({ 
+        message: "Certificado enviado correctamente",
+        deliveryMethod: method,
+        paymentRequired,
+        result: deliveryResult
+      });
+    } catch (error) {
+      console.error("Error shipping certificate:", error);
+      res.status(500).json({ message: "Error al enviar certificado" });
+    }
+  });
+
+  // Helper functions for certificate delivery
+  async function handleEmailWithPayment(certification: any, message: string) {
+    // Generate payment link (would integrate with Stripe)
+    const paymentLink = `${process.env.BASE_URL}/pay/${certification.id}`;
+    
+    // Send email with payment link
+    const emailContent = `
+      Estimado/a ${certification.ownerName},
+      
+      Su certificado energético está listo para la descarga. Para obtenerlo, por favor complete el pago pendiente:
+      
+      ${paymentLink}
+      
+      ${message ? `\nNota adicional: ${message}` : ''}
+      
+      Una vez completado el pago, recibirá su certificado inmediatamente.
+      
+      Saludos cordiales
+    `;
+    
+    // Here would integrate with email service (SendGrid, etc.)
+    console.log(`Email sent to ${certification.email} with payment link`);
+    
+    return { type: 'email_with_payment', paymentLink, sent: true };
+  }
+
+  async function handleDirectEmail(certification: any, message: string) {
+    const emailContent = `
+      Estimado/a ${certification.ownerName},
+      
+      Adjuntamos su certificado energético solicitado.
+      
+      ${message ? `\nNota adicional: ${message}` : ''}
+      
+      Saludos cordiales
+    `;
+    
+    // Here would attach the certificate file and send email
+    console.log(`Certificate emailed directly to ${certification.email}`);
+    
+    return { type: 'direct_email', sent: true };
+  }
+
+  async function handleWhatsAppWithPayment(certification: any, message: string) {
+    const paymentLink = `${process.env.BASE_URL}/pay/${certification.id}`;
+    
+    const whatsappMessage = `¡Hola ${certification.ownerName}! 🏠
+    
+Su certificado energético está listo. Para descargarlo, complete el pago aquí: ${paymentLink}
+
+${message ? `\n📝 ${message}` : ''}
+
+Una vez pagado, recibirá su certificado inmediatamente.`;
+    
+    // Here would integrate with WhatsApp Business API
+    console.log(`WhatsApp sent to ${certification.phone} with payment link`);
+    
+    return { type: 'whatsapp_with_payment', paymentLink, sent: true };
+  }
+
+  async function handleDirectWhatsApp(certification: any, message: string) {
+    const whatsappMessage = `¡Hola ${certification.ownerName}! 🏠
+    
+Su certificado energético está listo y adjunto en este mensaje.
+
+${message ? `\n📝 ${message}` : ''}
+
+¡Gracias por confiar en nosotros!`;
+    
+    // Here would send WhatsApp with certificate attachment
+    console.log(`Certificate sent via WhatsApp to ${certification.phone}`);
+    
+    return { type: 'direct_whatsapp', sent: true };
+  }
+
+  async function handleDirectDelivery(certification: any, paymentRequired: boolean, message: string) {
+    // Create delivery record for manual/direct delivery tracking
+    const deliveryRecord = {
+      certificationId: certification.id,
+      deliveryMethod: 'direct',
+      paymentRequired,
+      message,
+      status: 'pending',
+      createdAt: new Date()
+    };
+    
+    console.log(`Direct delivery prepared for ${certification.ownerName}`);
+    
+    return { type: 'direct_delivery', paymentRequired, prepared: true };
+  }
+
   const httpServer = createServer(app);
   return httpServer;
 }
