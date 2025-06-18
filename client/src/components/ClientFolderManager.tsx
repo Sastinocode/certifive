@@ -23,8 +23,17 @@ import {
   MapPin,
   FileCheck,
   Camera,
-  File
+  File,
+  Send,
+  Mail,
+  MessageCircle,
+  CreditCard,
+  Banknote,
+  Link2,
+  CheckCircle
 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface ClientFolderManagerProps {
   folderId: number;
@@ -69,6 +78,9 @@ export default function ClientFolderManager({ folderId, folderName, isOpen, onCl
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
   const [uploadCategory, setUploadCategory] = useState<'certificate' | 'photo' | 'document' | 'other'>('document');
   const [uploadDescription, setUploadDescription] = useState('');
+  const [shippingMethod, setShippingMethod] = useState<'whatsapp' | 'email' | 'direct'>('email');
+  const [paymentRequired, setPaymentRequired] = useState<'yes' | 'no'>('no');
+  const [shippingMessage, setShippingMessage] = useState('');
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -145,6 +157,30 @@ export default function ClientFolderManager({ folderId, folderName, isOpen, onCl
     }
   });
 
+  const shippingMutation = useMutation({
+    mutationFn: async (shippingData: {
+      method: string;
+      paymentRequired: boolean;
+      message: string;
+    }) => {
+      return await apiRequest("POST", `/api/folders/${folderId}/ship-certificate`, shippingData);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Certificado enviado",
+        description: "El certificado se ha enviado correctamente al cliente",
+      });
+      setShippingMessage('');
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Error al enviar el certificado",
+        variant: "destructive",
+      });
+    }
+  });
+
   const handleUpload = () => {
     if (!selectedFiles || selectedFiles.length === 0) return;
 
@@ -160,6 +196,23 @@ export default function ClientFolderManager({ folderId, folderName, isOpen, onCl
 
   const handleDownload = (document: Document) => {
     window.open(`/api/folders/${folderId}/documents/${document.id}/download`, '_blank');
+  };
+
+  const handleShipping = () => {
+    if (!shippingMethod) {
+      toast({
+        title: "Error",
+        description: "Por favor selecciona un método de envío",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    shippingMutation.mutate({
+      method: shippingMethod,
+      paymentRequired: paymentRequired === 'yes',
+      message: shippingMessage,
+    });
   };
 
   const getFileIcon = (fileType: string, category: string) => {
@@ -221,11 +274,12 @@ export default function ClientFolderManager({ folderId, folderName, isOpen, onCl
         </DialogHeader>
 
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">Resumen</TabsTrigger>
             <TabsTrigger value="documents">Documentos</TabsTrigger>
             <TabsTrigger value="certification">Certificación</TabsTrigger>
             <TabsTrigger value="photos">Fotos</TabsTrigger>
+            <TabsTrigger value="shipping">Envío</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
