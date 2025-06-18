@@ -27,14 +27,21 @@ import {
 
 interface Certification {
   id: number;
-  fullName: string;
-  cadastralRef: string;
-  energyRating: string | null;
+  full_name: string;
+  dni: string;
+  email: string;
+  phone: string;
+  cadastral_ref: string;
+  energy_rating: string | null;
   status: string;
-  createdAt: string;
-  energyConsumption: string | null;
-  co2Emissions: string | null;
-  folderId: number | null;
+  created_at: string;
+  energy_consumption: string | null;
+  co2_emissions: string | null;
+  folder_id: number | null;
+  rooms: number;
+  facade_orientation: string;
+  heating_system: string;
+  water_heating_type: string;
 }
 
 export default function Certificates() {
@@ -97,8 +104,8 @@ export default function Certificates() {
     switch (status) {
       case "completed":
         return <Badge className="bg-green-100 text-green-800">Completado</Badge>;
-      case "in_progress":
-        return <Badge className="bg-yellow-100 text-yellow-800">En Proceso</Badge>;
+      case "pending":
+        return <Badge className="bg-yellow-100 text-yellow-800">Pendiente</Badge>;
       case "draft":
         return <Badge className="bg-gray-100 text-gray-800">Borrador</Badge>;
       default:
@@ -114,8 +121,8 @@ export default function Certificates() {
   };
 
   const filteredCertifications = (certifications as Certification[]).filter((cert: Certification) => {
-    const matchesSearch = cert.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         cert.cadastralRef.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = cert.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         cert.cadastral_ref.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || cert.status === statusFilter;
     
     return matchesSearch && matchesStatus;
@@ -171,11 +178,11 @@ export default function Certificates() {
                 Borradores
               </Button>
               <Button
-                variant={statusFilter === "in_progress" ? "default" : "outline"}
-                onClick={() => setStatusFilter("in_progress")}
+                variant={statusFilter === "pending" ? "default" : "outline"}
+                onClick={() => setStatusFilter("pending")}
                 size="sm"
               >
-                En Proceso
+                Pendientes
               </Button>
               <Button
                 variant={statusFilter === "completed" ? "default" : "outline"}
@@ -239,20 +246,21 @@ export default function Certificates() {
                       {filteredCertifications.map((cert) => (
                         <tr key={cert.id} className="border-b border-gray-100 hover:bg-gray-50">
                           <td className="py-4 px-4">
-                            <div className="font-medium text-gray-900">{cert.fullName}</div>
+                            <div className="font-medium text-gray-900">{cert.full_name}</div>
+                            <div className="text-sm text-gray-500">{cert.dni}</div>
                           </td>
                           <td className="py-4 px-4">
-                            <span className="text-sm text-gray-600">{cert.cadastralRef}</span>
+                            <span className="text-sm text-gray-600">{cert.cadastral_ref}</span>
                           </td>
                           <td className="py-4 px-4">
-                            {getEnergyRatingBadge(cert.energyRating)}
+                            {getEnergyRatingBadge(cert.energy_rating)}
                           </td>
                           <td className="py-4 px-4">
                             {getStatusBadge(cert.status)}
                           </td>
                           <td className="py-4 px-4">
                             <span className="text-sm text-gray-600">
-                              {new Date(cert.createdAt).toLocaleDateString('es-ES')}
+                              {new Date(cert.created_at).toLocaleDateString('es-ES')}
                             </span>
                           </td>
                           <td className="py-4 px-4">
