@@ -24,7 +24,8 @@ import {
   Building2,
   Upload,
   FileText,
-  Eye
+  Eye,
+  Download
 } from "lucide-react";
 import CertificateManagement from "@/components/certificates/CertificateManagement";
 import CertificateUploadDialog from "@/components/certificates/CertificateUploadDialog";
@@ -75,6 +76,9 @@ interface Certification {
 export default function Properties() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFolder, setSelectedFolder] = useState<number | null | undefined>(undefined);
+  const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
+  const [selectedFolderName, setSelectedFolderName] = useState("");
+  const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showCreateFolder, setShowCreateFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [newFolderDescription, setNewFolderDescription] = useState("");
@@ -528,10 +532,30 @@ export default function Properties() {
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <Button variant="outline" size="sm">
-                              <Eye className="w-4 h-4 mr-1" />
-                              Ver Detalles
-                            </Button>
+                            <div className="flex items-center gap-2 justify-end">
+                              <Button variant="outline" size="sm">
+                                <Eye className="w-4 h-4 mr-1" />
+                                Ver Detalles
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  if (property.folderId) {
+                                    setSelectedFolderId(property.folderId);
+                                    setSelectedFolderName(`${property.ownerName} - ${property.cadastralRef}`);
+                                    setShowUploadDialog(true);
+                                  }
+                                }}
+                              >
+                                <Upload className="w-4 h-4 mr-1" />
+                                Subir Certificado
+                              </Button>
+                              <Button variant="outline" size="sm">
+                                <Download className="w-4 h-4 mr-1" />
+                                Descargar
+                              </Button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -553,6 +577,16 @@ export default function Properties() {
           </div>
         )}
       </div>
+
+      {/* Certificate Upload Dialog */}
+      {selectedFolderId && (
+        <CertificateUploadDialog 
+          open={showUploadDialog}
+          onOpenChange={setShowUploadDialog}
+          folderId={selectedFolderId}
+          folderName={selectedFolderName}
+        />
+      )}
     </div>
   );
 }

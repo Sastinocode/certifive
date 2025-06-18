@@ -1065,11 +1065,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId,
         folderId,
         fileName: req.file.filename,
-        originalName: req.file.originalname,
+        originalFileName: req.file.originalname,
         filePath: req.file.path,
         fileSize: req.file.size,
         mimeType: req.file.mimetype,
-        uploadedAt: new Date()
+        clientName: folder.name
       });
 
       res.json({ 
