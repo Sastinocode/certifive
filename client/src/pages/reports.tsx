@@ -138,6 +138,13 @@ export default function Reports() {
   const [showCollectionDialog, setShowCollectionDialog] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
   const [selectedTab, setSelectedTab] = useState("reports");
+  
+  // Filtros para la pestaña Gestor
+  const [searchType, setSearchType] = useState("payment_date");
+  const [paymentMethodFilter, setPaymentMethodFilter] = useState("all");
+  const [invoiceStatusFilter, setInvoiceStatusFilter] = useState("all");
+  const [dateFrom, setDateFrom] = useState(format(new Date(new Date().getFullYear(), new Date().getMonth(), 1), "yyyy-MM-dd"));
+  const [dateTo, setDateTo] = useState(format(new Date(), "yyyy-MM-dd"));
 
   // Handle authentication
   useEffect(() => {
@@ -169,6 +176,11 @@ export default function Reports() {
 
   const { data: collections = [] } = useQuery({
     queryKey: ["/api/collections", dateRange, categoryFilter],
+  });
+
+  // Query para datos del gestor (combinando facturas y cobros)
+  const { data: managerData = [] } = useQuery({
+    queryKey: ["/api/manager/financial-records", searchType, paymentMethodFilter, invoiceStatusFilter, dateFrom, dateTo],
   });
 
   // Mutations
@@ -270,6 +282,46 @@ export default function Reports() {
       toast({
         title: "Exportación completada",
         description: "El archivo Excel se ha descargado correctamente",
+      });
+    },
+  });
+
+  // Mutaciones para el gestor
+  const createInvoiceFromCollectionMutation = useMutation({
+    mutationFn: (collectionId: number) => apiRequest("POST", `/api/collections/${collectionId}/create-invoice`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/manager/financial-records"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/collections"] });
+      toast({
+        title: "Factura creada",
+        description: "La factura se ha generado a partir del cobro en efectivo.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error al crear factura",
+        description: "No se pudo generar la factura del cobro.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteCollectionMutation = useMutation({
+    mutationFn: (collectionId: number) => apiRequest("DELETE", `/api/collections/${collectionId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/manager/financial-records"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/collections"] });
+      toast({
+        title: "Cobro eliminado",
+        description: "El cobro en efectivo se ha eliminado correctamente.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error al eliminar",
+        description: "No se pudo eliminar el cobro.",
+        variant: "destructive",
       });
     },
   });
@@ -444,10 +496,11 @@ export default function Reports() {
         </div>
 
         <Tabs defaultValue="invoices" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="invoices">Facturas</TabsTrigger>
             <TabsTrigger value="payments">Pagos</TabsTrigger>
             <TabsTrigger value="collections">Cobros</TabsTrigger>
+            <TabsTrigger value="manager">Gestor</TabsTrigger>
             <TabsTrigger value="analytics">Analíticas</TabsTrigger>
           </TabsList>
 
@@ -573,6 +626,128 @@ export default function Reports() {
               </CardHeader>
               <CardContent>
                 <CollectionsTable collections={filteredCollections} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Manager Tab */}
+          <TabsContent value="manager">
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Building2 className="w-5 h-5 text-purple-500" />
+                      Gestor - Pagos, Fiscal y Contable
+                    </CardTitle>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                      Vista completa de registros financieros con control de facturación
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => exportToExcelMutation.mutate('complete')}
+                    variant="outline"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Exportar Todo
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Filtros Avanzados */}
+                <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg border">
+                  <h3 className="text-lg font-semibold mb-4 text-slate-900 dark:text-white">Filtros</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div>
+                      <Label htmlFor="searchType" className="text-sm font-medium">Tipo de búsqueda</Label>
+                      <Select value={searchType} onValueChange={setSearchType}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccionar tipo" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="payment_date">Fecha de pago</SelectItem>
+                          <SelectItem value="invoice_date">Fecha de factura</SelectItem>
+                          <SelectItem value="due_date">Fecha de vencimiento</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="paymentMethodFilter" className="text-sm font-medium">Formas de pago</Label>
+                      <Select value={paymentMethodFilter} onValueChange={setPaymentMethodFilter}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="[Todas]" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">[Todas]</SelectItem>
+                          <SelectItem value="cash">Efectivo</SelectItem>
+                          <SelectItem value="transfer">Transferencia</SelectItem>
+                          <SelectItem value="card">Tarjeta</SelectItem>
+                          <SelectItem value="bizum">Bizum</SelectItem>
+                          <SelectItem value="stripe">Stripe</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="invoiceStatusFilter" className="text-sm font-medium">Estado facturación</Label>
+                      <Select value={invoiceStatusFilter} onValueChange={setInvoiceStatusFilter}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="[Todos]" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">[Todos]</SelectItem>
+                          <SelectItem value="invoiced">Factura generada</SelectItem>
+                          <SelectItem value="not_invoiced">Sin Factura</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <Label htmlFor="dateFrom" className="text-sm font-medium">Desde (Pago)</Label>
+                      <Input
+                        id="dateFrom"
+                        type="date"
+                        value={dateFrom}
+                        onChange={(e) => setDateFrom(e.target.value)}
+                        className="w-full"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="dateTo" className="text-sm font-medium">Hasta (Pago)</Label>
+                      <Input
+                        id="dateTo"
+                        type="date"
+                        value={dateTo}
+                        onChange={(e) => setDateTo(e.target.value)}
+                        className="w-full"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-start">
+                    <Button 
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
+                      onClick={() => {
+                        // Trigger refetch with new filters
+                        queryClient.invalidateQueries({ queryKey: ["/api/manager/financial-records"] });
+                      }}
+                    >
+                      Filtrar
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Lista de Registros Financieros */}
+                <ManagerFinancialTable 
+                  data={managerData}
+                  onCreateInvoice={createInvoiceFromCollectionMutation.mutate}
+                  onDeleteCollection={deleteCollectionMutation.mutate}
+                />
               </CardContent>
             </Card>
           </TabsContent>
