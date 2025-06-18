@@ -26,6 +26,7 @@ import {
   FileText
 } from "lucide-react";
 import CertificateManagement from "@/components/certificates/CertificateManagement";
+import CertificateUploadDialog from "@/components/certificates/CertificateUploadDialog";
 
 interface Property {
   id: number;
@@ -205,7 +206,7 @@ export default function Properties() {
         {/* Header with Tabs */}
         <div className="bg-white border-b border-gray-200 px-6 py-4">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-bold text-gray-900">Propiedades y Certificados</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Archivo de Certificados Finales</h1>
           </div>
           <div className="flex space-x-1">
             <Button
@@ -213,8 +214,8 @@ export default function Properties() {
               onClick={() => setActiveTab('properties')}
               className="flex items-center gap-2"
             >
-              <Building2 className="h-4 w-4" />
-              Propiedades
+              <Archive className="h-4 w-4" />
+              Archivo de Certificados
             </Button>
             <Button
               variant={activeTab === 'certificates' ? 'default' : 'ghost'}
@@ -222,7 +223,7 @@ export default function Properties() {
               className="flex items-center gap-2"
             >
               <FileText className="h-4 w-4" />
-              Certificados
+              Gestión de Subidas
             </Button>
           </div>
         </div>
@@ -373,12 +374,23 @@ export default function Properties() {
                   {selectedFolder !== undefined && ` en esta ${selectedFolder === null ? 'categoría' : 'carpeta de cliente'}`}
                 </p>
               </div>
-              <Link to="/certificacion">
-                <Button className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Nueva Certificación
-                </Button>
-              </Link>
+              <CertificateUploadDialog 
+                folders={folders}
+                preselectedFolderId={selectedFolder === null || selectedFolder === undefined ? undefined : selectedFolder}
+                onSuccess={() => {
+                  queryClient.invalidateQueries({ queryKey: ["/api/uploaded-certificates"] });
+                  toast({
+                    title: "Certificado subido",
+                    description: "El certificado se ha archivado correctamente en la carpeta del cliente",
+                  });
+                }}
+                trigger={
+                  <Button className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700">
+                    <Upload className="w-4 h-4 mr-2" />
+                    Subir Certificado
+                  </Button>
+                }
+              />
             </div>
 
             {/* Search */}
