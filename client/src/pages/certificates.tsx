@@ -117,12 +117,7 @@ export default function Certificates() {
     }
   };
 
-  const getEnergyRatingBadge = (rating: string | null) => {
-    if (!rating) return <Badge className="bg-gray-100 text-gray-800">Sin calificar</Badge>;
-    
-    const ratingClass = `energy-rating energy-rating-${rating.toLowerCase()}`;
-    return <Badge className={ratingClass}>{rating}</Badge>;
-  };
+
 
   const filteredCertifications = (certifications as Certification[]).filter((cert: Certification) => {
     const matchesSearch = cert.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -240,7 +235,6 @@ export default function Certificates() {
                       <tr className="border-b border-gray-200">
                         <th className="text-left py-3 px-4 font-medium text-gray-700">Propietario</th>
                         <th className="text-left py-3 px-4 font-medium text-gray-700">Referencia Catastral</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-700">Calificación</th>
                         <th className="text-left py-3 px-4 font-medium text-gray-700">Estado</th>
                         <th className="text-left py-3 px-4 font-medium text-gray-700">Fecha</th>
                         <th className="text-right py-3 px-4 font-medium text-gray-700">Acciones</th>
@@ -255,9 +249,6 @@ export default function Certificates() {
                           </td>
                           <td className="py-4 px-4">
                             <span className="text-sm text-gray-600">{cert.cadastralRef}</span>
-                          </td>
-                          <td className="py-4 px-4">
-                            {getEnergyRatingBadge(cert.energyRating)}
                           </td>
                           <td className="py-4 px-4">
                             {getStatusBadge(cert.status)}
