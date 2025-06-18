@@ -83,7 +83,14 @@ export default function Properties() {
   const { toast } = useToast();
 
   const { data: certifications = [], isLoading } = useQuery({
-    queryKey: ["/api/certifications"],
+    queryKey: ["/api/certifications", "archived"],
+    queryFn: async () => {
+      const response = await fetch("/api/certifications?status=archived");
+      if (!response.ok) {
+        throw new Error("Failed to fetch archived certifications");
+      }
+      return response.json();
+    }
   });
 
   const { data: folders = [] } = useQuery({

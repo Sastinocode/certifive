@@ -309,12 +309,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get all certifications
-  app.get("/api/certifications", async (req: any, res) => {
+  // Get all certifications with optional status filter
+  app.get("/api/certifications", isAuthenticated, async (req: any, res) => {
     try {
-      // Temporary: Use hardcoded userId for testing
-      const userId = "42776088";
-      const certifications = await storage.getCertificationsByUser(userId);
+      const userId = req.user.claims.sub;
+      const { status } = req.query;
+      
+      let certifications;
+      if (status === 'archived') {
+        certifications = await storage.getCertificationsByStatus(userId, 'archived');
+      } else {
+        // Default: show non-archived certifications
+        certifications = await storage.getCertificationsByUserExcludingArchived(userId);
+      }
+      
       res.json(certifications);
     } catch (error) {
       console.error("Error fetching certifications:", error);
@@ -887,6 +895,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error processing certification form:", error);
       res.status(500).json({ message: "Error al procesar formulario" });
+    }
+  });
+
+  // Archive certification endpoint
+  app.post("/api/certifications/:id/archive", isAuthenticated, async (req, res) => {
+    try {
+      const certificationId = parseInt(req.params.id);
+      const userId = req.user?.claims?.sub;
+
+      if (!userId) {
+        return res.status(401).json({ message: "Usuario no autenticado" });
+      }
+
+      // Get certification to verify ownership
+      const certification = await storage.getCertification(certificationId, userId);
+      if (!certification) {
+        return res.status(404).json({ message: "Certificación no encontrada" });
+      }
+
+      // Update certification status to archived
+      await storage.updateCertification(certificationId, userId, {
+        status: 'archived'
+      });
+
+      res.json({ message: "Certificación archivada correctamente" });
+    } catch (error) {
+      console.error("Error archiving certification:", error);
+      res.status(500).json({ message: "Error al archivar certificación" });
     }
   });
 
