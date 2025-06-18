@@ -914,12 +914,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Certificación no encontrada" });
       }
 
-      // Update certification status to archived
+      // Create folder for the client if it doesn't exist
+      const folderName = `${certification.ownerName} - ${certification.cadastralRef}`;
+      const existingFolder = await storage.getFolderByName(userId, folderName);
+      
+      let folderId;
+      if (existingFolder) {
+        folderId = existingFolder.id;
+      } else {
+        const newFolder = await storage.createFolder({
+          userId,
+          name: folderName,
+          description: `Carpeta de certificación para ${certification.ownerName}`,
+          color: '#10B981' // Green color for archived certificates
+        });
+        folderId = newFolder.id;
+      }
+
+      // Update certification status to archived and assign to folder
       await storage.updateCertification(certificationId, userId, {
-        status: 'archived'
+        status: 'archived',
+        folderId: folderId
       });
 
-      res.json({ message: "Certificación archivada correctamente" });
+      res.json({ 
+        message: "Certificación archivada correctamente",
+        folderId,
+        folderName
+      });
     } catch (error) {
       console.error("Error archiving certification:", error);
       res.status(500).json({ message: "Error al archivar certificación" });
@@ -973,15 +995,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Certificación no encontrada" });
       }
 
-      // Update certification status
-      const updatedCertification = await storage.updateCertification(certificationId, userId, {
-        status: status
-      });
+      // If status is "finalizado", auto-archive with folder creation
+      if (status === "finalizado") {
+        // Create folder for the client if it doesn't exist
+        const folderName = `${certification.ownerName} - ${certification.cadastralRef}`;
+        const existingFolder = await storage.getFolderByName(userId, folderName);
+        
+        let folderId;
+        if (existingFolder) {
+          folderId = existingFolder.id;
+        } else {
+          const newFolder = await storage.createFolder({
+            userId,
+            name: folderName,
+            description: `Carpeta de certificación para ${certification.ownerName}`,
+            color: '#10B981' // Green color for archived certificates
+          });
+          folderId = newFolder.id;
+        }
 
-      res.json({ message: "Estado actualizado correctamente", certification: updatedCertification });
+        // Update certification status to archived and assign to folder
+        const updatedCertification = await storage.updateCertification(certificationId, userId, {
+          status: 'archived',
+          folderId: folderId
+        });
+
+        res.json({ 
+          message: "Certificación finalizada y archivada correctamente",
+          certification: updatedCertification,
+          folderId,
+          folderName
+        });
+      } else {
+        // Regular status update
+        const updatedCertification = await storage.updateCertification(certificationId, userId, {
+          status: status
+        });
+
+        res.json({ message: "Estado actualizado correctamente", certification: updatedCertification });
+      }
     } catch (error) {
       console.error("Error updating certification status:", error);
       res.status(500).json({ message: "Error al actualizar estado" });
+    }
+  });
+
+  // Upload final certificate to folder endpoint
+  app.post("/api/folders/:folderId/upload-certificate", isAuthenticated, upload.single('certificate'), async (req, res) => {
+    try {
+      const folderId = parseInt(req.params.folderId);
+      const userId = req.user?.claims?.sub;
+
+      if (!userId) {
+        return res.status(401).json({ message: "Usuario no autenticado" });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ message: "Archivo requerido" });
+      }
+
+      // Verify folder ownership
+      const folder = await storage.getFolder(folderId, userId);
+      if (!folder) {
+        return res.status(404).json({ message: "Carpeta no encontrada" });
+      }
+
+      // Store certificate information
+      const certificate = await storage.createUploadedCertificate({
+        userId,
+        folderId,
+        fileName: req.file.filename,
+        originalName: req.file.originalname,
+        filePath: req.file.path,
+        fileSize: req.file.size,
+        mimeType: req.file.mimetype,
+        uploadedAt: new Date()
+      });
+
+      res.json({ 
+        message: "Certificado subido correctamente",
+        certificate
+      });
+    } catch (error) {
+      console.error("Error uploading certificate:", error);
+      res.status(500).json({ message: "Error al subir certificado" });
     }
   });
 
