@@ -25,9 +25,11 @@ import {
   Upload,
   FileText,
   Eye,
-  Download
+  Download,
+  FolderOpen
 } from "lucide-react";
 import CertificateManagement from "@/components/certificates/CertificateManagement";
+import ClientFolderManager from "@/components/ClientFolderManager";
 import CertificateUploadDialog from "@/components/certificates/CertificateUploadDialog";
 
 interface Property {
@@ -79,6 +81,9 @@ export default function Properties() {
   const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
   const [selectedFolderName, setSelectedFolderName] = useState("");
   const [showUploadDialog, setShowUploadDialog] = useState(false);
+  const [showClientFolder, setShowClientFolder] = useState(false);
+  const [currentClientFolderId, setCurrentClientFolderId] = useState<number | null>(null);
+  const [currentClientFolderName, setCurrentClientFolderName] = useState("");
   const [showCreateFolder, setShowCreateFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [newFolderDescription, setNewFolderDescription] = useState("");
@@ -532,30 +537,20 @@ export default function Properties() {
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <div className="flex items-center gap-2 justify-end">
-                              <Button variant="outline" size="sm">
-                                <Eye className="w-4 h-4 mr-1" />
-                                Ver Detalles
-                              </Button>
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => {
-                                  if (property.folderId) {
-                                    setSelectedFolderId(property.folderId);
-                                    setSelectedFolderName(`${property.ownerName} - ${property.cadastralRef}`);
-                                    setShowUploadDialog(true);
-                                  }
-                                }}
-                              >
-                                <Upload className="w-4 h-4 mr-1" />
-                                Subir Certificado
-                              </Button>
-                              <Button variant="outline" size="sm">
-                                <Download className="w-4 h-4 mr-1" />
-                                Descargar
-                              </Button>
-                            </div>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => {
+                                if (property.folderId) {
+                                  setCurrentClientFolderId(property.folderId);
+                                  setCurrentClientFolderName(`${property.ownerName} - ${property.cadastralRef}`);
+                                  setShowClientFolder(true);
+                                }
+                              }}
+                            >
+                              <FolderOpen className="w-4 h-4 mr-1" />
+                              Abrir Carpeta
+                            </Button>
                           </td>
                         </tr>
                       ))}
@@ -587,6 +582,14 @@ export default function Properties() {
           folderName={selectedFolderName}
         />
       )}
+
+      {/* Client Folder Manager */}
+      <ClientFolderManager
+        folderId={currentClientFolderId || 0}
+        folderName={currentClientFolderName}
+        isOpen={showClientFolder}
+        onClose={() => setShowClientFolder(false)}
+      />
     </div>
   );
 }
