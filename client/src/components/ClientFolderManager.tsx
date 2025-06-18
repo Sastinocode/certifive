@@ -761,6 +761,214 @@ export default function ClientFolderManager({ folderId, folderName, isOpen, onCl
               </div>
             )}
           </TabsContent>
+
+          <TabsContent value="shipping" className="space-y-6">
+            <div className="grid gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Send className="w-5 h-5" />
+                    Envío Manual del Certificado
+                  </CardTitle>
+                  <CardDescription>
+                    Configura el envío del certificado final al cliente con diferentes opciones de pago y entrega
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Payment requirement section */}
+                  <div className="space-y-3">
+                    <Label className="text-base font-medium">¿Requiere pago previo?</Label>
+                    <RadioGroup
+                      value={paymentRequired}
+                      onValueChange={(value: 'yes' | 'no') => setPaymentRequired(value)}
+                      className="flex gap-6"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="yes" id="payment-yes" />
+                        <Label htmlFor="payment-yes" className="flex items-center gap-2">
+                          <CreditCard className="w-4 h-4" />
+                          Sí, generar enlace de pago
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="no" id="payment-no" />
+                        <Label htmlFor="payment-no" className="flex items-center gap-2">
+                          <CheckCircle className="w-4 h-4" />
+                          No, ya pagado (transferencia/efectivo)
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+
+                  {/* Payment method explanation */}
+                  {paymentRequired === 'yes' && (
+                    <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Link2 className="w-4 h-4 text-blue-600" />
+                        <span className="font-medium text-blue-800">Enlace de Pago</span>
+                      </div>
+                      <p className="text-sm text-blue-700">
+                        Se generará un enlace de pago seguro que el cliente deberá completar antes de poder descargar el certificado.
+                      </p>
+                    </div>
+                  )}
+
+                  {paymentRequired === 'no' && (
+                    <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Banknote className="w-4 h-4 text-green-600" />
+                        <span className="font-medium text-green-800">Pago Completado</span>
+                      </div>
+                      <p className="text-sm text-green-700">
+                        El certificado se enviará directamente sin requisitos de pago adicionales.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Shipping method selection */}
+                  <div className="space-y-3">
+                    <Label className="text-base font-medium">Método de Envío</Label>
+                    <Select value={shippingMethod} onValueChange={(value: 'whatsapp' | 'email' | 'direct') => setShippingMethod(value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecciona el método de envío" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="email">
+                          <div className="flex items-center gap-2">
+                            <Mail className="w-4 h-4" />
+                            Envío por Email
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="whatsapp">
+                          <div className="flex items-center gap-2">
+                            <MessageCircle className="w-4 h-4" />
+                            Envío por WhatsApp
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="direct">
+                          <div className="flex items-center gap-2">
+                            <Download className="w-4 h-4" />
+                            Entrega Directa
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Method-specific information */}
+                  {shippingMethod === 'email' && (
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Mail className="w-4 h-4 text-gray-600" />
+                        <span className="font-medium">Envío por Email</span>
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        {paymentRequired === 'yes' 
+                          ? 'Se enviará un email con el enlace de pago. Una vez completado, el cliente recibirá el certificado.'
+                          : 'Se enviará el certificado directamente por email al cliente.'
+                        }
+                      </p>
+                    </div>
+                  )}
+
+                  {shippingMethod === 'whatsapp' && (
+                    <div className="p-4 bg-green-50 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <MessageCircle className="w-4 h-4 text-green-600" />
+                        <span className="font-medium">Envío por WhatsApp</span>
+                      </div>
+                      <p className="text-sm text-green-600">
+                        {paymentRequired === 'yes'
+                          ? 'Se enviará un mensaje de WhatsApp con el enlace de pago. Una vez completado, el cliente recibirá el certificado.'
+                          : 'Se enviará el certificado directamente por WhatsApp al cliente.'
+                        }
+                      </p>
+                    </div>
+                  )}
+
+                  {shippingMethod === 'direct' && (
+                    <div className="p-4 bg-orange-50 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Download className="w-4 h-4 text-orange-600" />
+                        <span className="font-medium">Entrega Directa</span>
+                      </div>
+                      <p className="text-sm text-orange-600">
+                        {paymentRequired === 'yes'
+                          ? 'Se proporcionará un enlace de pago para entrega presencial o coordinada.'
+                          : 'Entrega directa sin procesamiento de pago online.'
+                        }
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Custom message */}
+                  <div className="space-y-2">
+                    <Label htmlFor="shipping-message">Mensaje Personalizado (Opcional)</Label>
+                    <Textarea
+                      id="shipping-message"
+                      placeholder="Añade un mensaje personalizado para el cliente..."
+                      value={shippingMessage}
+                      onChange={(e) => setShippingMessage(e.target.value)}
+                      rows={3}
+                    />
+                  </div>
+
+                  {/* Action buttons */}
+                  <div className="flex gap-3 pt-4">
+                    <Button
+                      onClick={handleShipping}
+                      disabled={shippingMutation.isPending}
+                      className="flex-1"
+                    >
+                      {shippingMutation.isPending ? (
+                        <>
+                          <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+                          Enviando...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-4 h-4 mr-2" />
+                          {paymentRequired === 'yes' ? 'Enviar con Enlace de Pago' : 'Enviar Certificado'}
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Client information reminder */}
+              {certificationData && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <User className="w-5 h-5" />
+                      Información de Contacto
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="font-medium">Cliente:</span>
+                        <p>{certificationData.ownerName}</p>
+                      </div>
+                      <div>
+                        <span className="font-medium">Email:</span>
+                        <p>{certificationData.email}</p>
+                      </div>
+                      <div>
+                        <span className="font-medium">Teléfono:</span>
+                        <p>{certificationData.phone}</p>
+                      </div>
+                      <div>
+                        <span className="font-medium">Dirección:</span>
+                        <p>{certificationData.propertyAddress}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </TabsContent>
         </Tabs>
       </DialogContent>
     </Dialog>
