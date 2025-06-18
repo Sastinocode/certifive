@@ -40,7 +40,7 @@ import {
   type UploadedCertificate,
   type InsertUploadedCertificate
 } from "@shared/schema";
-import { db } from "./db";
+import { db, pool } from "./db";
 import { eq, desc, count, and, isNull, gte, lte, sql, ne } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
@@ -1301,7 +1301,7 @@ export class DatabaseStorage implements IStorage {
   
   async getFolderDocuments(folderId: number, userId: string): Promise<any[]> {
     try {
-      const result = await pool.query(`
+      const result = await db.$client.query(`
         SELECT * FROM folder_documents 
         WHERE folder_id = $1 AND user_id = $2 
         ORDER BY uploaded_at DESC
@@ -1327,7 +1327,7 @@ export class DatabaseStorage implements IStorage {
 
   async createFolderDocument(data: any): Promise<any> {
     try {
-      const result = await pool.query(`
+      const result = await db.$client.query(`
         INSERT INTO folder_documents (user_id, folder_id, file_name, original_name, file_path, file_size, file_type, category, description)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING *
@@ -1342,7 +1342,7 @@ export class DatabaseStorage implements IStorage {
 
   async getFolderDocument(documentId: number, folderId: number, userId: string): Promise<any | undefined> {
     try {
-      const result = await pool.query(`
+      const result = await db.$client.query(`
         SELECT * FROM folder_documents 
         WHERE id = $1 AND folder_id = $2 AND user_id = $3
       `, [documentId, folderId, userId]);
@@ -1356,7 +1356,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteFolderDocument(documentId: number, folderId: number, userId: string): Promise<boolean> {
     try {
-      const result = await pool.query(`
+      const result = await db.$client.query(`
         DELETE FROM folder_documents 
         WHERE id = $1 AND folder_id = $2 AND user_id = $3
       `, [documentId, folderId, userId]);
