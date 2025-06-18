@@ -181,7 +181,7 @@ export default function Reports() {
   // Query para datos del gestor (combinando facturas y cobros)
   const { data: managerData = [] } = useQuery({
     queryKey: ["/api/manager/financial-records", searchType, paymentMethodFilter, invoiceStatusFilter, dateFrom, dateTo],
-  });
+  }) as { data: any[] };
 
   // Mutations
   const createInvoiceMutation = useMutation({
@@ -327,7 +327,7 @@ export default function Reports() {
   });
 
   // Financial calculations
-  const summary: FinancialSummary = financialSummary || {
+  const summary: FinancialSummary = (financialSummary as FinancialSummary) || {
     totalInvoiced: 0,
     totalPaid: 0,
     totalPending: 0,
