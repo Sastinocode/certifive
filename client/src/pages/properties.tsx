@@ -23,7 +23,8 @@ import {
   Archive,
   Building2,
   Upload,
-  FileText
+  FileText,
+  Eye
 } from "lucide-react";
 import CertificateManagement from "@/components/certificates/CertificateManagement";
 import CertificateUploadDialog from "@/components/certificates/CertificateUploadDialog";
@@ -494,90 +495,48 @@ export default function Properties() {
                 <div className="text-center py-8">
                   <Building className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                   <p className="text-gray-600 mb-4">
-                    {searchTerm 
-                      ? "No se encontraron propiedades con los criterios de búsqueda" 
-                      : "No hay propiedades registradas aún"
-                    }
+                    No hay propiedades archivadas aún. Las certificaciones completadas aparecerán aquí cuando las archives.
                   </p>
-
                 </div>
               ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {filteredProperties.map((property: Property) => (
-                    <Card key={property.cadastralRef} className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-6">
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex items-center">
-                            <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mr-3">
-                              <Building className="w-5 h-5 text-primary" />
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Propietario
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Referencia Catastral
+                        </th>
+                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Acciones
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {filteredProperties.map((property: Property) => (
+                        <tr key={property.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">
+                              {property.ownerName}
                             </div>
-                            <div>
-                              <h3 className="font-semibold text-gray-900 text-sm">{property.ownerName}</h3>
-                              <div className="flex items-center text-xs text-gray-500 mt-1">
-                                <MapPin className="w-3 h-3 mr-1" />
-                                {property.cadastralRef}
-                              </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900 font-mono">
+                              {property.cadastralRef}
                             </div>
-                          </div>
-                        </div>
-
-                        <div className="space-y-3">
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-600">Calificación Energética</span>
-                            {getEnergyRatingBadge(property.energyRating)}
-                          </div>
-
-                          {property.buildingFloors && (
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm text-gray-600">Plantas del Edificio</span>
-                              <span className="text-sm text-gray-900">{property.buildingFloors}</span>
-                            </div>
-                          )}
-                          
-                          {property.propertyFloors && (
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm text-gray-600">Plantas del Inmueble</span>
-                              <span className="text-sm text-gray-900">{property.propertyFloors}</span>
-                            </div>
-                          )}
-
-                          {property.rooms && (
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm text-gray-600">Habitaciones</span>
-                              <span className="text-sm text-gray-900">{property.rooms}</span>
-                            </div>
-                          )}
-
-                          {property.roofType && (
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm text-gray-600">Tipo de Cubierta</span>
-                              <span className="text-sm text-gray-900 capitalize">{property.roofType}</span>
-                            </div>
-                          )}
-
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-600">Estado</span>
-                            {getStatusBadge(property.status)}
-                          </div>
-                        </div>
-
-                        <div className="mt-4 pt-4 border-t border-gray-100">
-                          <div className="flex gap-2">
-                            <Button variant="outline" size="sm" className="flex-1">
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <Button variant="outline" size="sm">
+                              <Eye className="w-4 h-4 mr-1" />
                               Ver Detalles
                             </Button>
-                            {property.status !== 'completed' && (
-                              <Link to={`/certificacion/${property.id}`}>
-                                <Button size="sm" className="flex-1">
-                                  Continuar
-                                </Button>
-                              </Link>
-                            )}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </CardContent>
