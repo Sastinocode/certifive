@@ -1173,6 +1173,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Manager Financial Records API Route - Combined invoices and collections data
+  app.get('/api/manager/financial-records', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { searchType, paymentMethodFilter, invoiceStatusFilter, dateFrom, dateTo } = req.query;
+      
+      const records = await storage.getManagerFinancialRecords(userId, {
+        searchType: searchType as string,
+        paymentMethodFilter: paymentMethodFilter as string,
+        invoiceStatusFilter: invoiceStatusFilter as string,
+        dateFrom: dateFrom as string,
+        dateTo: dateTo as string
+      });
+      
+      res.json(records);
+    } catch (error) {
+      console.error("Error fetching manager financial records:", error);
+      res.status(500).json({ message: "Error al obtener registros financieros" });
+    }
+  });
+
+  // Create invoice from collection (cash payments without invoices)
+  app.post('/api/collections/:id/create-invoice', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const collectionId = parseInt(req.params.id);
+      
+      const invoice = await storage.createInvoiceFromCollection(collectionId, userId);
+      
+      if (!invoice) {
+        return res.status(404).json({ message: "Cobro no encontrado o no válido para facturación" });
+      }
+      
+      res.json(invoice);
+    } catch (error) {
+      console.error("Error creating invoice from collection:", error);
+      res.status(500).json({ message: "Error al crear factura desde cobro" });
+    }
+  });
+
+  // Delete collection (only for cash payments without invoices)
+  app.delete('/api/collections/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const collectionId = parseInt(req.params.id);
+      
+      const success = await storage.deleteCollection(collectionId, userId);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Cobro no encontrado o no se puede eliminar" });
+      }
+      
+      res.json({ message: "Cobro eliminado correctamente" });
+    } catch (error) {
+      console.error("Error deleting collection:", error);
+      res.status(500).json({ message: "Error al eliminar cobro" });
+    }
+  });
+
   // WhatsApp Flow Templates API Routes
   app.get('/api/whatsapp/flow-templates', isAuthenticated, async (req: any, res) => {
     try {
