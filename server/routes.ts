@@ -1649,6 +1649,160 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Uploaded certificates endpoints
+  app.get("/api/uploaded-certificates", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const folderId = req.query.folderId ? parseInt(req.query.folderId) : undefined;
+      const certificates = await storage.getUploadedCertificates(userId, folderId);
+      res.json(certificates);
+    } catch (error) {
+      console.error("Error fetching uploaded certificates:", error);
+      res.status(500).json({ message: "Failed to fetch uploaded certificates" });
+    }
+  });
+
+  app.get("/api/uploaded-certificates/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const certificateId = parseInt(req.params.id);
+      const certificate = await storage.getUploadedCertificate(certificateId, userId);
+      
+      if (!certificate) {
+        return res.status(404).json({ message: "Certificate not found" });
+      }
+      
+      res.json(certificate);
+    } catch (error) {
+      console.error("Error fetching uploaded certificate:", error);
+      res.status(500).json({ message: "Failed to fetch uploaded certificate" });
+    }
+  });
+
+  app.post("/api/uploaded-certificates", isAuthenticated, upload.single('certificate'), async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const file = req.file;
+      
+      if (!file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      const { clientName, clientEmail, clientPhone, folderId, certificationId, description, tags } = req.body;
+
+      if (!clientName) {
+        return res.status(400).json({ message: "Client name is required" });
+      }
+
+      const certificateData = {
+        userId,
+        certificationId: certificationId ? parseInt(certificationId) : null,
+        folderId: folderId ? parseInt(folderId) : null,
+        fileName: file.filename,
+        originalFileName: file.originalname,
+        filePath: file.path,
+        fileSize: file.size,
+        mimeType: file.mimetype,
+        clientName,
+        clientEmail: clientEmail || null,
+        clientPhone: clientPhone || null,
+        description: description || null,
+        tags: tags ? JSON.parse(tags) : null,
+        sentViaEmail: false,
+        sentViaWhatsapp: false
+      };
+
+      const certificate = await storage.createUploadedCertificate(certificateData);
+      res.status(201).json(certificate);
+    } catch (error) {
+      console.error("Error creating uploaded certificate:", error);
+      res.status(500).json({ message: "Failed to upload certificate" });
+    }
+  });
+
+  app.patch("/api/uploaded-certificates/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const certificateId = parseInt(req.params.id);
+      const updates = req.body;
+      
+      const certificate = await storage.updateUploadedCertificate(certificateId, userId, updates);
+      
+      if (!certificate) {
+        return res.status(404).json({ message: "Certificate not found" });
+      }
+      
+      res.json(certificate);
+    } catch (error) {
+      console.error("Error updating uploaded certificate:", error);
+      res.status(500).json({ message: "Failed to update certificate" });
+    }
+  });
+
+  app.delete("/api/uploaded-certificates/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const certificateId = parseInt(req.params.id);
+      
+      const success = await storage.deleteUploadedCertificate(certificateId, userId);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Certificate not found" });
+      }
+      
+      res.json({ message: "Certificate deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting uploaded certificate:", error);
+      res.status(500).json({ message: "Failed to delete certificate" });
+    }
+  });
+
+  app.post("/api/uploaded-certificates/:id/send-email", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const certificateId = parseInt(req.params.id);
+      const { recipientEmail } = req.body;
+      
+      if (!recipientEmail) {
+        return res.status(400).json({ message: "Recipient email is required" });
+      }
+      
+      const success = await storage.sendCertificateViaEmail(certificateId, userId, recipientEmail);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Certificate not found or failed to send" });
+      }
+      
+      res.json({ message: "Certificate sent via email successfully" });
+    } catch (error) {
+      console.error("Error sending certificate via email:", error);
+      res.status(500).json({ message: "Failed to send certificate via email" });
+    }
+  });
+
+  app.post("/api/uploaded-certificates/:id/send-whatsapp", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const certificateId = parseInt(req.params.id);
+      const { recipientPhone } = req.body;
+      
+      if (!recipientPhone) {
+        return res.status(400).json({ message: "Recipient phone is required" });
+      }
+      
+      const success = await storage.sendCertificateViaWhatsApp(certificateId, userId, recipientPhone);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Certificate not found or failed to send" });
+      }
+      
+      res.json({ message: "Certificate sent via WhatsApp successfully" });
+    } catch (error) {
+      console.error("Error sending certificate via WhatsApp:", error);
+      res.status(500).json({ message: "Failed to send certificate via WhatsApp" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

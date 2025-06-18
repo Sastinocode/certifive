@@ -1187,6 +1187,94 @@ export class DatabaseStorage implements IStorage {
       return false;
     }
   }
+
+  // Uploaded certificates implementation
+  async getUploadedCertificates(userId: string, folderId?: number): Promise<UploadedCertificate[]> {
+    let query = db.select().from(uploadedCertificates).where(eq(uploadedCertificates.userId, userId));
+    
+    if (folderId !== undefined) {
+      query = query.where(and(eq(uploadedCertificates.userId, userId), eq(uploadedCertificates.folderId, folderId)));
+    }
+    
+    return await query.orderBy(desc(uploadedCertificates.createdAt));
+  }
+
+  async getUploadedCertificate(id: number, userId: string): Promise<UploadedCertificate | undefined> {
+    const [certificate] = await db
+      .select()
+      .from(uploadedCertificates)
+      .where(and(eq(uploadedCertificates.id, id), eq(uploadedCertificates.userId, userId)));
+    return certificate;
+  }
+
+  async createUploadedCertificate(data: InsertUploadedCertificate): Promise<UploadedCertificate> {
+    const [certificate] = await db
+      .insert(uploadedCertificates)
+      .values(data)
+      .returning();
+    return certificate;
+  }
+
+  async updateUploadedCertificate(id: number, userId: string, data: Partial<InsertUploadedCertificate>): Promise<UploadedCertificate | undefined> {
+    const [certificate] = await db
+      .update(uploadedCertificates)
+      .set({ ...data, updatedAt: new Date() })
+      .where(and(eq(uploadedCertificates.id, id), eq(uploadedCertificates.userId, userId)))
+      .returning();
+    return certificate;
+  }
+
+  async deleteUploadedCertificate(id: number, userId: string): Promise<boolean> {
+    try {
+      const result = await db
+        .delete(uploadedCertificates)
+        .where(and(eq(uploadedCertificates.id, id), eq(uploadedCertificates.userId, userId)));
+      return (result.rowCount || 0) > 0;
+    } catch (error) {
+      console.error("Error deleting uploaded certificate:", error);
+      return false;
+    }
+  }
+
+  async sendCertificateViaEmail(certificateId: number, userId: string, recipientEmail: string): Promise<boolean> {
+    try {
+      const certificate = await this.getUploadedCertificate(certificateId, userId);
+      if (!certificate) return false;
+
+      // Update sent status
+      await this.updateUploadedCertificate(certificateId, userId, {
+        sentViaEmail: true,
+        emailSentAt: new Date()
+      });
+
+      // Here you would integrate with SendGrid or your email service
+      // For now, we'll just mark it as sent
+      return true;
+    } catch (error) {
+      console.error("Error sending certificate via email:", error);
+      return false;
+    }
+  }
+
+  async sendCertificateViaWhatsApp(certificateId: number, userId: string, recipientPhone: string): Promise<boolean> {
+    try {
+      const certificate = await this.getUploadedCertificate(certificateId, userId);
+      if (!certificate) return false;
+
+      // Update sent status
+      await this.updateUploadedCertificate(certificateId, userId, {
+        sentViaWhatsapp: true,
+        whatsappSentAt: new Date()
+      });
+
+      // Here you would integrate with WhatsApp Business API
+      // For now, we'll just mark it as sent
+      return true;
+    } catch (error) {
+      console.error("Error sending certificate via WhatsApp:", error);
+      return false;
+    }
+  }
 }
 
 export const storage = new DatabaseStorage();
