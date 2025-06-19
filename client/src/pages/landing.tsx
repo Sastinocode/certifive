@@ -54,17 +54,29 @@ export default function Landing() {
             <Button 
               onClick={() => navigate("/registro")} 
               size="lg" 
-              className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-lg px-8 py-3"
+              className="bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-600 hover:to-blue-700 text-lg px-8 py-3"
             >
               Empezar Gratis
             </Button>
             <Button 
               variant="outline"
-              onClick={() => navigate("/solicitar-demo")} 
+              onClick={() => {
+                loginDemo();
+                navigate("/");
+              }} 
               size="lg" 
-              className="border-green-200 text-green-700 hover:bg-green-50 text-lg px-8 py-3"
+              className="border-teal-200 text-teal-700 hover:bg-teal-50 text-lg px-8 py-3"
             >
-              Solicitar Demo
+              <Play className="w-5 h-5 mr-2" />
+              Probar Demo
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={() => navigate("/login")} 
+              size="lg" 
+              className="border-gray-200 text-gray-700 hover:bg-gray-50 text-lg px-8 py-3"
+            >
+              Iniciar Sesión
             </Button>
           </div>
         </div>
