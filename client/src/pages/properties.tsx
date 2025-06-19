@@ -80,6 +80,7 @@ interface Certification {
 
 export default function Properties() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [filters, setFilters] = useState<Record<string, string>>({});
   const [selectedFolder, setSelectedFolder] = useState<number | null | undefined>(undefined);
   const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
   const [selectedFolderName, setSelectedFolderName] = useState("");
@@ -109,6 +110,47 @@ export default function Properties() {
   const { data: folders = [] } = useQuery({
     queryKey: ["/api/folders"],
   });
+
+  // Optimized filtering with memoization
+  const filteredFolders = useMemo(() => {
+    if (!Array.isArray(folders)) return [];
+    
+    let filtered = folders.filter((folder: any) => {
+      const matchesSearch = folder.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           folder.description?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesFilters = Object.entries(filters).every(([key, value]) => {
+        if (!value) return true;
+        return folder[key] === value;
+      });
+      
+      return matchesSearch && matchesFilters;
+    });
+    
+    return filtered;
+  }, [folders, searchTerm, filters]);
+
+  const filterOptions = [
+    {
+      key: 'color',
+      label: 'Color',
+      values: [
+        { value: '#059669', label: 'Verde' },
+        { value: '#3b82f6', label: 'Azul' },
+        { value: '#ef4444', label: 'Rojo' },
+        { value: '#f59e0b', label: 'Naranja' },
+        { value: '#8b5cf6', label: 'Púrpura' },
+      ]
+    }
+  ];
+
+  const handleFilterChange = (key: string, value: string) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const clearFilters = () => {
+    setFilters({});
+  };
 
   const createFolderMutation = useMutation({
     mutationFn: async (data: { name: string; description: string; color: string; icon: string }) =>
@@ -270,14 +312,26 @@ export default function Properties() {
             {/* Folder Sidebar */}
             <div className="w-80 bg-white border-r border-gray-200 overflow-y-auto">
               <div className="p-4 border-b border-gray-200">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold text-gray-900">Gestión de Clientes</h2>
-              <Dialog open={showCreateFolder} onOpenChange={setShowCreateFolder}>
-                <DialogTrigger asChild>
-                  <Button size="sm" variant="outline">
-                    <FolderPlus className="w-4 h-4" />
-                  </Button>
-                </DialogTrigger>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="font-semibold text-gray-900">Gestión de Clientes</h2>
+                  <Dialog open={showCreateFolder} onOpenChange={setShowCreateFolder}>
+                    <DialogTrigger asChild>
+                      <Button size="sm" variant="outline">
+                        <FolderPlus className="w-4 h-4" />
+                      </Button>
+                    </DialogTrigger>
+                
+                {/* Enhanced Search and Filter for Folders */}
+                <SearchFilter
+                  searchValue={searchTerm}
+                  onSearchChange={setSearchTerm}
+                  filters={filterOptions}
+                  activeFilters={filters}
+                  onFilterChange={handleFilterChange}
+                  onClearFilters={clearFilters}
+                  placeholder="Buscar carpetas..."
+                  className="mb-4"
+                />
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Crear Nueva Carpeta de Cliente</DialogTitle>
@@ -364,30 +418,47 @@ export default function Properties() {
             </Button>
           </div>
           
-          {/* Folders List */}
+          {/* Folders List with Enhanced Display */}
           <div className="p-4">
             <h3 className="text-sm font-medium text-gray-700 mb-3">Clientes</h3>
             <div className="space-y-1">
-              {(folders as Folder[]).map((folder) => {
-                const IconComponent = getIconComponent(folder.icon || "folder");
-                return (
-                  <Button
-                    key={folder.id}
-                    variant={selectedFolder === folder.id ? "default" : "ghost"}
-                    className="w-full justify-start"
-                    onClick={() => setSelectedFolder(folder.id)}
-                  >
-                    <IconComponent 
-                      className="w-4 h-4 mr-2" 
-                      style={{ color: folder.color }}
-                    />
-                    <span className="truncate">{folder.name}</span>
-                    <Badge variant="secondary" className="ml-auto">
-                      {getCertificationsInFolder(folder.id)}
-                    </Badge>
-                  </Button>
-                );
-              })}
+              {filteredFolders.length > 0 ? (
+                filteredFolders.map((folder) => {
+                  const IconComponent = getIconComponent(folder.icon || "folder");
+                  return (
+                    <Button
+                      key={folder.id}
+                      variant={selectedFolder === folder.id ? "default" : "ghost"}
+                      className="w-full justify-start floating-card"
+                      onClick={() => setSelectedFolder(folder.id)}
+                    >
+                      <IconComponent 
+                        className="w-4 h-4 mr-2" 
+                        style={{ color: folder.color || '#059669' }}
+                      />
+                      <span className="truncate">{folder.name}</span>
+                      <Badge variant="secondary" className="ml-auto">
+                        {getCertificationsInFolder(folder.id)}
+                      </Badge>
+                    </Button>
+                  );
+                })
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <FolderOpen className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No se encontraron carpetas</p>
+                  {searchTerm && (
+                    <Button 
+                      variant="link" 
+                      size="sm" 
+                      onClick={() => setSearchTerm("")}
+                      className="mt-2"
+                    >
+                      Limpiar búsqueda
+                    </Button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
