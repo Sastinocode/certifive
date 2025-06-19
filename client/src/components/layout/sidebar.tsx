@@ -16,6 +16,7 @@ import {
   Menu,
   ChevronLeft
 } from "lucide-react";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 interface SidebarProps {
   selectedTab: string;
@@ -52,14 +53,17 @@ export default function Sidebar({ selectedTab, onTabChange }: SidebarProps) {
             </div>
             {!isCollapsed && <h1 className="text-xl font-bold text-gray-900">CertificoEnergia</h1>}
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="ml-auto p-2 hover:bg-gray-100"
-          >
-            {isCollapsed ? <Menu className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-          </Button>
+          <div className="ml-auto flex items-center space-x-2">
+            <NotificationBell />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className="p-2 hover:bg-gray-100"
+            >
+              {isCollapsed ? <Menu className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+            </Button>
+          </div>
         </div>
         
         {/* Navigation */}
