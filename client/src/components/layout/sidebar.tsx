@@ -16,7 +16,7 @@ import {
   Menu,
   ChevronLeft
 } from "lucide-react";
-import { NotificationBell } from "@/components/notifications/NotificationBell";
+
 
 interface SidebarProps {
   selectedTab: string;
@@ -54,7 +54,7 @@ export default function Sidebar({ selectedTab, onTabChange }: SidebarProps) {
             {!isCollapsed && <h1 className="text-xl font-bold text-gray-900">CertificoEnergia</h1>}
           </div>
           <div className="ml-auto flex items-center space-x-2">
-            <NotificationBell />
+
             <Button
               variant="ghost"
               size="sm"
