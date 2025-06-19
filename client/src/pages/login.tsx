@@ -42,13 +42,13 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Back to Home */}
         <Button
           variant="ghost"
           onClick={() => navigate("/")}
-          className="mb-6 text-green-600 hover:text-green-700 hover:bg-green-50"
+          className="mb-6 text-teal-600 hover:text-teal-700 hover:bg-teal-50"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Volver al inicio
@@ -57,7 +57,7 @@ export default function Login() {
         <Card className="backdrop-blur-sm bg-white/90 border-0 shadow-xl">
           <CardHeader className="text-center space-y-4">
             <div className="flex justify-center">
-              <div className="w-12 h-12 bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl flex items-center justify-center">
+              <div className="w-12 h-12 bg-gradient-to-r from-teal-500 to-blue-600 rounded-xl flex items-center justify-center">
                 <Zap className="w-7 h-7 text-white" />
               </div>
             </div>

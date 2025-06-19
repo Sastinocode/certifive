@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,7 +14,7 @@ import { User, Settings, LogOut, Shield } from "lucide-react";
 import { Link } from "wouter";
 
 export function ProfileMenu() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, logout } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   if (isLoading) {
@@ -35,25 +35,8 @@ export function ProfileMenu() {
     ? `${user.firstName} ${user.lastName}`
     : user.email || "Usuario";
 
-  const handleLogout = async () => {
-    try {
-      // Clear local storage and session data
-      localStorage.removeItem('auth-token');
-      sessionStorage.clear();
-      
-      // Call logout endpoint
-      await fetch('/api/logout', {
-        method: 'POST',
-        credentials: 'include'
-      });
-      
-      // Force page reload to clear all state and redirect to landing
-      window.location.href = "/";
-    } catch (error) {
-      console.error('Logout error:', error);
-      // Force redirect anyway
-      window.location.href = "/";
-    }
+  const handleLogout = () => {
+    logout();
   };
 
   return (
@@ -64,7 +47,7 @@ export function ProfileMenu() {
           className="relative h-8 w-8 rounded-full hover:bg-teal-50 dark:hover:bg-teal-900/20"
         >
           <Avatar className="h-8 w-8">
-            <AvatarImage src={user.profileImageUrl || ""} alt={displayName} />
+            <AvatarImage src="" alt={displayName} />
             <AvatarFallback className="bg-gradient-to-r from-teal-500 to-blue-600 text-white text-xs font-medium">
               {initials}
             </AvatarFallback>
