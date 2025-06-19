@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import Sidebar from "@/components/layout/sidebar";
 import { DashboardSkeletons, TableSkeleton } from "@/components/ui/loading-states";
+import { NotificationModal } from "@/components/notifications/NotificationModal";
 
 import { 
   IdCard, 
@@ -163,11 +164,16 @@ export default function Dashboard() {
 
         {/* Main content */}
         <div className="flex-1 overflow-auto p-6">
-          <div className="mb-8">
-            <h2 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent mb-2">
-              Dashboard Energético
-            </h2>
-            <p className="text-gray-600">Gestiona tus certificaciones energéticas de forma eficiente y sostenible</p>
+          <div className="mb-8 flex justify-between items-start">
+            <div>
+              <h2 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent mb-2">
+                Dashboard Energético
+              </h2>
+              <p className="text-gray-600">Gestiona tus certificaciones energéticas de forma eficiente y sostenible</p>
+            </div>
+            <div className="flex items-center space-x-4">
+              <NotificationModal />
+            </div>
           </div>
 
           {/* Stats Cards */}
