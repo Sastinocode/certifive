@@ -66,6 +66,7 @@ function Router() {
           <Route path="/tarifas" component={Pricing} />
           <Route path="/informes" component={Reports} />
           <Route path="/configuracion" component={Settings} />
+          <Route path="/settings" component={Settings} />
         </>
       )}
       <Route component={NotFound} />
