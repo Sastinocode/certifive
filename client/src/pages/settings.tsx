@@ -452,21 +452,66 @@ export default function Settings() {
                     />
                   </div>
 
-                  {certificateSettings.autoBackup && (
-                    <div className="ml-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span className="text-sm font-medium text-green-800">Sistema de backup activo</span>
+                  {/* Enhanced Backup Status and Controls */}
+                  <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <Database className="w-4 h-4 text-blue-600 mr-2" />
+                        <span className="font-medium">Estado del Sistema de Backup</span>
                       </div>
-                      <ul className="text-xs text-green-700 space-y-1">
-                        <li>• Backup diario automático a las 02:00 AM</li>
-                        <li>• Respaldo de certificados finalizados</li>
-                        <li>• Copia de documentos adjuntos</li>
-                        <li>• Retención de 30 días de historial</li>
-                        <li>• Compresión automática para optimizar espacio</li>
-                      </ul>
+                      <Button
+                        onClick={handleCreateBackup}
+                        disabled={isCreatingBackup}
+                        size="sm"
+                        variant="outline"
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        {isCreatingBackup ? "Creando..." : "Crear Backup"}
+                      </Button>
                     </div>
-                  )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                      <div className="flex items-center">
+                        <Calendar className="w-4 h-4 text-gray-500 mr-2" />
+                        <div>
+                          <p className="text-gray-600">Último backup</p>
+                          <p className="font-medium">
+                            {backupStatus.lastBackup 
+                              ? new Date(backupStatus.lastBackup).toLocaleDateString('es-ES')
+                              : 'Nunca'
+                            }
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center">
+                        <HardDrive className="w-4 h-4 text-gray-500 mr-2" />
+                        <div>
+                          <p className="text-gray-600">Backups totales</p>
+                          <p className="font-medium">{backupStatus.backupCount}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center">
+                        <Database className="w-4 h-4 text-gray-500 mr-2" />
+                        <div>
+                          <p className="text-gray-600">Tamaño total</p>
+                          <p className="font-medium">{formatFileSize(backupStatus.totalSize)}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {certificateSettings.autoBackup && (
+                      <div className="bg-green-50 border border-green-200 p-3 rounded">
+                        <div className="flex items-center">
+                          <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                          <span className="text-sm text-green-800">
+                            Backup automático activado - Se crean copias diarias
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <Button onClick={handleCertificateSettingsSave} disabled={isSaving}>
