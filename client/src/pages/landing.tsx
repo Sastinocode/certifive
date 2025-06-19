@@ -7,28 +7,28 @@ export default function Landing() {
   const [, navigate] = useLocation();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50">
+    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
       {/* Header */}
       <header className="border-b bg-white/80 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-green-600 to-emerald-600 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-gradient-to-r from-teal-500 to-blue-600 rounded-lg flex items-center justify-center">
                 <Zap className="w-6 h-6 text-white" />
               </div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">EnergyPro España</h1>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-teal-500 to-blue-600 bg-clip-text text-transparent">CERTIFIVE</h1>
             </div>
             <div className="flex items-center gap-3">
               <Button 
                 variant="outline" 
                 onClick={() => navigate("/login")}
-                className="border-green-200 text-green-700 hover:bg-green-50"
+                className="border-teal-200 text-teal-700 hover:bg-teal-50"
               >
                 Iniciar Sesión
               </Button>
               <Button 
                 onClick={() => navigate("/registro")}
-                className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                className="bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-600 hover:to-blue-700"
               >
                 Registrarse
               </Button>
@@ -42,7 +42,7 @@ export default function Landing() {
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-5xl font-bold text-gray-900 mb-6">
             Plataforma de Certificación Energética
-            <span className="block bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">para Profesionales</span>
+            <span className="block bg-gradient-to-r from-teal-500 to-blue-600 bg-clip-text text-transparent">para Profesionales</span>
           </h2>
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
             Simplifica el proceso de certificación energética con automatización completa. 

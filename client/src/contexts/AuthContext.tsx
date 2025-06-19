@@ -101,10 +101,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      // Call backend logout endpoint
+      await apiRequest("POST", "/api/auth/logout", {}, {
+        Authorization: `Bearer ${token}`
+      });
+    } catch (error) {
+      console.log("Logout API call failed, continuing with local cleanup");
+    }
+    
+    // Clear all local state and storage
     setUser(null);
     setToken(null);
     localStorage.removeItem("auth_token");
+    localStorage.clear();
+    sessionStorage.clear();
+    
+    // Force page reload to ensure complete state reset
+    window.location.href = "/";
   };
 
   const value = {
