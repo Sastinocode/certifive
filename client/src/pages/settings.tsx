@@ -51,10 +51,7 @@ export default function Settings() {
   // Certificate settings
   const [certificateSettings, setCertificateSettings] = useState({
     defaultValidity: "10",
-    autoBackup: true,
-    watermark: true,
-    logoPosition: "top-right",
-    signatureRequired: true
+    autoBackup: true
   });
 
   const handleProfileSave = async () => {
@@ -320,6 +317,9 @@ export default function Settings() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <Label htmlFor="validity">Validez predeterminada (años)</Label>
+                    <p className="text-sm text-gray-500 mb-2">
+                      Duración estándar para nuevos certificados energéticos
+                    </p>
                     <Select
                       value={certificateSettings.defaultValidity}
                       onValueChange={(value) => 
@@ -330,39 +330,26 @@ export default function Settings() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="1">1 año</SelectItem>
+                        <SelectItem value="2">2 años</SelectItem>
+                        <SelectItem value="3">3 años</SelectItem>
                         <SelectItem value="5">5 años</SelectItem>
+                        <SelectItem value="7">7 años</SelectItem>
                         <SelectItem value="10">10 años</SelectItem>
-                        <SelectItem value="15">15 años</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="logoPosition">Posición del logo</Label>
-                    <Select
-                      value={certificateSettings.logoPosition}
-                      onValueChange={(value) => 
-                        setCertificateSettings(prev => ({ ...prev, logoPosition: value }))
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="top-left">Superior izquierda</SelectItem>
-                        <SelectItem value="top-right">Superior derecha</SelectItem>
-                        <SelectItem value="bottom-left">Inferior izquierda</SelectItem>
-                        <SelectItem value="bottom-right">Inferior derecha</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
 
+                <Separator />
+
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <Label className="text-sm font-medium">Backup automático</Label>
-                      <p className="text-sm text-gray-500">Crear copias de seguridad automáticas de los certificados</p>
+                      <p className="text-sm text-gray-500">
+                        Crear copias de seguridad automáticas de certificados y documentos
+                      </p>
                     </div>
                     <Switch
                       checked={certificateSettings.autoBackup}
@@ -372,35 +359,21 @@ export default function Settings() {
                     />
                   </div>
 
-                  <Separator />
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label className="text-sm font-medium">Marca de agua</Label>
-                      <p className="text-sm text-gray-500">Añadir marca de agua de seguridad a los certificados</p>
+                  {certificateSettings.autoBackup && (
+                    <div className="ml-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <span className="text-sm font-medium text-green-800">Sistema de backup activo</span>
+                      </div>
+                      <ul className="text-xs text-green-700 space-y-1">
+                        <li>• Backup diario automático a las 02:00 AM</li>
+                        <li>• Respaldo de certificados finalizados</li>
+                        <li>• Copia de documentos adjuntos</li>
+                        <li>• Retención de 30 días de historial</li>
+                        <li>• Compresión automática para optimizar espacio</li>
+                      </ul>
                     </div>
-                    <Switch
-                      checked={certificateSettings.watermark}
-                      onCheckedChange={(checked) => 
-                        setCertificateSettings(prev => ({ ...prev, watermark: checked }))
-                      }
-                    />
-                  </div>
-
-                  <Separator />
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label className="text-sm font-medium">Firma digital requerida</Label>
-                      <p className="text-sm text-gray-500">Exigir firma digital antes de finalizar certificados</p>
-                    </div>
-                    <Switch
-                      checked={certificateSettings.signatureRequired}
-                      onCheckedChange={(checked) => 
-                        setCertificateSettings(prev => ({ ...prev, signatureRequired: checked }))
-                      }
-                    />
-                  </div>
+                  )}
                 </div>
 
                 <Button onClick={handleCertificateSettingsSave} disabled={isSaving}>
