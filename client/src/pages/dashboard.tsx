@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import Sidebar from "@/components/layout/sidebar";
 import { DashboardSkeletons, TableSkeleton } from "@/components/ui/loading-states";
-import { NotificationTester } from "@/components/notifications/NotificationTester";
+
 import { 
   IdCard, 
   Clock,
@@ -380,11 +380,7 @@ export default function Dashboard() {
               )}
           </div>
 
-          {/* Notification Testing Section */}
-          <div className="mt-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Sistema de Notificaciones</h2>
-            <NotificationTester />
-          </div>
+
         </div>
       </div>
     </div>
