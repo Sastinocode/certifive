@@ -42,7 +42,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(localStorage.getItem("auth_token"));
   const [isLoading, setIsLoading] = useState(true);
-  const [hasLoggedOut, setHasLoggedOut] = useState(false);
+  const [hasLoggedOut, setHasLoggedOut] = useState(() => {
+    return localStorage.getItem("has_logged_out") === "true";
+  });
 
   // Check if user is authenticated on app load
   useEffect(() => {
@@ -130,7 +132,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("auth_token");
     localStorage.removeItem("auth-token");
     localStorage.removeItem("demo_user");
-    localStorage.clear();
+    
+    // Store logout flag BEFORE clearing localStorage
+    localStorage.setItem("has_logged_out", "true");
+    
+    // Clear session storage but preserve logout flag in localStorage
     sessionStorage.clear();
     
     // Clear any cookies
@@ -145,6 +151,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginDemo = () => {
     setHasLoggedOut(false);
+    // Clear logout flag when demo is explicitly requested
+    localStorage.removeItem("has_logged_out");
+    
     const demoUser = {
       id: "demo-user",
       email: "demo@certificacion.com",
