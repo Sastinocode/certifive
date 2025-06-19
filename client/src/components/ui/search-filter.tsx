@@ -141,7 +141,7 @@ export function SearchFilter({
             if (!value) return null;
             const filter = filters.find(f => f.key === key);
             const option = filter?.values.find(v => v.value === value);
-            if (!option) return null;
+            if (!option || !filter) return null;
 
             return (
               <Badge key={key} variant="secondary" className="gap-1">
