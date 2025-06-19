@@ -497,7 +497,6 @@ export default function Properties() {
                                 <th>Propietario</th>
                                 <th>Referencia Catastral</th>
                                 <th>Estado</th>
-                                <th>Calificación</th>
                                 <th>Cliente</th>
                                 <th className="text-right">Acciones</th>
                               </tr>
@@ -520,17 +519,6 @@ export default function Properties() {
                                     </td>
                                     <td>
                                       {getStatusBadge(property.status)}
-                                    </td>
-                                    <td>
-                                      {property.energyRating ? (
-                                        <Badge 
-                                          className={`energy-rating energy-rating-${property.energyRating.toLowerCase()}`}
-                                        >
-                                          {property.energyRating}
-                                        </Badge>
-                                      ) : (
-                                        <span className="text-gray-400">-</span>
-                                      )}
                                     </td>
                                     <td>
                                       {folder ? (
