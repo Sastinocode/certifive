@@ -60,15 +60,15 @@ export function NotificationStatus() {
           <h4 className="font-medium text-sm text-gray-900 mb-1">Estado del Sistema:</h4>
           <ul className="text-xs text-gray-600 space-y-1">
             <li className="flex items-center space-x-2">
-              <div className={`w-2 h-2 rounded-full ${hasEmailConfigured ? 'bg-green-500' : 'bg-orange-500'}`}></div>
+              <div className={`w-2 h-2 rounded-full ${hasEmailConfigured ? 'bg-cyan-500' : 'bg-orange-500'}`}></div>
               <span>Notificaciones visuales en dashboard</span>
             </li>
             <li className="flex items-center space-x-2">
-              <div className={`w-2 h-2 rounded-full ${hasEmailConfigured ? 'bg-green-500' : 'bg-orange-500'}`}></div>
+              <div className={`w-2 h-2 rounded-full ${hasEmailConfigured ? 'bg-cyan-500' : 'bg-orange-500'}`}></div>
               <span>Email del certificador vinculado</span>
             </li>
             <li className="flex items-center space-x-2">
-              <div className={`w-2 h-2 rounded-full ${sendGridConfigured ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+              <div className={`w-2 h-2 rounded-full ${sendGridConfigured ? 'bg-cyan-500' : 'bg-gray-400'}`}></div>
               <span>Envío automático por correo</span>
             </li>
           </ul>

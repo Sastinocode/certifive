@@ -230,7 +230,7 @@ export default function ClientFolderManager({ folderId, folderName, isOpen, onCl
 
   const getCategoryBadge = (category: string) => {
     const colors = {
-      certificate: "bg-green-100 text-green-800",
+      certificate: "bg-cyan-100 text-cyan-800",
       photo: "bg-blue-100 text-blue-800",
       document: "bg-purple-100 text-purple-800",
       other: "bg-gray-100 text-gray-800"
@@ -557,7 +557,7 @@ export default function ClientFolderManager({ folderId, folderName, isOpen, onCl
                       </div>
                       <div>
                         <Label>Calificación Energética</Label>
-                        <Badge className="bg-green-100 text-green-800">
+                        <Badge className="bg-cyan-100 text-cyan-800">
                           {certificationData.energyRating || 'Pendiente'}
                         </Badge>
                       </div>

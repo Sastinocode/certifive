@@ -41,7 +41,7 @@ export function NotificationTester() {
       label: 'Pago Recibido',
       description: 'Simula un pago procesado exitosamente',
       icon: CreditCard,
-      color: 'bg-green-50 border-green-200 text-green-700',
+      color: 'bg-cyan-50 border-cyan-200 text-cyan-700',
     },
     {
       type: 'certificate_expiring',

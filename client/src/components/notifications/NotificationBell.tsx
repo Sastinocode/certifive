@@ -94,7 +94,7 @@ export function NotificationBell() {
       case 'new_certification':
         return 'bg-blue-50 border-blue-200';
       case 'payment_received':
-        return 'bg-green-50 border-green-200';
+        return 'bg-cyan-50 border-cyan-200';
       case 'certificate_expiring':
         return 'bg-orange-50 border-orange-200';
       case 'quote_request':
