@@ -67,15 +67,62 @@ export default function Settings() {
   });
   const [isCreatingBackup, setIsCreatingBackup] = useState(false);
 
+  // Professional profile validation state
+  const [profileValidation, setProfileValidation] = useState({
+    isValid: false,
+    missingFields: [] as string[]
+  });
+
+  // Load profile validation on mount
+  useEffect(() => {
+    const loadProfileValidation = async () => {
+      try {
+        const response = await fetch('/api/profile/validation');
+        if (response.ok) {
+          const validation = await response.json();
+          setProfileValidation(validation);
+        }
+      } catch (error) {
+        console.error('Error loading profile validation:', error);
+      }
+    };
+
+    loadProfileValidation();
+  }, []);
+
   const handleProfileSave = async () => {
     setIsSaving(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    toast({
-      title: "Perfil actualizado",
-      description: "Los cambios han sido guardados correctamente.",
-    });
+    try {
+      const response = await fetch('/api/profile/update', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(profileData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al actualizar perfil');
+      }
+
+      // Check profile validation after save
+      const validationResponse = await fetch('/api/profile/validation');
+      if (validationResponse.ok) {
+        const validation = await validationResponse.json();
+        setProfileValidation(validation);
+      }
+      
+      toast({
+        title: "Perfil actualizado",
+        description: "Los cambios han sido guardados correctamente.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el perfil.",
+        variant: "destructive",
+      });
+    }
     setIsSaving(false);
   };
 
@@ -234,10 +281,38 @@ export default function Settings() {
             {/* Profile Settings */}
             <Card>
               <CardHeader>
-                <div className="flex items-center">
-                  <User className="w-5 h-5 text-primary mr-2" />
-                  <CardTitle>Perfil Profesional</CardTitle>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <User className="w-5 h-5 text-primary mr-2" />
+                    <CardTitle>Perfil Profesional</CardTitle>
+                  </div>
+                  {/* Professional Profile Validation Indicator */}
+                  <div className="flex items-center space-x-2">
+                    {profileValidation.isValid ? (
+                      <div className="flex items-center text-green-600">
+                        <CheckCircle className="w-4 h-4 mr-1" />
+                        <span className="text-sm font-medium">Listo para facturación</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center text-amber-600">
+                        <AlertCircle className="w-4 h-4 mr-1" />
+                        <span className="text-sm font-medium">
+                          Completar datos requeridos
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
+                {!profileValidation.isValid && profileValidation.missingFields.length > 0 && (
+                  <div className="mt-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
+                    <p className="text-sm text-amber-800">
+                      <strong>Campos requeridos para facturación legal:</strong> {profileValidation.missingFields.join(', ')}
+                    </p>
+                    <p className="text-xs text-amber-600 mt-1">
+                      Complete estos datos para generar facturas con validez legal española.
+                    </p>
+                  </div>
+                )}
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
