@@ -128,7 +128,7 @@ export class NotificationService {
 
       await mailService.send({
         to: user.email,
-        from: process.env.FROM_EMAIL || 'notifications@certificoenergia.com',
+        from: process.env.FROM_EMAIL || 'notifications@certifive.com',
         subject: emailContent.subject,
         html: emailContent.html,
         text: emailContent.text,
@@ -148,7 +148,7 @@ export class NotificationService {
 
   // Generate email content based on notification type
   private getEmailContent(notification: Notification, user?: { email: string; firstName: string | null; lastName: string | null }): { subject: string; html: string; text: string } {
-    const baseSubject = 'CertificoEnergia - ';
+    const baseSubject = 'CERTIFIVE - ';
     const data = notification.data as NotificationData || {};
     const userName = user?.firstName && user?.lastName 
       ? `${user.firstName} ${user.lastName}` 
@@ -161,7 +161,7 @@ export class NotificationService {
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px;">
               <div style="text-align: center; margin-bottom: 30px;">
-                <h1 style="color: #059669; margin: 0; font-size: 24px;">CertificoEnergia</h1>
+                <h1 style="color: #22d3ee; margin: 0; font-size: 24px;">CERTIFIVE</h1>
                 <p style="color: #6b7280; margin: 5px 0;">Gestión Inteligente de Certificaciones Energéticas</p>
               </div>
               
@@ -191,13 +191,13 @@ export class NotificationService {
               
               <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 30px; text-align: center;">
                 <p style="color: #6b7280; font-size: 14px; margin: 0;">
-                  Este correo se envió automáticamente desde tu sistema CertificoEnergia.<br>
+                  Este correo se envió automáticamente desde tu sistema CERTIFIVE.<br>
                   Accede a tu dashboard para gestionar esta solicitud.
                 </p>
               </div>
             </div>
           `,
-          text: `CertificoEnergia - Nueva Solicitud de Certificación
+          text: `CERTIFIVE - Nueva Solicitud de Certificación
             
             Hola ${userName},
             

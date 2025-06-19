@@ -159,7 +159,7 @@ export default function Dashboard() {
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile header */}
         <div className="lg:hidden backdrop-blur-md bg-white/70 border-b border-white/30 px-4 py-3">
-          <h1 className="text-lg font-semibold text-gray-900">CertificoEnergia</h1>
+          <h1 className="text-lg font-semibold text-gray-900">CERTIFIVE</h1>
         </div>
 
         {/* Main content */}
