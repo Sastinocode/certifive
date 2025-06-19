@@ -6,6 +6,7 @@ import { reportGenerator } from "./reportGenerator";
 import { authenticateToken, hashPassword, comparePassword, generateToken } from "./auth";
 import { notificationService } from "./notifications";
 import { backupService } from "./backupService";
+import { invoiceService } from "./invoiceService";
 import { insertCertificationSchema, updateCertificationSchema, insertPricingRateSchema, insertQuoteRequestSchema, insertFolderSchema, insertWhatsappFlowTemplateSchema, insertDemoRequestSchema } from "@shared/schema";
 import { z } from "zod";
 import multer from "multer";
@@ -2481,6 +2482,119 @@ ${message ? `\n📝 ${message}` : ''}
     } catch (error) {
       console.error("Error saving certificate settings:", error);
       res.status(500).json({ message: "Error al guardar configuración" });
+    }
+  });
+
+  // Professional invoicing endpoints
+  app.post('/api/invoices/create', authenticateToken, async (req: any, res) => {
+    try {
+      const userId = req.userId;
+      
+      // Validate professional profile first
+      const validation = await invoiceService.validateProfessionalProfile(userId);
+      if (!validation.isValid) {
+        return res.status(400).json({ 
+          message: "Perfil profesional incompleto para generar facturas",
+          missingFields: validation.missingFields
+        });
+      }
+
+      const invoice = await invoiceService.createProfessionalInvoice(userId, req.body);
+      
+      res.json({ 
+        message: "Factura creada exitosamente",
+        invoice
+      });
+    } catch (error) {
+      console.error("Error creating invoice:", error);
+      res.status(500).json({ message: error.message || "Error al crear factura" });
+    }
+  });
+
+  app.post('/api/invoices/from-certification/:certificationId', authenticateToken, async (req: any, res) => {
+    try {
+      const userId = req.userId;
+      const certificationId = parseInt(req.params.certificationId);
+      const { paymentMethod } = req.body;
+      
+      // Validate professional profile first
+      const validation = await invoiceService.validateProfessionalProfile(userId);
+      if (!validation.isValid) {
+        return res.status(400).json({ 
+          message: "Perfil profesional incompleto para generar facturas",
+          missingFields: validation.missingFields
+        });
+      }
+
+      const invoice = await invoiceService.createInvoiceFromCertification(userId, certificationId, paymentMethod);
+      
+      res.json({ 
+        message: "Factura generada automáticamente desde certificación",
+        invoice
+      });
+    } catch (error) {
+      console.error("Error creating invoice from certification:", error);
+      res.status(500).json({ message: error.message || "Error al generar factura" });
+    }
+  });
+
+  app.get('/api/invoices', authenticateToken, async (req: any, res) => {
+    try {
+      const userId = req.userId;
+      const limit = parseInt(req.query.limit as string) || 50;
+      
+      const invoices = await invoiceService.getUserInvoices(userId, limit);
+      res.json(invoices);
+    } catch (error) {
+      console.error("Error getting invoices:", error);
+      res.status(500).json({ message: "Error al obtener facturas" });
+    }
+  });
+
+  app.get('/api/invoices/:invoiceId', authenticateToken, async (req: any, res) => {
+    try {
+      const userId = req.userId;
+      const invoiceId = parseInt(req.params.invoiceId);
+      
+      const invoice = await invoiceService.getInvoice(invoiceId, userId);
+      if (!invoice) {
+        return res.status(404).json({ message: "Factura no encontrada" });
+      }
+      
+      res.json(invoice);
+    } catch (error) {
+      console.error("Error getting invoice:", error);
+      res.status(500).json({ message: "Error al obtener factura" });
+    }
+  });
+
+  app.patch('/api/invoices/:invoiceId/payment', authenticateToken, async (req: any, res) => {
+    try {
+      const userId = req.userId;
+      const invoiceId = parseInt(req.params.invoiceId);
+      const { status, paidAmount, paymentMethod } = req.body;
+      
+      const invoice = await invoiceService.updatePaymentStatus(invoiceId, userId, status, paidAmount, paymentMethod);
+      
+      res.json({ 
+        message: "Estado de pago actualizado",
+        invoice
+      });
+    } catch (error) {
+      console.error("Error updating payment status:", error);
+      res.status(500).json({ message: "Error al actualizar estado de pago" });
+    }
+  });
+
+  app.get('/api/profile/validation', authenticateToken, async (req: any, res) => {
+    try {
+      const userId = req.userId;
+      const validation = await invoiceService.validateProfessionalProfile(userId);
+      
+      res.json(validation);
+    } catch (error) {
+      console.error("Error validating profile:", error);
+      res.status(500).json({ message: "Error al validar perfil" });
     }
   });
 
