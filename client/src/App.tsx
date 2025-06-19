@@ -66,6 +66,7 @@ function Router() {
           <Route path="/propiedades" component={Properties} />
           <Route path="/tarifas" component={Pricing} />
           <Route path="/informes" component={Reports} />
+          <Route path="/stripe" component={StripeIntegration} />
           <Route path="/configuracion" component={Settings} />
           <Route path="/settings" component={Settings} />
         </>
