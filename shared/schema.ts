@@ -36,6 +36,7 @@ export const users = pgTable("users", {
   license: varchar("license"),
   phone: varchar("phone"),
   address: text("address"),
+  dni: varchar("dni"), // DNI/NIF for legal invoicing
   role: varchar("role").default("user"), // user, admin, demo
   isVerified: boolean("is_verified").default(false),
   verificationToken: varchar("verification_token"),
@@ -267,7 +268,7 @@ export const whatsappMessages = pgTable("whatsapp_messages", {
 });
 
 // Financial Management Tables
-export const invoices = pgTable("invoices", {
+export const invoices: any = pgTable("invoices", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").references(() => users.id).notNull(),
   certificationId: integer("certification_id").references(() => certifications.id),
@@ -286,6 +287,15 @@ export const invoices = pgTable("invoices", {
   accountingRegisteredAt: timestamp("accounting_registered_at"),
   accountingRegisteredBy: varchar("accounting_registered_by").references(() => users.id),
   manualAccountingRequired: boolean("manual_accounting_required").default(false), // Para cobros en efectivo
+  
+  // Professional/Company information (automatically populated from user profile)
+  professionalName: varchar("professional_name").notNull(), // From user firstName + lastName
+  professionalDni: varchar("professional_dni").notNull(), // From user DNI field
+  professionalEmail: varchar("professional_email").notNull(), // From user email
+  professionalPhone: varchar("professional_phone"), // From user phone
+  professionalAddress: text("professional_address"), // From user address
+  professionalCompany: varchar("professional_company"), // From user company
+  professionalLicense: varchar("professional_license"), // From user license
   
   // Client information
   clientName: varchar("client_name").notNull(),

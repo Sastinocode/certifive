@@ -40,7 +40,8 @@ export default function Settings() {
     phone: "",
     company: "",
     license: "",
-    address: ""
+    address: "",
+    dni: ""
   });
 
   // Notification settings
@@ -300,6 +301,21 @@ export default function Settings() {
                         onChange={(e) => setProfileData(prev => ({ ...prev, company: e.target.value }))}
                         className="pl-10"
                         placeholder="Nombre de tu empresa"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="dni">DNI/NIF</Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <Input
+                        id="dni"
+                        value={profileData.dni}
+                        onChange={(e) => setProfileData(prev => ({ ...prev, dni: e.target.value }))}
+                        className="pl-10"
+                        placeholder="12345678A"
+                        maxLength={9}
                       />
                     </div>
                   </div>
