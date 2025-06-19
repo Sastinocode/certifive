@@ -12,6 +12,7 @@ import { apiRequest } from "@/lib/queryClient";
 import Sidebar from "@/components/layout/sidebar";
 import { DashboardSkeletons, TableSkeleton } from "@/components/ui/loading-states";
 import { NotificationModal } from "@/components/notifications/NotificationModal";
+import { ProfileMenu } from "@/components/layout/ProfileMenu";
 
 import { 
   IdCard, 
@@ -173,6 +174,7 @@ export default function Dashboard() {
             </div>
             <div className="flex items-center space-x-4">
               <NotificationModal />
+              <ProfileMenu />
             </div>
           </div>
 
