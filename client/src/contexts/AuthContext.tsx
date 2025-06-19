@@ -51,6 +51,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           localStorage.removeItem("auth_token");
           setToken(null);
         }
+      } else {
+        // Demo mode - create a demo user for immediate access
+        const demoUser = {
+          id: "demo-user",
+          email: "demo@certificacion.com",
+          firstName: "Usuario",
+          lastName: "Demo",
+          company: "Empresa Demo",
+          role: "demo"
+        };
+        const demoToken = "demo-token-" + Date.now();
+        
+        setUser(demoUser);
+        setToken(demoToken);
+        localStorage.setItem("auth_token", demoToken);
+        localStorage.setItem("demo_user", JSON.stringify(demoUser));
       }
       setIsLoading(false);
     };
