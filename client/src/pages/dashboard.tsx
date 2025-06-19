@@ -379,6 +379,12 @@ export default function Dashboard() {
                 </div>
               )}
           </div>
+
+          {/* Notification Testing Section */}
+          <div className="mt-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Sistema de Notificaciones</h2>
+            <NotificationTester />
+          </div>
         </div>
       </div>
     </div>
