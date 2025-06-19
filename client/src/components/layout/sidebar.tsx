@@ -16,7 +16,8 @@ import {
   Menu,
   ChevronLeft,
   CreditCard,
-  TrendingUp
+  TrendingUp,
+  Bot
 } from "lucide-react";
 import certifiveLogo from "@assets/Logo_1750326352340.jpg";
 
@@ -43,6 +44,7 @@ export default function Sidebar({ selectedTab, onTabChange }: SidebarProps) {
     { id: "pricing", label: "Tarifas", icon: Euro, path: "/tarifas" },
     { id: "reports", label: "Informes", icon: BarChart, path: "/informes" },
     { id: "marketing", label: "Marketing", icon: TrendingUp, path: "/marketing" },
+    { id: "automations", label: "Automatizaciones", icon: Bot, path: "/automatizaciones" },
     { id: "stripe", label: "Pagos Stripe", icon: CreditCard, path: "/stripe" },
     { id: "settings", label: "Configuración", icon: Settings, path: "/configuracion" },
   ];
