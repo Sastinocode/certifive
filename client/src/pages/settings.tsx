@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,11 @@ import {
   Save,
   Building,
   Mail,
-  Phone
+  Phone,
+  Database,
+  Download,
+  Calendar,
+  HardDrive
 } from "lucide-react";
 
 export default function Settings() {
@@ -54,6 +58,15 @@ export default function Settings() {
     autoBackup: true
   });
 
+  // Backup status
+  const [backupStatus, setBackupStatus] = useState({
+    enabled: false,
+    lastBackup: null,
+    backupCount: 0,
+    totalSize: 0
+  });
+  const [isCreatingBackup, setIsCreatingBackup] = useState(false);
+
   const handleProfileSave = async () => {
     setIsSaving(true);
     // Simulate API call
@@ -79,13 +92,93 @@ export default function Settings() {
 
   const handleCertificateSettingsSave = async () => {
     setIsSaving(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    toast({
-      title: "Configuración de certificados actualizada",
-      description: "Los ajustes predeterminados han sido guardados.",
-    });
+    try {
+      const response = await fetch('/api/settings/certificates', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(certificateSettings),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al guardar configuración');
+      }
+
+      const result = await response.json();
+      
+      toast({
+        title: "Configuración actualizada",
+        description: certificateSettings.autoBackup 
+          ? "Configuración guardada y backup automático creado"
+          : "Los ajustes predeterminados han sido guardados",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo guardar la configuración",
+        variant: "destructive",
+      });
+    }
     setIsSaving(false);
+  };
+
+  // Load backup status on component mount
+  useEffect(() => {
+    loadBackupStatus();
+  }, []);
+
+  const loadBackupStatus = async () => {
+    try {
+      const response = await fetch('/api/backup/status');
+      if (response.ok) {
+        const status = await response.json();
+        setBackupStatus(status);
+      }
+    } catch (error) {
+      console.error('Error loading backup status:', error);
+    }
+  };
+
+  const handleCreateBackup = async () => {
+    setIsCreatingBackup(true);
+    try {
+      const response = await fetch('/api/backup/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al crear backup');
+      }
+
+      const result = await response.json();
+      
+      toast({
+        title: "Backup creado",
+        description: "Copia de seguridad creada exitosamente",
+      });
+
+      // Reload backup status
+      await loadBackupStatus();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo crear el backup",
+        variant: "destructive",
+      });
+    }
+    setIsCreatingBackup(false);
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   return (
