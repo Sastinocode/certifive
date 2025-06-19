@@ -24,7 +24,9 @@ import {
   Database,
   Download,
   Calendar,
-  HardDrive
+  HardDrive,
+  CheckCircle,
+  AlertCircle
 } from "lucide-react";
 
 export default function Settings() {
