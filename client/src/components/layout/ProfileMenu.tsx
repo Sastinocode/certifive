@@ -35,8 +35,25 @@ export function ProfileMenu() {
     ? `${user.firstName} ${user.lastName}`
     : user.email || "Usuario";
 
-  const handleLogout = () => {
-    window.location.href = "/api/logout";
+  const handleLogout = async () => {
+    try {
+      // Clear local storage and session data
+      localStorage.removeItem('auth-token');
+      sessionStorage.clear();
+      
+      // Call logout endpoint
+      await fetch('/api/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+      
+      // Force page reload to clear all state and redirect to landing
+      window.location.href = "/";
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force redirect anyway
+      window.location.href = "/";
+    }
   };
 
   return (
