@@ -184,10 +184,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Unified auth middleware that works with both systems
+  const unifiedAuth = async (req: any, res: any, next: any) => {
+    // Try JWT auth first (includes demo tokens)
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
+    
+    if (token) {
+      if (token.startsWith("demo-token-")) {
+        const demoUser = {
+          id: "demo-user",
+          email: "demo@certificacion.com",
+          firstName: "Usuario",
+          lastName: "Demo",
+          company: "Empresa Demo",
+          role: "demo",
+          dni: "",
+          phone: "",
+          address: "",
+          license: "",
+          isVerified: true
+        };
+        
+        req.userId = "demo-user";
+        req.user = demoUser;
+        return next();
+      }
+    }
+    
+    // Try Replit Auth
+    if (req.isAuthenticated && req.isAuthenticated() && req.user) {
+      return next();
+    }
+    
+    // Try JWT auth
+    return authenticateToken(req, res, next);
+  };
+
   // Dashboard stats
-  app.get("/api/dashboard/stats", isAuthenticated, async (req: any, res) => {
+  app.get("/api/dashboard/stats", unifiedAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.claims?.sub || req.userId || req.user?.id;
       const stats = await storage.getDashboardStats(userId);
       res.json(stats);
     } catch (error) {
@@ -197,9 +234,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get recent certifications
-  app.get("/api/certifications/recent", isAuthenticated, async (req: any, res) => {
+  app.get("/api/certifications/recent", unifiedAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.claims?.sub || req.userId || req.user?.id;
       const certifications = await storage.getRecentCertifications(userId);
       res.json(certifications);
     } catch (error) {
@@ -209,9 +246,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Folder management routes
-  app.get("/api/folders", isAuthenticated, async (req: any, res) => {
+  app.get("/api/folders", unifiedAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.claims?.sub || req.userId || req.user?.id;
       const folders = await storage.getFolders(userId);
       res.json(folders);
     } catch (error) {
@@ -1544,9 +1581,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Notifications API Routes
-  app.get('/api/notifications', isAuthenticated, async (req: any, res) => {
+  app.get('/api/notifications', unifiedAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.claims?.sub || req.userId || req.user?.id;
       const notifications = await notificationService.getAllNotifications(userId);
       res.json(notifications);
     } catch (error) {
@@ -1618,9 +1655,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/notifications/count', isAuthenticated, async (req: any, res) => {
+  app.get('/api/notifications/count', unifiedAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user?.claims?.sub || req.userId || req.user?.id;
       const count = await notificationService.getUnreadCount(userId);
       res.json({ count });
     } catch (error) {
