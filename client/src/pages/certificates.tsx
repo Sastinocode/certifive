@@ -239,7 +239,7 @@ export default function Certificates() {
               </p>
             </div>
             <Link to="/certificacion">
-              <Button className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700">
+              <Button className="btn-certifive">
                 <Plus className="w-4 h-4 mr-2" />
                 Procesar Nueva Solicitud
               </Button>
@@ -318,7 +318,7 @@ export default function Certificates() {
                   </p>
                   {!searchTerm && statusFilter === "all" && (
                     <Link to="/certificacion">
-                      <Button className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700">
+                      <Button className="btn-certifive">
                         <Plus className="w-4 h-4 mr-2" />
                         Crear primer certificado
                       </Button>

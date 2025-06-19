@@ -251,7 +251,7 @@ export default function WhatsAppManagement() {
           {/* WhatsApp Status */}
           <div className="flex items-center space-x-2 text-sm">
             <div className={`w-2 h-2 rounded-full ${
-              whatsappStatus?.integrationActive ? 'bg-green-500' : 'bg-red-500'
+              whatsappStatus?.integrationActive ? 'bg-cyan-500' : 'bg-red-500'
             }`}></div>
             <span className={whatsappStatus?.integrationActive ? 'text-green-700' : 'text-red-700'}>
               {whatsappStatus?.integrationActive ? 'WhatsApp Conectado' : 'WhatsApp Desconectado'}
@@ -420,7 +420,7 @@ export default function WhatsAppManagement() {
                 <Button 
                   onClick={handleSendMessage}
                   disabled={!messageText.trim() || sendMessageMutation.isPending}
-                  className="bg-green-600 hover:bg-green-700"
+                  className="btn-certifive"
                 >
                   <Send className="w-4 h-4" />
                 </Button>
@@ -533,7 +533,7 @@ export default function WhatsAppManagement() {
               <Button 
                 onClick={() => configureWhatsAppMutation.mutate(whatsappConfig)}
                 disabled={configureWhatsAppMutation.isPending}
-                className="bg-green-600 hover:bg-green-700"
+                className="btn-certifive"
               >
                 {configureWhatsAppMutation.isPending ? "Guardando..." : "Guardar Configuración"}
               </Button>
