@@ -128,7 +128,7 @@ export default function CertificationWizard() {
                 <div key={step.id} className="flex items-center">
                   <div className={`
                     w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
-                    ${currentStep > step.id ? 'bg-green-600 text-white' : 
+                    ${currentStep > step.id ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white' : 
                       currentStep === step.id ? 'bg-blue-600 text-white' : 
                       'bg-gray-200 text-gray-600'}
                   `}>
@@ -138,7 +138,7 @@ export default function CertificationWizard() {
                     {step.title}
                   </span>
                   {index < steps.length - 1 && (
-                    <div className={`w-16 h-0.5 mx-4 ${currentStep > step.id ? 'bg-green-600' : 'bg-gray-200'}`} />
+                    <div className={`w-16 h-0.5 mx-4 ${currentStep > step.id ? 'bg-gradient-to-r from-cyan-500 to-blue-500' : 'bg-gray-200'}`} />
                   )}
                 </div>
               ))}

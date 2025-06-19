@@ -508,7 +508,7 @@ export default function PublicQuote() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="mb-6 p-4 bg-green-50 rounded-lg">
+              <div className="mb-6 p-4 bg-cyan-50 rounded-lg">
                 <div className="flex items-center justify-between">
                   <span className="text-green-800 font-medium">Importe a pagar:</span>
                   <span className="text-2xl font-bold text-green-600">

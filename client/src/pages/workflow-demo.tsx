@@ -128,7 +128,7 @@ const demoSteps = [
 ];
 
 const statusColors = {
-  completed: "bg-green-100 text-green-800",
+  completed: "bg-cyan-100 text-cyan-800",
   in_progress: "bg-blue-100 text-blue-800",
   pending: "bg-gray-100 text-gray-600"
 };
@@ -152,7 +152,7 @@ export default function WorkflowDemo() {
   const currentStep = demoSteps.find(step => step.id === selectedStep);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
@@ -165,7 +165,7 @@ export default function WorkflowDemo() {
           <Button 
             onClick={playDemo}
             disabled={isPlaying}
-            className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 text-lg"
+            className="btn-certifive px-8 py-3 text-lg"
           >
             <Play className="w-5 h-5 mr-2" />
             {isPlaying ? "Reproduciendo..." : "Ver Demostración Completa"}
@@ -193,7 +193,7 @@ export default function WorkflowDemo() {
                             selectedStep === step.id 
                               ? 'bg-blue-600 text-white ring-4 ring-blue-200' 
                               : step.status === 'completed'
-                              ? 'bg-green-500 text-white'
+                              ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white'
                               : step.status === 'in_progress'
                               ? 'bg-blue-500 text-white'
                               : 'bg-gray-200 text-gray-500'
