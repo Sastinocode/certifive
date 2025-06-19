@@ -103,10 +103,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      // Call backend logout endpoint
-      await apiRequest("POST", "/api/auth/logout", {}, {
-        Authorization: `Bearer ${token}`
-      });
+      // Call backend logout endpoint if token exists
+      if (token) {
+        await apiRequest("POST", "/api/auth/logout", {}, {
+          Authorization: `Bearer ${token}`
+        });
+      }
     } catch (error) {
       console.log("Logout API call failed, continuing with local cleanup");
     }
@@ -115,11 +117,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setToken(null);
     localStorage.removeItem("auth_token");
+    localStorage.removeItem("auth-token");
     localStorage.clear();
     sessionStorage.clear();
     
-    // Force page reload to ensure complete state reset
+    // Clear any cookies
+    document.cookie.split(";").forEach(function(c) { 
+      document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+    });
+    
+    // Force page reload to ensure complete state reset and redirect to landing
     window.location.href = "/";
+    window.location.reload();
   };
 
   const value = {

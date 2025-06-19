@@ -10,12 +10,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, Settings, LogOut, Shield } from "lucide-react";
+import { User, Settings, LogOut, Shield, Loader2 } from "lucide-react";
 import { Link } from "wouter";
+import { useToast } from "@/hooks/use-toast";
 
 export function ProfileMenu() {
   const { user, isLoading, logout } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const { toast } = useToast();
 
   if (isLoading) {
     return (
@@ -35,8 +38,27 @@ export function ProfileMenu() {
     ? `${user.firstName} ${user.lastName}`
     : user.email || "Usuario";
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+      setIsDropdownOpen(false);
+      
+      toast({
+        title: "Cerrando sesión...",
+        description: "Por favor espera un momento",
+      });
+      
+      await logout();
+    } catch (error) {
+      console.error("Error durante logout:", error);
+      toast({
+        title: "Error al cerrar sesión",
+        description: "Inténtalo de nuevo",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   return (
@@ -91,10 +113,15 @@ export function ProfileMenu() {
         
         <DropdownMenuItem 
           onClick={handleLogout}
-          className="cursor-pointer text-red-600 dark:text-red-400 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-900/20"
+          disabled={isLoggingOut}
+          className="cursor-pointer text-red-600 dark:text-red-400 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-900/20 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <LogOut className="mr-2 h-4 w-4" />
-          <span>Cerrar Sesión</span>
+          {isLoggingOut ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <LogOut className="mr-2 h-4 w-4" />
+          )}
+          <span>{isLoggingOut ? "Cerrando..." : "Cerrar Sesión"}</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
