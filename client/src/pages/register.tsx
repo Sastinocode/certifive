@@ -320,6 +320,7 @@ export default function Register() {
         </div>
       </div>
 
+      <div className="container mx-auto px-4 py-12">
         <div className="grid lg:grid-cols-2 gap-12 items-center max-w-6xl mx-auto">
           {/* Registration Form */}
           <Card className="w-full max-w-md mx-auto backdrop-blur-sm bg-white/90 border-0 shadow-xl">
