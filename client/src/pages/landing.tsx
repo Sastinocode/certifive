@@ -1,10 +1,12 @@
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Zap, Shield, FileText, Users, TrendingUp, MessageSquare } from "lucide-react";
+import { Zap, Shield, FileText, Users, TrendingUp, MessageSquare, Play } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Landing() {
   const [, navigate] = useLocation();
+  const { loginDemo } = useAuth();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">

@@ -16,6 +16,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (userData: RegisterData) => Promise<void>;
   logout: () => void;
+  loginDemo: () => void;
   isLoading: boolean;
   isAuthenticated: boolean;
 }
@@ -35,6 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(localStorage.getItem("auth_token"));
   const [isLoading, setIsLoading] = useState(true);
+  const [hasLoggedOut, setHasLoggedOut] = useState(false);
 
   // Check if user is authenticated on app load
   useEffect(() => {
@@ -51,8 +53,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           localStorage.removeItem("auth_token");
           setToken(null);
         }
-      } else {
-        // Demo mode - create a demo user for immediate access
+      } else if (!hasLoggedOut) {
+        // Demo mode - create a demo user for immediate access (only if not explicitly logged out)
         const demoUser = {
           id: "demo-user",
           email: "demo@certificacion.com",
@@ -113,11 +115,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log("Logout API call failed, continuing with local cleanup");
     }
     
+    // Mark as explicitly logged out
+    setHasLoggedOut(true);
+    
     // Clear all local state and storage
     setUser(null);
     setToken(null);
     localStorage.removeItem("auth_token");
     localStorage.removeItem("auth-token");
+    localStorage.removeItem("demo_user");
     localStorage.clear();
     sessionStorage.clear();
     
@@ -131,12 +137,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.location.reload();
   };
 
+  const loginDemo = () => {
+    setHasLoggedOut(false);
+    const demoUser = {
+      id: "demo-user",
+      email: "demo@certificacion.com",
+      firstName: "Usuario",
+      lastName: "Demo",
+      company: "Empresa Demo",
+      role: "demo"
+    };
+    const demoToken = "demo-token-" + Date.now();
+    
+    setUser(demoUser);
+    setToken(demoToken);
+    localStorage.setItem("auth_token", demoToken);
+    localStorage.setItem("demo_user", JSON.stringify(demoUser));
+  };
+
   const value = {
     user,
     token,
     login,
     register,
     logout,
+    loginDemo,
     isLoading,
     isAuthenticated: !!user,
   };
