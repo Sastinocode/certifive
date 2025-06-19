@@ -2407,9 +2407,9 @@ ${message ? `\n📝 ${message}` : ''}
   }
 
   // Backup system endpoints
-  app.post('/api/backup/create', isAuthenticated, async (req: any, res) => {
+  app.post('/api/backup/create', authenticateToken, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.userId;
       const backupFile = await backupService.createBackup(userId);
       
       res.json({ 
@@ -2423,9 +2423,9 @@ ${message ? `\n📝 ${message}` : ''}
     }
   });
 
-  app.get('/api/backup/status', isAuthenticated, async (req: any, res) => {
+  app.get('/api/backup/status', authenticateToken, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.userId;
       const status = await backupService.getBackupStatus(userId);
       res.json(status);
     } catch (error) {
@@ -2434,9 +2434,9 @@ ${message ? `\n📝 ${message}` : ''}
     }
   });
 
-  app.get('/api/backup/list', isAuthenticated, async (req: any, res) => {
+  app.get('/api/backup/list', authenticateToken, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.userId;
       const backups = await backupService.listBackups(userId);
       res.json(backups);
     } catch (error) {
@@ -2446,9 +2446,9 @@ ${message ? `\n📝 ${message}` : ''}
   });
 
   // Certificate settings endpoints
-  app.get('/api/settings/certificates', isAuthenticated, async (req: any, res) => {
+  app.get('/api/settings/certificates', authenticateToken, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.userId;
       // In a real implementation, these would be stored in database per user
       const settings = {
         defaultValidity: "10",
@@ -2461,9 +2461,9 @@ ${message ? `\n📝 ${message}` : ''}
     }
   });
 
-  app.post('/api/settings/certificates', isAuthenticated, async (req: any, res) => {
+  app.post('/api/settings/certificates', authenticateToken, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.userId;
       const { defaultValidity, autoBackup } = req.body;
       
       // Here would save settings to database per user
