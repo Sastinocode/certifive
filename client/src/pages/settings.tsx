@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import Sidebar from "@/components/layout/sidebar";
 import { useToast } from "@/hooks/use-toast";
+import { NotificationStatus } from "@/components/notifications/NotificationStatus";
 import { 
   Settings as SettingsIcon, 
   User, 
@@ -218,6 +219,12 @@ export default function Settings() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
+                {/* Notification System Status */}
+                <div className="mb-6">
+                  <NotificationStatus />
+                </div>
+
+                <Separator />
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>

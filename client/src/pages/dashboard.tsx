@@ -12,7 +12,6 @@ import { apiRequest } from "@/lib/queryClient";
 import Sidebar from "@/components/layout/sidebar";
 import { DashboardSkeletons, TableSkeleton } from "@/components/ui/loading-states";
 import { NotificationModal } from "@/components/notifications/NotificationModal";
-import { NotificationStatus } from "@/components/notifications/NotificationStatus";
 
 import { 
   IdCard, 
@@ -175,11 +174,6 @@ export default function Dashboard() {
             <div className="flex items-center space-x-4">
               <NotificationModal />
             </div>
-          </div>
-
-          {/* Notification Status */}
-          <div className="mb-6">
-            <NotificationStatus />
           </div>
 
           {/* Stats Cards */}
