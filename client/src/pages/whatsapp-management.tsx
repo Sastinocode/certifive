@@ -97,19 +97,13 @@ export default function WhatsAppManagement() {
   });
 
   // Handle authentication
+  // Handle authentication - removed automatic redirect to fix session expired error
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      toast({
-        title: "Sesión expirada",
-        description: "Redirigiendo al login...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/api/login";
-      }, 500);
-      return;
+      // Don't automatically redirect, let the user stay on the page
+      console.log("User not authenticated, but staying on WhatsApp management page");
     }
-  }, [isAuthenticated, isLoading, toast]);
+  }, [isAuthenticated, isLoading]);
 
   // Fetch conversations
   const { data: conversations = [], isLoading: loadingConversations } = useQuery({
@@ -263,6 +257,45 @@ export default function WhatsAppManagement() {
         <div className="flex-1 overflow-y-auto">
           {loadingConversations ? (
             <div className="p-4 text-center text-gray-500">Cargando conversaciones...</div>
+          ) : !whatsappStatus?.integrationActive ? (
+            <div className="p-6 text-center">
+              <div className="bg-gradient-to-r from-teal-50 to-blue-50 rounded-lg p-6 border border-teal-200">
+                <MessageCircle className="w-16 h-16 mx-auto mb-4 text-teal-500" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Configura tu WhatsApp Business
+                </h3>
+                <p className="text-gray-600 mb-4 text-sm leading-relaxed">
+                  Para recibir y gestionar conversaciones de clientes, necesitas conectar tu cuenta de WhatsApp Business.
+                </p>
+                <div className="space-y-3 text-left">
+                  <div className="flex items-start space-x-2">
+                    <div className="w-5 h-5 bg-teal-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-xs text-teal-600 font-bold">1</span>
+                    </div>
+                    <p className="text-sm text-gray-700">Crea una aplicación en Meta for Developers</p>
+                  </div>
+                  <div className="flex items-start space-x-2">
+                    <div className="w-5 h-5 bg-teal-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-xs text-teal-600 font-bold">2</span>
+                    </div>
+                    <p className="text-sm text-gray-700">Obtén tu token de acceso y configuración de API</p>
+                  </div>
+                  <div className="flex items-start space-x-2">
+                    <div className="w-5 h-5 bg-teal-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-xs text-teal-600 font-bold">3</span>
+                    </div>
+                    <p className="text-sm text-gray-700">Configura los datos en el formulario</p>
+                  </div>
+                </div>
+                <Button 
+                  className="mt-4 bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-600 hover:to-blue-700"
+                  onClick={() => setShowConfigDialog(true)}
+                >
+                  <Settings className="w-4 h-4 mr-2" />
+                  Configurar WhatsApp Business
+                </Button>
+              </div>
+            </div>
           ) : conversations.length === 0 ? (
             <div className="p-4 text-center text-gray-500">
               <MessageCircle className="w-12 h-12 mx-auto mb-2 text-gray-300" />
@@ -452,90 +485,165 @@ export default function WhatsAppManagement() {
 
       {/* WhatsApp Configuration Dialog */}
       <Dialog open={showConfigDialog} onOpenChange={setShowConfigDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center">
-              <MessageCircle className="w-5 h-5 mr-2 text-green-600" />
-              Configurar WhatsApp Business
+              <MessageCircle className="w-5 h-5 mr-2 text-teal-600" />
+              Registrar WhatsApp Business
             </DialogTitle>
+            <p className="text-sm text-gray-600 mt-2">
+              Conecta tu cuenta de WhatsApp Business para automatizar conversaciones con clientes
+            </p>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="businessToken">Token de Acceso Permanente</Label>
-              <Input
-                id="businessToken"
-                type="password"
-                placeholder="EAAG..."
-                value={whatsappConfig.businessToken}
-                onChange={(e) => setWhatsappConfig(prev => ({ ...prev, businessToken: e.target.value }))}
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Obténlo desde la configuración de tu aplicación en Meta Developers
-              </p>
-            </div>
-            
-            <div>
-              <Label htmlFor="phoneNumberId">ID del Número de Teléfono</Label>
-              <Input
-                id="phoneNumberId"
-                placeholder="1234567890123456"
-                value={whatsappConfig.phoneNumberId}
-                onChange={(e) => setWhatsappConfig(prev => ({ ...prev, phoneNumberId: e.target.value }))}
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="businessAccountId">ID de Cuenta Business</Label>
-              <Input
-                id="businessAccountId"
-                placeholder="1234567890123456"
-                value={whatsappConfig.businessAccountId}
-                onChange={(e) => setWhatsappConfig(prev => ({ ...prev, businessAccountId: e.target.value }))}
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="webhookVerifyToken">Token de Verificación Webhook</Label>
-              <Input
-                id="webhookVerifyToken"
-                placeholder="tu_token_secreto"
-                value={whatsappConfig.webhookVerifyToken}
-                onChange={(e) => setWhatsappConfig(prev => ({ ...prev, webhookVerifyToken: e.target.value }))}
-              />
-            </div>
-
-            <div className="bg-yellow-50 p-3 rounded-md">
-              <div className="flex items-start">
-                <AlertTriangle className="w-4 h-4 text-yellow-600 mt-0.5 mr-2" />
-                <div className="text-sm text-yellow-800">
-                  <p className="font-medium">Configurar Webhook</p>
-                  <p className="mt-1">URL: <code className="bg-yellow-100 px-1 rounded">https://tu-dominio.com/api/webhooks/whatsapp</code></p>
-                  <p className="mt-1">Token de verificación: usar el mismo token configurado arriba</p>
+          
+          <div className="space-y-6">
+            {/* Setup Instructions */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h4 className="font-semibold text-blue-900 mb-3 flex items-center">
+                <span className="bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded mr-2">GUÍA</span>
+                Pasos para configurar WhatsApp Business API
+              </h4>
+              <div className="space-y-3 text-sm">
+                <div className="flex items-start space-x-3">
+                  <span className="bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full">1</span>
+                  <div>
+                    <p className="font-medium text-blue-900">Crear aplicación en Meta for Developers</p>
+                    <p className="text-blue-700">Ve a <code className="bg-blue-100 px-1 rounded">developers.facebook.com</code> y crea una nueva app</p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <span className="bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full">2</span>
+                  <div>
+                    <p className="font-medium text-blue-900">Agregar producto WhatsApp Business</p>
+                    <p className="text-blue-700">En tu app, agrega el producto "WhatsApp Business API"</p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-3">
+                  <span className="bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full">3</span>
+                  <div>
+                    <p className="font-medium text-blue-900">Obtener credenciales</p>
+                    <p className="text-blue-700">Copia el token de acceso, Phone Number ID y Business Account ID</p>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="integrationActive"
-                checked={whatsappConfig.integrationActive}
-                onChange={(e) => setWhatsappConfig(prev => ({ ...prev, integrationActive: e.target.checked }))}
-                className="rounded"
-              />
-              <Label htmlFor="integrationActive">Activar integración WhatsApp</Label>
+            {/* Configuration Form */}
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="businessToken" className="text-sm font-medium">
+                  Token de Acceso Permanente *
+                </Label>
+                <Input
+                  id="businessToken"
+                  type="password"
+                  placeholder="EAAG... (ejemplo: EAAGxxxxxxxxxxxx)"
+                  value={whatsappConfig.businessToken}
+                  onChange={(e) => setWhatsappConfig(prev => ({ ...prev, businessToken: e.target.value }))}
+                  className="mt-1"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Se encuentra en tu app de Meta → WhatsApp → Configuración → Tokens de acceso
+                </p>
+              </div>
+              
+              <div>
+                <Label htmlFor="phoneNumberId" className="text-sm font-medium">
+                  ID del Número de Teléfono *
+                </Label>
+                <Input
+                  id="phoneNumberId"
+                  placeholder="123456789012345 (15 dígitos)"
+                  value={whatsappConfig.phoneNumberId}
+                  onChange={(e) => setWhatsappConfig(prev => ({ ...prev, phoneNumberId: e.target.value }))}
+                  className="mt-1"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  ID numérico de tu número de WhatsApp Business
+                </p>
+              </div>
+              
+              <div>
+                <Label htmlFor="businessAccountId" className="text-sm font-medium">
+                  ID de Cuenta Business *
+                </Label>
+                <Input
+                  id="businessAccountId"
+                  placeholder="123456789012345 (15 dígitos)"
+                  value={whatsappConfig.businessAccountId}
+                  onChange={(e) => setWhatsappConfig(prev => ({ ...prev, businessAccountId: e.target.value }))}
+                  className="mt-1"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Se encuentra en tu WhatsApp Business Account
+                </p>
+              </div>
+              
+              <div>
+                <Label htmlFor="webhookVerifyToken" className="text-sm font-medium">
+                  Token de Verificación Webhook *
+                </Label>
+                <Input
+                  id="webhookVerifyToken"
+                  placeholder="mi_token_secreto_123"
+                  value={whatsappConfig.webhookVerifyToken}
+                  onChange={(e) => setWhatsappConfig(prev => ({ ...prev, webhookVerifyToken: e.target.value }))}
+                  className="mt-1"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Crea un token personalizado para verificar tu webhook
+                </p>
+              </div>
+
+              {/* Webhook Configuration Info */}
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <div className="flex items-start">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 mr-2 flex-shrink-0" />
+                  <div className="text-sm">
+                    <p className="font-medium text-amber-800 mb-2">Configuración del Webhook</p>
+                    <div className="space-y-1 text-amber-700">
+                      <p><span className="font-medium">URL del Webhook:</span></p>
+                      <code className="bg-amber-100 px-2 py-1 rounded text-xs block">
+                        https://tu-dominio-replit.replit.app/api/webhooks/whatsapp
+                      </code>
+                      <p className="mt-2"><span className="font-medium">Token de verificación:</span> usar el mismo token configurado arriba</p>
+                      <p className="text-xs mt-2">⚠️ Configura este webhook en tu aplicación de Meta for Developers</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Activation Toggle */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <input
+                    type="checkbox"
+                    id="integrationActive"
+                    checked={whatsappConfig.integrationActive}
+                    onChange={(e) => setWhatsappConfig(prev => ({ ...prev, integrationActive: e.target.checked }))}
+                    className="w-4 h-4 text-teal-600 rounded"
+                  />
+                  <Label htmlFor="integrationActive" className="text-sm font-medium">
+                    Activar integración WhatsApp Business
+                  </Label>
+                </div>
+                <p className="text-xs text-gray-500 mt-1 ml-7">
+                  Una vez activado, podrás recibir y enviar mensajes automáticamente
+                </p>
+              </div>
             </div>
 
-            <div className="flex justify-end space-x-2 pt-4">
+            {/* Action Buttons */}
+            <div className="flex justify-end space-x-3 pt-4 border-t">
               <Button variant="outline" onClick={() => setShowConfigDialog(false)}>
                 Cancelar
               </Button>
               <Button 
                 onClick={() => configureWhatsAppMutation.mutate(whatsappConfig)}
-                disabled={configureWhatsAppMutation.isPending}
-                className="btn-certifive"
+                disabled={configureWhatsAppMutation.isPending || !whatsappConfig.businessToken || !whatsappConfig.phoneNumberId}
+                className="bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-600 hover:to-blue-700"
               >
-                {configureWhatsAppMutation.isPending ? "Guardando..." : "Guardar Configuración"}
+                {configureWhatsAppMutation.isPending ? "Configurando..." : "Conectar WhatsApp Business"}
               </Button>
             </div>
           </div>
