@@ -48,8 +48,7 @@ export default function Settings() {
     emailCertifications: true,
     emailReports: true,
     emailReminders: false,
-    pushNotifications: true,
-    smsAlerts: false
+    pushNotifications: true
   });
 
   // Certificate settings
@@ -61,7 +60,7 @@ export default function Settings() {
   // Backup status
   const [backupStatus, setBackupStatus] = useState({
     enabled: false,
-    lastBackup: null,
+    lastBackup: null as string | null,
     backupCount: 0,
     totalSize: 0
   });
@@ -408,21 +407,7 @@ export default function Settings() {
                     />
                   </div>
 
-                  <Separator />
 
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label className="text-sm font-medium">Alertas SMS (próximamente)</Label>
-                      <p className="text-sm text-gray-500">Notificaciones importantes por mensaje de texto</p>
-                    </div>
-                    <Switch
-                      checked={notifications.smsAlerts}
-                      onCheckedChange={(checked) => 
-                        setNotifications(prev => ({ ...prev, smsAlerts: checked }))
-                      }
-                      disabled
-                    />
-                  </div>
                 </div>
 
                 <Button onClick={handleNotificationsSave} disabled={isSaving}>
