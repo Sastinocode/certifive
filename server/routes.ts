@@ -2598,6 +2598,33 @@ ${message ? `\n📝 ${message}` : ''}
     }
   });
 
+  app.patch('/api/profile/update', authenticateToken, async (req: any, res) => {
+    try {
+      const userId = req.userId;
+      const { firstName, lastName, email, phone, company, license, address, dni } = req.body;
+      
+      // Update user profile with new data including DNI
+      const updatedUser = await storage.updateUser(userId, {
+        firstName,
+        lastName,
+        email,
+        phone,
+        company,
+        license,
+        address,
+        dni
+      });
+      
+      res.json({ 
+        message: "Perfil actualizado exitosamente",
+        user: updatedUser
+      });
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      res.status(500).json({ message: "Error al actualizar perfil" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
