@@ -17,6 +17,7 @@ import Properties from "@/pages/properties";
 import Pricing from "@/pages/pricing";
 import Reports from "@/pages/reports";
 import Marketing from "@/pages/marketing";
+import Automations from "@/pages/automations";
 import Settings from "@/pages/settings";
 import StripeIntegration from "@/pages/stripe-integration";
 import Landing from "@/pages/landing";
@@ -68,6 +69,7 @@ function Router() {
           <Route path="/tarifas" component={Pricing} />
           <Route path="/informes" component={Reports} />
           <Route path="/marketing" component={Marketing} />
+          <Route path="/automatizaciones" component={Automations} />
           <Route path="/stripe" component={StripeIntegration} />
           <Route path="/configuracion" component={Settings} />
           <Route path="/settings" component={Settings} />
