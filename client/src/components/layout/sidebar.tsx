@@ -14,7 +14,8 @@ import {
   Euro,
   MessageCircle,
   Menu,
-  ChevronLeft
+  ChevronLeft,
+  CreditCard
 } from "lucide-react";
 import certifiveLogo from "@assets/Logo_1750326352340.jpg";
 
@@ -40,6 +41,7 @@ export default function Sidebar({ selectedTab, onTabChange }: SidebarProps) {
     { id: "properties", label: "Propiedades", icon: Building, path: "/propiedades" },
     { id: "pricing", label: "Tarifas", icon: Euro, path: "/tarifas" },
     { id: "reports", label: "Informes", icon: BarChart, path: "/informes" },
+    { id: "stripe", label: "Pagos Stripe", icon: CreditCard, path: "/stripe" },
     { id: "settings", label: "Configuración", icon: Settings, path: "/configuracion" },
   ];
 

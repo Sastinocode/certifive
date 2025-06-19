@@ -17,6 +17,7 @@ import Properties from "@/pages/properties";
 import Pricing from "@/pages/pricing";
 import Reports from "@/pages/reports";
 import Settings from "@/pages/settings";
+import StripeIntegration from "@/pages/stripe-integration";
 import Landing from "@/pages/landing";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
