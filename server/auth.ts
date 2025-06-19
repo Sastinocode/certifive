@@ -40,6 +40,27 @@ export async function authenticateToken(req: AuthRequest, res: Response, next: N
     return res.status(401).json({ message: "Token de acceso requerido" });
   }
 
+  // Handle demo tokens
+  if (token.startsWith("demo-token-")) {
+    const demoUser = {
+      id: "demo-user",
+      email: "demo@certificacion.com",
+      firstName: "Usuario",
+      lastName: "Demo",
+      company: "Empresa Demo",
+      role: "demo",
+      dni: "",
+      phone: "",
+      address: "",
+      license: "",
+      isVerified: true
+    };
+    
+    req.userId = "demo-user";
+    req.user = demoUser;
+    return next();
+  }
+
   const payload = verifyToken(token);
   if (!payload) {
     return res.status(403).json({ message: "Token inválido o expirado" });
