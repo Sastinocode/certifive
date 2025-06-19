@@ -2461,9 +2461,9 @@ ${message ? `\n📝 ${message}` : ''}
     }
   });
 
-  app.get('/api/backup/status', authenticateToken, async (req: any, res) => {
+  app.get('/api/backup/status', unifiedAuth, async (req: any, res) => {
     try {
-      const userId = req.userId;
+      const userId = req.user?.claims?.sub || req.userId || req.user?.id;
       const status = await backupService.getBackupStatus(userId);
       res.json(status);
     } catch (error) {
@@ -2623,9 +2623,9 @@ ${message ? `\n📝 ${message}` : ''}
     }
   });
 
-  app.get('/api/profile/validation', authenticateToken, async (req: any, res) => {
+  app.get('/api/profile/validation', unifiedAuth, async (req: any, res) => {
     try {
-      const userId = req.userId;
+      const userId = req.user?.claims?.sub || req.userId || req.user?.id;
       const validation = await invoiceService.validateProfessionalProfile(userId);
       
       res.json(validation);
