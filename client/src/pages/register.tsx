@@ -4,9 +4,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { Zap, Shield, TrendingUp, Users, Eye, EyeOff } from "lucide-react";
+import { Zap, Shield, TrendingUp, Users, Eye, EyeOff, Chrome, Mail, Lock, User, Building, Phone } from "lucide-react";
+import certifiveLogo from "@assets/Logo_1750326352340.jpg";
 
 export default function Register() {
   const [, navigate] = useLocation();
@@ -25,19 +27,39 @@ export default function Register() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validaciones básicas
+    if (!formData.email || !formData.password || !formData.firstName || !formData.lastName) {
+      toast({
+        title: "Campos requeridos",
+        description: "Por favor completa todos los campos obligatorios",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (formData.password.length < 8) {
+      toast({
+        title: "Contraseña muy corta",
+        description: "La contraseña debe tener al menos 8 caracteres",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       await register(formData);
       toast({
         title: "¡Cuenta creada exitosamente!",
-        description: "Bienvenido a EnergyPro España. Tu cuenta ha sido activada.",
+        description: "Bienvenido a CERTIFIVE. Tu cuenta ha sido activada.",
       });
       navigate("/");
     } catch (error: any) {
       toast({
         title: "Error en el registro",
-        description: error.message,
+        description: error.message || "No se pudo crear la cuenta. Inténtalo de nuevo.",
         variant: "destructive",
       });
     } finally {
@@ -45,23 +67,258 @@ export default function Register() {
     }
   };
 
+  const handleGoogleSignup = () => {
+    window.location.href = "/api/auth/google";
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50">
-      {/* Hero Section */}
-      <div className="container mx-auto px-4 py-12">
-        <div className="text-center mb-12">
-          <div className="flex justify-center items-center gap-3 mb-6">
-            <div className="w-12 h-12 bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl flex items-center justify-center">
-              <Zap className="w-7 h-7 text-white" />
-            </div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-              EnergyPro España
-            </h1>
-          </div>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Únete a la plataforma líder en certificaciones energéticas
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
+      {/* Header */}
+      <div className="absolute top-6 left-6">
+        <div className="flex items-center space-x-3">
+          <img src={certifiveLogo} alt="CERTIFIVE" className="h-10 w-10 rounded-lg" />
+          <span className="text-2xl font-bold bg-gradient-to-r from-teal-600 to-blue-600 bg-clip-text text-transparent">
+            CERTIFIVE
+          </span>
         </div>
+      </div>
+
+      <div className="flex min-h-screen">
+        {/* Left side - Benefits */}
+        <div className="hidden lg:flex lg:w-1/2 flex-col justify-center px-12">
+          <div className="max-w-md mx-auto">
+            <h1 className="text-4xl font-bold text-gray-900 mb-6">
+              Únete a la plataforma líder en certificación energética
+            </h1>
+            <p className="text-lg text-gray-600 mb-8">
+              Automatiza tu flujo de trabajo, gestiona clientes y genera certificados profesionales en minutos.
+            </p>
+            
+            <div className="space-y-6">
+              <div className="flex items-start space-x-4">
+                <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-r from-teal-500 to-blue-500 rounded-lg flex items-center justify-center">
+                  <Zap className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-1">Automatización completa</h3>
+                  <p className="text-gray-600 text-sm">Desde WhatsApp hasta entrega final del certificado</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start space-x-4">
+                <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-r from-teal-500 to-blue-500 rounded-lg flex items-center justify-center">
+                  <Shield className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-1">Cumplimiento normativo</h3>
+                  <p className="text-gray-600 text-sm">Certificados que cumplen toda la normativa española</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start space-x-4">
+                <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-r from-teal-500 to-blue-500 rounded-lg flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-1">Gestión financiera</h3>
+                  <p className="text-gray-600 text-sm">Control total de pagos, facturas y contabilidad</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right side - Form */}
+        <div className="w-full lg:w-1/2 flex flex-col justify-center px-6 py-12">
+          <div className="max-w-md mx-auto w-full">
+            <Card className="border-0 shadow-2xl">
+              <CardHeader className="text-center pb-6">
+                <CardTitle className="text-2xl font-bold text-gray-900">Crear cuenta</CardTitle>
+                <CardDescription className="text-gray-600">
+                  Comienza tu prueba gratuita de 14 días
+                </CardDescription>
+              </CardHeader>
+              
+              <CardContent className="space-y-6">
+                {/* Google Sign Up */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleGoogleSignup}
+                  className="w-full h-12 border-2 hover:bg-gray-50 transition-colors"
+                  disabled={isLoading}
+                >
+                  <Chrome className="w-5 h-5 mr-3 text-red-500" />
+                  <span className="font-medium">Continuar con Google</span>
+                </Button>
+
+                <div className="relative">
+                  <Separator />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="bg-white px-3 text-sm text-gray-500">o</span>
+                  </div>
+                </div>
+
+                {/* Email Form */}
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="firstName" className="text-sm font-medium">
+                        Nombre *
+                      </Label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <Input
+                          id="firstName"
+                          type="text"
+                          placeholder="Tu nombre"
+                          value={formData.firstName}
+                          onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                          className="pl-10 h-12"
+                          required
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="lastName" className="text-sm font-medium">
+                        Apellidos *
+                      </Label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <Input
+                          id="lastName"
+                          type="text"
+                          placeholder="Tus apellidos"
+                          value={formData.lastName}
+                          onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                          className="pl-10 h-12"
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-sm font-medium">
+                      Email *
+                    </Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="tu@email.com"
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        className="pl-10 h-12"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="password" className="text-sm font-medium">
+                      Contraseña *
+                    </Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Mínimo 8 caracteres"
+                        value={formData.password}
+                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                        className="pl-10 pr-10 h-12"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="company" className="text-sm font-medium">
+                        Empresa
+                      </Label>
+                      <div className="relative">
+                        <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <Input
+                          id="company"
+                          type="text"
+                          placeholder="Tu empresa"
+                          value={formData.company}
+                          onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                          className="pl-10 h-12"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="phone" className="text-sm font-medium">
+                        Teléfono
+                      </Label>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <Input
+                          id="phone"
+                          type="tel"
+                          placeholder="+34 600 000 000"
+                          value={formData.phone}
+                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                          className="pl-10 h-12"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full h-12 btn-certifive text-white font-medium"
+                  >
+                    {isLoading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Creando cuenta...
+                      </>
+                    ) : (
+                      "Crear cuenta gratuita"
+                    )}
+                  </Button>
+                </form>
+
+                <div className="text-center text-sm text-gray-600">
+                  ¿Ya tienes cuenta?{" "}
+                  <button
+                    onClick={() => navigate("/login")}
+                    className="font-medium text-teal-600 hover:text-teal-500 transition-colors"
+                  >
+                    Iniciar sesión
+                  </button>
+                </div>
+
+                <div className="text-xs text-gray-500 text-center">
+                  Al crear una cuenta, aceptas nuestros{" "}
+                  <a href="#" className="underline hover:text-gray-700">
+                    Términos de Servicio
+                  </a>{" "}
+                  y{" "}
+                  <a href="#" className="underline hover:text-gray-700">
+                    Política de Privacidad
+                  </a>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
 
         <div className="grid lg:grid-cols-2 gap-12 items-center max-w-6xl mx-auto">
           {/* Registration Form */}
