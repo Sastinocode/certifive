@@ -712,6 +712,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
             paidAt: new Date(),
           });
 
+          // Create notification for payment received
+          if (quote && quote.userId) {
+            await notificationService.notifyPaymentReceived(
+              quote.userId,
+              quote.clientName || 'Cliente',
+              paymentIntent.amount / 100, // Convert from cents
+              parseInt(paymentIntent.id)
+            );
+          }
+
           // Trigger automatic certification form sending via WhatsApp
           if (quote && quote.whatsappConversationId) {
             await sendCertificationFormToClient(quote);
@@ -875,7 +885,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Create notification for new certification
       await notificationService.notifyNewCertification(
-        userId,
+        quote.userId,
         formData.fullName,
         formData.cadastralRef,
         certification.id
@@ -1540,6 +1550,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching notifications:", error);
       res.status(500).json({ message: "Failed to fetch notifications" });
+    }
+  });
+
+  // Test notification endpoint for demonstration
+  app.post('/api/notifications/test', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { type } = req.body;
+
+      switch (type) {
+        case 'new_certification':
+          await notificationService.notifyNewCertification(
+            userId,
+            'Juan Pérez',
+            '1234567890123',
+            999
+          );
+          break;
+        case 'payment_received':
+          await notificationService.notifyPaymentReceived(
+            userId,
+            'María García',
+            450,
+            888
+          );
+          break;
+        case 'certificate_expiring':
+          const expirationDate = new Date();
+          expirationDate.setDate(expirationDate.getDate() + 30);
+          await notificationService.notifyCertificateExpiring(
+            userId,
+            'Carlos López',
+            '9876543210987',
+            expirationDate.toLocaleDateString('es-ES')
+          );
+          break;
+        case 'quote_request':
+          await notificationService.notifyQuoteRequest(
+            userId,
+            'Ana Martínez',
+            '5555555555555',
+            777
+          );
+          break;
+        default:
+          return res.status(400).json({ message: 'Invalid notification type' });
+      }
+
+      res.json({ message: 'Test notification created successfully' });
+    } catch (error) {
+      console.error("Error creating test notification:", error);
+      res.status(500).json({ message: "Failed to create test notification" });
     }
   });
 
