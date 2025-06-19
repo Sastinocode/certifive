@@ -16,6 +16,7 @@ import {
   Menu,
   ChevronLeft
 } from "lucide-react";
+import certifiveLogo from "@assets/Logo_1750326352340.jpg";
 
 
 interface SidebarProps {
@@ -48,10 +49,11 @@ export default function Sidebar({ selectedTab, onTabChange }: SidebarProps) {
         {/* Logo */}
         <div className="flex items-center flex-shrink-0 px-6 py-4 border-b border-gray-200">
           <div className="flex items-center">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center mr-3">
-              <Leaf className="w-5 h-5 text-white" />
-            </div>
-            {!isCollapsed && <h1 className="text-xl font-bold text-gray-900">CertificoEnergia</h1>}
+            <img 
+              src={certifiveLogo} 
+              alt="CERTIFIVE" 
+              className={`object-contain ${isCollapsed ? 'w-8 h-8' : 'h-8'}`}
+            />
           </div>
           <div className="ml-auto flex items-center space-x-2">
 

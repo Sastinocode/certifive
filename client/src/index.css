@@ -220,7 +220,7 @@
 
 /* Button improvements */
 .btn-primary {
-  background: linear-gradient(135deg, #10b981, #047857);
+  background: linear-gradient(135deg, #22d3ee, #0891b2);
   border: none;
   color: white;
   font-weight: 500;
@@ -228,14 +228,14 @@
 }
 
 .btn-primary:hover {
-  background: linear-gradient(135deg, #059669, #065f46);
+  background: linear-gradient(135deg, #06b6d4, #0e7490);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+  box-shadow: 0 4px 12px rgba(34, 211, 238, 0.4);
 }
 
 /* Notification improvements */
 .toast-success {
-  background: linear-gradient(135deg, #10b981, #047857);
+  background: linear-gradient(135deg, #22d3ee, #10b981);
   color: white;
   border: none;
 }
@@ -273,15 +273,15 @@
   --card-foreground: hsl(222, 84%, 4.9%);
   --border: hsl(214, 32%, 91%);
   --input: hsl(214, 32%, 91%);
-  --primary: hsl(142, 76%, 36%);
+  --primary: hsl(170, 70%, 45%);
   --primary-foreground: hsl(0, 0%, 100%);
-  --secondary: hsl(210, 40%, 96%);
+  --secondary: hsl(200, 50%, 95%);
   --secondary-foreground: hsl(222, 84%, 4.9%);
-  --accent: hsl(210, 40%, 96%);
-  --accent-foreground: hsl(222, 84%, 4.9%);
+  --accent: hsl(170, 70%, 95%);
+  --accent-foreground: hsl(170, 70%, 25%);
   --destructive: hsl(0, 84%, 60%);
   --destructive-foreground: hsl(210, 40%, 98%);
-  --ring: hsl(142, 76%, 36%);
+  --ring: hsl(170, 70%, 45%);
   --radius: 0.75rem;
   
   /* Energy efficiency colors */
