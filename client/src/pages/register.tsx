@@ -19,20 +19,27 @@ export default function Register() {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
+    confirmPassword: "",
     firstName: "",
     lastName: "",
     company: "",
     phone: "",
+    dni: "",
+    license: "",
+    address: "",
+    city: "",
+    postalCode: "",
+    province: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validaciones básicas
-    if (!formData.email || !formData.password || !formData.firstName || !formData.lastName) {
+    if (!formData.email || !formData.password || !formData.firstName || !formData.lastName || !formData.dni) {
       toast({
         title: "Campos requeridos",
-        description: "Por favor completa todos los campos obligatorios",
+        description: "Por favor completa todos los campos obligatorios marcados con *",
         variant: "destructive",
       });
       return;
@@ -47,16 +54,48 @@ export default function Register() {
       return;
     }
 
-    setIsLoading(true);
+    if (formData.password !== formData.confirmPassword) {
+      toast({
+        title: "Las contraseñas no coinciden",
+        description: "Por favor verifica que ambas contraseñas sean idénticas",
+        variant: "destructive",
+      });
+      return;
+    }
 
+    // Validar formato de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      toast({
+        title: "Email inválido",
+        description: "Por favor introduce un email válido",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validar DNI/NIF español
+    const dniRegex = /^[0-9]{8}[TRWAGMYFPDXBNJZSQVHLCKE]$/i;
+    const nieRegex = /^[XYZ][0-9]{7}[TRWAGMYFPDXBNJZSQVHLCKE]$/i;
+    if (!dniRegex.test(formData.dni) && !nieRegex.test(formData.dni)) {
+      toast({
+        title: "DNI/NIE inválido",
+        description: "Por favor introduce un DNI o NIE válido",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
     try {
       await register(formData);
       toast({
         title: "¡Cuenta creada exitosamente!",
-        description: "Bienvenido a CERTIFIVE. Tu cuenta ha sido activada.",
+        description: "Bienvenido a CERTIFIVE. Ya puedes comenzar a gestionar tus certificaciones.",
       });
       navigate("/");
     } catch (error: any) {
+      console.error("Error en el registro:", error);
       toast({
         title: "Error en el registro",
         description: error.message || "No se pudo crear la cuenta. Inténtalo de nuevo.",
@@ -129,13 +168,13 @@ export default function Register() {
         </div>
 
         {/* Right side - Form */}
-        <div className="w-full lg:w-1/2 flex flex-col justify-center px-6 py-12">
+        <div className="w-full lg:w-1/2 flex flex-col justify-center px-6 py-12 overflow-y-auto">
           <div className="max-w-md mx-auto w-full">
             <Card className="border-0 shadow-2xl">
               <CardHeader className="text-center pb-6">
-                <CardTitle className="text-2xl font-bold text-gray-900">Crear cuenta</CardTitle>
+                <CardTitle className="text-2xl font-bold text-gray-900">Registro Profesional</CardTitle>
                 <CardDescription className="text-gray-600">
-                  Comienza tu prueba gratuita de 14 días
+                  Crea tu cuenta de certificador energético
                 </CardDescription>
               </CardHeader>
               
@@ -159,107 +198,86 @@ export default function Register() {
                   </div>
                 </div>
 
-                {/* Email Form */}
+                {/* Professional Registration Form */}
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  {/* Datos Personales */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Datos Personales</h3>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="firstName" className="text-sm font-medium">
+                          Nombre *
+                        </Label>
+                        <div className="relative">
+                          <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <Input
+                            id="firstName"
+                            type="text"
+                            placeholder="Tu nombre"
+                            value={formData.firstName}
+                            onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                            className="pl-10 h-12"
+                            required
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="lastName" className="text-sm font-medium">
+                          Apellidos *
+                        </Label>
+                        <div className="relative">
+                          <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <Input
+                            id="lastName"
+                            type="text"
+                            placeholder="Tus apellidos"
+                            value={formData.lastName}
+                            onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                            className="pl-10 h-12"
+                            required
+                          />
+                        </div>
+                      </div>
+                    </div>
+
                     <div className="space-y-2">
-                      <Label htmlFor="firstName" className="text-sm font-medium">
-                        Nombre *
+                      <Label htmlFor="dni" className="text-sm font-medium">
+                        DNI/NIE *
                       </Label>
                       <div className="relative">
-                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <Shield className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                         <Input
-                          id="firstName"
+                          id="dni"
                           type="text"
-                          placeholder="Tu nombre"
-                          value={formData.firstName}
-                          onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                          placeholder="12345678A o X1234567A"
+                          value={formData.dni}
+                          onChange={(e) => setFormData({ ...formData, dni: e.target.value.toUpperCase() })}
                           className="pl-10 h-12"
                           required
                         />
                       </div>
                     </div>
-                    
+
                     <div className="space-y-2">
-                      <Label htmlFor="lastName" className="text-sm font-medium">
-                        Apellidos *
+                      <Label htmlFor="email" className="text-sm font-medium">
+                        Email Profesional *
                       </Label>
                       <div className="relative">
-                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                         <Input
-                          id="lastName"
-                          type="text"
-                          placeholder="Tus apellidos"
-                          value={formData.lastName}
-                          onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                          id="email"
+                          type="email"
+                          placeholder="certificador@empresa.com"
+                          value={formData.email}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                           className="pl-10 h-12"
                           required
                         />
                       </div>
                     </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="text-sm font-medium">
-                      Email *
-                    </Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="tu@email.com"
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="pl-10 h-12"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="password" className="text-sm font-medium">
-                      Contraseña *
-                    </Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <Input
-                        id="password"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="Mínimo 8 caracteres"
-                        value={formData.password}
-                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                        className="pl-10 pr-10 h-12"
-                        required
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                      >
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="company" className="text-sm font-medium">
-                        Empresa
-                      </Label>
-                      <div className="relative">
-                        <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <Input
-                          id="company"
-                          type="text"
-                          placeholder="Tu empresa"
-                          value={formData.company}
-                          onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                          className="pl-10 h-12"
-                        />
-                      </div>
-                    </div>
-                    
                     <div className="space-y-2">
                       <Label htmlFor="phone" className="text-sm font-medium">
                         Teléfono
@@ -269,7 +287,7 @@ export default function Register() {
                         <Input
                           id="phone"
                           type="tel"
-                          placeholder="+34 600 000 000"
+                          placeholder="+34 600 123 456"
                           value={formData.phone}
                           onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                           className="pl-10 h-12"
@@ -278,10 +296,160 @@ export default function Register() {
                     </div>
                   </div>
 
+                  {/* Datos Profesionales */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Datos Profesionales</h3>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="company" className="text-sm font-medium">
+                        Empresa/Despacho
+                      </Label>
+                      <div className="relative">
+                        <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <Input
+                          id="company"
+                          type="text"
+                          placeholder="Nombre de tu empresa"
+                          value={formData.company}
+                          onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                          className="pl-10 h-12"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="license" className="text-sm font-medium">
+                        Número de Colegiado/Licencia
+                      </Label>
+                      <div className="relative">
+                        <Shield className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <Input
+                          id="license"
+                          type="text"
+                          placeholder="Ej: COL-1234 o similar"
+                          value={formData.license}
+                          onChange={(e) => setFormData({ ...formData, license: e.target.value })}
+                          className="pl-10 h-12"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Dirección */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Dirección Profesional</h3>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="address" className="text-sm font-medium">
+                        Dirección
+                      </Label>
+                      <Input
+                        id="address"
+                        type="text"
+                        placeholder="Calle, número, piso, puerta"
+                        value={formData.address}
+                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                        className="h-12"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="city" className="text-sm font-medium">
+                          Ciudad
+                        </Label>
+                        <Input
+                          id="city"
+                          type="text"
+                          placeholder="Madrid, Barcelona..."
+                          value={formData.city}
+                          onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                          className="h-12"
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="postalCode" className="text-sm font-medium">
+                          Código Postal
+                        </Label>
+                        <Input
+                          id="postalCode"
+                          type="text"
+                          placeholder="28001"
+                          value={formData.postalCode}
+                          onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
+                          className="h-12"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="province" className="text-sm font-medium">
+                        Provincia
+                      </Label>
+                      <Input
+                        id="province"
+                        type="text"
+                        placeholder="Madrid, Barcelona, Valencia..."
+                        value={formData.province}
+                        onChange={(e) => setFormData({ ...formData, province: e.target.value })}
+                        className="h-12"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Contraseña */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Seguridad</h3>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="password" className="text-sm font-medium">
+                        Contraseña *
+                      </Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <Input
+                          id="password"
+                          type={showPassword ? "text" : "password"}
+                          placeholder="Mínimo 8 caracteres"
+                          value={formData.password}
+                          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                          className="pl-10 pr-10 h-12"
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        >
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="confirmPassword" className="text-sm font-medium">
+                        Confirmar Contraseña *
+                      </Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <Input
+                          id="confirmPassword"
+                          type="password"
+                          placeholder="Repite la contraseña"
+                          value={formData.confirmPassword}
+                          onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                          className="pl-10 h-12"
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+
                   <Button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full h-12 btn-certifive text-white font-medium"
+                    className="w-full h-12 bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-600 hover:to-blue-700 text-white font-medium"
                   >
                     {isLoading ? (
                       <>
@@ -289,7 +457,7 @@ export default function Register() {
                         Creando cuenta...
                       </>
                     ) : (
-                      "Crear cuenta gratuita"
+                      "Crear cuenta profesional"
                     )}
                   </Button>
                 </form>
@@ -316,190 +484,6 @@ export default function Register() {
                 </div>
               </CardContent>
             </Card>
-          </div>
-        </div>
-      </div>
-
-      <div className="container mx-auto px-4 py-12">
-        <div className="grid lg:grid-cols-2 gap-12 items-center max-w-6xl mx-auto">
-          {/* Registration Form */}
-          <Card className="w-full max-w-md mx-auto backdrop-blur-sm bg-white/90 border-0 shadow-xl">
-            <CardHeader className="text-center space-y-4">
-              <CardTitle className="text-2xl font-bold text-gray-900">
-                Crear Cuenta
-              </CardTitle>
-              <CardDescription className="text-gray-600">
-                Regístrate para empezar a gestionar certificaciones energéticas
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName">Nombre</Label>
-                    <Input
-                      id="firstName"
-                      type="text"
-                      placeholder="Tu nombre"
-                      value={formData.firstName}
-                      onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                      required
-                      className="h-11"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName">Apellido</Label>
-                    <Input
-                      id="lastName"
-                      type="text"
-                      placeholder="Tu apellido"
-                      value={formData.lastName}
-                      onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                      required
-                      className="h-11"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="tu@email.com"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    required
-                    className="h-11"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Contraseña</Label>
-                  <div className="relative">
-                    <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Mínimo 6 caracteres"
-                      value={formData.password}
-                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      required
-                      minLength={6}
-                      className="h-11 pr-10"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </Button>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="company">Empresa (opcional)</Label>
-                  <Input
-                    id="company"
-                    type="text"
-                    placeholder="Nombre de tu empresa"
-                    value={formData.company}
-                    onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                    className="h-11"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Teléfono (opcional)</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="+34 600 000 000"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="h-11"
-                  />
-                </div>
-                <Button
-                  type="submit"
-                  className="w-full h-11 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Creando cuenta..." : "Crear Cuenta"}
-                </Button>
-              </form>
-
-              <div className="text-center space-y-3">
-                <p className="text-sm text-gray-600">
-                  ¿Ya tienes cuenta?{" "}
-                  <Button
-                    variant="link"
-                    className="p-0 h-auto text-green-600 hover:text-green-700"
-                    onClick={() => navigate("/login")}
-                  >
-                    Inicia sesión aquí
-                  </Button>
-                </p>
-                <p className="text-sm text-gray-600">
-                  ¿Quieres probar primero?{" "}
-                  <Button
-                    variant="link"
-                    className="p-0 h-auto text-emerald-600 hover:text-emerald-700"
-                    onClick={() => navigate("/solicitar-demo")}
-                  >
-                    Solicita una cuenta demo
-                  </Button>
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Features Section */}
-          <div className="space-y-8">
-            <div className="text-center lg:text-left">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                Empieza hoy mismo con todas las funcionalidades
-              </h2>
-              <p className="text-lg text-gray-600">
-                Sin período de prueba limitado - acceso completo desde el primer día
-              </p>
-            </div>
-
-            <div className="grid gap-6">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Shield className="w-6 h-6 text-green-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">Certificaciones Ilimitadas</h3>
-                  <p className="text-gray-600">
-                    Genera tantos certificados energéticos como necesites sin restricciones
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <TrendingUp className="w-6 h-6 text-emerald-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">Facturación Automática</h3>
-                  <p className="text-gray-600">
-                    Gestiona presupuestos, facturas y cobros de forma totalmente automatizada
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Users className="w-6 h-6 text-teal-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">Soporte Completo</h3>
-                  <p className="text-gray-600">
-                    Asistencia técnica y formación incluida para aprovechar al máximo la plataforma
-                  </p>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>

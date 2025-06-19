@@ -28,6 +28,12 @@ interface RegisterData {
   lastName: string;
   company?: string;
   phone?: string;
+  dni: string;
+  license?: string;
+  address?: string;
+  city?: string;
+  postalCode?: string;
+  province?: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
