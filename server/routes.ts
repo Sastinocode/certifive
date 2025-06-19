@@ -873,6 +873,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const certification = await storage.createCertification(certificationData);
       
+      // Create notification for new certification
+      await notificationService.notifyNewCertification(
+        userId,
+        formData.fullName,
+        formData.cadastralRef,
+        certification.id
+      );
+      
       // Update quote status
       await storage.updateQuoteRequest(uniqueLink, {
         status: 'certification_started'
