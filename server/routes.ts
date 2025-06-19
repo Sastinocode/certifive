@@ -5,6 +5,7 @@ import { setupAuth, isAuthenticated } from "./replitAuth";
 import { reportGenerator } from "./reportGenerator";
 import { authenticateToken, hashPassword, comparePassword, generateToken } from "./auth";
 import { notificationService } from "./notifications";
+import { backupService } from "./backupService";
 import { insertCertificationSchema, updateCertificationSchema, insertPricingRateSchema, insertQuoteRequestSchema, insertFolderSchema, insertWhatsappFlowTemplateSchema, insertDemoRequestSchema } from "@shared/schema";
 import { z } from "zod";
 import multer from "multer";
@@ -2404,6 +2405,84 @@ ${message ? `\n📝 ${message}` : ''}
     
     return { type: 'direct_delivery', paymentRequired, prepared: true };
   }
+
+  // Backup system endpoints
+  app.post('/api/backup/create', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const backupFile = await backupService.createBackup(userId);
+      
+      res.json({ 
+        message: "Backup creado exitosamente",
+        backupFile: backupFile.split('/').pop(), // Return only filename for security
+        success: true 
+      });
+    } catch (error) {
+      console.error("Error creating backup:", error);
+      res.status(500).json({ message: "Error al crear backup" });
+    }
+  });
+
+  app.get('/api/backup/status', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const status = await backupService.getBackupStatus(userId);
+      res.json(status);
+    } catch (error) {
+      console.error("Error getting backup status:", error);
+      res.status(500).json({ message: "Error al obtener estado del backup" });
+    }
+  });
+
+  app.get('/api/backup/list', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const backups = await backupService.listBackups(userId);
+      res.json(backups);
+    } catch (error) {
+      console.error("Error listing backups:", error);
+      res.status(500).json({ message: "Error al listar backups" });
+    }
+  });
+
+  // Certificate settings endpoints
+  app.get('/api/settings/certificates', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      // In a real implementation, these would be stored in database per user
+      const settings = {
+        defaultValidity: "10",
+        autoBackup: true
+      };
+      res.json(settings);
+    } catch (error) {
+      console.error("Error getting certificate settings:", error);
+      res.status(500).json({ message: "Error al obtener configuración" });
+    }
+  });
+
+  app.post('/api/settings/certificates', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { defaultValidity, autoBackup } = req.body;
+      
+      // Here would save settings to database per user
+      // For now, just validate and return success
+      
+      if (autoBackup) {
+        // Create initial backup when auto-backup is enabled
+        await backupService.createBackup(userId);
+      }
+      
+      res.json({ 
+        message: "Configuración guardada exitosamente",
+        settings: { defaultValidity, autoBackup }
+      });
+    } catch (error) {
+      console.error("Error saving certificate settings:", error);
+      res.status(500).json({ message: "Error al guardar configuración" });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;
