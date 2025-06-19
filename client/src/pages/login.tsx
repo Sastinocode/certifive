@@ -65,7 +65,7 @@ export default function Login() {
               Iniciar Sesión
             </CardTitle>
             <CardDescription className="text-gray-600">
-              Accede a tu cuenta de EnergyPro España
+              Accede a tu cuenta de CERTIFIVE
             </CardDescription>
           </CardHeader>
           
@@ -110,7 +110,7 @@ export default function Login() {
 
               <Button
                 type="submit"
-                className="w-full h-11 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                className="w-full h-11 bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-600 hover:to-blue-700"
                 disabled={isLoading}
               >
                 {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
@@ -123,7 +123,7 @@ export default function Login() {
                   ¿No tienes cuenta?{" "}
                   <Button
                     variant="link"
-                    className="p-0 h-auto text-green-600 hover:text-green-700"
+                    className="p-0 h-auto text-teal-600 hover:text-teal-700"
                     onClick={() => navigate("/registro")}
                   >
                     Regístrate aquí
@@ -143,7 +143,7 @@ export default function Login() {
               <Button
                 variant="outline"
                 onClick={() => navigate("/solicitar-demo")}
-                className="w-full h-11 border-green-200 text-green-700 hover:bg-green-50"
+                className="w-full h-11 border-teal-200 text-teal-700 hover:bg-teal-50"
               >
                 Solicitar Cuenta Demo
               </Button>
