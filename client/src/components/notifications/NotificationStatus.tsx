@@ -38,7 +38,7 @@ export function NotificationStatus() {
               )}
               <Badge 
                 variant={hasEmailConfigured ? "default" : "secondary"}
-                className={hasEmailConfigured ? "bg-green-100 text-green-800" : ""}
+                className={hasEmailConfigured ? "bg-cyan-100 text-cyan-800" : ""}
               >
                 {hasEmailConfigured ? "Email Vinculado" : "Email Pendiente"}
               </Badge>
