@@ -36,6 +36,9 @@ export const users = pgTable("users", {
   license: varchar("license"),
   phone: varchar("phone"),
   address: text("address"),
+  city: varchar("city"),
+  postalCode: varchar("postal_code"),
+  province: varchar("province"),
   dni: varchar("dni"), // DNI/NIF for legal invoicing
   role: varchar("role").default("user"), // user, admin, demo
   isVerified: boolean("is_verified").default(false),

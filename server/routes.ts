@@ -40,11 +40,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Local authentication routes
   const registerSchema = z.object({
     email: z.string().email("Email inválido"),
-    password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
+    password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres"),
     firstName: z.string().min(1, "El nombre es requerido"),
     lastName: z.string().min(1, "El apellido es requerido"),
+    dni: z.string().min(1, "DNI/NIE es requerido"),
     company: z.string().optional(),
     phone: z.string().optional(),
+    license: z.string().optional(),
+    address: z.string().optional(),
+    city: z.string().optional(),
+    postalCode: z.string().optional(),
+    province: z.string().optional(),
   });
 
   const loginSchema = z.object({
