@@ -96,28 +96,22 @@ export default function WhatsAppManagement() {
     integrationActive: false
   });
 
-  // Handle authentication
-  // Handle authentication - removed automatic redirect to fix session expired error
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      // Don't automatically redirect, let the user stay on the page
-      console.log("User not authenticated, but staying on WhatsApp management page");
-    }
-  }, [isAuthenticated, isLoading]);
-
-  // Fetch conversations
+  // Fetch conversations (only if authenticated)
   const { data: conversations = [], isLoading: loadingConversations } = useQuery({
     queryKey: ["/api/whatsapp/conversations"],
+    enabled: isAuthenticated && !isLoading,
   });
 
-  // Fetch WhatsApp status
+  // Fetch WhatsApp status (only if authenticated)
   const { data: whatsappStatus } = useQuery({
     queryKey: ["/api/whatsapp/status"],
+    enabled: isAuthenticated && !isLoading,
   });
 
-  // Fetch quote requests for context
+  // Fetch quote requests for context (only if authenticated)
   const { data: quoteRequests = [] } = useQuery({
     queryKey: ["/api/quote-requests"],
+    enabled: isAuthenticated && !isLoading,
   });
 
   // Create new quote link mutation
