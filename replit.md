@@ -1,0 +1,151 @@
+# replit.md
+
+## Overview
+
+This is a full-stack energy certification management platform built for Spanish energy auditors and certification professionals. The application provides a complete workflow from WhatsApp client contact to final certificate delivery, with automated quoting, payment processing, and report generation.
+
+## System Architecture
+
+### Frontend Architecture
+- **Framework**: React 18 with TypeScript
+- **Routing**: Wouter for client-side routing
+- **State Management**: TanStack Query for server state management
+- **UI Components**: Radix UI primitives with shadcn/ui design system
+- **Styling**: Tailwind CSS with custom design tokens
+- **Build Tool**: Vite with custom configuration for monorepo structure
+
+### Backend Architecture
+- **Runtime**: Node.js with Express.js
+- **Language**: TypeScript with ES modules
+- **Database ORM**: Drizzle ORM with PostgreSQL
+- **Authentication**: Dual system - Replit Auth for development + JWT for production
+- **File Handling**: Multer for image uploads with validation
+- **API Design**: RESTful endpoints with consistent error handling
+
+### Database Design
+- **Primary Database**: PostgreSQL via Neon serverless
+- **Session Storage**: PostgreSQL table for Replit Auth compatibility
+- **Schema Management**: Drizzle migrations with versioned schema files
+- **Key Entities**: Users, Certifications, Folders, Pricing Rates, Quote Requests, WhatsApp integrations, Invoices, Payments
+
+## Key Components
+
+### 1. Authentication System
+- **Replit Auth**: Primary authentication for development environment
+- **JWT Auth**: Local authentication system for production
+- **Session Management**: PostgreSQL-backed sessions with configurable TTL
+- **User Roles**: Basic role-based access (user, admin, demo)
+
+### 2. Certification Management
+- **Wizard-based Form**: Multi-step certification creation process
+- **Document Storage**: File upload system for property photos
+- **Energy Ratings**: Spanish energy efficiency classification (A-G)
+- **Folder Organization**: Hierarchical organization system
+
+### 3. Quote System
+- **Dynamic Pricing**: Configurable rates by property type and location
+- **Public Quote Links**: Shareable links for client quote requests
+- **Stripe Integration**: Payment processing for quote acceptance
+- **WhatsApp Integration**: Automated quote delivery via WhatsApp Business API
+
+### 4. Report Generation
+- **Multi-format Export**: PDF, Excel, Word document generation
+- **Template System**: Customizable report templates
+- **Automated Calculations**: Energy consumption and CO2 emissions
+- **Official Compliance**: Spanish certification standards compliance
+
+### 5. WhatsApp Business Integration
+- **Flow Editor**: Visual WhatsApp conversation flow builder
+- **Automated Responses**: Template-based message automation
+- **Client Management**: Conversation tracking and state management
+- **Payment Links**: Direct payment integration in WhatsApp flows
+
+## Data Flow
+
+### Certification Workflow
+1. **Initial Contact**: Client contacts via WhatsApp or direct form
+2. **Quote Generation**: System generates personalized quote based on property details
+3. **Payment Processing**: Client pays advance through Stripe integration
+4. **Data Collection**: Certification wizard collects property information
+5. **Report Generation**: System generates official certification documents
+6. **Delivery**: Final certificates delivered via email/WhatsApp
+
+### WhatsApp Automation Flow
+1. **Message Reception**: WhatsApp webhook receives client message
+2. **State Management**: System tracks conversation state and context
+3. **Automated Response**: Pre-configured responses based on conversation flow
+4. **Quote Integration**: Automatic quote link generation and delivery
+5. **Payment Tracking**: Real-time payment status updates
+
+## External Dependencies
+
+### Core Dependencies
+- **Database**: Neon PostgreSQL serverless
+- **Payment Processing**: Stripe API for payment handling
+- **Email Service**: SendGrid for transactional emails
+- **WhatsApp**: WhatsApp Business API for messaging automation
+- **File Storage**: Local file system with upload validation
+
+### Development Dependencies
+- **Replit Integration**: Cartographer for development environment
+- **Build Tools**: ESBuild for server bundling, Vite for client bundling
+- **Type Checking**: TypeScript with strict configuration
+- **Database Tools**: Drizzle Kit for migrations and schema management
+
+## Deployment Strategy
+
+### Development Environment
+- **Platform**: Replit with Node.js 20 runtime
+- **Database**: PostgreSQL 16 module
+- **Port Configuration**: Port 5000 mapped to external port 80
+- **Auto-scaling**: Configured for Replit's autoscale deployment
+
+### Production Build
+- **Client Build**: Static assets generated via Vite
+- **Server Build**: Single JavaScript bundle via ESBuild
+- **Environment**: Production mode with NODE_ENV=production
+- **Process Management**: Single-process deployment suitable for serverless
+
+### Configuration Management
+- **Environment Variables**: Database URL, JWT secrets, API keys
+- **Session Storage**: PostgreSQL-backed sessions for horizontal scaling
+- **File Uploads**: Configurable upload directory with size limits
+- **CORS**: Configured for cross-origin requests in development
+
+## User Preferences
+
+Preferred communication style: Simple, everyday language.
+
+## Changelog
+
+Changelog:
+- June 18, 2025. Initial setup
+- June 18, 2025. Certificate upload system fully integrated with folder management - certificates now properly link to existing property folders with preselection, visual folder indicators, and proper validation
+- June 18, 2025. Reorganized system workflow: Properties section now serves as "Final Certificate Archive" for storing completed certificates with upload functionality, while Certificates section handles "Client Form Information Reception" for processing new requests
+- June 18, 2025. Created sample certification data for system preview: Added 3 complete certificate examples with different states (completed/pending/draft) and full form data including energy ratings, contact details, and property specifications
+- June 18, 2025. Fixed certification display system: Resolved authentication and data mapping issues to properly show sample certification data in the "Solicitudes de Certificación" section with correct filtering and search functionality
+- June 18, 2025. Removed energy rating column from form submissions view: Eliminated automatic energy rating display to maintain proper workflow where ratings are assigned manually by certificators, not collected from forms
+- June 18, 2025. Enhanced certification form based on official CEE document: Created comprehensive 6-step form capturing all required data including property address, owner details, building structure, facade orientations with detailed window specifications, energy installations (roof, HVAC, heating, water heater), and photo upload section - fully aligned with Spanish energy certification standards
+- June 18, 2025. Implemented manual archiving system: Certificators now manually control when certifications move from "Certificates" to "Properties" section using archive button, ensuring proper workflow control and preventing automatic archiving
+- June 18, 2025. Simplified Properties view: Replaced complex card layout with clean table showing only essential data (owner name and cadastral reference) for archived certificates, improving usability and reducing visual clutter
+- June 18, 2025. Implemented editable status system: Created dropdown selector with "Nuevo", "En Proceso", and "Finalizado" states. New certificates default to "Nuevo" status. When "Finalizado" is selected, automatic archiving occurs with confirmation prompt
+- June 18, 2025. Completed automatic folder system: Fixed certification archiving to properly create client folders with correct naming format and folder assignment. Certificates now automatically appear in Properties section with client names and upload capabilities for final documents
+- June 18, 2025. Implemented vital certificate shipping system: Added comprehensive "Envío" tab with manual certificate delivery options including payment link generation for unpaid certificates, direct delivery for paid certificates (cash/transfer), and multiple delivery methods (WhatsApp, email, direct). System supports custom messages and tracks delivery status
+- June 19, 2025. Enhanced interface with advanced search and filter system: Implemented comprehensive search functionality with optimized filtering, breadcrumb navigation, loading states, and mobile responsive design for better user experience
+- June 19, 2025. Simplified properties table: Removed non-functional "Calificación" column from archived certificates table to streamline interface and show only relevant data (owner, cadastral reference, status, client, actions)
+- June 19, 2025. Enhanced notification system with improved positioning: Relocated notification bell from sidebar to dashboard header top-right corner with full modal window for viewing all notifications, better visual indicators, and comprehensive notification management interface
+- June 19, 2025. Implemented automatic email linkage for notifications: System now automatically detects and links certificator's email address for notifications, includes professional email templates with personalization, visual status indicators, and complete integration ready for SendGrid activation
+- June 19, 2025. Reorganized notification system placement: Moved notification status panel from dashboard to settings page in the notifications section for better organization and user experience
+- June 19, 2025. Completed comprehensive backup system implementation: Created fully functional automatic backup service with file archiving using archiver package, manual backup creation controls, backup status monitoring with visual indicators, configurable certificate validity periods for expiration tracking, and integrated backup management interface in settings page for critical data protection
+- June 19, 2025. Removed SMS alerts feature: Eliminated SMS notification functionality from settings page and notification system as requested by user - streamlined notification preferences to focus on email and push notifications only
+- June 19, 2025. Implemented professional DNI/NIF field and legal invoicing system: Added DNI/NIF field to user profile with validation indicators, created comprehensive invoice service that automatically populates professional data (name, DNI, email, address, company, license) in generated invoices for legal compliance, integrated professional profile validation with visual indicators showing completion status, and established complete invoicing API endpoints for creating, viewing, and managing legally compliant Spanish invoices
+- June 19, 2025. Fixed 404 error with demo authentication system: Implemented automatic demo user creation for immediate application access without requiring login process, allowing users to directly access all features including settings page with professional profile management and invoicing system
+- June 19, 2025. Completed unified authentication middleware solution: Created comprehensive authentication system that supports demo tokens, JWT tokens, and Replit Auth simultaneously, ensuring all API endpoints work correctly with the demo user system for seamless application access
+- June 19, 2025. Enhanced profile menu integration and fixed WhatsApp session error: Integrated professional profile menu component with user avatar and dropdown in dashboard header next to notifications, fixed "Sesión expirada" error in WhatsApp management page by removing automatic redirects, implemented comprehensive WhatsApp Business registration system with step-by-step configuration guide, detailed setup instructions for Meta for Developers, and improved user interface with clear connection status indicators and registration workflow
+- June 19, 2025. Completed logout system integration with CERTIFIVE branding: Fixed ProfileMenu logout functionality to use authentication context properly, updated login page with complete CERTIFIVE branding using teal-blue color scheme (from-teal-500 to-blue-600), ensured proper session clearing and landing page redirection after logout, streamlined logout process to use single logout() function from AuthContext instead of manual API calls, and maintained consistent CERTIFIVE brand identity across all authentication flows
+- June 19, 2025. Enhanced logout and demo access system: Implemented hasLoggedOut flag to prevent automatic demo mode activation after explicit logout, added controlled demo access functionality with loginDemo function accessible from landing page, fixed logout redirection to properly keep users on landing page instead of auto-redirecting to dashboard, created "Probar Demo" button in landing page hero section with teal-blue branding and play icon, ensuring users can access demo mode only when explicitly requested while maintaining proper logout behavior
+- June 19, 2025. Implemented comprehensive professional registration system: Created complete professional certificator registration form with personal data (name, surnames, DNI/NIE, email, phone), professional data (company, license number), and complete professional address fields, added Spanish DNI/NIE validation, enhanced password security (8+ characters), integrated Google Sign-up option, updated database schema with professional fields (city, postalCode, province), and configured backend to handle all professional registration data for energy certificators
+- June 19, 2025. Added Marketing module to platform: Created new Marketing section in sidebar with comprehensive future integrations preview, designed module to showcase upcoming connections with advertising platforms (Facebook, Instagram, TikTok, Google Ads, LinkedIn, YouTube), included Google Marketing Platform integration details, analytics and insights features preview, engagement tracking capabilities, ROI optimization tools, and complete social media management functionality - module marked as "Coming Soon" with user notification signup for early access
+- June 19, 2025. Implemented Automatizaciones module with AI agents: Created comprehensive Automatizations section featuring 6 specialized AI agents including customer service agent, personal management agent with calendar integration, RAG agent for knowledge base queries, technical information agent for project consultations with voice/text interaction, interactive voice agent with natural language processing, and optimization agent for process improvement - includes complete voice interaction capabilities, integration with OpenAI GPT-4 and Google Cloud AI, detailed use cases, and future technology roadmap with "Coming Soon" status and early access notification system
+- June 19, 2025. Fixed persistent logout redirection issue: Corrected authentication context to properly persist hasLoggedOut flag in localStorage, preventing automatic demo mode activation after explicit logout, ensured logout process properly clears session data while maintaining logout state persistence, updated loginDemo function to clear logout flag when demo access is explicitly requested, eliminated localStorage.clear() conflict that was removing logout state, and guaranteed users remain on landing page after logout instead of auto-redirecting to dashboard
+- June 19, 2025. Created professional landing page with modern design: Implemented complete CERTIFIVE branding with corporate logo and teal-blue color scheme, added "CERTIFICA EN 5 MINUTOS. MULTIPLICA TUS INGRESOS X5" headline, created visual 5-step process section (CONECTA - professional registration, EXPLORA - dashboard opportunities, REVISA - automated data analysis, TRAMITA - one-click CEE processing, FACTURA - instant billing and advisory integration), enhanced features showcase with WhatsApp Business, financial management, technical reports and CEE compliance, added benefits section with real metrics (+400% income increase, 85% time reduction, 24h delivery), implemented professional footer with complete CERTIFIVE branding and trust indicators
