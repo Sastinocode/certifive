@@ -11,7 +11,7 @@ This is a full-stack energy certification management platform built for Spanish 
 - **Routing**: Wouter for client-side routing
 - **State Management**: TanStack Query for server state management
 - **UI Components**: Radix UI primitives with shadcn/ui design system
-- **Styling**: Tailwind CSS with custom design tokens
+- **Styling**: Tailwind CSS with custom emerald/orange design system (emerald-800 primary, orange-600 CTA, soft white cards)
 - **Build Tool**: Vite with custom configuration for monorepo structure
 
 ### Backend Architecture
