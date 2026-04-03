@@ -36,138 +36,121 @@ export default function Register({ onBack, onShowLogin }: RegisterProps) {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-lg">
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-teal-400 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-              <span className="text-white font-black text-xl">C5</span>
-            </div>
-            <span className="text-white font-bold text-2xl">CERTIFIVE</span>
-          </div>
-          <h2 className="text-white text-2xl font-semibold">Registro profesional</h2>
-          <p className="text-white/50 text-sm mt-1">Crea tu cuenta de certificador energético</p>
-        </div>
+  const update = (key: string, value: string) => setForm(f => ({ ...f, [key]: value }));
+  const inputClass = "w-full bg-white border border-emerald-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300";
+  const labelClass = "text-[10px] font-bold uppercase tracking-widest text-emerald-700/60 block mb-1.5";
 
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-8">
+  return (
+    <div className="min-h-screen bg-emerald-50 flex">
+      <div className="hidden lg:flex lg:w-2/5 bg-emerald-800 flex-col justify-between p-12">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
+            <span className="material-symbols-outlined text-white text-[20px]">energy_savings_leaf</span>
+          </div>
+          <span className="text-white font-bold text-xl">CERTIFIVE</span>
+        </div>
+        <div>
+          <h2 className="text-3xl font-black text-white mb-4 leading-tight tracking-tight">
+            Únete a más de 500 certificadores profesionales.
+          </h2>
+          <p className="text-emerald-200 text-base leading-relaxed mb-8">
+            Regístrate hoy y empieza a gestionar tus certificaciones CEE de forma eficiente y conforme a la normativa española.
+          </p>
+          <div className="space-y-3">
+            {["Certificaciones ilimitadas", "Facturación legal incluida", "Soporte técnico especializado"].map(f => (
+              <div key={f} className="flex items-center gap-3">
+                <div className="w-5 h-5 rounded-full bg-emerald-600 flex items-center justify-center flex-shrink-0">
+                  <span className="material-symbols-outlined text-white text-[12px]">check</span>
+                </div>
+                <span className="text-emerald-200 text-sm font-medium">{f}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <p className="text-emerald-500 text-xs">© 2024 CERTIFIVE. Certificación CEE Española.</p>
+      </div>
+
+      <div className="flex-1 flex items-center justify-center p-8 overflow-y-auto">
+        <div className="w-full max-w-lg py-8">
+          <div className="lg:hidden flex items-center gap-3 mb-8">
+            <div className="w-9 h-9 bg-emerald-800 rounded-xl flex items-center justify-center">
+              <span className="material-symbols-outlined text-white text-[18px]">energy_savings_leaf</span>
+            </div>
+            <span className="font-bold text-emerald-900 text-lg">CERTIFIVE</span>
+          </div>
+
+          <h1 className="text-2xl font-bold text-emerald-900 tracking-tight mb-1">Registro profesional</h1>
+          <p className="text-sm text-emerald-700/60 mb-8">Crea tu cuenta de auditor energético certificado</p>
+
           <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <div className="bg-red-50 border border-red-100 rounded-xl px-4 py-3 flex items-center gap-2 text-sm text-red-700">
+                <span className="material-symbols-outlined text-[16px]">error</span>
+                {error}
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-white/70 text-sm mb-2">Nombre</label>
-                <input
-                  type="text"
-                  value={form.firstName}
-                  onChange={e => setForm(f => ({ ...f, firstName: e.target.value }))}
-                  className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-teal-500 transition-colors"
-                  placeholder="Nombre"
-                />
+                <label className={labelClass}>Nombre</label>
+                <input data-testid="input-firstName" className={inputClass} value={form.firstName} onChange={e => update("firstName", e.target.value)} placeholder="María" />
               </div>
               <div>
-                <label className="block text-white/70 text-sm mb-2">Apellidos</label>
-                <input
-                  type="text"
-                  value={form.lastName}
-                  onChange={e => setForm(f => ({ ...f, lastName: e.target.value }))}
-                  className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-teal-500 transition-colors"
-                  placeholder="Apellidos"
-                />
+                <label className={labelClass}>Apellidos</label>
+                <input data-testid="input-lastName" className={inputClass} value={form.lastName} onChange={e => update("lastName", e.target.value)} placeholder="García López" />
               </div>
             </div>
             <div>
-              <label className="block text-white/70 text-sm mb-2">Usuario *</label>
-              <input
-                type="text"
-                value={form.username}
-                onChange={e => setForm(f => ({ ...f, username: e.target.value }))}
-                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-teal-500 transition-colors"
-                placeholder="Nombre de usuario"
-                required
-              />
+              <label className={labelClass}>Usuario *</label>
+              <input data-testid="input-username" className={inputClass} value={form.username} onChange={e => update("username", e.target.value)} placeholder="tu_usuario" required />
             </div>
             <div>
-              <label className="block text-white/70 text-sm mb-2">Email</label>
-              <input
-                type="email"
-                value={form.email}
-                onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-teal-500 transition-colors"
-                placeholder="tu@email.com"
-              />
+              <label className={labelClass}>Email</label>
+              <input data-testid="input-email" type="email" className={inputClass} value={form.email} onChange={e => update("email", e.target.value)} placeholder="tu@email.com" />
             </div>
             <div>
-              <label className="block text-white/70 text-sm mb-2">Teléfono</label>
-              <input
-                type="tel"
-                value={form.phone}
-                onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
-                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-teal-500 transition-colors"
-                placeholder="+34 600 000 000"
-              />
+              <label className={labelClass}>Teléfono</label>
+              <input data-testid="input-phone" type="tel" className={inputClass} value={form.phone} onChange={e => update("phone", e.target.value)} placeholder="+34 600 000 000" />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-white/70 text-sm mb-2">Empresa</label>
-                <input
-                  type="text"
-                  value={form.company}
-                  onChange={e => setForm(f => ({ ...f, company: e.target.value }))}
-                  className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-teal-500 transition-colors"
-                  placeholder="Empresa"
-                />
+                <label className={labelClass}>Empresa</label>
+                <input data-testid="input-company" className={inputClass} value={form.company} onChange={e => update("company", e.target.value)} placeholder="Mi empresa S.L." />
               </div>
               <div>
-                <label className="block text-white/70 text-sm mb-2">Nº Habilitación</label>
-                <input
-                  type="text"
-                  value={form.licenseNumber}
-                  onChange={e => setForm(f => ({ ...f, licenseNumber: e.target.value }))}
-                  className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-teal-500 transition-colors"
-                  placeholder="Habilitación"
-                />
+                <label className={labelClass}>Nº Habilitación</label>
+                <input data-testid="input-license" className={inputClass} value={form.licenseNumber} onChange={e => update("licenseNumber", e.target.value)} placeholder="CEE-2024-001" />
               </div>
             </div>
             <div>
-              <label className="block text-white/70 text-sm mb-2">Contraseña * (mín. 8 caracteres)</label>
-              <input
-                type="password"
-                value={form.password}
-                onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-teal-500 transition-colors"
-                placeholder="Contraseña"
-                required
-              />
+              <label className={labelClass}>Contraseña * (mín. 8 caracteres)</label>
+              <input data-testid="input-password" type="password" className={inputClass} value={form.password} onChange={e => update("password", e.target.value)} placeholder="••••••••" required />
             </div>
             <div>
-              <label className="block text-white/70 text-sm mb-2">Confirmar contraseña *</label>
-              <input
-                type="password"
-                value={form.confirmPassword}
-                onChange={e => setForm(f => ({ ...f, confirmPassword: e.target.value }))}
-                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-teal-500 transition-colors"
-                placeholder="Repite la contraseña"
-                required
-              />
+              <label className={labelClass}>Confirmar contraseña *</label>
+              <input data-testid="input-confirmPassword" type="password" className={inputClass} value={form.confirmPassword} onChange={e => update("confirmPassword", e.target.value)} placeholder="••••••••" required />
             </div>
-            {error && <p className="text-red-400 text-sm">{error}</p>}
             <button
+              data-testid="btn-register"
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-teal-500 to-blue-600 text-white py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="w-full py-3 bg-emerald-800 text-white rounded-xl font-semibold hover:bg-emerald-700 disabled:opacity-60 transition-colors shadow-sm"
             >
-              {loading ? "Registrando..." : "Crear cuenta profesional"}
+              {loading ? "Creando cuenta..." : "Crear cuenta profesional"}
             </button>
           </form>
-        </div>
 
-        <div className="text-center mt-6 space-y-3">
-          <button onClick={onShowLogin} className="text-teal-400 hover:text-teal-300 text-sm transition-colors">
-            ¿Ya tienes cuenta? Iniciar sesión
-          </button>
-          <br />
-          <button onClick={onBack} className="text-white/40 hover:text-white/60 text-sm transition-colors">
-            ← Volver al inicio
-          </button>
+          <p className="text-center text-sm text-emerald-700/60 mt-6">
+            ¿Ya tienes cuenta?{" "}
+            <button onClick={onShowLogin} className="text-emerald-800 font-semibold hover:underline">
+              Iniciar sesión
+            </button>
+          </p>
+          <p className="text-center mt-3">
+            <button onClick={onBack} className="text-xs text-emerald-700/50 hover:text-emerald-700 transition-colors">
+              ← Volver al inicio
+            </button>
+          </p>
         </div>
       </div>
     </div>

@@ -1,66 +1,66 @@
 export default function Marketing() {
-  const platforms = [
-    { name: "Facebook Ads", icon: "📘", desc: "Campañas publicitarias en Facebook e Instagram" },
-    { name: "Google Ads", icon: "🔍", desc: "Anuncios de búsqueda y display en Google" },
-    { name: "Instagram", icon: "📸", desc: "Contenido visual y stories para captación" },
-    { name: "TikTok Ads", icon: "🎵", desc: "Vídeos cortos para nueva audiencia" },
-    { name: "LinkedIn", icon: "💼", desc: "Marketing B2B para empresas y promotores" },
-    { name: "YouTube", icon: "▶️", desc: "Vídeos educativos sobre eficiencia energética" },
-  ];
-
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <h1 className="text-2xl font-bold text-gray-900">Marketing</h1>
-          <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-xs font-medium">Próximamente</span>
-        </div>
-        <p className="text-gray-500 text-sm">Integración con plataformas publicitarias para captación de clientes</p>
+    <div className="p-8 max-w-5xl mx-auto space-y-8">
+      <div>
+        <h1 className="text-2xl font-bold text-emerald-900 tracking-tight">Marketing</h1>
+        <p className="text-sm text-emerald-700/60 mt-1 font-medium">Herramientas de captación y fidelización de clientes</p>
       </div>
 
-      <div className="bg-gradient-to-br from-teal-50 to-blue-50 border border-teal-200 rounded-2xl p-8 mb-8">
-        <div className="flex items-center gap-4 mb-4">
-          <div className="w-14 h-14 bg-gradient-to-br from-teal-500 to-blue-600 rounded-2xl flex items-center justify-center text-2xl">📣</div>
-          <div>
-            <h2 className="text-xl font-bold text-gray-900">Plataforma de Marketing Digital</h2>
-            <p className="text-gray-600 text-sm">Conecta tus campañas publicitarias directamente con CERTIFIVE</p>
-          </div>
-        </div>
-        <p className="text-gray-600 mb-4">
-          Próximamente podrás gestionar todas tus campañas de marketing desde un solo lugar, 
-          con analytics integrado, seguimiento de ROI y automatización de captación de clientes.
-        </p>
-        <button className="bg-gradient-to-r from-teal-500 to-blue-600 text-white px-6 py-2.5 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity">
-          Notificarme cuando esté disponible
-        </button>
-      </div>
-
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">Integraciones disponibles próximamente</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-        {platforms.map(p => (
-          <div key={p.name} className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm opacity-75 hover:opacity-100 transition-opacity">
-            <div className="flex items-center gap-3 mb-3">
-              <span className="text-3xl">{p.icon}</span>
-              <span className="font-semibold text-gray-900">{p.name}</span>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 bg-emerald-800 rounded-2xl p-8 text-white overflow-hidden relative">
+          <div className="relative z-10">
+            <span className="inline-flex items-center gap-1.5 bg-white/10 backdrop-blur-sm text-emerald-200 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full mb-4">
+              <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
+              Próximamente
+            </span>
+            <h2 className="text-2xl font-bold mb-3 tracking-tight">Captación automatizada de clientes</h2>
+            <p className="text-emerald-200 text-sm leading-relaxed mb-6">
+              Lanza campañas de captación dirigidas a propietarios con certificados próximos a vencer. Automatiza el seguimiento y multiplica tus conversiones.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {["Email campaigns", "SMS marketing", "Landing pages", "Lead tracking"].map(f => (
+                <span key={f} className="bg-white/10 text-emerald-200 text-xs px-3 py-1.5 rounded-full font-medium">{f}</span>
+              ))}
             </div>
-            <p className="text-gray-500 text-sm mb-4">{p.desc}</p>
-            <span className="bg-gray-100 text-gray-500 px-3 py-1 rounded-full text-xs font-medium">Próximamente</span>
           </div>
-        ))}
+          <div className="absolute -right-8 -bottom-8 w-48 h-48 bg-white/5 rounded-full" />
+          <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-white/5 rounded-full" />
+        </div>
+
+        <div className="space-y-4">
+          {[
+            { icon: "campaign", title: "Campañas por email", desc: "Envía newsletters con plantillas profesionales.", color: "bg-orange-100 text-orange-700" },
+            { icon: "person_add", title: "Gestión de leads", desc: "Captura oportunidades de negocio automáticamente.", color: "bg-violet-100 text-violet-700" },
+            { icon: "insights", title: "Analíticas avanzadas", desc: "Métricas de conversión y rendimiento de campañas.", color: "bg-blue-100 text-blue-700" },
+          ].map(item => (
+            <div key={item.title} className="bg-white rounded-2xl border border-emerald-100/60 shadow-[0_4px_16px_rgba(0,100,44,0.04)] p-5">
+              <div className="flex items-start gap-4">
+                <div className={`w-10 h-10 ${item.color} rounded-xl flex items-center justify-center flex-shrink-0`}>
+                  <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
+                </div>
+                <div>
+                  <p className="font-semibold text-emerald-900 text-sm mb-1">{item.title}</p>
+                  <p className="text-xs text-emerald-700/60 leading-relaxed">{item.desc}</p>
+                  <span className="mt-2 inline-block text-[10px] font-bold uppercase tracking-widest text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full">Próximamente</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {[
-          { icon: "📊", title: "Analytics integrado", desc: "Dashboard unificado con métricas de todas las plataformas" },
-          { icon: "🎯", title: "Seguimiento de conversiones", desc: "Rastrea desde el anuncio hasta el certificado firmado" },
-          { icon: "🤖", title: "Automatización inteligente", desc: "IA para optimizar tus campañas automáticamente" },
-        ].map(feat => (
-          <div key={feat.title} className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-            <div className="text-3xl mb-3">{feat.icon}</div>
-            <h3 className="font-semibold text-gray-900 mb-2">{feat.title}</h3>
-            <p className="text-gray-500 text-sm">{feat.desc}</p>
-          </div>
-        ))}
+      <div className="bg-white rounded-2xl border border-emerald-100/60 shadow-[0_4px_24px_rgba(0,100,44,0.06)] p-8">
+        <h2 className="text-lg font-bold text-emerald-900 mb-2">Notificaciones de disponibilidad</h2>
+        <p className="text-sm text-emerald-700/60 mb-6">Sé el primero en acceder cuando el módulo de Marketing esté disponible.</p>
+        <div className="flex gap-3 max-w-md">
+          <input
+            className="flex-1 bg-emerald-50 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-300 outline-none"
+            placeholder="tu@email.com"
+          />
+          <button className="px-5 py-3 bg-emerald-800 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition-colors shadow-sm whitespace-nowrap">
+            Avisarme
+          </button>
+        </div>
       </div>
     </div>
   );

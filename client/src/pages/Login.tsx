@@ -9,104 +9,143 @@ interface LoginProps {
 export default function Login({ onBack, onShowRegister }: LoginProps) {
   const { login, loginDemo } = useAuth();
   const [form, setForm] = useState({ username: "", password: "" });
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
     setLoading(true);
+    setError("");
     try {
       await login(form.username, form.password);
-    } catch (err: any) {
+    } catch {
       setError("Usuario o contraseña incorrectos");
+    } finally {
       setLoading(false);
     }
   };
 
   const handleDemo = async () => {
-    setLoading(true);
+    setDemoLoading(true);
     try {
       await loginDemo();
     } catch {
-      setLoading(false);
+      setDemoLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-teal-400 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-              <span className="text-white font-black text-xl">C5</span>
-            </div>
-            <span className="text-white font-bold text-2xl">CERTIFIVE</span>
+    <div className="min-h-screen bg-emerald-50 flex">
+      <div className="hidden lg:flex lg:w-1/2 bg-emerald-800 flex-col justify-between p-12">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
+            <span className="material-symbols-outlined text-white text-[20px]">energy_savings_leaf</span>
           </div>
-          <h2 className="text-white text-2xl font-semibold">Iniciar sesión</h2>
-          <p className="text-white/50 text-sm mt-1">Accede a tu plataforma de certificación</p>
+          <span className="text-white font-bold text-xl">CERTIFIVE</span>
         </div>
+        <div>
+          <h2 className="text-4xl font-black text-white mb-4 leading-tight tracking-tight">
+            La plataforma CEE<br />para profesionales.
+          </h2>
+          <p className="text-emerald-200 text-lg leading-relaxed mb-10">
+            Gestiona tus certificaciones energéticas con precisión y eficiencia desde un solo lugar.
+          </p>
+          <div className="grid grid-cols-3 gap-4">
+            {[
+              { num: "+400%", label: "Más ingresos" },
+              { num: "85%", label: "Menos tiempo" },
+              { num: "24h", label: "Entrega" },
+            ].map(s => (
+              <div key={s.label} className="bg-white/10 rounded-xl p-4">
+                <p className="text-2xl font-black text-white mb-1">{s.num}</p>
+                <p className="text-emerald-300 text-xs font-medium">{s.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+        <p className="text-emerald-500 text-xs">© 2024 CERTIFIVE. Certificación CEE Española.</p>
+      </div>
 
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-8">
-          <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="w-full max-w-md">
+          <div className="lg:hidden flex items-center gap-3 mb-8">
+            <div className="w-9 h-9 bg-emerald-800 rounded-xl flex items-center justify-center">
+              <span className="material-symbols-outlined text-white text-[18px]">energy_savings_leaf</span>
+            </div>
+            <span className="font-bold text-emerald-900 text-lg">CERTIFIVE</span>
+          </div>
+
+          <h1 className="text-2xl font-bold text-emerald-900 tracking-tight mb-1">Bienvenido de nuevo</h1>
+          <p className="text-sm text-emerald-700/60 mb-8">Inicia sesión en tu cuenta de certificador</p>
+
+          <form onSubmit={handleLogin} className="space-y-4">
+            {error && (
+              <div className="bg-red-50 border border-red-100 rounded-xl px-4 py-3 flex items-center gap-2 text-sm text-red-700">
+                <span className="material-symbols-outlined text-[16px]">error</span>
+                {error}
+              </div>
+            )}
             <div>
-              <label className="block text-white/70 text-sm mb-2">Usuario</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-emerald-700/60 block mb-1.5">Usuario</label>
               <input
+                data-testid="input-username"
                 type="text"
                 value={form.username}
                 onChange={e => setForm(f => ({ ...f, username: e.target.value }))}
-                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-teal-500 transition-colors"
-                placeholder="Tu usuario"
+                placeholder="tu_usuario"
                 required
+                className="w-full bg-white border border-emerald-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300"
               />
             </div>
             <div>
-              <label className="block text-white/70 text-sm mb-2">Contraseña</label>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-emerald-700/60 block mb-1.5">Contraseña</label>
               <input
+                data-testid="input-password"
                 type="password"
                 value={form.password}
                 onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-teal-500 transition-colors"
-                placeholder="Tu contraseña"
+                placeholder="••••••••"
                 required
+                className="w-full bg-white border border-emerald-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300"
               />
             </div>
-            {error && <p className="text-red-400 text-sm">{error}</p>}
             <button
+              data-testid="btn-login"
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-teal-500 to-blue-600 text-white py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="w-full py-3 bg-emerald-800 text-white rounded-xl font-semibold hover:bg-emerald-700 disabled:opacity-60 transition-colors shadow-sm"
             >
-              {loading ? "Iniciando..." : "Iniciar sesión"}
+              {loading ? "Iniciando sesión..." : "Iniciar sesión"}
             </button>
           </form>
 
-          <div className="mt-4 relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-white/10"></div>
-            </div>
-            <div className="relative flex justify-center">
-              <span className="bg-slate-800 px-4 text-white/40 text-sm">o</span>
-            </div>
+          <div className="flex items-center gap-4 my-5">
+            <div className="flex-1 h-px bg-emerald-200" />
+            <span className="text-xs text-emerald-700/50 font-medium">o continúa con</span>
+            <div className="flex-1 h-px bg-emerald-200" />
           </div>
 
           <button
+            data-testid="btn-demo"
             onClick={handleDemo}
-            disabled={loading}
-            className="w-full mt-4 border border-white/20 text-white py-3 rounded-xl font-medium hover:bg-white/5 transition-colors disabled:opacity-50"
+            disabled={demoLoading}
+            className="w-full py-3 border-2 border-orange-200 text-orange-700 bg-orange-50 rounded-xl font-semibold hover:bg-orange-100 disabled:opacity-60 transition-colors text-sm"
           >
-            Acceder con cuenta demo
+            {demoLoading ? "Cargando demo..." : "▶ Acceder a la demo"}
           </button>
-        </div>
 
-        <div className="text-center mt-6 space-y-3">
-          <button onClick={onShowRegister} className="text-teal-400 hover:text-teal-300 text-sm transition-colors">
-            ¿No tienes cuenta? Regístrate aquí
-          </button>
-          <br />
-          <button onClick={onBack} className="text-white/40 hover:text-white/60 text-sm transition-colors">
-            ← Volver al inicio
-          </button>
+          <p className="text-center text-sm text-emerald-700/60 mt-6">
+            ¿No tienes cuenta?{" "}
+            <button onClick={onShowRegister} className="text-emerald-800 font-semibold hover:underline">
+              Regístrate gratis
+            </button>
+          </p>
+          <p className="text-center mt-3">
+            <button onClick={onBack} className="text-xs text-emerald-700/50 hover:text-emerald-700 transition-colors">
+              ← Volver al inicio
+            </button>
+          </p>
         </div>
       </div>
     </div>

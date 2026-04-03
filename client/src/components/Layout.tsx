@@ -11,13 +11,13 @@ import Settings from "../pages/Settings";
 type Page = "dashboard" | "certifications" | "properties" | "whatsapp" | "invoices" | "marketing" | "settings";
 
 const navItems = [
-  { id: "dashboard", label: "Panel", icon: "📊" },
-  { id: "certifications", label: "Certificados", icon: "📋" },
-  { id: "properties", label: "Propiedades", icon: "🏠" },
-  { id: "whatsapp", label: "WhatsApp", icon: "💬" },
-  { id: "invoices", label: "Facturas", icon: "🧾" },
-  { id: "marketing", label: "Marketing", icon: "📣" },
-  { id: "settings", label: "Configuración", icon: "⚙️" },
+  { id: "dashboard", label: "Dashboard", icon: "dashboard" },
+  { id: "certifications", label: "Certificados", icon: "verified" },
+  { id: "properties", label: "Propiedades", icon: "home_work" },
+  { id: "whatsapp", label: "WhatsApp", icon: "chat" },
+  { id: "invoices", label: "Facturas", icon: "receipt_long" },
+  { id: "marketing", label: "Marketing", icon: "campaign" },
+  { id: "settings", label: "Configuración", icon: "settings" },
 ] as const;
 
 export default function Layout() {
@@ -27,7 +27,7 @@ export default function Layout() {
 
   const renderPage = () => {
     switch (page) {
-      case "dashboard": return <Dashboard />;
+      case "dashboard": return <Dashboard onNavigate={setPage} />;
       case "certifications": return <Certifications />;
       case "properties": return <Properties />;
       case "whatsapp": return <WhatsApp />;
@@ -37,88 +37,120 @@ export default function Layout() {
     }
   };
 
+  const initials = (user?.name || user?.username || "U")
+    .split(" ")
+    .map((n: string) => n[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex h-screen bg-emerald-50/40 overflow-hidden">
       {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-20 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
+        <div className="fixed inset-0 bg-black/30 z-20 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
-      <aside className={`fixed lg:static inset-y-0 left-0 z-30 w-64 bg-sidebar flex flex-col transform transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
-        style={{ background: "hsl(var(--sidebar-background))" }}>
-        <div className="flex items-center gap-3 px-6 py-5 border-b border-sidebar-border">
-          <div className="w-9 h-9 bg-gradient-to-br from-teal-400 to-blue-600 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
-            <span className="text-white font-black text-sm">C5</span>
+      <aside className={`fixed lg:static inset-y-0 left-0 z-30 w-64 bg-emerald-50 flex flex-col p-6 transform transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"} border-r border-emerald-100`}>
+        <div className="flex items-center gap-3 mb-8">
+          <div className="w-10 h-10 rounded-xl bg-emerald-800 flex items-center justify-center flex-shrink-0 shadow-md">
+            <span className="material-symbols-outlined text-white text-[18px]">energy_savings_leaf</span>
           </div>
-          <span className="text-white font-bold text-lg">CERTIFIVE</span>
+          <div>
+            <span className="text-base font-bold text-emerald-900 leading-tight block">CERTIFIVE</span>
+            <span className="text-[9px] font-semibold uppercase tracking-wider text-emerald-700/60">Certificación CEE v1.0</span>
+          </div>
         </div>
 
-        <nav className="flex-1 px-3 py-4 overflow-y-auto">
-          {navItems.map(item => (
-            <button
-              key={item.id}
-              onClick={() => { setPage(item.id); setSidebarOpen(false); }}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium mb-1 transition-colors ${
-                page === item.id
-                  ? "bg-teal-500/20 text-teal-400"
-                  : "text-white/60 hover:bg-white/5 hover:text-white"
-              }`}
-            >
-              <span className="text-lg">{item.icon}</span>
-              <span>{item.label}</span>
-              {item.id === "marketing" && (
-                <span className="ml-auto text-xs bg-orange-500/20 text-orange-400 px-1.5 py-0.5 rounded-full">Nuevo</span>
-              )}
-            </button>
-          ))}
+        <nav className="flex-1 space-y-1">
+          <p className="text-[9px] font-bold uppercase tracking-widest text-emerald-800/50 mb-3 px-2">Menú principal</p>
+          {navItems.map(item => {
+            const isActive = page === item.id;
+            return (
+              <button
+                key={item.id}
+                data-testid={`nav-${item.id}`}
+                onClick={() => { setPage(item.id); setSidebarOpen(false); }}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[11px] font-semibold uppercase tracking-wider transition-all ${
+                  isActive
+                    ? "bg-white text-orange-700 shadow-sm"
+                    : "text-emerald-800/60 hover:bg-emerald-100 hover:text-emerald-900"
+                }`}
+              >
+                <span className={isActive ? "material-symbols-filled" : "material-symbols-outlined"} style={isActive ? { fontVariationSettings: "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24", fontFamily: "'Material Symbols Outlined'" } : {}}>
+                  {item.icon}
+                </span>
+                <span>{item.label}</span>
+                {item.id === "marketing" && (
+                  <span className="ml-auto text-[9px] bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-full font-bold">NEW</span>
+                )}
+              </button>
+            );
+          })}
         </nav>
 
-        <div className="p-4 border-t border-sidebar-border">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-9 h-9 bg-gradient-to-br from-teal-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
-              <span className="text-white font-bold text-sm">
-                {(user?.name || user?.username || "U").charAt(0).toUpperCase()}
-              </span>
+        <div className="mt-4">
+          <button
+            data-testid="btn-nuevo-certificado"
+            onClick={() => setPage("certifications")}
+            className="w-full bg-orange-600 text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-orange-200 hover:bg-orange-700 active:scale-[0.98] transition-all text-sm"
+          >
+            <span className="material-symbols-outlined text-[20px]">add_circle</span>
+            Nuevo Certificado
+          </button>
+        </div>
+
+        <div className="mt-6 pt-6 border-t border-emerald-100 space-y-1">
+          <button className="w-full flex items-center gap-3 px-4 py-2.5 text-emerald-800/60 hover:bg-emerald-100 rounded-xl transition-all text-[11px] font-semibold uppercase tracking-wider">
+            <span className="material-symbols-outlined text-[20px]">help</span>
+            <span>Centro de ayuda</span>
+          </button>
+          <div className="flex items-center gap-3 px-4 py-3 mt-2 bg-emerald-100/40 rounded-xl">
+            <div className="w-8 h-8 rounded-full bg-emerald-800 flex items-center justify-center flex-shrink-0">
+              <span className="text-white font-bold text-xs">{initials}</span>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-white text-sm font-medium truncate">{user?.name || user?.username}</p>
-              <p className="text-white/40 text-xs truncate">{user?.email || "Certificador"}</p>
+              <p className="text-xs font-bold text-emerald-900 truncate">{user?.name || user?.username}</p>
+              <p className="text-[10px] text-emerald-700/60 truncate">{user?.email || "Certificador energético"}</p>
             </div>
+            <button
+              data-testid="btn-logout"
+              onClick={logout}
+              title="Cerrar sesión"
+              className="text-emerald-900/40 hover:text-emerald-900 transition-colors"
+            >
+              <span className="material-symbols-outlined text-[18px]">logout</span>
+            </button>
           </div>
-          <button
-            onClick={logout}
-            className="w-full text-white/50 hover:text-white text-xs py-2 rounded-lg hover:bg-white/5 transition-colors"
-          >
-            Cerrar sesión
-          </button>
         </div>
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-4 flex-shrink-0">
+        <header className="bg-white/80 backdrop-blur-md border-b border-emerald-100/60 px-8 py-5 flex items-center gap-4 flex-shrink-0 sticky top-0 z-20">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="lg:hidden text-gray-500 hover:text-gray-700"
+            className="lg:hidden text-emerald-700 hover:bg-emerald-100 p-2 rounded-lg transition-colors"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
+            <span className="material-symbols-outlined">menu</span>
           </button>
           <div className="flex-1">
-            <h2 className="font-semibold text-gray-900">
+            <h2 className="text-xl font-semibold text-emerald-900 tracking-tight">
               {navItems.find(n => n.id === page)?.label}
             </h2>
           </div>
           <div className="flex items-center gap-3">
+            <div className="relative hidden sm:flex items-center bg-emerald-50 rounded-full px-4 py-2.5 w-56 gap-2">
+              <span className="material-symbols-outlined text-emerald-500 text-[18px]">search</span>
+              <input
+                className="bg-transparent border-none focus:ring-0 text-sm w-full placeholder:text-emerald-500/70 outline-none"
+                placeholder="Buscar..."
+              />
+            </div>
             <button
+              data-testid="btn-settings"
               onClick={() => setPage("settings")}
-              className="w-9 h-9 bg-gradient-to-br from-teal-500 to-blue-600 rounded-full flex items-center justify-center hover:opacity-90 transition-opacity"
+              className="w-10 h-10 rounded-full bg-emerald-800 flex items-center justify-center hover:bg-emerald-700 transition-colors"
             >
-              <span className="text-white font-bold text-sm">
-                {(user?.name || user?.username || "U").charAt(0).toUpperCase()}
-              </span>
+              <span className="text-white font-bold text-sm">{initials}</span>
             </button>
           </div>
         </header>
