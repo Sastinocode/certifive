@@ -6,10 +6,9 @@ import Properties from "../pages/Properties";
 import WhatsApp from "../pages/WhatsApp";
 import Invoices from "../pages/Invoices";
 import Marketing from "../pages/Marketing";
-import Automatizaciones from "../pages/Automatizaciones";
 import Settings from "../pages/Settings";
 
-type Page = "dashboard" | "certifications" | "properties" | "whatsapp" | "invoices" | "marketing" | "automatizaciones" | "settings";
+type Page = "dashboard" | "certifications" | "properties" | "whatsapp" | "invoices" | "marketing" | "settings";
 
 const navItems = [
   { id: "dashboard", label: "Panel", icon: "📊" },
@@ -18,7 +17,6 @@ const navItems = [
   { id: "whatsapp", label: "WhatsApp", icon: "💬" },
   { id: "invoices", label: "Facturas", icon: "🧾" },
   { id: "marketing", label: "Marketing", icon: "📣" },
-  { id: "automatizaciones", label: "Automatizaciones", icon: "🤖" },
   { id: "settings", label: "Configuración", icon: "⚙️" },
 ] as const;
 
@@ -35,7 +33,6 @@ export default function Layout() {
       case "whatsapp": return <WhatsApp />;
       case "invoices": return <Invoices />;
       case "marketing": return <Marketing />;
-      case "automatizaciones": return <Automatizaciones />;
       case "settings": return <Settings />;
     }
   };
@@ -71,7 +68,7 @@ export default function Layout() {
             >
               <span className="text-lg">{item.icon}</span>
               <span>{item.label}</span>
-              {(item.id === "marketing" || item.id === "automatizaciones") && (
+              {item.id === "marketing" && (
                 <span className="ml-auto text-xs bg-orange-500/20 text-orange-400 px-1.5 py-0.5 rounded-full">Nuevo</span>
               )}
             </button>
