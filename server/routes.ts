@@ -1,6 +1,6 @@
 import { Express, Request, Response } from "express";
 import { db } from "./db";
-import { users, certifications, folders, pricingRates, quoteRequests, invoices } from "../shared/schema";
+import { users, certifications, folders, pricingRates, quoteRequests, invoices, formResponses, payments } from "../shared/schema";
 import { eq, and, desc } from "drizzle-orm";
 import {
   authenticate,
@@ -604,6 +604,7 @@ export function registerRoutes(app: Express) {
         energyData,
       } = req.body;
 
+      // Update certification with owner-submitted data
       await db.update(certifications)
         .set({
           ownerName: ownerName || cert.ownerName,
@@ -625,6 +626,25 @@ export function registerRoutes(app: Express) {
           updatedAt: new Date(),
         })
         .where(eq(certifications.id, cert.id));
+
+      // Store immutable snapshot in form_responses for audit trail
+      await db.insert(formResponses).values({
+        certificationId: cert.id,
+        ownerName: ownerName || null,
+        ownerEmail: ownerEmail || null,
+        ownerPhone: ownerPhone || null,
+        ownerDni: ownerDni || null,
+        address: address || null,
+        city: city || null,
+        postalCode: postalCode || null,
+        province: province || null,
+        propertyType: propertyType || null,
+        constructionYear: constructionYear ? parseInt(constructionYear) : null,
+        totalArea: totalArea || null,
+        cadastralReference: cadastralReference || null,
+        energyData: energyData ?? null,
+        rawData: req.body,
+      });
 
       res.json({ ok: true });
     } catch {
