@@ -1,12 +1,23 @@
 import { Express, Request, Response } from "express";
 import { db } from "./db";
 import { users, certifications, folders, pricingRates, quoteRequests, invoices } from "../shared/schema";
-import { eq, and, desc, ilike, or } from "drizzle-orm";
-import { authenticate, hashPassword, comparePasswords, generateToken, createDemoUser } from "./auth";
+import { eq, and, desc } from "drizzle-orm";
+import {
+  authenticate,
+  hashPassword,
+  comparePasswords,
+  generateToken,
+  generateRefreshToken,
+  rotateRefreshToken,
+  revokeRefreshToken,
+  createDemoUser,
+  verifyToken,
+} from "./auth";
 import { insertUserSchema, insertCertificationSchema, insertFolderSchema, insertPricingRateSchema } from "../shared/schema";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { nanoid } from "nanoid";
 
 const upload = multer({
   dest: "uploads/",
@@ -18,36 +29,79 @@ const upload = multer({
   },
 });
 
+// In-memory rate limiter: 5 login attempts per IP per minute
+const loginAttempts = new Map<string, { count: number; resetAt: number }>();
+
+function checkLoginRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = loginAttempts.get(ip);
+  if (!entry || now > entry.resetAt) {
+    loginAttempts.set(ip, { count: 1, resetAt: now + 60_000 });
+    return true;
+  }
+  if (entry.count >= 5) return false;
+  entry.count++;
+  return true;
+}
+
 export function registerRoutes(app: Express) {
   app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
 
+  // --- AUTH ---
+
   app.post("/api/auth/login", async (req: Request, res: Response) => {
     try {
-      const { username, password } = req.body;
-      if (!username || !password) return res.status(400).json({ message: "Username and password required" });
+      const ip = req.ip ?? "unknown";
+      if (!checkLoginRateLimit(ip)) {
+        return res.status(429).json({ message: "Demasiados intentos. Espera 1 minuto." });
+      }
+
+      const { username, password, rememberMe } = req.body;
+      if (!username || !password) {
+        return res.status(400).json({ message: "Usuario y contraseña requeridos" });
+      }
 
       const [user] = await db.select().from(users).where(eq(users.username, username)).limit(1);
-      if (!user || !user.password) return res.status(401).json({ message: "Invalid credentials" });
+      if (!user) {
+        return res.status(401).json({ message: "Email o usuario no registrado" });
+      }
+      if (!user.password) {
+        return res.status(401).json({ message: "Contraseña incorrecta" });
+      }
 
       const valid = await comparePasswords(password, user.password);
-      if (!valid) return res.status(401).json({ message: "Invalid credentials" });
+      if (!valid) {
+        return res.status(401).json({ message: "Contraseña incorrecta" });
+      }
 
-      const token = generateToken({ id: user.id, username: user.username, email: user.email, role: user.role, name: user.name, firstName: user.firstName, lastName: user.lastName });
-      res.json({ token, user: { id: user.id, username: user.username, email: user.email, role: user.role, name: user.name } });
-    } catch (err) {
-      res.status(500).json({ message: "Login failed" });
+      const authUser = { id: user.id, username: user.username, email: user.email, role: user.role, name: user.name, firstName: user.firstName, lastName: user.lastName };
+      const token = generateToken(authUser, !!rememberMe);
+      const refreshToken = await generateRefreshToken(user.id, !!rememberMe);
+
+      res.json({ token, refreshToken, user: { id: user.id, username: user.username, email: user.email, role: user.role, name: user.name } });
+    } catch {
+      res.status(500).json({ message: "Error al iniciar sesión" });
     }
   });
 
   app.post("/api/auth/register", async (req: Request, res: Response) => {
     try {
       const { username, password, email, firstName, lastName, phone, company, licenseNumber } = req.body;
-      if (!username || !password) return res.status(400).json({ message: "Username and password required" });
+      if (!username || !password) {
+        return res.status(400).json({ message: "Usuario y contraseña requeridos" });
+      }
+      if (password.length < 8) {
+        return res.status(400).json({ message: "La contraseña debe tener al menos 8 caracteres" });
+      }
 
       const existing = await db.select().from(users).where(eq(users.username, username)).limit(1);
-      if (existing.length > 0) return res.status(400).json({ message: "Username already exists" });
+      if (existing.length > 0) {
+        return res.status(400).json({ message: "El usuario ya existe" });
+      }
 
       const hashed = await hashPassword(password);
+      const verificationToken = nanoid(32);
+
       const [user] = await db.insert(users).values({
         username,
         password: hashed,
@@ -59,21 +113,97 @@ export function registerRoutes(app: Express) {
         company,
         licenseNumber,
         role: "user",
+        emailVerificationToken: verificationToken,
       }).returning();
 
-      const token = generateToken({ id: user.id, username: user.username, email: user.email, role: user.role, name: user.name, firstName: user.firstName, lastName: user.lastName });
-      res.json({ token, user: { id: user.id, username: user.username, email: user.email, role: user.role, name: user.name } });
-    } catch (err) {
-      res.status(500).json({ message: "Registration failed" });
+      const authUser = { id: user.id, username: user.username, email: user.email, role: user.role, name: user.name, firstName: user.firstName, lastName: user.lastName };
+      const token = generateToken(authUser);
+      const refreshToken = await generateRefreshToken(user.id);
+
+      res.json({ token, refreshToken, user: { id: user.id, username: user.username, email: user.email, role: user.role, name: user.name } });
+    } catch {
+      res.status(500).json({ message: "Error en el registro" });
     }
+  });
+
+  app.post("/api/auth/refresh", async (req: Request, res: Response) => {
+    try {
+      const { refreshToken } = req.body;
+      if (!refreshToken) {
+        return res.status(400).json({ message: "Refresh token requerido" });
+      }
+
+      const result = await rotateRefreshToken(refreshToken);
+      if (!result) {
+        return res.status(401).json({ message: "Refresh token inválido o expirado" });
+      }
+
+      const [user] = await db.select().from(users).where(eq(users.id, result.userId)).limit(1);
+      if (!user) {
+        return res.status(401).json({ message: "Usuario no encontrado" });
+      }
+
+      const authUser = { id: user.id, username: user.username, email: user.email, role: user.role, name: user.name, firstName: user.firstName, lastName: user.lastName };
+      const token = generateToken(authUser);
+
+      res.json({ token, refreshToken: result.newToken });
+    } catch {
+      res.status(500).json({ message: "Error al renovar sesión" });
+    }
+  });
+
+  app.post("/api/auth/logout", async (req: Request, res: Response) => {
+    try {
+      const { refreshToken } = req.body;
+      if (refreshToken) {
+        await revokeRefreshToken(refreshToken);
+      }
+      res.json({ message: "Sesión cerrada" });
+    } catch {
+      res.status(500).json({ message: "Error al cerrar sesión" });
+    }
+  });
+
+  app.post("/api/auth/verify-email", async (req: Request, res: Response) => {
+    try {
+      const { token } = req.body;
+      if (!token) {
+        return res.status(400).json({ message: "Token de verificación requerido" });
+      }
+
+      const [user] = await db.select().from(users).where(eq(users.emailVerificationToken, token)).limit(1);
+      if (!user) {
+        return res.status(400).json({ message: "Token de verificación inválido o ya utilizado" });
+      }
+
+      await db.update(users)
+        .set({ emailVerifiedAt: new Date(), emailVerificationToken: null, updatedAt: new Date() })
+        .where(eq(users.id, user.id));
+
+      res.json({ message: "Email verificado correctamente" });
+    } catch {
+      res.status(500).json({ message: "Error al verificar email" });
+    }
+  });
+
+  app.post("/api/auth/forgot-password", async (req: Request, res: Response) => {
+    // Placeholder: in production this would send a password reset email
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: "Email requerido" });
+    }
+    // Always return success to prevent email enumeration
+    res.json({ message: "Si ese email está registrado, recibirás un enlace para restablecer tu contraseña." });
   });
 
   app.post("/api/auth/demo", async (_req: Request, res: Response) => {
     try {
       const demo = await createDemoUser();
-      res.json({ token: "demo-token", user: demo });
-    } catch (err) {
-      res.status(500).json({ message: "Demo login failed" });
+      const token = generateToken(demo);
+      const refreshToken = await generateRefreshToken(demo.id);
+      res.json({ token, refreshToken, user: demo });
+    } catch {
+      res.status(500).json({ message: "Error al acceder a la demo" });
     }
   });
 
@@ -81,11 +211,11 @@ export function registerRoutes(app: Express) {
     try {
       const userId = (req as any).user.id;
       const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
-      if (!user) return res.status(404).json({ message: "User not found" });
-      const { password: _, ...safeUser } = user;
+      if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
+      const { password: _, emailVerificationToken: __, ...safeUser } = user;
       res.json(safeUser);
-    } catch (err) {
-      res.status(500).json({ message: "Failed to get user" });
+    } catch {
+      res.status(500).json({ message: "Error al obtener usuario" });
     }
   });
 
@@ -94,19 +224,23 @@ export function registerRoutes(app: Express) {
       const userId = (req as any).user.id;
       const { firstName, lastName, email, phone, company, licenseNumber, dniNif, address, city, postalCode, province } = req.body;
       const name = `${firstName || ""} ${lastName || ""}`.trim();
-      const [updated] = await db.update(users).set({ firstName, lastName, name, email, phone, company, licenseNumber, dniNif, address, city, postalCode, province, updatedAt: new Date() }).where(eq(users.id, userId)).returning();
-      const { password: _, ...safeUser } = updated;
+      const [updated] = await db.update(users)
+        .set({ firstName, lastName, name, email, phone, company, licenseNumber, dniNif, address, city, postalCode, province, updatedAt: new Date() })
+        .where(eq(users.id, userId))
+        .returning();
+      const { password: _, emailVerificationToken: __, ...safeUser } = updated;
       res.json(safeUser);
-    } catch (err) {
-      res.status(500).json({ message: "Failed to update user" });
+    } catch {
+      res.status(500).json({ message: "Error al actualizar usuario" });
     }
   });
+
+  // --- CERTIFICATIONS ---
 
   app.get("/api/certifications", authenticate, async (req: Request, res: Response) => {
     try {
       const userId = (req as any).user.id;
       const { search, status, archived } = req.query;
-      let query = db.select().from(certifications).where(eq(certifications.userId, userId));
       const results = await db.select().from(certifications).where(
         and(
           eq(certifications.userId, userId),
@@ -126,8 +260,8 @@ export function registerRoutes(app: Express) {
       if (status) filtered = filtered.filter(c => c.status === status);
 
       res.json(filtered);
-    } catch (err) {
-      res.status(500).json({ message: "Failed to get certifications" });
+    } catch {
+      res.status(500).json({ message: "Error al obtener certificaciones" });
     }
   });
 
@@ -137,21 +271,20 @@ export function registerRoutes(app: Express) {
       const [cert] = await db.select().from(certifications).where(
         and(eq(certifications.id, parseInt(req.params.id)), eq(certifications.userId, userId))
       ).limit(1);
-      if (!cert) return res.status(404).json({ message: "Certification not found" });
+      if (!cert) return res.status(404).json({ message: "Certificación no encontrada" });
       res.json(cert);
-    } catch (err) {
-      res.status(500).json({ message: "Failed to get certification" });
+    } catch {
+      res.status(500).json({ message: "Error al obtener certificación" });
     }
   });
 
   app.post("/api/certifications", authenticate, async (req: Request, res: Response) => {
     try {
       const userId = (req as any).user.id;
-      const data = { ...req.body, userId };
-      const [cert] = await db.insert(certifications).values(data).returning();
+      const [cert] = await db.insert(certifications).values({ ...req.body, userId }).returning();
       res.status(201).json(cert);
-    } catch (err) {
-      res.status(500).json({ message: "Failed to create certification" });
+    } catch {
+      res.status(500).json({ message: "Error al crear certificación" });
     }
   });
 
@@ -162,10 +295,10 @@ export function registerRoutes(app: Express) {
         .set({ ...req.body, updatedAt: new Date() })
         .where(and(eq(certifications.id, parseInt(req.params.id)), eq(certifications.userId, userId)))
         .returning();
-      if (!cert) return res.status(404).json({ message: "Certification not found" });
+      if (!cert) return res.status(404).json({ message: "Certificación no encontrada" });
       res.json(cert);
-    } catch (err) {
-      res.status(500).json({ message: "Failed to update certification" });
+    } catch {
+      res.status(500).json({ message: "Error al actualizar certificación" });
     }
   });
 
@@ -176,7 +309,7 @@ export function registerRoutes(app: Express) {
       const [existing] = await db.select().from(certifications).where(
         and(eq(certifications.id, certId), eq(certifications.userId, userId))
       ).limit(1);
-      if (!existing) return res.status(404).json({ message: "Certification not found" });
+      if (!existing) return res.status(404).json({ message: "Certificación no encontrada" });
 
       if (existing.ownerName) {
         const folderName = existing.ownerName;
@@ -207,8 +340,8 @@ export function registerRoutes(app: Express) {
         .where(eq(certifications.id, certId))
         .returning();
       res.json(updated);
-    } catch (err) {
-      res.status(500).json({ message: "Failed to archive certification" });
+    } catch {
+      res.status(500).json({ message: "Error al archivar certificación" });
     }
   });
 
@@ -218,19 +351,21 @@ export function registerRoutes(app: Express) {
       await db.delete(certifications).where(
         and(eq(certifications.id, parseInt(req.params.id)), eq(certifications.userId, userId))
       );
-      res.json({ message: "Deleted" });
-    } catch (err) {
-      res.status(500).json({ message: "Failed to delete certification" });
+      res.json({ message: "Eliminada" });
+    } catch {
+      res.status(500).json({ message: "Error al eliminar certificación" });
     }
   });
+
+  // --- FOLDERS ---
 
   app.get("/api/folders", authenticate, async (req: Request, res: Response) => {
     try {
       const userId = (req as any).user.id;
       const result = await db.select().from(folders).where(eq(folders.userId, userId)).orderBy(desc(folders.createdAt));
       res.json(result);
-    } catch (err) {
-      res.status(500).json({ message: "Failed to get folders" });
+    } catch {
+      res.status(500).json({ message: "Error al obtener carpetas" });
     }
   });
 
@@ -239,8 +374,8 @@ export function registerRoutes(app: Express) {
       const userId = (req as any).user.id;
       const [folder] = await db.insert(folders).values({ ...req.body, userId }).returning();
       res.status(201).json(folder);
-    } catch (err) {
-      res.status(500).json({ message: "Failed to create folder" });
+    } catch {
+      res.status(500).json({ message: "Error al crear carpeta" });
     }
   });
 
@@ -248,19 +383,21 @@ export function registerRoutes(app: Express) {
     try {
       const userId = (req as any).user.id;
       await db.delete(folders).where(and(eq(folders.id, parseInt(req.params.id)), eq(folders.userId, userId)));
-      res.json({ message: "Deleted" });
-    } catch (err) {
-      res.status(500).json({ message: "Failed to delete folder" });
+      res.json({ message: "Eliminada" });
+    } catch {
+      res.status(500).json({ message: "Error al eliminar carpeta" });
     }
   });
+
+  // --- PRICING ---
 
   app.get("/api/pricing", authenticate, async (req: Request, res: Response) => {
     try {
       const userId = (req as any).user.id;
       const result = await db.select().from(pricingRates).where(eq(pricingRates.userId, userId));
       res.json(result);
-    } catch (err) {
-      res.status(500).json({ message: "Failed to get pricing rates" });
+    } catch {
+      res.status(500).json({ message: "Error al obtener tarifas" });
     }
   });
 
@@ -269,8 +406,8 @@ export function registerRoutes(app: Express) {
       const userId = (req as any).user.id;
       const [rate] = await db.insert(pricingRates).values({ ...req.body, userId }).returning();
       res.status(201).json(rate);
-    } catch (err) {
-      res.status(500).json({ message: "Failed to create pricing rate" });
+    } catch {
+      res.status(500).json({ message: "Error al crear tarifa" });
     }
   });
 
@@ -282,8 +419,8 @@ export function registerRoutes(app: Express) {
         .where(and(eq(pricingRates.id, parseInt(req.params.id)), eq(pricingRates.userId, userId)))
         .returning();
       res.json(rate);
-    } catch (err) {
-      res.status(500).json({ message: "Failed to update pricing rate" });
+    } catch {
+      res.status(500).json({ message: "Error al actualizar tarifa" });
     }
   });
 
@@ -291,19 +428,21 @@ export function registerRoutes(app: Express) {
     try {
       const userId = (req as any).user.id;
       await db.delete(pricingRates).where(and(eq(pricingRates.id, parseInt(req.params.id)), eq(pricingRates.userId, userId)));
-      res.json({ message: "Deleted" });
-    } catch (err) {
-      res.status(500).json({ message: "Failed to delete pricing rate" });
+      res.json({ message: "Eliminada" });
+    } catch {
+      res.status(500).json({ message: "Error al eliminar tarifa" });
     }
   });
+
+  // --- INVOICES ---
 
   app.get("/api/invoices", authenticate, async (req: Request, res: Response) => {
     try {
       const userId = (req as any).user.id;
       const result = await db.select().from(invoices).where(eq(invoices.userId, userId)).orderBy(desc(invoices.createdAt));
       res.json(result);
-    } catch (err) {
-      res.status(500).json({ message: "Failed to get invoices" });
+    } catch {
+      res.status(500).json({ message: "Error al obtener facturas" });
     }
   });
 
@@ -313,10 +452,12 @@ export function registerRoutes(app: Express) {
       const invoiceNumber = `INV-${Date.now()}`;
       const [inv] = await db.insert(invoices).values({ ...req.body, userId, invoiceNumber, issuedAt: new Date() }).returning();
       res.status(201).json(inv);
-    } catch (err) {
-      res.status(500).json({ message: "Failed to create invoice" });
+    } catch {
+      res.status(500).json({ message: "Error al crear factura" });
     }
   });
+
+  // --- STATS ---
 
   app.get("/api/stats", authenticate, async (req: Request, res: Response) => {
     try {
@@ -325,7 +466,7 @@ export function registerRoutes(app: Express) {
       const allFolders = await db.select().from(folders).where(eq(folders.userId, userId));
       const allInvoices = await db.select().from(invoices).where(eq(invoices.userId, userId));
 
-      const stats = {
+      res.json({
         totalCertifications: allCerts.length,
         activeCertifications: allCerts.filter(c => !c.isArchived).length,
         archivedCertifications: allCerts.filter(c => c.isArchived).length,
@@ -336,16 +477,17 @@ export function registerRoutes(app: Express) {
           "En Proceso": allCerts.filter(c => c.status === "En Proceso").length,
           Finalizado: allCerts.filter(c => c.status === "Finalizado").length,
         },
-      };
-      res.json(stats);
-    } catch (err) {
-      res.status(500).json({ message: "Failed to get stats" });
+      });
+    } catch {
+      res.status(500).json({ message: "Error al obtener estadísticas" });
     }
   });
 
+  // --- UPLOAD ---
+
   if (!fs.existsSync("uploads")) fs.mkdirSync("uploads");
   app.post("/api/upload", authenticate, upload.single("file"), (req: Request, res: Response) => {
-    if (!req.file) return res.status(400).json({ message: "No file uploaded" });
+    if (!req.file) return res.status(400).json({ message: "No se subió ningún archivo" });
     res.json({ filename: req.file.filename, originalName: req.file.originalname, size: req.file.size });
   });
 }
