@@ -483,6 +483,155 @@ export function registerRoutes(app: Express) {
     }
   });
 
+  // --- PUBLIC FORM (no auth required) ---
+
+  // Generate a shareable link for a certification
+  app.post("/api/certifications/:id/generate-link", authenticate, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user.id;
+      const certId = parseInt(req.params.id);
+
+      const [cert] = await db.select().from(certifications)
+        .where(and(eq(certifications.id, certId), eq(certifications.userId, userId)))
+        .limit(1);
+      if (!cert) return res.status(404).json({ message: "Certificación no encontrada" });
+
+      // Reuse existing token or create a new one
+      const token = cert.formToken ?? nanoid(32);
+      const [updated] = await db.update(certifications)
+        .set({
+          formToken: token,
+          formStatus: cert.formStatus ?? "enviado",
+          formSentAt: cert.formSentAt ?? new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(certifications.id, certId))
+        .returning();
+
+      const host = req.headers.host ?? "localhost:5000";
+      const protocol = req.headers["x-forwarded-proto"] ?? (process.env.NODE_ENV === "production" ? "https" : "http");
+      const url = `${protocol}://${host}/form/${token}`;
+
+      res.json({ token, url, formStatus: updated.formStatus });
+    } catch {
+      res.status(500).json({ message: "Error al generar el enlace" });
+    }
+  });
+
+  // Public: load form data (no auth)
+  app.get("/api/form/:token", async (req: Request, res: Response) => {
+    try {
+      const { token } = req.params;
+      const [cert] = await db.select().from(certifications)
+        .where(eq(certifications.formToken, token))
+        .limit(1);
+      if (!cert) return res.status(404).json({ message: "Formulario no encontrado o enlace inválido" });
+
+      if (cert.formStatus === "completado") {
+        return res.json({ alreadyCompleted: true });
+      }
+
+      const [certifier] = await db.select({
+        name: users.name,
+        firstName: users.firstName,
+        company: users.company,
+      }).from(users).where(eq(users.id, cert.userId!)).limit(1);
+
+      res.json({
+        alreadyCompleted: false,
+        certifier: {
+          name: certifier?.name ?? certifier?.firstName ?? "Tu certificador",
+          company: certifier?.company ?? null,
+        },
+        // Pre-fill known data so the owner only fills what's missing
+        prefill: {
+          ownerName: cert.ownerName ?? "",
+          ownerEmail: cert.ownerEmail ?? "",
+          ownerPhone: cert.ownerPhone ?? "",
+          ownerDni: cert.ownerDni ?? "",
+          address: cert.address ?? "",
+          city: cert.city ?? "",
+          postalCode: cert.postalCode ?? "",
+          province: cert.province ?? "",
+          propertyType: cert.propertyType ?? "",
+          constructionYear: cert.constructionYear ?? "",
+          totalArea: cert.totalArea ?? "",
+          cadastralReference: cert.cadastralReference ?? "",
+        },
+      });
+    } catch {
+      res.status(500).json({ message: "Error al cargar el formulario" });
+    }
+  });
+
+  // Public: mark form as opened
+  app.post("/api/form/:token/open", async (req: Request, res: Response) => {
+    try {
+      const { token } = req.params;
+      const [cert] = await db.select().from(certifications)
+        .where(eq(certifications.formToken, token))
+        .limit(1);
+      if (!cert || cert.formStatus === "completado") return res.json({ ok: true });
+
+      // Only update if not already opened/completed
+      if (cert.formStatus === "enviado") {
+        await db.update(certifications)
+          .set({ formStatus: "abierto", formOpenedAt: new Date(), updatedAt: new Date() })
+          .where(eq(certifications.id, cert.id));
+      }
+      res.json({ ok: true });
+    } catch {
+      res.json({ ok: true }); // Never fail silently on open-tracking
+    }
+  });
+
+  // Public: submit form data
+  app.post("/api/form/:token/submit", async (req: Request, res: Response) => {
+    try {
+      const { token } = req.params;
+      const [cert] = await db.select().from(certifications)
+        .where(eq(certifications.formToken, token))
+        .limit(1);
+      if (!cert) return res.status(404).json({ message: "Formulario no encontrado" });
+      if (cert.formStatus === "completado") {
+        return res.status(409).json({ message: "Este formulario ya fue enviado" });
+      }
+
+      const {
+        ownerName, ownerEmail, ownerPhone, ownerDni,
+        address, city, postalCode, province,
+        propertyType, constructionYear, totalArea, cadastralReference,
+        energyData,
+      } = req.body;
+
+      await db.update(certifications)
+        .set({
+          ownerName: ownerName || cert.ownerName,
+          ownerEmail: ownerEmail || cert.ownerEmail,
+          ownerPhone: ownerPhone || cert.ownerPhone,
+          ownerDni: ownerDni || cert.ownerDni,
+          address: address || cert.address,
+          city: city || cert.city,
+          postalCode: postalCode || cert.postalCode,
+          province: province || cert.province,
+          propertyType: propertyType || cert.propertyType,
+          constructionYear: constructionYear ? parseInt(constructionYear) : cert.constructionYear,
+          totalArea: totalArea || cert.totalArea,
+          cadastralReference: cadastralReference || cert.cadastralReference,
+          formData: { ...(cert.formData as object ?? {}), energyData },
+          formStatus: "completado",
+          formCompletedAt: new Date(),
+          status: "En Proceso",
+          updatedAt: new Date(),
+        })
+        .where(eq(certifications.id, cert.id));
+
+      res.json({ ok: true });
+    } catch {
+      res.status(500).json({ message: "Error al enviar el formulario" });
+    }
+  });
+
   // --- UPLOAD ---
 
   if (!fs.existsSync("uploads")) fs.mkdirSync("uploads");

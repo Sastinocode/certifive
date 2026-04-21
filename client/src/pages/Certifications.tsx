@@ -10,6 +10,146 @@ const PROPERTY_TYPES = [
   "Edificio de viviendas", "Oficinas", "Industrial", "Otro",
 ];
 
+// ── Form status badge ────────────────────────────────────────────────────────
+
+function FormStatusBadge({ status }: { status: string | null }) {
+  if (!status) return null;
+  const styles: Record<string, string> = {
+    enviado: "bg-blue-50 text-blue-700 border border-blue-100",
+    abierto: "bg-orange-50 text-orange-700 border border-orange-100",
+    completado: "bg-emerald-50 text-emerald-700 border border-emerald-100",
+  };
+  const labels: Record<string, string> = {
+    enviado: "Enlace enviado",
+    abierto: "Abierto",
+    completado: "✓ Completado",
+  };
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${styles[status] ?? ""}`}>
+      {labels[status] ?? status}
+    </span>
+  );
+}
+
+// ── Generate link modal ──────────────────────────────────────────────────────
+
+function LinkModal({ cert, onClose }: { cert: any; onClose: () => void }) {
+  const [url, setUrl] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const generate = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const data = await apiRequest("POST", `/api/certifications/${cert.id}/generate-link`);
+      setUrl(data.url);
+      queryClient.invalidateQueries({ queryKey: ["/api/certifications"] });
+    } catch {
+      setError("No se pudo generar el enlace. Inténtalo de nuevo.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const copy = () => {
+    if (!url) return;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  const whatsapp = () => {
+    if (!url) return;
+    const name = cert.ownerName ? ` para ${cert.ownerName}` : "";
+    const text = encodeURIComponent(
+      `Hola! Te envío el enlace para rellenar los datos de tu certificado energético${name}:\n\n${url}\n\nSolo te llevará unos minutos. ¡Gracias!`
+    );
+    window.open(`https://wa.me/?text=${text}`, "_blank");
+  };
+
+  // Auto-generate on open if no url yet
+  if (!url && !loading && !error) {
+    generate();
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+        <div className="bg-emerald-50 px-6 py-5 flex items-center justify-between border-b border-emerald-100">
+          <div>
+            <h3 className="text-base font-bold text-emerald-900">Enlace para el propietario</h3>
+            {cert.ownerName && <p className="text-xs text-emerald-700/60 mt-0.5">{cert.ownerName}</p>}
+          </div>
+          <button onClick={onClose} className="text-emerald-700/40 hover:text-emerald-900 transition-colors">
+            <span className="material-symbols-outlined text-[22px]">close</span>
+          </button>
+        </div>
+
+        <div className="p-6 space-y-5">
+          <p className="text-sm text-gray-600">
+            Envía este enlace al propietario. Podrá rellenar sus datos desde el móvil{" "}
+            <strong>sin crear ninguna cuenta</strong>.
+          </p>
+
+          {loading && (
+            <div className="flex items-center gap-3 py-4">
+              <div className="w-5 h-5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+              <span className="text-sm text-gray-500">Generando enlace…</span>
+            </div>
+          )}
+
+          {error && (
+            <div className="bg-red-50 border border-red-100 rounded-xl px-4 py-3 text-sm text-red-700">{error}</div>
+          )}
+
+          {url && (
+            <>
+              {/* URL display */}
+              <div className="bg-gray-50 rounded-xl px-4 py-3 flex items-center gap-3">
+                <span className="material-symbols-outlined text-emerald-600 text-[18px]">link</span>
+                <p className="text-xs text-gray-600 break-all flex-1">{url}</p>
+              </div>
+
+              {/* State badge */}
+              {cert.formStatus && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-400">Estado actual:</span>
+                  <FormStatusBadge status={cert.formStatus} />
+                </div>
+              )}
+
+              {/* Action buttons */}
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={copy}
+                  className="w-full flex items-center justify-center gap-2 py-3 bg-emerald-800 text-white rounded-xl font-semibold text-sm hover:bg-emerald-700 transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[18px]">
+                    {copied ? "check_circle" : "content_copy"}
+                  </span>
+                  {copied ? "¡Copiado!" : "Copiar enlace"}
+                </button>
+                <button
+                  onClick={whatsapp}
+                  className="w-full flex items-center justify-center gap-2 py-3 bg-green-600 text-white rounded-xl font-semibold text-sm hover:bg-green-700 transition-colors"
+                >
+                  <span className="text-base">📲</span>
+                  Enviar por WhatsApp
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Certification form ───────────────────────────────────────────────────────
+
 function CertificationForm({ onClose, cert }: { onClose: () => void; cert?: any }) {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({
@@ -269,11 +409,15 @@ function CertificationForm({ onClose, cert }: { onClose: () => void; cert?: any 
   );
 }
 
+// ── Main page ────────────────────────────────────────────────────────────────
+
 export default function Certifications() {
   const [showForm, setShowForm] = useState(false);
   const [editCert, setEditCert] = useState<any>(null);
+  const [linkCert, setLinkCert] = useState<any>(null);
   const [statusFilter, setStatusFilter] = useState("Todos");
   const [search, setSearch] = useState("");
+  const [openMenu, setOpenMenu] = useState<number | null>(null);
 
   const { data: certifications, isLoading } = useQuery<any[]>({ queryKey: ["/api/certifications"] });
 
@@ -299,7 +443,7 @@ export default function Certifications() {
   const filtered = allCerts.filter(c => {
     const matchStatus = statusFilter === "Todos" || c.status === statusFilter;
     const matchSearch = !search || [c.ownerName, c.address, c.cadastralReference]
-      .some(v => v?.toLowerCase().includes(search.toLowerCase()));
+      .some((v: string) => v?.toLowerCase().includes(search.toLowerCase()));
     return matchStatus && matchSearch;
   });
 
@@ -321,8 +465,6 @@ export default function Certifications() {
     }
   };
 
-  const [openMenu, setOpenMenu] = useState<number | null>(null);
-
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-6">
       {(showForm || editCert) && (
@@ -330,6 +472,10 @@ export default function Certifications() {
           cert={editCert}
           onClose={() => { setShowForm(false); setEditCert(null); }}
         />
+      )}
+
+      {linkCert && (
+        <LinkModal cert={linkCert} onClose={() => setLinkCert(null)} />
       )}
 
       <div className="flex items-end justify-between">
@@ -376,21 +522,22 @@ export default function Certifications() {
             <tr className="bg-emerald-50/50 border-b border-emerald-100/60">
               <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-emerald-700/60">Cliente</th>
               <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-emerald-700/60">Inmueble</th>
-              <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-emerald-700/60">Fecha</th>
+              <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-emerald-700/60 hidden md:table-cell">Fecha</th>
               <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-emerald-700/60">Estado</th>
+              <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-emerald-700/60 hidden lg:table-cell">Formulario</th>
               <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-emerald-700/60 text-right">Acciones</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-emerald-50">
             {isLoading ? (
               <tr>
-                <td colSpan={5} className="px-8 py-16 text-center">
+                <td colSpan={6} className="px-8 py-16 text-center">
                   <div className="w-10 h-10 border-4 border-emerald-200 border-t-emerald-700 rounded-full animate-spin mx-auto" />
                 </td>
               </tr>
             ) : filtered.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-8 py-16 text-center">
+                <td colSpan={6} className="px-8 py-16 text-center">
                   <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
                     <span className="material-symbols-outlined text-emerald-400 text-[32px]">verified</span>
                   </div>
@@ -431,12 +578,24 @@ export default function Certifications() {
                       <p className="text-sm text-emerald-800 font-medium">{cert.address || "-"}</p>
                       {cert.propertyType && <p className="text-xs text-emerald-700/50 mt-0.5">{cert.propertyType}</p>}
                     </td>
-                    <td className="px-8 py-5 text-sm font-medium text-emerald-800">{formatDate(cert.createdAt)}</td>
+                    <td className="px-8 py-5 text-sm font-medium text-emerald-800 hidden md:table-cell">{formatDate(cert.createdAt)}</td>
                     <td className="px-8 py-5">
                       <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${getStatusStyle(cert.status)}`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${getDotColor(cert.status)}`} />
                         {cert.status}
                       </span>
+                    </td>
+                    <td className="px-8 py-5 hidden lg:table-cell">
+                      {cert.formStatus ? (
+                        <FormStatusBadge status={cert.formStatus} />
+                      ) : (
+                        <button
+                          onClick={() => { setLinkCert(cert); setOpenMenu(null); }}
+                          className="text-[11px] text-emerald-700/50 hover:text-emerald-800 underline underline-offset-2 transition-colors"
+                        >
+                          Generar enlace
+                        </button>
+                      )}
                     </td>
                     <td className="px-8 py-5 text-right relative">
                       <button
@@ -447,7 +606,7 @@ export default function Certifications() {
                         <span className="material-symbols-outlined text-[20px]">more_vert</span>
                       </button>
                       {openMenu === cert.id && (
-                        <div className="absolute right-6 top-14 bg-white border border-emerald-100 rounded-xl shadow-xl z-10 min-w-[160px] overflow-hidden">
+                        <div className="absolute right-6 top-14 bg-white border border-emerald-100 rounded-xl shadow-xl z-10 min-w-[200px] overflow-hidden">
                           <button
                             data-testid={`btn-edit-${cert.id}`}
                             onClick={() => { setEditCert(cert); setOpenMenu(null); }}
@@ -455,6 +614,13 @@ export default function Certifications() {
                           >
                             <span className="material-symbols-outlined text-[18px]">edit</span>
                             Editar
+                          </button>
+                          <button
+                            onClick={() => { setLinkCert(cert); setOpenMenu(null); }}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-emerald-800 hover:bg-emerald-50 transition-colors"
+                          >
+                            <span className="material-symbols-outlined text-[18px]">link</span>
+                            {cert.formToken ? "Ver enlace del propietario" : "Enviar enlace al propietario"}
                           </button>
                           {cert.status === "Finalizado" && !cert.isArchived && (
                             <button

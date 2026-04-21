@@ -57,6 +57,12 @@ export const certifications = pgTable("certifications", {
   isArchived: boolean("is_archived").default(false),
   archivedAt: timestamp("archived_at"),
   deliveryStatus: text("delivery_status"),
+  // Public form link
+  formToken: text("form_token").unique(),
+  formStatus: text("form_status"), // "enviado" | "abierto" | "completado"
+  formSentAt: timestamp("form_sent_at"),
+  formOpenedAt: timestamp("form_opened_at"),
+  formCompletedAt: timestamp("form_completed_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
