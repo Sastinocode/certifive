@@ -9,18 +9,25 @@ interface LoginProps {
 export default function Login({ onBack, onShowRegister }: LoginProps) {
   const { login, loginDemo } = useAuth();
   const [form, setForm] = useState({ username: "", password: "" });
+  const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [demoLoading, setDemoLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const isDemoMode = new URLSearchParams(window.location.search).get("demo") === "true";
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
     try {
-      await login(form.username, form.password);
-    } catch {
-      setError("Usuario o contraseña incorrectos");
+      await login(form.username, form.password, rememberMe);
+    } catch (err: any) {
+      const msg = err.message ?? "";
+      if (msg.includes("no registrado")) setError("Email o usuario no registrado");
+      else if (msg.includes("incorrecta")) setError("Contraseña incorrecta");
+      else if (msg.includes("429") || msg.includes("Demasiados")) setError("Demasiados intentos. Espera 1 minuto.");
+      else setError("Usuario o contraseña incorrectos");
     } finally {
       setLoading(false);
     }
@@ -99,7 +106,16 @@ export default function Login({ onBack, onShowRegister }: LoginProps) {
               />
             </div>
             <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest text-emerald-700/60 block mb-1.5">Contraseña</label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-emerald-700/60">Contraseña</label>
+                <button
+                  type="button"
+                  onClick={() => alert("Próximamente: se enviará un enlace de recuperación a tu email registrado.")}
+                  className="text-[11px] text-emerald-700/60 hover:text-emerald-800 transition-colors"
+                >
+                  ¿Olvidaste tu contraseña?
+                </button>
+              </div>
               <input
                 data-testid="input-password"
                 type="password"
@@ -110,6 +126,15 @@ export default function Login({ onBack, onShowRegister }: LoginProps) {
                 className="w-full bg-white border border-emerald-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300"
               />
             </div>
+            <label className="flex items-center gap-2.5 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={e => setRememberMe(e.target.checked)}
+                className="w-4 h-4 rounded border-emerald-300 text-emerald-700 focus:ring-emerald-300"
+              />
+              <span className="text-sm text-emerald-700/70">Recordarme durante 30 días</span>
+            </label>
             <button
               data-testid="btn-login"
               type="submit"
@@ -120,20 +145,23 @@ export default function Login({ onBack, onShowRegister }: LoginProps) {
             </button>
           </form>
 
-          <div className="flex items-center gap-4 my-5">
-            <div className="flex-1 h-px bg-emerald-200" />
-            <span className="text-xs text-emerald-700/50 font-medium">o continúa con</span>
-            <div className="flex-1 h-px bg-emerald-200" />
-          </div>
-
-          <button
-            data-testid="btn-demo"
-            onClick={handleDemo}
-            disabled={demoLoading}
-            className="w-full py-3 border-2 border-orange-200 text-orange-700 bg-orange-50 rounded-xl font-semibold hover:bg-orange-100 disabled:opacity-60 transition-colors text-sm"
-          >
-            {demoLoading ? "Cargando demo..." : "▶ Acceder a la demo"}
-          </button>
+          {isDemoMode && (
+            <>
+              <div className="flex items-center gap-4 my-5">
+                <div className="flex-1 h-px bg-emerald-200" />
+                <span className="text-xs text-emerald-700/50 font-medium">o continúa con</span>
+                <div className="flex-1 h-px bg-emerald-200" />
+              </div>
+              <button
+                data-testid="btn-demo"
+                onClick={handleDemo}
+                disabled={demoLoading}
+                className="w-full py-3 border-2 border-orange-200 text-orange-700 bg-orange-50 rounded-xl font-semibold hover:bg-orange-100 disabled:opacity-60 transition-colors text-sm"
+              >
+                {demoLoading ? "Cargando demo..." : "▶ Acceder a la demo"}
+              </button>
+            </>
+          )}
 
           <p className="text-center text-sm text-emerald-700/60 mt-6">
             ¿No tienes cuenta?{" "}
