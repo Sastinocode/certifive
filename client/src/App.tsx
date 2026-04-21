@@ -5,12 +5,13 @@ import { useAuth } from "./hooks/useAuth";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import PublicForm from "./pages/PublicForm";
 import Layout from "./components/Layout";
 
 type View = "landing" | "login" | "register";
 
 function AppContent() {
-  const { user, isLoading, isLoggedOut } = useAuth();
+  const { user, isLoading } = useAuth();
   const [view, setView] = useState<View>("landing");
 
   if (isLoading) {
@@ -26,9 +27,7 @@ function AppContent() {
     );
   }
 
-  if (user) {
-    return <Layout />;
-  }
+  if (user) return <Layout />;
 
   if (view === "login") return <Login onBack={() => setView("landing")} onShowRegister={() => setView("register")} />;
   if (view === "register") return <Register onBack={() => setView("landing")} onShowLogin={() => setView("login")} />;
@@ -37,6 +36,17 @@ function AppContent() {
 }
 
 export default function App() {
+  // Public form route: /form/:token — rendered without authentication
+  const path = window.location.pathname;
+  const formMatch = path.match(/^\/form\/([A-Za-z0-9_-]+)$/);
+  if (formMatch) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <PublicForm token={formMatch[1]} />
+      </QueryClientProvider>
+    );
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
       <AppContent />
