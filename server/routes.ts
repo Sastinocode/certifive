@@ -14,10 +14,22 @@ import {
   verifyToken,
 } from "./auth";
 import { insertUserSchema, insertCertificationSchema, insertFolderSchema, insertPricingRateSchema } from "../shared/schema";
+import {
+  sendWelcomeEmail,
+  sendEmailVerification,
+  sendPasswordResetEmail,
+  sendFormLinkEmail,
+  sendOwnerConfirmationEmail,
+  sendCertifierNotification,
+  sendTestEmail,
+} from "./email";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { nanoid } from "nanoid";
+import jwt from "jsonwebtoken";
+
+const JWT_SECRET = process.env.JWT_SECRET || "certifive-dev-secret-2024";
 
 const upload = multer({
   dest: "uploads/",
@@ -120,6 +132,12 @@ export function registerRoutes(app: Express) {
       const token = generateToken(authUser);
       const refreshToken = await generateRefreshToken(user.id);
 
+      // Fire-and-forget emails — never block the response
+      if (user.email) {
+        sendWelcomeEmail({ to: user.email, name: user.name ?? user.username, username: user.username });
+        sendEmailVerification({ to: user.email, name: user.name ?? user.username, verificationToken });
+      }
+
       res.json({ token, refreshToken, user: { id: user.id, username: user.username, email: user.email, role: user.role, name: user.name } });
     } catch {
       res.status(500).json({ message: "Error en el registro" });
@@ -187,13 +205,44 @@ export function registerRoutes(app: Express) {
   });
 
   app.post("/api/auth/forgot-password", async (req: Request, res: Response) => {
-    // Placeholder: in production this would send a password reset email
     const { email } = req.body;
-    if (!email) {
-      return res.status(400).json({ message: "Email requerido" });
+    if (!email) return res.status(400).json({ message: "Email requerido" });
+
+    try {
+      const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+      if (user?.email) {
+        // Stateless reset token — signed JWT, 1 h expiry, no DB needed
+        const resetToken = jwt.sign(
+          { id: user.id, purpose: "password_reset" },
+          JWT_SECRET,
+          { expiresIn: "1h" },
+        );
+        sendPasswordResetEmail({ to: user.email, name: user.name ?? user.username, resetToken });
+      }
+    } catch {
+      // Swallow errors intentionally — never reveal whether email exists
     }
-    // Always return success to prevent email enumeration
+
+    // Always same response (prevents email enumeration)
     res.json({ message: "Si ese email está registrado, recibirás un enlace para restablecer tu contraseña." });
+  });
+
+  app.post("/api/auth/reset-password", async (req: Request, res: Response) => {
+    try {
+      const { token, newPassword } = req.body;
+      if (!token || !newPassword) return res.status(400).json({ message: "Token y nueva contraseña requeridos" });
+      if (newPassword.length < 8) return res.status(400).json({ message: "La contraseña debe tener al menos 8 caracteres" });
+
+      const payload = jwt.verify(token, JWT_SECRET) as any;
+      if (payload?.purpose !== "password_reset") return res.status(400).json({ message: "Token inválido" });
+
+      const hashed = await hashPassword(newPassword);
+      await db.update(users).set({ password: hashed, updatedAt: new Date() }).where(eq(users.id, payload.id));
+
+      res.json({ message: "Contraseña actualizada correctamente" });
+    } catch {
+      res.status(400).json({ message: "Token inválido o expirado" });
+    }
   });
 
   app.post("/api/auth/demo", async (_req: Request, res: Response) => {
@@ -512,7 +561,22 @@ export function registerRoutes(app: Express) {
       const protocol = req.headers["x-forwarded-proto"] ?? (process.env.NODE_ENV === "production" ? "https" : "http");
       const url = `${protocol}://${host}/form/${token}`;
 
-      res.json({ token, url, formStatus: updated.formStatus });
+      // Send form-link email to owner if we have their email address
+      const ownerEmail = cert.ownerEmail ?? req.body.ownerEmail ?? null;
+      if (ownerEmail) {
+        const [certifier] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+        sendFormLinkEmail({
+          to: ownerEmail,
+          ownerName: cert.ownerName ?? "",
+          certifierName: certifier?.name ?? certifier?.username ?? "Tu certificador",
+          certifierPhone: certifier?.phone ?? null,
+          certifierCompany: certifier?.company ?? null,
+          formUrl: url,
+          propertyAddress: cert.address ? `${cert.address}, ${cert.city ?? ""}`.trim().replace(/,$/, "") : null,
+        });
+      }
+
+      res.json({ token, url, formStatus: updated.formStatus, emailSent: !!ownerEmail });
     } catch {
       res.status(500).json({ message: "Error al generar el enlace" });
     }
@@ -627,6 +691,35 @@ export function registerRoutes(app: Express) {
         })
         .where(eq(certifications.id, cert.id));
 
+      // Emails: owner confirmation + certifier notification (fire-and-forget)
+      const [certifier] = await db.select().from(users).where(eq(users.id, cert.userId!)).limit(1);
+      const finalOwnerEmail = ownerEmail || cert.ownerEmail;
+      const finalOwnerName  = ownerName  || cert.ownerName  || "Propietario";
+      const finalAddress    = address    || cert.address;
+      const certifierName   = certifier?.name ?? certifier?.username ?? "Tu certificador";
+
+      if (finalOwnerEmail) {
+        sendOwnerConfirmationEmail({
+          to: finalOwnerEmail,
+          ownerName: finalOwnerName,
+          certifierName,
+          certifierPhone: certifier?.phone ?? null,
+          certifierEmail: certifier?.email ?? null,
+          propertyAddress: finalAddress ?? null,
+        });
+      }
+      if (certifier?.email) {
+        sendCertifierNotification({
+          to: certifier.email,
+          certifierName,
+          ownerName: finalOwnerName,
+          ownerPhone: ownerPhone || cert.ownerPhone || null,
+          ownerEmail: finalOwnerEmail ?? null,
+          propertyAddress: finalAddress ?? null,
+          certificationId: cert.id,
+        });
+      }
+
       // Store immutable snapshot in form_responses for audit trail
       await db.insert(formResponses).values({
         certificationId: cert.id,
@@ -649,6 +742,21 @@ export function registerRoutes(app: Express) {
       res.json({ ok: true });
     } catch {
       res.status(500).json({ message: "Error al enviar el formulario" });
+    }
+  });
+
+  // --- TEST EMAIL (authenticated — remove before public launch) ---
+
+  app.post("/api/test-email", authenticate, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user.id;
+      const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+      const to = req.body.email || user?.email;
+      if (!to) return res.status(400).json({ message: "No hay dirección de email configurada en tu cuenta" });
+      await sendTestEmail(to);
+      res.json({ message: `Email de prueba enviado a ${to}` });
+    } catch {
+      res.status(500).json({ message: "Error al enviar email de prueba" });
     }
   });
 

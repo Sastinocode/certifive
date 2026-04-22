@@ -3,6 +3,7 @@ import session from "express-session";
 import path from "path";
 import { fileURLToPath } from "url";
 import { registerRoutes } from "./routes";
+import { initEmail } from "./email";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -20,6 +21,9 @@ app.use(session({
     maxAge: 7 * 24 * 60 * 60 * 1000,
   },
 }));
+
+// Initialize email service (no-op if SENDGRID_API_KEY is not set)
+initEmail();
 
 registerRoutes(app);
 
