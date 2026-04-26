@@ -10,6 +10,11 @@ interface AuthUser {
   name: string | null;
   firstName: string | null;
   lastName: string | null;
+  onboardingCompleted: boolean;
+  phone?: string | null;
+  dniNif?: string | null;
+  company?: string | null;
+  logoUrl?: string | null;
 }
 
 interface AuthState {

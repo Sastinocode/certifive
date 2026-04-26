@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Background (full bleed for maskable) -->
+  <rect width="512" height="512" fill="#059669"/>
+  <!-- Inner card -->
+  <rect x="64" y="80" width="384" height="352" rx="48" fill="#047857"/>
+  <!-- Energy leaf bolt -->
+  <path d="M256 130 L190 264 H252 L208 380 L322 232 H260 L304 130 Z" fill="#ffffff" opacity="0.95"/>
+  <!-- Small "5" badge -->
+  <circle cx="396" cy="116" r="52" fill="#f97316"/>
+  <text x="396" y="133" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="52" font-weight="800" fill="#ffffff">5</text>
+</svg>

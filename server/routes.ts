@@ -1,7 +1,8 @@
 import { Express, Request, Response } from "express";
 import { db } from "./db";
 import { users, certifications, folders, pricingRates, quoteRequests, invoices, formResponses, payments } from "../shared/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, or, isNull } from "drizzle-orm";
+import Stripe from "stripe";
 import {
   authenticate,
   hashPassword,
@@ -13,7 +14,12 @@ import {
   createDemoUser,
   verifyToken,
 } from "./auth";
-import { insertUserSchema, insertCertificationSchema, insertFolderSchema, insertPricingRateSchema } from "../shared/schema";
+import { insertUserSchema, insertCertificationSchema, insertFolderSchema, insertPricingRateSchema, documentos, payments, refreshTokens, plantillasWhatsapp, mensajesComunicacion, notificaciones, betaLeads } from "../shared/schema";
+import { encryptApiKey, validateApiKey, DEFAULT_TEMPLATES, TEMPLATE_LABELS, AVAILABLE_PLACEHOLDERS } from "./whatsapp";
+import { sendNotification, retryMensaje } from "./notifications";
+import { subscribe as sseSubscribe } from "./sse";
+import { createNotification } from "./createNotification";
+import { lt, gte } from "drizzle-orm";
 import {
   sendWelcomeEmail,
   sendEmailVerification,
@@ -22,6 +28,18 @@ import {
   sendOwnerConfirmationEmail,
   sendCertifierNotification,
   sendTestEmail,
+  sendSolicitudLinkEmail,
+  sendNuevaSolicitudEmail,
+  sendPresupuestoEmail,
+  sendPresupuestoAceptadoEmail,
+  sendModificacionPresupuestoEmail,
+  sendPaymentLinkEmail,
+  sendPagoConfirmadoEmail,
+  sendPagoManualPendienteEmail,
+  sendCEEFormLinkEmail,
+  sendDocumentosRecibidosEmail,
+  sendDocumentoRechazadoEmail,
+  sendBetaLeadConfirmation,
 } from "./email";
 import multer from "multer";
 import path from "path";
@@ -30,6 +48,38 @@ import { nanoid } from "nanoid";
 import jwt from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET || "certifive-dev-secret-2024";
+
+const stripe = process.env.STRIPE_SECRET_KEY
+  ? new Stripe(process.env.STRIPE_SECRET_KEY)
+  : null;
+
+// ─── Pricing helper ──────────────────────────────────────────────────────────
+function calcularPrecio(
+  basePrice: number,
+  totalArea: number | null,
+  province: string | null,
+  areaTiers: any,
+  provinceSurcharges: any,
+): { base: number; surchargeArea: number; surchargeProvince: number; total: number } {
+  let multiplier = 1;
+  if (areaTiers && Array.isArray(areaTiers) && totalArea) {
+    for (const tier of areaTiers) {
+      if (tier.maxArea === null || totalArea <= tier.maxArea) {
+        multiplier = tier.multiplier ?? 1;
+        break;
+      }
+    }
+  }
+  const base = parseFloat((basePrice * multiplier).toFixed(2));
+  let surchargeProvince = 0;
+  if (provinceSurcharges && province) {
+    const key = province.toLowerCase().replace(/\s+/g, "_");
+    const pct = (provinceSurcharges as Record<string, number>)[key] ?? 0;
+    surchargeProvince = parseFloat(((base * pct) / 100).toFixed(2));
+  }
+  const total = parseFloat((base + surchargeProvince).toFixed(2));
+  return { base, surchargeArea: base - basePrice, surchargeProvince, total };
+}
 
 const upload = multer({
   dest: "uploads/",
@@ -58,6 +108,97 @@ function checkLoginRateLimit(ip: string): boolean {
 
 export function registerRoutes(app: Express) {
   app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // NOTIFICATIONS — SSE stream + REST endpoints
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /**
+   * SSE stream endpoint.
+   * The client appends ?token=<jwt> because EventSource cannot send
+   * custom headers. We validate it here as a query-param bearer token.
+   */
+  app.get("/api/notifications/stream", async (req: Request, res: Response) => {
+    const token = (req.query.token as string) || req.headers.authorization?.split(" ")[1];
+    if (!token) return res.status(401).json({ message: "No autorizado" });
+
+    let userId: number;
+    try {
+      const payload = verifyToken(token) as any;
+      userId = payload.id ?? payload.userId;
+      if (!userId) throw new Error("no userId in token");
+    } catch {
+      return res.status(401).json({ message: "Token inválido" });
+    }
+
+    sseSubscribe(userId, res);
+    // Note: response stays open — sseSubscribe owns it from here on
+  });
+
+  /** List last 20 notifications for the authenticated user. */
+  app.get("/api/notifications", authenticate, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId ?? (req as any).user?.id;
+      const rows = await db
+        .select()
+        .from(notificaciones)
+        .where(eq(notificaciones.userId, userId))
+        .orderBy(desc(notificaciones.createdAt))
+        .limit(20);
+
+      const unreadCount = rows.filter(n => !n.leida).length;
+      res.json({ notifications: rows, unreadCount });
+    } catch {
+      res.status(500).json({ message: "Error al obtener notificaciones" });
+    }
+  });
+
+  /** Activity feed for the dashboard — last 10 events from the past 24 h. */
+  app.get("/api/activity", authenticate, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId ?? (req as any).user?.id;
+      const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const rows = await db
+        .select()
+        .from(notificaciones)
+        .where(and(eq(notificaciones.userId, userId), gte(notificaciones.createdAt, since)))
+        .orderBy(desc(notificaciones.createdAt))
+        .limit(10);
+
+      res.json(rows);
+    } catch {
+      res.status(500).json({ message: "Error al obtener actividad" });
+    }
+  });
+
+  /** Mark one notification as read. */
+  app.patch("/api/notifications/:id/read", authenticate, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId ?? (req as any).user?.id;
+      const id = parseInt(req.params.id);
+      await db
+        .update(notificaciones)
+        .set({ leida: true })
+        .where(and(eq(notificaciones.id, id), eq(notificaciones.userId, userId)));
+      res.json({ ok: true });
+    } catch {
+      res.status(500).json({ message: "Error al marcar notificación" });
+    }
+  });
+
+  /** Mark ALL notifications as read. */
+  app.patch("/api/notifications/read-all", authenticate, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).userId ?? (req as any).user?.id;
+      await db
+        .update(notificaciones)
+        .set({ leida: true })
+        .where(and(eq(notificaciones.userId, userId), eq(notificaciones.leida, false)));
+      res.json({ ok: true });
+    } catch {
+      res.status(500).json({ message: "Error al marcar notificaciones" });
+    }
+  });
 
   // --- AUTH ---
 
@@ -261,7 +402,7 @@ export function registerRoutes(app: Express) {
       const userId = (req as any).user.id;
       const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
       if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
-      const { password: _, emailVerificationToken: __, ...safeUser } = user;
+      const { password: _, emailVerificationToken: __, whatsappApiKey: ___, ...safeUser } = user as any;
       res.json(safeUser);
     } catch {
       res.status(500).json({ message: "Error al obtener usuario" });
@@ -271,17 +412,154 @@ export function registerRoutes(app: Express) {
   app.put("/api/auth/user", authenticate, async (req: Request, res: Response) => {
     try {
       const userId = (req as any).user.id;
-      const { firstName, lastName, email, phone, company, licenseNumber, dniNif, address, city, postalCode, province } = req.body;
+      const {
+        firstName, lastName, email, phone, company, commercialName,
+        licenseNumber, dniNif, address, city, postalCode, province,
+        iban, emailSignature,
+      } = req.body;
       const name = `${firstName || ""} ${lastName || ""}`.trim();
       const [updated] = await db.update(users)
-        .set({ firstName, lastName, name, email, phone, company, licenseNumber, dniNif, address, city, postalCode, province, updatedAt: new Date() })
+        .set({
+          firstName, lastName, name, email, phone,
+          company, commercialName, licenseNumber, dniNif,
+          address, city, postalCode, province, iban,
+          emailSignature,
+          updatedAt: new Date(),
+        } as any)
         .where(eq(users.id, userId))
         .returning();
-      const { password: _, emailVerificationToken: __, ...safeUser } = updated;
+      const { password: _, emailVerificationToken: __, whatsappApiKey: ___, ...safeUser } = updated;
       res.json(safeUser);
     } catch {
       res.status(500).json({ message: "Error al actualizar usuario" });
     }
+  });
+
+  // ─── Profile: logo upload ──────────────────────────────────────────────────
+  const avatarUpload = multer({
+    storage: multer.diskStorage({
+      destination: (_req, _file, cb) => {
+        const dir = "uploads/avatars";
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        cb(null, dir);
+      },
+      filename: (_req, file, cb) => cb(null, nanoid(12) + path.extname(file.originalname).toLowerCase()),
+    }),
+    limits: { fileSize: 2 * 1024 * 1024 },
+    fileFilter: (_req, file, cb) => {
+      const ok = [".jpg", ".jpeg", ".png"].includes(path.extname(file.originalname).toLowerCase());
+      cb(null, ok);
+    },
+  });
+
+  app.post("/api/auth/user/logo", authenticate, avatarUpload.single("logo"), async (req: any, res) => {
+    if (!req.file) return res.status(400).json({ message: "Archivo inválido (máx 2 MB, PNG/JPG)" });
+    const url = `/api/uploads/avatars/${req.file.filename}`;
+    await db.update(users).set({ logoUrl: url, updatedAt: new Date() } as any).where(eq(users.id, req.userId));
+    res.json({ url });
+  });
+
+  app.post("/api/auth/user/firma", authenticate, avatarUpload.single("firma"), async (req: any, res) => {
+    if (!req.file) return res.status(400).json({ message: "Archivo inválido (máx 2 MB, PNG/JPG)" });
+    const url = `/api/uploads/avatars/${req.file.filename}`;
+    await db.update(users).set({ firmaUrl: url, updatedAt: new Date() } as any).where(eq(users.id, req.userId));
+    res.json({ url });
+  });
+
+  app.get("/api/uploads/avatars/:filename", (req, res) => {
+    const fp = path.resolve(`uploads/avatars/${req.params.filename}`);
+    if (!fs.existsSync(fp)) return res.status(404).end();
+    res.sendFile(fp);
+  });
+
+  // ─── Profile completeness ──────────────────────────────────────────────────
+  // PATCH /api/auth/onboarding/complete — mark onboarding as done
+  app.patch("/api/auth/onboarding/complete", authenticate, async (req: any, res) => {
+    try {
+      const userId = (req as any).user.id;
+      await db
+        .update(users)
+        .set({ onboardingCompleted: true, onboardingCompletedAt: new Date(), updatedAt: new Date() } as any)
+        .where(eq(users.id, userId));
+      res.json({ ok: true });
+    } catch {
+      res.status(500).json({ message: "Error al completar onboarding" });
+    }
+  });
+
+  app.get("/api/auth/user/completeness", authenticate, async (req: any, res) => {
+    try {
+      const [u] = await db.select().from(users).where(eq(users.id, req.userId));
+      if (!u) return res.status(404).end();
+      const checks = [
+        { label: "Nombre y apellidos", filled: !!((u as any).firstName && (u as any).lastName) },
+        { label: "Email de contacto",  filled: !!(u as any).email },
+        { label: "Teléfono",           filled: !!(u as any).phone },
+        { label: "DNI / NIF",          filled: !!(u as any).dniNif },
+        { label: "Dirección fiscal",   filled: !!(u as any).address },
+        { label: "Empresa / Nombre",   filled: !!(u as any).company },
+        { label: "Nº de habilitación", filled: !!(u as any).licenseNumber },
+        { label: "Logo profesional",   filled: !!(u as any).logoUrl },
+      ];
+      const filled  = checks.filter(c => c.filled).length;
+      const percent = Math.round((filled / checks.length) * 100);
+      res.json({ percent, missing: checks.filter(c => !c.filled).map(c => c.label), complete: percent === 100 });
+    } catch { res.status(500).json({ message: "Error" }); }
+  });
+
+  // ─── Notifications preferences ─────────────────────────────────────────────
+  app.put("/api/auth/user/notifications", authenticate, async (req: any, res) => {
+    try {
+      const { notifyFormCompleted, notifyPaymentReceived, notifyNewMessage, dailyDigestEnabled, dailyDigestHour } = req.body;
+      const [updated] = await db.update(users).set({
+        notifyFormCompleted:  !!notifyFormCompleted,
+        notifyPaymentReceived: !!notifyPaymentReceived,
+        notifyNewMessage:     !!notifyNewMessage,
+        dailyDigestEnabled:   !!dailyDigestEnabled,
+        dailyDigestHour:      dailyDigestHour ?? 8,
+        updatedAt: new Date(),
+      } as any).where(eq(users.id, req.userId)).returning();
+      const { password: _, emailVerificationToken: __, whatsappApiKey: ___, ...safe } = updated;
+      res.json(safe);
+    } catch { res.status(500).json({ message: "Error" }); }
+  });
+
+  // ─── Security: change password + timezone ──────────────────────────────────
+  app.put("/api/auth/user/security", authenticate, async (req: any, res) => {
+    try {
+      const { currentPassword, newPassword, timezone } = req.body;
+      const [u] = await db.select().from(users).where(eq(users.id, req.userId));
+      if (!u) return res.status(404).end();
+
+      if (currentPassword && newPassword) {
+        if (!u.password) return res.status(400).json({ message: "No tienes contraseña configurada" });
+        const ok = await comparePasswords(currentPassword, u.password);
+        if (!ok) return res.status(400).json({ message: "La contraseña actual es incorrecta" });
+        if (newPassword.length < 8) return res.status(400).json({ message: "La nueva contraseña debe tener al menos 8 caracteres" });
+        const hashed = await hashPassword(newPassword);
+        await db.update(users).set({ password: hashed, updatedAt: new Date() }).where(eq(users.id, req.userId));
+      }
+
+      if (timezone) {
+        await db.update(users).set({ timezone: timezone as any, updatedAt: new Date() }).where(eq(users.id, req.userId));
+      }
+
+      res.json({ ok: true });
+    } catch { res.status(500).json({ message: "Error" }); }
+  });
+
+  // ─── GDPR data export ──────────────────────────────────────────────────────
+  app.get("/api/auth/user/export", authenticate, async (req: any, res) => {
+    try {
+      const [u] = await db.select().from(users).where(eq(users.id, req.userId));
+      if (!u) return res.status(404).end();
+      const certs  = await db.select().from(certifications).where(eq(certifications.userId, req.userId));
+      const fldrs  = await db.select().from(folders).where(eq(folders.userId, req.userId));
+      const { password: _, whatsappApiKey: __, emailVerificationToken: ___, ...safeUser } = u;
+      res.setHeader("Content-Type", "application/json");
+      res.setHeader("Content-Disposition", `attachment; filename="certifive-${new Date().toISOString().slice(0, 10)}.json"`);
+      res.json({ exportedAt: new Date().toISOString(), user: safeUser, certifications: certs, folders: fldrs });
+    } catch { res.status(500).json({ message: "Error" }); }
   });
 
   // --- CERTIFICATIONS ---
@@ -766,5 +1044,1607 @@ export function registerRoutes(app: Express) {
   app.post("/api/upload", authenticate, upload.single("file"), (req: Request, res: Response) => {
     if (!req.file) return res.status(400).json({ message: "No se subió ningún archivo" });
     res.json({ filename: req.file.filename, originalName: req.file.originalname, size: req.file.size });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // USER SETTINGS (payment + service)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  app.put("/api/auth/user/settings", authenticate, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user.id;
+      const {
+        publicSlug, condicionesServicio, plazoEntregaDias,
+        bizumPhone, iban, enabledPaymentMethods,
+        tramo1Percent, blockFormUntilPayment1, blockCertificateUntilPayment2, paymentReminderDays,
+        invoiceSeriesPrefix, invoiceNextNumber, ivaPercent,
+      } = req.body;
+
+      // Validate slug uniqueness if provided
+      if (publicSlug) {
+        const [existing] = await db.select({ id: users.id })
+          .from(users)
+          .where(and(eq(users.publicSlug, publicSlug), eq(users.id, userId).not ? undefined as any : undefined))
+          .limit(1);
+        // Simple check: if another user has this slug, reject
+        const [conflicting] = await db.select({ id: users.id })
+          .from(users)
+          .where(eq(users.publicSlug, publicSlug))
+          .limit(1);
+        if (conflicting && conflicting.id !== userId) {
+          return res.status(409).json({ message: "Ese slug ya está en uso. Elige otro." });
+        }
+      }
+
+      const [updated] = await db.update(users)
+        .set({
+          publicSlug: publicSlug || null,
+          condicionesServicio: condicionesServicio || null,
+          plazoEntregaDias: plazoEntregaDias ?? 10,
+          bizumPhone: bizumPhone || null,
+          iban: iban || null,
+          enabledPaymentMethods: enabledPaymentMethods ?? null,
+          tramo1Percent: tramo1Percent ?? 25,
+          blockFormUntilPayment1: !!blockFormUntilPayment1,
+          blockCertificateUntilPayment2: !!blockCertificateUntilPayment2,
+          paymentReminderDays: paymentReminderDays ?? 3,
+          invoiceSeriesPrefix: invoiceSeriesPrefix || "FAC",
+          invoiceNextNumber: invoiceNextNumber ?? 1,
+          ivaPercent: ivaPercent ?? "21",
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, userId))
+        .returning();
+
+      const { password: _, emailVerificationToken: __, ...safe } = updated;
+      res.json(safe);
+    } catch {
+      res.status(500).json({ message: "Error al guardar configuración" });
+    }
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // PUBLIC CERTIFIER LANDING  GET /api/c/:slug
+  // ─────────────────────────────────────────────────────────────────────────
+
+  app.get("/api/c/:slug", async (req: Request, res: Response) => {
+    try {
+      const [certifier] = await db.select({
+        id: users.id,
+        name: users.name,
+        firstName: users.firstName,
+        company: users.company,
+        licenseNumber: users.licenseNumber,
+        phone: users.phone,
+        email: users.email,
+        province: users.province,
+        city: users.city,
+        condicionesServicio: users.condicionesServicio,
+        plazoEntregaDias: users.plazoEntregaDias,
+        publicSlug: users.publicSlug,
+      }).from(users).where(eq(users.publicSlug, req.params.slug)).limit(1);
+
+      if (!certifier) return res.status(404).json({ message: "Certificador no encontrado" });
+      res.json(certifier);
+    } catch {
+      res.status(500).json({ message: "Error" });
+    }
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // PRICING CALCULATE  POST /api/pricing/calculate
+  // ─────────────────────────────────────────────────────────────────────────
+
+  app.post("/api/pricing/calculate", async (req: Request, res: Response) => {
+    try {
+      const { certifierId, propertyType, totalArea, province } = req.body;
+      if (!certifierId || !propertyType) {
+        return res.status(400).json({ message: "certifierId y propertyType son obligatorios" });
+      }
+
+      const [rate] = await db.select().from(pricingRates)
+        .where(and(
+          eq(pricingRates.userId, parseInt(certifierId)),
+          eq(pricingRates.propertyType, propertyType),
+          eq(pricingRates.isActive, true),
+        ))
+        .limit(1);
+
+      if (!rate) {
+        return res.json({ available: false, message: "No hay tarifa configurada para este tipo de inmueble" });
+      }
+
+      const pricing = calcularPrecio(
+        parseFloat(rate.basePrice as any),
+        totalArea ? parseFloat(totalArea) : null,
+        province ?? null,
+        rate.areaTiers,
+        rate.provinceSurcharges,
+      );
+
+      res.json({ available: true, ...pricing });
+    } catch {
+      res.status(500).json({ message: "Error al calcular precio" });
+    }
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // SOLICITUD FLOW  (Formulario 1 — tasación)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  // Certifier generates solicitud token and sends link
+  app.post("/api/certifications/:id/generate-solicitud", authenticate, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user.id;
+      const certId = parseInt(req.params.id);
+
+      const [cert] = await db.select().from(certifications)
+        .where(and(eq(certifications.id, certId), eq(certifications.userId, userId)))
+        .limit(1);
+      if (!cert) return res.status(404).json({ message: "Certificación no encontrada" });
+
+      const token = cert.solicitudToken ?? nanoid(32);
+      const [updated] = await db.update(certifications)
+        .set({
+          solicitudToken: token,
+          solicitudStatus: cert.solicitudStatus ?? "enviado",
+          solicitudSentAt: cert.solicitudSentAt ?? new Date(),
+          workflowStatus: "solicitud_enviada",
+          updatedAt: new Date(),
+        })
+        .where(eq(certifications.id, certId))
+        .returning();
+
+      const host = req.headers.host ?? "localhost:5000";
+      const protocol = req.headers["x-forwarded-proto"] ?? (process.env.NODE_ENV === "production" ? "https" : "http");
+      const url = `${protocol}://${host}/solicitud/${token}`;
+
+      const ownerEmail = cert.ownerEmail ?? req.body.ownerEmail ?? null;
+      if (ownerEmail) {
+        const [certifier] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+        sendSolicitudLinkEmail({
+          to: ownerEmail,
+          ownerName: cert.ownerName ?? "",
+          certifierName: certifier?.name ?? certifier?.username ?? "Tu certificador",
+          certifierPhone: certifier?.phone ?? null,
+          certifierCompany: certifier?.company ?? null,
+          solicitudUrl: url,
+          propertyAddress: cert.address ? `${cert.address}, ${cert.city ?? ""}`.trimEnd().replace(/,$/, "") : null,
+        });
+      }
+
+      res.json({ token, url, solicitudStatus: updated.solicitudStatus, emailSent: !!ownerEmail });
+    } catch {
+      res.status(500).json({ message: "Error al generar el enlace de solicitud" });
+    }
+  });
+
+  // Public: Vía B — owner fills solicitud from certifier's public page (no existing cert)
+  app.post("/api/solicitud/nueva", async (req: Request, res: Response) => {
+    try {
+      const { certifierId, ownerName, ownerEmail, ownerPhone, ownerDni } = req.body;
+      if (!certifierId || !ownerName) {
+        return res.status(400).json({ message: "certifierId y nombre son obligatorios" });
+      }
+
+      const token = nanoid(32);
+      const [cert] = await db.insert(certifications).values({
+        userId: parseInt(certifierId),
+        ownerName,
+        ownerEmail: ownerEmail || null,
+        ownerPhone: ownerPhone || null,
+        ownerDni: ownerDni || null,
+        solicitudToken: token,
+        solicitudStatus: "abierto",
+        solicitudSentAt: new Date(),
+        solicitudOpenedAt: new Date(),
+        workflowStatus: "solicitud_enviada",
+        status: "Nuevo",
+      }).returning();
+
+      // Notify certifier
+      const [certifier] = await db.select().from(users).where(eq(users.id, parseInt(certifierId))).limit(1);
+      if (certifier?.email) {
+        sendNuevaSolicitudEmail({
+          to: certifier.email,
+          certifierName: certifier.name ?? certifier.username,
+          ownerName,
+          ownerPhone: ownerPhone || null,
+          ownerEmail: ownerEmail || null,
+          propertyAddress: null,
+          certificationId: cert.id,
+        });
+      }
+
+      const host = req.headers.host ?? "localhost:5000";
+      const protocol = req.headers["x-forwarded-proto"] ?? (process.env.NODE_ENV === "production" ? "https" : "http");
+      const url = `${protocol}://${host}/solicitud/${token}`;
+      res.json({ token, url, certificationId: cert.id });
+    } catch {
+      res.status(500).json({ message: "Error al crear solicitud" });
+    }
+  });
+
+  // Public: get solicitud form data
+  app.get("/api/solicitud/:token", async (req: Request, res: Response) => {
+    try {
+      const [cert] = await db.select().from(certifications)
+        .where(eq(certifications.solicitudToken, req.params.token))
+        .limit(1);
+      if (!cert) return res.status(404).json({ message: "Enlace inválido o expirado" });
+
+      const [certifier] = await db.select({
+        id: users.id,
+        name: users.name,
+        firstName: users.firstName,
+        company: users.company,
+        phone: users.phone,
+        plazoEntregaDias: users.plazoEntregaDias,
+      }).from(users).where(eq(users.id, cert.userId!)).limit(1);
+
+      const completed = cert.solicitudStatus === "completado";
+      res.json({
+        completed,
+        certifier: {
+          id: certifier?.id,
+          name: certifier?.name ?? certifier?.firstName ?? "Tu certificador",
+          company: certifier?.company ?? null,
+          phone: certifier?.phone ?? null,
+          plazoEntregaDias: certifier?.plazoEntregaDias ?? 10,
+        },
+        prefill: {
+          ownerName: cert.ownerName ?? "",
+          ownerEmail: cert.ownerEmail ?? "",
+          ownerPhone: cert.ownerPhone ?? "",
+          ownerDni: cert.ownerDni ?? "",
+          address: cert.address ?? "",
+          city: cert.city ?? "",
+          postalCode: cert.postalCode ?? "",
+          province: cert.province ?? "",
+          propertyType: cert.propertyType ?? "",
+          constructionYear: cert.constructionYear ?? "",
+          totalArea: cert.totalArea ?? "",
+          numPlantas: cert.numPlantas ?? "",
+          cadastralReference: cert.cadastralReference ?? "",
+        },
+      });
+    } catch {
+      res.status(500).json({ message: "Error al cargar formulario" });
+    }
+  });
+
+  // Public: mark solicitud opened
+  app.post("/api/solicitud/:token/open", async (req: Request, res: Response) => {
+    try {
+      const [cert] = await db.select().from(certifications)
+        .where(eq(certifications.solicitudToken, req.params.token))
+        .limit(1);
+      if (!cert || cert.solicitudStatus === "completado") return res.json({ ok: true });
+      if (cert.solicitudStatus === "enviado") {
+        await db.update(certifications)
+          .set({ solicitudStatus: "abierto", solicitudOpenedAt: new Date(), updatedAt: new Date() })
+          .where(eq(certifications.id, cert.id));
+      }
+      res.json({ ok: true });
+    } catch {
+      res.json({ ok: true });
+    }
+  });
+
+  // Public: submit solicitud form (calculates price, updates cert)
+  app.post("/api/solicitud/:token/submit", async (req: Request, res: Response) => {
+    try {
+      const [cert] = await db.select().from(certifications)
+        .where(eq(certifications.solicitudToken, req.params.token))
+        .limit(1);
+      if (!cert) return res.status(404).json({ message: "Formulario no encontrado" });
+      if (cert.solicitudStatus === "completado") {
+        return res.status(409).json({ message: "Este formulario ya fue enviado" });
+      }
+
+      const {
+        ownerName, ownerEmail, ownerPhone, ownerDni,
+        address, city, postalCode, province,
+        propertyType, constructionYear, totalArea, numPlantas, cadastralReference,
+      } = req.body;
+
+      // Calculate estimated price
+      let estimatedPrice: number | null = null;
+      if (propertyType) {
+        const [rate] = await db.select().from(pricingRates)
+          .where(and(eq(pricingRates.userId, cert.userId!), eq(pricingRates.propertyType, propertyType), eq(pricingRates.isActive, true)))
+          .limit(1);
+        if (rate) {
+          const p = calcularPrecio(
+            parseFloat(rate.basePrice as any),
+            totalArea ? parseFloat(totalArea) : null,
+            province ?? null,
+            rate.areaTiers,
+            rate.provinceSurcharges,
+          );
+          estimatedPrice = p.total;
+        }
+      }
+
+      const [updated] = await db.update(certifications)
+        .set({
+          ownerName: ownerName || cert.ownerName,
+          ownerEmail: ownerEmail || cert.ownerEmail,
+          ownerPhone: ownerPhone || cert.ownerPhone,
+          ownerDni: ownerDni || cert.ownerDni,
+          address: address || cert.address,
+          city: city || cert.city,
+          postalCode: postalCode || cert.postalCode,
+          province: province || cert.province,
+          propertyType: propertyType || cert.propertyType,
+          constructionYear: constructionYear ? parseInt(constructionYear) : cert.constructionYear,
+          totalArea: totalArea || cert.totalArea,
+          numPlantas: numPlantas ? parseInt(numPlantas) : cert.numPlantas,
+          cadastralReference: cadastralReference || cert.cadastralReference,
+          estimatedPrice: estimatedPrice !== null ? String(estimatedPrice) : cert.estimatedPrice,
+          solicitudStatus: "completado",
+          solicitudCompletedAt: new Date(),
+          workflowStatus: "solicitud_completada",
+          status: "En Proceso",
+          updatedAt: new Date(),
+        })
+        .where(eq(certifications.id, cert.id))
+        .returning();
+
+      // Notify certifier (email + in-app)
+      const [certifier] = await db.select().from(users).where(eq(users.id, cert.userId!)).limit(1);
+      if (certifier?.email) {
+        sendNuevaSolicitudEmail({
+          to: certifier.email,
+          certifierName: certifier.name ?? certifier.username,
+          ownerName: ownerName || cert.ownerName || "Propietario",
+          ownerPhone: ownerPhone || cert.ownerPhone || null,
+          ownerEmail: ownerEmail || cert.ownerEmail || null,
+          propertyAddress: address ? `${address}, ${city ?? ""}`.trimEnd().replace(/,$/, "") : null,
+          certificationId: cert.id,
+        });
+      }
+
+      // In-app notification
+      createNotification({
+        userId: cert.userId!,
+        tipo: "solicitud_completada",
+        mensaje: `${ownerName || cert.ownerName || "Propietario"} completó el formulario de tasación`,
+        certificationId: cert.id,
+        metadata: { ownerName: ownerName || cert.ownerName, address: address || cert.address },
+      }).catch(console.error);
+
+      res.json({ ok: true, estimatedPrice });
+    } catch {
+      res.status(500).json({ message: "Error al enviar formulario" });
+    }
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // PRESUPUESTO FLOW
+  // ─────────────────────────────────────────────────────────────────────────
+
+  // Certifier generates presupuesto
+  app.post("/api/certifications/:id/generate-presupuesto", authenticate, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user.id;
+      const certId = parseInt(req.params.id);
+      const { finalPrice, plazoEntregaDias } = req.body;
+
+      const [cert] = await db.select().from(certifications)
+        .where(and(eq(certifications.id, certId), eq(certifications.userId, userId)))
+        .limit(1);
+      if (!cert) return res.status(404).json({ message: "Certificación no encontrada" });
+
+      const token = cert.presupuestoToken ?? nanoid(32);
+      const payToken = cert.paymentToken ?? nanoid(32);
+
+      // Calculate installments
+      const [certifier] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+      const tramo1Pct = certifier?.tramo1Percent ?? 25;
+      const price = finalPrice ? parseFloat(finalPrice) : (cert.estimatedPrice ? parseFloat(cert.estimatedPrice as any) : 0);
+      const tramo1Amt = parseFloat(((price * tramo1Pct) / 100).toFixed(2));
+      const tramo2Amt = parseFloat((price - tramo1Amt).toFixed(2));
+
+      await db.update(certifications)
+        .set({
+          presupuestoToken: token,
+          paymentToken: payToken,
+          presupuestoStatus: "enviado",
+          presupuestoSentAt: new Date(),
+          finalPrice: String(price),
+          tramo1Amount: String(tramo1Amt),
+          tramo2Amount: String(tramo2Amt),
+          plazoEntregaDias: plazoEntregaDias ?? certifier?.plazoEntregaDias ?? 10,
+          workflowStatus: "presupuesto_enviado",
+          updatedAt: new Date(),
+        })
+        .where(eq(certifications.id, certId));
+
+      const host = req.headers.host ?? "localhost:5000";
+      const protocol = req.headers["x-forwarded-proto"] ?? (process.env.NODE_ENV === "production" ? "https" : "http");
+      const url = `${protocol}://${host}/presupuesto/${token}`;
+
+      const ownerEmail = cert.ownerEmail;
+      if (ownerEmail) {
+        sendPresupuestoEmail({
+          to: ownerEmail,
+          ownerName: cert.ownerName ?? "",
+          certifierName: certifier?.name ?? certifier?.username ?? "Tu certificador",
+          certifierCompany: certifier?.company ?? null,
+          presupuestoUrl: url,
+          propertyAddress: cert.address ?? null,
+          amount: price,
+          plazoEntregaDias: plazoEntregaDias ?? certifier?.plazoEntregaDias ?? 10,
+        });
+      }
+
+      res.json({ token, url, emailSent: !!ownerEmail });
+    } catch {
+      res.status(500).json({ message: "Error al generar presupuesto" });
+    }
+  });
+
+  // Public: get presupuesto data
+  app.get("/api/presupuesto/:token", async (req: Request, res: Response) => {
+    try {
+      const [cert] = await db.select().from(certifications)
+        .where(eq(certifications.presupuestoToken, req.params.token))
+        .limit(1);
+      if (!cert) return res.status(404).json({ message: "Presupuesto no encontrado o enlace inválido" });
+
+      const [certifier] = await db.select({
+        name: users.name,
+        firstName: users.firstName,
+        company: users.company,
+        licenseNumber: users.licenseNumber,
+        dniNif: users.dniNif,
+        address: users.address,
+        city: users.city,
+        phone: users.phone,
+        email: users.email,
+        condicionesServicio: users.condicionesServicio,
+      }).from(users).where(eq(users.id, cert.userId!)).limit(1);
+
+      res.json({
+        status: cert.presupuestoStatus,
+        cert: {
+          ownerName: cert.ownerName,
+          address: cert.address,
+          city: cert.city,
+          province: cert.province,
+          propertyType: cert.propertyType,
+          totalArea: cert.totalArea,
+          constructionYear: cert.constructionYear,
+          finalPrice: cert.finalPrice,
+          tramo1Amount: cert.tramo1Amount,
+          tramo2Amount: cert.tramo2Amount,
+          plazoEntregaDias: cert.plazoEntregaDias,
+        },
+        certifier: {
+          name: certifier?.name ?? certifier?.firstName ?? "Certificador",
+          company: certifier?.company ?? null,
+          licenseNumber: certifier?.licenseNumber ?? null,
+          dniNif: certifier?.dniNif ?? null,
+          address: certifier?.address ?? null,
+          city: certifier?.city ?? null,
+          phone: certifier?.phone ?? null,
+          email: certifier?.email ?? null,
+          condicionesServicio: certifier?.condicionesServicio ?? null,
+        },
+        paymentToken: cert.paymentToken,
+      });
+    } catch {
+      res.status(500).json({ message: "Error al cargar presupuesto" });
+    }
+  });
+
+  // Public: accept presupuesto
+  app.post("/api/presupuesto/:token/aceptar", async (req: Request, res: Response) => {
+    try {
+      const [cert] = await db.select().from(certifications)
+        .where(eq(certifications.presupuestoToken, req.params.token))
+        .limit(1);
+      if (!cert) return res.status(404).json({ message: "Presupuesto no encontrado" });
+      if (cert.presupuestoStatus === "aceptado") {
+        return res.json({ ok: true, paymentToken: cert.paymentToken });
+      }
+
+      await db.update(certifications)
+        .set({
+          presupuestoStatus: "aceptado",
+          presupuestoAceptadoAt: new Date(),
+          workflowStatus: "presupuesto_aceptado",
+          updatedAt: new Date(),
+        })
+        .where(eq(certifications.id, cert.id));
+
+      const [certifier] = await db.select().from(users).where(eq(users.id, cert.userId!)).limit(1);
+      if (certifier?.email) {
+        sendPresupuestoAceptadoEmail({
+          to: certifier.email,
+          certifierName: certifier.name ?? certifier.username,
+          ownerName: cert.ownerName ?? "Propietario",
+          propertyAddress: cert.address ?? null,
+          amount: cert.finalPrice ? parseFloat(cert.finalPrice as any) : 0,
+          certificationId: cert.id,
+        });
+      }
+
+      // Send payment link to owner
+      const host = req.headers.host ?? "localhost:5000";
+      const protocol = req.headers["x-forwarded-proto"] ?? (process.env.NODE_ENV === "production" ? "https" : "http");
+      const payUrl = `${protocol}://${host}/pay/${cert.paymentToken}`;
+
+      if (cert.ownerEmail && cert.paymentToken) {
+        sendPaymentLinkEmail({
+          to: cert.ownerEmail,
+          ownerName: cert.ownerName ?? "",
+          certifierName: certifier?.name ?? "Tu certificador",
+          paymentUrl: payUrl,
+          amount: cert.tramo1Amount ? parseFloat(cert.tramo1Amount as any) : 0,
+          tramo: 1,
+          propertyAddress: cert.address ?? null,
+        });
+      }
+
+      // In-app notification
+      createNotification({
+        userId: cert.userId!,
+        tipo: "presupuesto_aceptado",
+        mensaje: `${cert.ownerName || "El cliente"} aceptó el presupuesto de ${cert.finalPrice ? parseFloat(cert.finalPrice as any).toFixed(2) : "—"} €`,
+        certificationId: cert.id,
+        metadata: { ownerName: cert.ownerName, amount: cert.finalPrice },
+      }).catch(console.error);
+
+      res.json({ ok: true, paymentToken: cert.paymentToken });
+    } catch {
+      res.status(500).json({ message: "Error al aceptar presupuesto" });
+    }
+  });
+
+  // Public: request presupuesto modification
+  app.post("/api/presupuesto/:token/modificar", async (req: Request, res: Response) => {
+    try {
+      const { motivo } = req.body;
+      const [cert] = await db.select().from(certifications)
+        .where(eq(certifications.presupuestoToken, req.params.token))
+        .limit(1);
+      if (!cert) return res.status(404).json({ message: "Presupuesto no encontrado" });
+
+      await db.update(certifications)
+        .set({
+          presupuestoStatus: "modificacion_solicitada",
+          modificacionSolicitada: true,
+          modificacionMotivo: motivo || "",
+          workflowStatus: "presupuesto_modificacion",
+          updatedAt: new Date(),
+        })
+        .where(eq(certifications.id, cert.id));
+
+      const [certifier] = await db.select().from(users).where(eq(users.id, cert.userId!)).limit(1);
+      if (certifier?.email) {
+        sendModificacionPresupuestoEmail({
+          to: certifier.email,
+          certifierName: certifier.name ?? certifier.username,
+          ownerName: cert.ownerName ?? "Propietario",
+          motivo: motivo || "",
+          certificationId: cert.id,
+        });
+      }
+
+      res.json({ ok: true });
+    } catch {
+      res.status(500).json({ message: "Error al solicitar modificación" });
+    }
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // PAYMENT FLOW
+  // ─────────────────────────────────────────────────────────────────────────
+
+  // Public: get payment page data
+  app.get("/api/pay/:token", async (req: Request, res: Response) => {
+    try {
+      const [cert] = await db.select().from(certifications)
+        .where(eq(certifications.paymentToken, req.params.token))
+        .limit(1);
+      if (!cert) return res.status(404).json({ message: "Enlace de pago inválido" });
+
+      const tramo = cert.tramo1PaidAt ? 2 : 1;
+      const amount = tramo === 1
+        ? (cert.tramo1Amount ? parseFloat(cert.tramo1Amount as any) : 0)
+        : (cert.tramo2Amount ? parseFloat(cert.tramo2Amount as any) : 0);
+
+      const [certifier] = await db.select({
+        name: users.name,
+        company: users.company,
+        phone: users.phone,
+        email: users.email,
+        bizumPhone: users.bizumPhone,
+        iban: users.iban,
+        enabledPaymentMethods: users.enabledPaymentMethods,
+      }).from(users).where(eq(users.id, cert.userId!)).limit(1);
+
+      res.json({
+        tramo,
+        amount,
+        totalAmount: cert.finalPrice ? parseFloat(cert.finalPrice as any) : 0,
+        cert: {
+          ownerName: cert.ownerName,
+          address: cert.address,
+          city: cert.city,
+          propertyType: cert.propertyType,
+        },
+        certifier: {
+          name: certifier?.name ?? "Tu certificador",
+          company: certifier?.company ?? null,
+          phone: certifier?.phone ?? null,
+          email: certifier?.email ?? null,
+          bizumPhone: certifier?.bizumPhone ?? null,
+          iban: certifier?.iban ?? null,
+          enabledPaymentMethods: (certifier?.enabledPaymentMethods as string[]) ?? ["stripe", "bizum", "transferencia", "efectivo"],
+        },
+        alreadyPaid: tramo === 2 && !!cert.tramo2PaidAt,
+      });
+    } catch {
+      res.status(500).json({ message: "Error al cargar datos de pago" });
+    }
+  });
+
+  // Public: create Stripe PaymentIntent
+  app.post("/api/pay/:token/stripe-intent", async (req: Request, res: Response) => {
+    try {
+      if (!stripe) return res.status(503).json({ message: "Stripe no configurado" });
+
+      const [cert] = await db.select().from(certifications)
+        .where(eq(certifications.paymentToken, req.params.token))
+        .limit(1);
+      if (!cert) return res.status(404).json({ message: "Enlace inválido" });
+
+      const tramo = cert.tramo1PaidAt ? 2 : 1;
+      const amount = tramo === 1
+        ? parseFloat((cert.tramo1Amount ?? "0") as any)
+        : parseFloat((cert.tramo2Amount ?? "0") as any);
+
+      const intent = await stripe.paymentIntents.create({
+        amount: Math.round(amount * 100),
+        currency: "eur",
+        metadata: { certificationId: String(cert.id), tramo: String(tramo) },
+        automatic_payment_methods: { enabled: true },
+      });
+
+      res.json({ clientSecret: intent.client_secret });
+    } catch {
+      res.status(500).json({ message: "Error al crear intención de pago" });
+    }
+  });
+
+  // Public: notify manual payment (bizum / transfer / cash)
+  app.post("/api/pay/:token/manual", async (req: Request, res: Response) => {
+    try {
+      const { metodo, notas } = req.body;
+      if (!metodo) return res.status(400).json({ message: "Método de pago requerido" });
+
+      const [cert] = await db.select().from(certifications)
+        .where(eq(certifications.paymentToken, req.params.token))
+        .limit(1);
+      if (!cert) return res.status(404).json({ message: "Enlace inválido" });
+
+      const tramo = cert.tramo1PaidAt ? 2 : 1;
+      const amount = tramo === 1
+        ? parseFloat((cert.tramo1Amount ?? "0") as any)
+        : parseFloat((cert.tramo2Amount ?? "0") as any);
+
+      await db.insert(payments).values({
+        userId: cert.userId!,
+        certificationId: cert.id,
+        amount: String(amount),
+        currency: "eur",
+        status: "pending",
+        tramo,
+        metodo,
+        estadoConfirmacion: "pendiente_confirmacion",
+        fechaNotificacion: new Date(),
+        notas: notas || null,
+        description: `Tramo ${tramo} - ${metodo} - ${cert.ownerName ?? ""}`,
+      });
+
+      await db.update(certifications)
+        .set({ workflowStatus: `pago_${tramo}_pendiente`, updatedAt: new Date() })
+        .where(eq(certifications.id, cert.id));
+
+      const [certifier] = await db.select().from(users).where(eq(users.id, cert.userId!)).limit(1);
+      if (certifier?.email) {
+        sendPagoManualPendienteEmail({
+          to: certifier.email,
+          certifierName: certifier.name ?? certifier.username,
+          ownerName: cert.ownerName ?? "Propietario",
+          metodo,
+          amount,
+          tramo: tramo as 1 | 2,
+        });
+      }
+
+      res.json({ ok: true });
+    } catch {
+      res.status(500).json({ message: "Error al notificar pago" });
+    }
+  });
+
+  // Stripe webhook
+  app.post("/api/stripe/webhook", async (req: Request, res: Response) => {
+    if (!stripe) return res.status(503).json({ message: "Stripe no configurado" });
+
+    const sig = req.headers["stripe-signature"] as string;
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+    let event: any;
+    try {
+      const rawBody = (req as any).rawBody ?? JSON.stringify(req.body);
+      event = webhookSecret
+        ? stripe.webhooks.constructEvent(rawBody, sig, webhookSecret)
+        : req.body;
+    } catch {
+      return res.status(400).json({ message: "Webhook signature invalid" });
+    }
+
+    if (event.type === "payment_intent.succeeded") {
+      const intent = event.data.object;
+      const certId = parseInt(intent.metadata?.certificationId ?? "0");
+      const tramo = parseInt(intent.metadata?.tramo ?? "1") as 1 | 2;
+
+      if (certId) {
+        const [cert] = await db.select().from(certifications).where(eq(certifications.id, certId)).limit(1);
+        if (cert) {
+          const amount = tramo === 1
+            ? parseFloat((cert.tramo1Amount ?? "0") as any)
+            : parseFloat((cert.tramo2Amount ?? "0") as any);
+
+          await db.update(certifications)
+            .set({
+              [`tramo${tramo}PaidAt`]: new Date(),
+              workflowStatus: `pago_${tramo}_confirmado`,
+              updatedAt: new Date(),
+            })
+            .where(eq(certifications.id, certId));
+
+          // If tramo 1, auto-generate CEE form link
+          const [certifier] = await db.select().from(users).where(eq(users.id, cert.userId!)).limit(1);
+
+          if (tramo === 1 && certifier) {
+            const ceeToken = cert.ceeToken ?? nanoid(32);
+            await db.update(certifications)
+              .set({ ceeToken, ceeFormStatus: "enviado", ceeFormSentAt: new Date(), workflowStatus: "formulario_cee_enviado", updatedAt: new Date() })
+              .where(eq(certifications.id, certId));
+
+            const host = "certifive.es";
+            const ceeUrl = `https://${host}/formulario-cee/${ceeToken}`;
+            if (cert.ownerEmail) {
+              sendPagoConfirmadoEmail({ to: cert.ownerEmail, ownerName: cert.ownerName ?? "", certifierName: certifier.name ?? certifier.username, amount, tramo, ceeFormUrl: ceeUrl });
+              sendCEEFormLinkEmail({ to: cert.ownerEmail, ownerName: cert.ownerName ?? "", certifierName: certifier.name ?? certifier.username, ceeFormUrl: ceeUrl, propertyAddress: cert.address ?? null });
+            }
+          } else if (tramo === 2 && cert.ownerEmail) {
+            sendPagoConfirmadoEmail({ to: cert.ownerEmail, ownerName: cert.ownerName ?? "", certifierName: certifier?.name ?? "Tu certificador", amount, tramo, ceeFormUrl: null });
+          }
+        }
+      }
+    }
+
+    res.json({ received: true });
+  });
+
+  // Authenticated: get pending manual payments
+  app.get("/api/payments/pending", authenticate, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user.id;
+      const pending = await db.select({
+        id: payments.id,
+        certificationId: payments.certificationId,
+        amount: payments.amount,
+        metodo: payments.metodo,
+        tramo: payments.tramo,
+        notas: payments.notas,
+        estadoConfirmacion: payments.estadoConfirmacion,
+        fechaNotificacion: payments.fechaNotificacion,
+        ownerName: certifications.ownerName,
+        address: certifications.address,
+        city: certifications.city,
+      })
+        .from(payments)
+        .leftJoin(certifications, eq(payments.certificationId, certifications.id))
+        .where(and(
+          eq(payments.userId, userId),
+          eq(payments.estadoConfirmacion, "pendiente_confirmacion"),
+        ))
+        .orderBy(desc(payments.fechaNotificacion));
+
+      res.json(pending);
+    } catch {
+      res.status(500).json({ message: "Error al obtener cobros pendientes" });
+    }
+  });
+
+  // Authenticated: confirm manual payment
+  app.post("/api/payments/:id/confirm", authenticate, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user.id;
+      const paymentId = parseInt(req.params.id);
+
+      const [payment] = await db.select().from(payments)
+        .where(and(eq(payments.id, paymentId), eq(payments.userId, userId)))
+        .limit(1);
+      if (!payment) return res.status(404).json({ message: "Pago no encontrado" });
+
+      await db.update(payments)
+        .set({
+          estadoConfirmacion: "confirmado",
+          fechaConfirmacion: new Date(),
+          confirmadoPor: userId,
+          status: "succeeded",
+          paidAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(payments.id, paymentId));
+
+      if (payment.certificationId) {
+        const [cert] = await db.select().from(certifications).where(eq(certifications.id, payment.certificationId)).limit(1);
+        const tramo = payment.tramo as 1 | 2;
+        const amount = parseFloat(payment.amount as any);
+
+        await db.update(certifications)
+          .set({
+            [`tramo${tramo}PaidAt`]: new Date(),
+            workflowStatus: `pago_${tramo}_confirmado`,
+            updatedAt: new Date(),
+          })
+          .where(eq(certifications.id, payment.certificationId));
+
+        const [certifier] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+
+        if (cert?.ownerEmail) {
+          // Send payment confirmation
+          if (tramo === 1) {
+            // Auto-generate CEE form if not exists
+            const ceeToken = cert.ceeToken ?? nanoid(32);
+            if (!cert.ceeToken) {
+              await db.update(certifications)
+                .set({ ceeToken, ceeFormStatus: "enviado", ceeFormSentAt: new Date(), workflowStatus: "formulario_cee_enviado", updatedAt: new Date() })
+                .where(eq(certifications.id, cert.id));
+            }
+            const host = req.headers.host ?? "localhost:5000";
+            const protocol = req.headers["x-forwarded-proto"] ?? (process.env.NODE_ENV === "production" ? "https" : "http");
+            const ceeUrl = `${protocol}://${host}/formulario-cee/${ceeToken}`;
+            sendPagoConfirmadoEmail({ to: cert.ownerEmail, ownerName: cert.ownerName ?? "", certifierName: certifier?.name ?? "Tu certificador", amount, tramo: 1, ceeFormUrl: ceeUrl });
+            sendCEEFormLinkEmail({ to: cert.ownerEmail, ownerName: cert.ownerName ?? "", certifierName: certifier?.name ?? "Tu certificador", ceeFormUrl: ceeUrl, propertyAddress: cert.address ?? null });
+          } else {
+            sendPagoConfirmadoEmail({ to: cert.ownerEmail, ownerName: cert.ownerName ?? "", certifierName: certifier?.name ?? "Tu certificador", amount, tramo: 2, ceeFormUrl: null });
+          }
+        }
+      }
+
+      // In-app notification
+      if (payment.userId && payment.certificationId) {
+        const [paymentCert] = await db.select().from(certifications).where(eq(certifications.id, payment.certificationId)).limit(1).catch(() => [null]);
+        createNotification({
+          userId: payment.userId,
+          tipo: "pago_recibido",
+          mensaje: `Pago confirmado: ${parseFloat(payment.amount as any).toFixed(2)} € (Tramo ${payment.tramo})${paymentCert?.ownerName ? ` · ${paymentCert.ownerName}` : ""}`,
+          certificationId: payment.certificationId,
+          metadata: { amount: payment.amount, tramo: payment.tramo, metodo: payment.metodo },
+        }).catch(console.error);
+      }
+
+      res.json({ ok: true });
+    } catch {
+      res.status(500).json({ message: "Error al confirmar pago" });
+    }
+  });
+
+  // Authenticated: reject manual payment
+  app.post("/api/payments/:id/reject", authenticate, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user.id;
+      const paymentId = parseInt(req.params.id);
+      const { motivo } = req.body;
+
+      const [rejectedPayment] = await db.update(payments)
+        .set({
+          estadoConfirmacion: "rechazado",
+          fechaConfirmacion: new Date(),
+          confirmadoPor: userId,
+          notas: motivo ? `RECHAZADO: ${motivo}` : "RECHAZADO",
+          updatedAt: new Date(),
+        })
+        .where(and(eq(payments.id, paymentId), eq(payments.userId, userId)))
+        .returning();
+
+      // In-app notification
+      if (rejectedPayment?.certificationId) {
+        const [rejCert] = await db.select().from(certifications).where(eq(certifications.id, rejectedPayment.certificationId)).limit(1).catch(() => [null]);
+        createNotification({
+          userId,
+          tipo: "pago_fallido",
+          mensaje: `Pago rechazado: ${parseFloat(rejectedPayment.amount as any).toFixed(2)} €${motivo ? ` — ${motivo}` : ""}${rejCert?.ownerName ? ` · ${rejCert.ownerName}` : ""}`,
+          certificationId: rejectedPayment.certificationId,
+          metadata: { amount: rejectedPayment.amount, motivo },
+        }).catch(console.error);
+      }
+
+      res.json({ ok: true });
+    } catch {
+      res.status(500).json({ message: "Error al rechazar pago" });
+    }
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // CEE FORM FLOW  (Formulario 2 — detallado)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  // Certifier sends CEE form link
+  app.post("/api/certifications/:id/generate-cee-form", authenticate, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user.id;
+      const certId = parseInt(req.params.id);
+
+      const [cert] = await db.select().from(certifications)
+        .where(and(eq(certifications.id, certId), eq(certifications.userId, userId)))
+        .limit(1);
+      if (!cert) return res.status(404).json({ message: "Certificación no encontrada" });
+
+      const token = cert.ceeToken ?? nanoid(32);
+      await db.update(certifications)
+        .set({ ceeToken: token, ceeFormStatus: "enviado", ceeFormSentAt: new Date(), workflowStatus: "formulario_cee_enviado", updatedAt: new Date() })
+        .where(eq(certifications.id, certId));
+
+      const host = req.headers.host ?? "localhost:5000";
+      const protocol = req.headers["x-forwarded-proto"] ?? (process.env.NODE_ENV === "production" ? "https" : "http");
+      const url = `${protocol}://${host}/formulario-cee/${token}`;
+
+      if (cert.ownerEmail) {
+        const [certifier] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+        sendCEEFormLinkEmail({
+          to: cert.ownerEmail,
+          ownerName: cert.ownerName ?? "",
+          certifierName: certifier?.name ?? certifier?.username ?? "Tu certificador",
+          ceeFormUrl: url,
+          propertyAddress: cert.address ?? null,
+        });
+      }
+
+      res.json({ token, url, emailSent: !!cert.ownerEmail });
+    } catch {
+      res.status(500).json({ message: "Error al generar enlace CEE" });
+    }
+  });
+
+  // Public: get CEE form data
+  app.get("/api/formulario-cee/:token", async (req: Request, res: Response) => {
+    try {
+      const [cert] = await db.select().from(certifications)
+        .where(eq(certifications.ceeToken, req.params.token))
+        .limit(1);
+      if (!cert) return res.status(404).json({ message: "Formulario no encontrado" });
+
+      // Check if payment 1 is required and confirmed
+      const [certifier] = await db.select({
+        name: users.name,
+        company: users.company,
+        phone: users.phone,
+        email: users.email,
+        blockFormUntilPayment1: users.blockFormUntilPayment1,
+      }).from(users).where(eq(users.id, cert.userId!)).limit(1);
+
+      const paymentBlocked = certifier?.blockFormUntilPayment1 && !cert.tramo1PaidAt;
+
+      if (cert.ceeFormStatus === "completado") {
+        return res.json({ completed: true });
+      }
+
+      if (paymentBlocked) {
+        return res.json({
+          paymentBlocked: true,
+          paymentToken: cert.paymentToken,
+          workflowStatus: cert.workflowStatus,
+        });
+      }
+
+      // Get existing documents
+      const docs = await db.select().from(documentos)
+        .where(and(eq(documentos.certificationId, cert.id), eq(documentos.subidoPor, "cliente")))
+        .orderBy(documentos.fechaSubida);
+
+      res.json({
+        completed: false,
+        paymentBlocked: false,
+        certifier: {
+          name: certifier?.name ?? "Tu certificador",
+          company: certifier?.company ?? null,
+          phone: certifier?.phone ?? null,
+        },
+        prefill: {
+          ownerName: cert.ownerName ?? "",
+          ownerEmail: cert.ownerEmail ?? "",
+          ownerPhone: cert.ownerPhone ?? "",
+          ownerDni: cert.ownerDni ?? "",
+          address: cert.address ?? "",
+          city: cert.city ?? "",
+          postalCode: cert.postalCode ?? "",
+          province: cert.province ?? "",
+          propertyType: cert.propertyType ?? "",
+          constructionYear: cert.constructionYear ?? "",
+          totalArea: cert.totalArea ?? "",
+          numPlantas: cert.numPlantas ?? "",
+          cadastralReference: cert.cadastralReference ?? "",
+        },
+        existingData: cert.formData ?? null,
+        documents: docs,
+      });
+    } catch {
+      res.status(500).json({ message: "Error al cargar formulario" });
+    }
+  });
+
+  // Public: mark CEE form opened
+  app.post("/api/formulario-cee/:token/open", async (req: Request, res: Response) => {
+    try {
+      const [cert] = await db.select().from(certifications)
+        .where(eq(certifications.ceeToken, req.params.token))
+        .limit(1);
+      if (!cert || cert.ceeFormStatus === "completado") return res.json({ ok: true });
+      if (cert.ceeFormStatus === "enviado") {
+        await db.update(certifications)
+          .set({ ceeFormStatus: "abierto", ceeFormOpenedAt: new Date(), updatedAt: new Date() })
+          .where(eq(certifications.id, cert.id));
+      }
+      res.json({ ok: true });
+    } catch {
+      res.json({ ok: true });
+    }
+  });
+
+  // Public: submit CEE form data
+  app.post("/api/formulario-cee/:token/submit", async (req: Request, res: Response) => {
+    try {
+      const [cert] = await db.select().from(certifications)
+        .where(eq(certifications.ceeToken, req.params.token))
+        .limit(1);
+      if (!cert) return res.status(404).json({ message: "Formulario no encontrado" });
+      if (cert.ceeFormStatus === "completado") {
+        return res.status(409).json({ message: "Este formulario ya fue enviado" });
+      }
+
+      const {
+        ownerName, ownerEmail, ownerPhone, ownerDni,
+        address, city, postalCode, province,
+        propertyType, constructionYear, totalArea, numPlantas, cadastralReference,
+        cerramientoExterior, tipoVentanas, tipoMarcos, superficieAcristalada,
+        tieneCalefaccion, tipoCalefaccion, anioCalefaccion, potenciaCalefaccion,
+        tipoACS, tieneSolares, numPaneles,
+        tieneAireAcondicionado, tipoAire, anioAire,
+        tipoIluminacion, controlIluminacion,
+      } = req.body;
+
+      const formData = {
+        constructivas: { cerramientoExterior, tipoVentanas, tipoMarcos, superficieAcristalada },
+        calefaccion: { tieneCalefaccion, tipoCalefaccion, anioCalefaccion, potenciaCalefaccion },
+        acs: { tipoACS, tieneSolares, numPaneles },
+        refrigeracion: { tieneAireAcondicionado, tipoAire, anioAire },
+        iluminacion: { tipoIluminacion, controlIluminacion },
+      };
+
+      // Count uploaded documents
+      const docs = await db.select().from(documentos)
+        .where(and(eq(documentos.certificationId, cert.id), eq(documentos.subidoPor, "cliente")));
+
+      await db.update(certifications)
+        .set({
+          ownerName: ownerName || cert.ownerName,
+          ownerEmail: ownerEmail || cert.ownerEmail,
+          ownerPhone: ownerPhone || cert.ownerPhone,
+          ownerDni: ownerDni || cert.ownerDni,
+          address: address || cert.address,
+          city: city || cert.city,
+          postalCode: postalCode || cert.postalCode,
+          province: province || cert.province,
+          propertyType: propertyType || cert.propertyType,
+          constructionYear: constructionYear ? parseInt(constructionYear) : cert.constructionYear,
+          totalArea: totalArea || cert.totalArea,
+          numPlantas: numPlantas ? parseInt(numPlantas) : cert.numPlantas,
+          cadastralReference: cadastralReference || cert.cadastralReference,
+          formData: { ...(cert.formData as object ?? {}), ceeDetallado: formData },
+          ceeFormStatus: "completado",
+          ceeFormCompletedAt: new Date(),
+          workflowStatus: "formulario_cee_completado",
+          status: "En Proceso",
+          updatedAt: new Date(),
+        })
+        .where(eq(certifications.id, cert.id));
+
+      // Notify certifier (email + in-app)
+      const [certifier] = await db.select().from(users).where(eq(users.id, cert.userId!)).limit(1);
+      if (certifier?.email) {
+        sendDocumentosRecibidosEmail({
+          to: certifier.email,
+          certifierName: certifier.name ?? certifier.username,
+          ownerName: ownerName || cert.ownerName || "Propietario",
+          ownerPhone: ownerPhone || cert.ownerPhone || null,
+          propertyAddress: address || cert.address || null,
+          numDocumentos: docs.length,
+          certificationId: cert.id,
+        });
+      }
+
+      // In-app notification
+      createNotification({
+        userId: cert.userId!,
+        tipo: "cee_completado",
+        mensaje: `${ownerName || cert.ownerName || "El propietario"} completó el formulario CEE${docs.length > 0 ? ` y subió ${docs.length} documento${docs.length !== 1 ? "s" : ""}` : ""}`,
+        certificationId: cert.id,
+        metadata: { ownerName: ownerName || cert.ownerName, numDocs: docs.length },
+      }).catch(console.error);
+
+      res.json({ ok: true });
+    } catch {
+      res.status(500).json({ message: "Error al enviar formulario" });
+    }
+  });
+
+  // Public: upload document (client side, during CEE form)
+  const ceeUploadDir = multer({
+    storage: multer.diskStorage({
+      destination: (req, _file, cb) => {
+        const certId = req.params.certId;
+        const dir = `uploads/certs/${certId}`;
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        cb(null, dir);
+      },
+      filename: (_req, file, cb) => {
+        const ext = path.extname(file.originalname);
+        cb(null, `${nanoid(12)}${ext}`);
+      },
+    }),
+    limits: { fileSize: 15 * 1024 * 1024 },
+    fileFilter: (_req, file, cb) => {
+      const allowed = [".jpg", ".jpeg", ".png", ".pdf", ".heic", ".heif", ".doc", ".docx"];
+      cb(null, allowed.includes(path.extname(file.originalname).toLowerCase()));
+    },
+  });
+
+  app.post("/api/formulario-cee/:token/upload/:certId", ceeUploadDir.single("file"), async (req: Request, res: Response) => {
+    try {
+      if (!req.file) return res.status(400).json({ message: "No se subió ningún archivo" });
+      const { tipoDoc = "otro" } = req.body;
+      const certId = parseInt(req.params.certId);
+
+      // Verify token matches certId
+      const [cert] = await db.select({ id: certifications.id, ceeToken: certifications.ceeToken })
+        .from(certifications).where(eq(certifications.id, certId)).limit(1);
+      if (!cert || cert.ceeToken !== req.params.token) {
+        return res.status(403).json({ message: "No autorizado" });
+      }
+
+      const [doc] = await db.insert(documentos).values({
+        certificationId: certId,
+        nombreOriginal: req.file.originalname,
+        nombreArchivo: req.file.filename,
+        path: req.file.path,
+        mimeType: req.file.mimetype,
+        tamano: req.file.size,
+        tipoDoc,
+        subidoPor: "cliente",
+        estadoRevision: "pendiente",
+      }).returning();
+
+      res.json(doc);
+    } catch {
+      res.status(500).json({ message: "Error al subir archivo" });
+    }
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // DOCUMENTS (certifier side)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  app.get("/api/certifications/:id/documentos", authenticate, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user.id;
+      const certId = parseInt(req.params.id);
+
+      // Verify ownership
+      const [cert] = await db.select({ id: certifications.id })
+        .from(certifications)
+        .where(and(eq(certifications.id, certId), eq(certifications.userId, userId)))
+        .limit(1);
+      if (!cert) return res.status(404).json({ message: "Certificación no encontrada" });
+
+      const docs = await db.select().from(documentos)
+        .where(eq(documentos.certificationId, certId))
+        .orderBy(documentos.fechaSubida);
+      res.json(docs);
+    } catch {
+      res.status(500).json({ message: "Error al obtener documentos" });
+    }
+  });
+
+  // Certifier uploads a document (e.g., the final certificate)
+  const certifierUpload = multer({
+    storage: multer.diskStorage({
+      destination: (req, _file, cb) => {
+        const certId = req.params.id;
+        const dir = `uploads/certs/${certId}`;
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        cb(null, dir);
+      },
+      filename: (_req, file, cb) => {
+        cb(null, `${nanoid(12)}${path.extname(file.originalname)}`);
+      },
+    }),
+    limits: { fileSize: 25 * 1024 * 1024 },
+    fileFilter: (_req, file, cb) => {
+      const ok = [".pdf", ".jpg", ".jpeg", ".png", ".doc", ".docx", ".zip"];
+      cb(null, ok.includes(path.extname(file.originalname).toLowerCase()));
+    },
+  });
+
+  app.post("/api/certifications/:id/documentos", authenticate, certifierUpload.single("file"), async (req: Request, res: Response) => {
+    try {
+      if (!req.file) return res.status(400).json({ message: "No se subió ningún archivo" });
+      const userId = (req as any).user.id;
+      const certId = parseInt(req.params.id);
+      const { tipoDoc = "certificado" } = req.body;
+
+      const [cert] = await db.select({ id: certifications.id })
+        .from(certifications)
+        .where(and(eq(certifications.id, certId), eq(certifications.userId, userId)))
+        .limit(1);
+      if (!cert) return res.status(403).json({ message: "No autorizado" });
+
+      const [doc] = await db.insert(documentos).values({
+        certificationId: certId,
+        nombreOriginal: req.file.originalname,
+        nombreArchivo: req.file.filename,
+        path: req.file.path,
+        mimeType: req.file.mimetype,
+        tamano: req.file.size,
+        tipoDoc,
+        subidoPor: "certificador",
+        estadoRevision: "revisado",
+      }).returning();
+
+      res.json(doc);
+    } catch {
+      res.status(500).json({ message: "Error al subir documento" });
+    }
+  });
+
+  // Update document estado (certifier)
+  app.put("/api/documentos/:id/estado", authenticate, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user.id;
+      const docId = parseInt(req.params.id);
+      const { estadoRevision, motivoRechazo } = req.body;
+
+      // Get the doc and verify certifier owns the certification
+      const [doc] = await db.select().from(documentos).where(eq(documentos.id, docId)).limit(1);
+      if (!doc) return res.status(404).json({ message: "Documento no encontrado" });
+
+      const [cert] = await db.select({ userId: certifications.userId, ownerEmail: certifications.ownerEmail, ownerName: certifications.ownerName, address: certifications.address, ceeToken: certifications.ceeToken })
+        .from(certifications).where(eq(certifications.id, doc.certificationId)).limit(1);
+      if (!cert || cert.userId !== userId) return res.status(403).json({ message: "No autorizado" });
+
+      const [updated] = await db.update(documentos)
+        .set({ estadoRevision, motivoRechazo: motivoRechazo || null })
+        .where(eq(documentos.id, docId))
+        .returning();
+
+      // If rejected, notify owner
+      if (estadoRevision === "rechazado" && cert.ownerEmail && motivoRechazo && cert.ceeToken) {
+        const [certifier] = await db.select({ name: users.name, username: users.username }).from(users).where(eq(users.id, userId)).limit(1);
+        const host = req.headers.host ?? "localhost:5000";
+        const protocol = req.headers["x-forwarded-proto"] ?? (process.env.NODE_ENV === "production" ? "https" : "http");
+
+        const tipoLabels: Record<string, string> = {
+          factura_luz: "Factura de electricidad",
+          factura_gas: "Factura de gas",
+          referencia_catastral: "Referencia catastral",
+          planos: "Planos del inmueble",
+          certificado: "Certificado",
+          otro: "Documento adjunto",
+        };
+
+        sendDocumentoRechazadoEmail({
+          to: cert.ownerEmail,
+          ownerName: cert.ownerName ?? "",
+          certifierName: certifier?.name ?? certifier?.username ?? "Tu certificador",
+          tipoDoc: tipoLabels[doc.tipoDoc] ?? doc.tipoDoc,
+          motivo: motivoRechazo,
+          ceeFormUrl: `${protocol}://${host}/formulario-cee/${cert.ceeToken}`,
+        });
+      }
+
+      res.json(updated);
+    } catch {
+      res.status(500).json({ message: "Error al actualizar documento" });
+    }
+  });
+
+  app.delete("/api/documentos/:id", authenticate, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user.id;
+      const docId = parseInt(req.params.id);
+
+      const [doc] = await db.select().from(documentos).where(eq(documentos.id, docId)).limit(1);
+      if (!doc) return res.status(404).json({ message: "Documento no encontrado" });
+
+      const [cert] = await db.select({ userId: certifications.userId }).from(certifications).where(eq(certifications.id, doc.certificationId)).limit(1);
+      if (!cert || cert.userId !== userId) return res.status(403).json({ message: "No autorizado" });
+
+      // Delete file from disk
+      try { fs.unlinkSync(doc.path); } catch {}
+
+      await db.delete(documentos).where(eq(documentos.id, docId));
+      res.json({ ok: true });
+    } catch {
+      res.status(500).json({ message: "Error al eliminar documento" });
+    }
+  });
+
+  // Serve uploaded files (certifier auth required for certifier's certs)
+  app.get("/api/uploads/:certId/:filename", authenticate, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user.id;
+      const certId = parseInt(req.params.certId);
+
+      const [cert] = await db.select({ userId: certifications.userId }).from(certifications).where(eq(certifications.id, certId)).limit(1);
+      if (!cert || cert.userId !== userId) return res.status(403).json({ message: "No autorizado" });
+
+      const filePath = path.resolve(`uploads/certs/${certId}/${req.params.filename}`);
+      if (!fs.existsSync(filePath)) return res.status(404).json({ message: "Archivo no encontrado" });
+      res.sendFile(filePath);
+    } catch {
+      res.status(500).json({ message: "Error" });
+    }
+  });
+
+  // ══════════════════════════════════════════════════════════════════════════════
+  // WHATSAPP BUSINESS — Connection management
+  // ══════════════════════════════════════════════════════════════════════════════
+
+  // GET /api/whatsapp/status — current connection state
+  app.get("/api/whatsapp/status", authenticate, async (req: any, res) => {
+    try {
+      const [u] = await db.select().from(users).where(eq(users.id, req.userId));
+      const connected = !!(u as any).whatsappApiKey;
+      res.json({
+        connected,
+        phone: (u as any).whatsappPhone ?? null,
+        connectedAt: (u as any).whatsappConnectedAt ?? null,
+      });
+    } catch {
+      res.status(500).json({ message: "Error" });
+    }
+  });
+
+  // POST /api/whatsapp/connect — validate and save an API key
+  app.post("/api/whatsapp/connect", authenticate, async (req: any, res) => {
+    const { apiKey, phone } = req.body;
+    if (!apiKey) return res.status(400).json({ message: "apiKey requerida" });
+    try {
+      const check = await validateApiKey(apiKey);
+      if (!check.valid) return res.status(400).json({ message: check.error ?? "API key inválida" });
+
+      await db.update(users).set({
+        whatsappApiKey: encryptApiKey(apiKey),
+        whatsappPhone: phone ?? null,
+        whatsappConnectedAt: new Date(),
+        updatedAt: new Date(),
+      } as any).where(eq(users.id, req.userId));
+
+      res.json({ ok: true, phone: phone ?? null });
+    } catch {
+      res.status(500).json({ message: "Error al conectar WhatsApp" });
+    }
+  });
+
+  // DELETE /api/whatsapp/disconnect — remove WhatsApp credentials
+  app.delete("/api/whatsapp/disconnect", authenticate, async (req: any, res) => {
+    try {
+      await db.update(users).set({
+        whatsappApiKey: null,
+        whatsappPhone: null,
+        whatsappConnectedAt: null,
+        updatedAt: new Date(),
+      } as any).where(eq(users.id, req.userId));
+      res.json({ ok: true });
+    } catch {
+      res.status(500).json({ message: "Error" });
+    }
+  });
+
+  // ══════════════════════════════════════════════════════════════════════════════
+  // WHATSAPP BUSINESS — Message templates
+  // ══════════════════════════════════════════════════════════════════════════════
+
+  // GET /api/whatsapp/templates — all 8 templates (custom or default)
+  app.get("/api/whatsapp/templates", authenticate, async (req: any, res) => {
+    try {
+      const customs = await db
+        .select()
+        .from(plantillasWhatsapp)
+        .where(eq(plantillasWhatsapp.userId, req.userId));
+
+      const result = Object.entries(TEMPLATE_LABELS).map(([num, label]) => {
+        const tipo = parseInt(num);
+        const custom = customs.find(c => c.tipoMensaje === tipo);
+        return {
+          tipo,
+          label,
+          contenido: custom?.contenido ?? DEFAULT_TEMPLATES[tipo] ?? "",
+          isCustom: !!custom,
+          placeholders: AVAILABLE_PLACEHOLDERS,
+        };
+      });
+      res.json(result);
+    } catch {
+      res.status(500).json({ message: "Error" });
+    }
+  });
+
+  // PUT /api/whatsapp/templates/:tipo — upsert a single template
+  app.put("/api/whatsapp/templates/:tipo", authenticate, async (req: any, res) => {
+    const tipo = parseInt(req.params.tipo);
+    const { contenido } = req.body;
+    if (!tipo || !contenido) return res.status(400).json({ message: "Datos incompletos" });
+    try {
+      const [existing] = await db
+        .select()
+        .from(plantillasWhatsapp)
+        .where(and(eq(plantillasWhatsapp.userId, req.userId), eq(plantillasWhatsapp.tipoMensaje, tipo)));
+
+      if (existing) {
+        await db.update(plantillasWhatsapp)
+          .set({ contenido, updatedAt: new Date() })
+          .where(eq(plantillasWhatsapp.id, existing.id));
+      } else {
+        await db.insert(plantillasWhatsapp).values({
+          userId: req.userId,
+          tipoMensaje: tipo,
+          contenido,
+        });
+      }
+      res.json({ ok: true });
+    } catch {
+      res.status(500).json({ message: "Error al guardar plantilla" });
+    }
+  });
+
+  // DELETE /api/whatsapp/templates/:tipo — reset to default
+  app.delete("/api/whatsapp/templates/:tipo", authenticate, async (req: any, res) => {
+    const tipo = parseInt(req.params.tipo);
+    try {
+      await db.delete(plantillasWhatsapp)
+        .where(and(eq(plantillasWhatsapp.userId, req.userId), eq(plantillasWhatsapp.tipoMensaje, tipo)));
+      res.json({ ok: true, contenido: DEFAULT_TEMPLATES[tipo] });
+    } catch {
+      res.status(500).json({ message: "Error" });
+    }
+  });
+
+  // ══════════════════════════════════════════════════════════════════════════════
+  // MENSAJES COMUNICACIÓN — History & manual send
+  // ══════════════════════════════════════════════════════════════════════════════
+
+  // GET /api/certifications/:id/mensajes — communication timeline
+  app.get("/api/certifications/:id/mensajes", authenticate, async (req: any, res) => {
+    const certId = parseInt(req.params.id);
+    try {
+      const [cert] = await db.select().from(certifications).where(eq(certifications.id, certId));
+      if (!cert || cert.userId !== req.userId) return res.status(403).json({ message: "No autorizado" });
+
+      const msgs = await db
+        .select()
+        .from(mensajesComunicacion)
+        .where(eq(mensajesComunicacion.certificationId, certId))
+        .orderBy(mensajesComunicacion.fechaEnvio);
+
+      res.json(msgs);
+    } catch {
+      res.status(500).json({ message: "Error" });
+    }
+  });
+
+  // POST /api/certifications/:id/mensajes — send a manual message
+  app.post("/api/certifications/:id/mensajes", authenticate, async (req: any, res) => {
+    const certId = parseInt(req.params.id);
+    const { texto, canal } = req.body;
+    if (!texto) return res.status(400).json({ message: "Texto requerido" });
+    try {
+      const [cert] = await db.select().from(certifications).where(eq(certifications.id, certId));
+      if (!cert || cert.userId !== req.userId) return res.status(403).json({ message: "No autorizado" });
+
+      await sendNotification({ certificationId: certId, tipo: "manual", manualText: texto });
+      res.json({ ok: true });
+    } catch {
+      res.status(500).json({ message: "Error al enviar mensaje" });
+    }
+  });
+
+  // POST /api/certifications/:id/mensajes/:msgId/retry — retry a failed message
+  app.post("/api/certifications/:id/mensajes/:msgId/retry", authenticate, async (req: any, res) => {
+    const certId = parseInt(req.params.id);
+    const msgId  = parseInt(req.params.msgId);
+    try {
+      const [cert] = await db.select().from(certifications).where(eq(certifications.id, certId));
+      if (!cert || cert.userId !== req.userId) return res.status(403).json({ message: "No autorizado" });
+
+      await retryMensaje(msgId);
+      res.json({ ok: true });
+    } catch {
+      res.status(500).json({ message: "Error al reintentar" });
+    }
+  });
+
+  // ══════════════════════════════════════════════════════════════════════════════
+  // SENDNOTIFICATION — Trigger endpoints for certifier dashboard actions
+  // ══════════════════════════════════════════════════════════════════════════════
+
+  // POST /api/certifications/:id/notify/:tipo — send a specific notification type
+  app.post("/api/certifications/:id/notify/:tipo", authenticate, async (req: any, res) => {
+    const certId = parseInt(req.params.id);
+    const tipo   = req.params.tipo === "manual"
+      ? ("manual" as const)
+      : parseInt(req.params.tipo) as any;
+    const { manualText, documentUrl } = req.body;
+    try {
+      const [cert] = await db.select().from(certifications).where(eq(certifications.id, certId));
+      if (!cert || cert.userId !== req.userId) return res.status(403).json({ message: "No autorizado" });
+
+      await sendNotification({ certificationId: certId, tipo, manualText, documentUrl });
+      res.json({ ok: true });
+    } catch {
+      res.status(500).json({ message: "Error al enviar notificación" });
+    }
+  });
+
+  // ── BETA LEADS ──────────────────────────────────────────────────────────────
+
+  // POST /api/beta-leads — landing page registration
+  app.post("/api/beta-leads", async (req, res) => {
+    const { nombre, email, telefono, provincia, certificacionesMes } = req.body ?? {};
+
+    if (!nombre || typeof nombre !== "string" || !nombre.trim()) {
+      return res.status(400).json({ message: "El nombre es obligatorio" });
+    }
+    if (!email || typeof email !== "string" || !email.includes("@")) {
+      return res.status(400).json({ message: "El email no es válido" });
+    }
+
+    try {
+      // Check for duplicate — silently succeed so we don't expose who's registered
+      const existing = await db
+        .select({ id: betaLeads.id })
+        .from(betaLeads)
+        .where(eq(betaLeads.email, email.trim().toLowerCase()))
+        .limit(1);
+
+      if (existing.length === 0) {
+        await db.insert(betaLeads).values({
+          nombre:             nombre.trim(),
+          email:              email.trim().toLowerCase(),
+          telefono:           telefono?.trim() || null,
+          provincia:          provincia || null,
+          certificacionesMes: certificacionesMes ? parseInt(certificacionesMes) : null,
+        });
+      }
+
+      // Always send confirmation (even on duplicate — user may have refreshed)
+      sendBetaLeadConfirmation({ to: email.trim().toLowerCase(), nombre: nombre.trim() }).catch(() => {});
+
+      res.json({ ok: true });
+    } catch (err) {
+      console.error("[beta-leads] Error:", err);
+      res.status(500).json({ message: "Error al guardar el registro" });
+    }
   });
 }

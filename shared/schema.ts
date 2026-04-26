@@ -40,6 +40,53 @@ export const users = pgTable("users", {
   // Email verification
   emailVerifiedAt: timestamp("email_verified_at"),
   emailVerificationToken: text("email_verification_token"),
+
+  // ── Public profile ──────────────────────────────────────────────────────────
+  publicSlug: text("public_slug").unique(),
+
+  // ── Service settings ────────────────────────────────────────────────────────
+  condicionesServicio: text("condiciones_servicio"),
+  plazoEntregaDias: integer("plazo_entrega_dias").default(10),
+
+  // ── Payment settings ────────────────────────────────────────────────────────
+  bizumPhone: text("bizum_phone"),
+  iban: text("iban"),
+  enabledPaymentMethods: jsonb("enabled_payment_methods"),   // string[]
+  tramo1Percent: integer("tramo1_percent").default(25),
+  blockFormUntilPayment1: boolean("block_form_until_payment1").default(false).notNull(),
+  blockCertificateUntilPayment2: boolean("block_certificate_until_payment2").default(false).notNull(),
+  paymentReminderDays: integer("payment_reminder_days").default(3),
+
+  // ── Profile media & identity ────────────────────────────────────────────────
+  commercialName: text("commercial_name"),         // nombre comercial (if different from company)
+  logoUrl: text("logo_url"),                       // certifier logo for documents
+  firmaUrl: text("firma_url"),                     // digital signature image
+  emailSignature: text("email_signature"),         // custom email footer
+
+  // ── Invoice settings ────────────────────────────────────────────────────────
+  invoiceSeriesPrefix: text("invoice_series_prefix").default("FAC"),
+  invoiceNextNumber: integer("invoice_next_number").default(1),
+  ivaPercent: decimal("iva_percent", { precision: 5, scale: 2 }).default("21"),
+
+  // ── Notification preferences ─────────────────────────────────────────────────
+  notifyFormCompleted: boolean("notify_form_completed").default(true).notNull(),
+  notifyPaymentReceived: boolean("notify_payment_received").default(true).notNull(),
+  notifyNewMessage: boolean("notify_new_message").default(true).notNull(),
+  dailyDigestEnabled: boolean("daily_digest_enabled").default(false).notNull(),
+  dailyDigestHour: integer("daily_digest_hour").default(8),
+
+  // ── Onboarding ───────────────────────────────────────────────────────────────
+  onboardingCompleted: boolean("onboarding_completed").default(false).notNull(),
+  onboardingCompletedAt: timestamp("onboarding_completed_at"),
+
+  // ── Account settings ────────────────────────────────────────────────────────
+  timezone: text("timezone").default("Europe/Madrid"),
+
+  // ── WhatsApp Business (360dialog) ───────────────────────────────────────────
+  whatsappApiKey: text("whatsapp_api_key"),        // AES-256-CBC encrypted
+  whatsappPhone: text("whatsapp_phone"),           // verified number e.g. +34600000000
+  whatsappConnectedAt: timestamp("whatsapp_connected_at"),
+
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -107,18 +154,52 @@ export const certifications = pgTable("certifications", {
   constructionYear: integer("construction_year"),
   totalArea: decimal("total_area", { precision: 10, scale: 2 }),
   energyRating: text("energy_rating"),              // A | B | C | D | E | F | G
+  numPlantas: integer("num_plantas"),
 
-  // Pricing
+  // ── Pricing ─────────────────────────────────────────────────────────────────
   estimatedPrice: decimal("estimated_price", { precision: 10, scale: 2 }),
   finalPrice: decimal("final_price", { precision: 10, scale: 2 }),
   isPaid: boolean("is_paid").default(false).notNull(),
+  plazoEntregaDias: integer("plazo_entrega_dias"),
+  tramo1Amount: decimal("tramo1_amount", { precision: 10, scale: 2 }),
+  tramo2Amount: decimal("tramo2_amount", { precision: 10, scale: 2 }),
+  tramo1PaidAt: timestamp("tramo1_paid_at"),
+  tramo2PaidAt: timestamp("tramo2_paid_at"),
 
-  // Free-form data (technical / energy detail from professional)
+  // ── Free-form data ───────────────────────────────────────────────────────────
   formData: jsonb("form_data"),
 
-  // Public owner form link
+  // ── SOLICITUD (Formulario 1 — tasación) ─────────────────────────────────────
+  solicitudToken: text("solicitud_token").unique(),
+  solicitudStatus: text("solicitud_status"),   // "enviado"|"abierto"|"completado"
+  solicitudSentAt: timestamp("solicitud_sent_at"),
+  solicitudOpenedAt: timestamp("solicitud_opened_at"),
+  solicitudCompletedAt: timestamp("solicitud_completed_at"),
+
+  // ── PRESUPUESTO ──────────────────────────────────────────────────────────────
+  presupuestoToken: text("presupuesto_token").unique(),
+  presupuestoStatus: text("presupuesto_status"),  // "enviado"|"aceptado"|"modificacion_solicitada"
+  presupuestoSentAt: timestamp("presupuesto_sent_at"),
+  presupuestoAceptadoAt: timestamp("presupuesto_aceptado_at"),
+  modificacionSolicitada: boolean("modificacion_solicitada").default(false),
+  modificacionMotivo: text("modificacion_motivo"),
+
+  // ── PAYMENT TOKEN (public payment page) ─────────────────────────────────────
+  paymentToken: text("payment_token").unique(),
+
+  // ── FORMULARIO CEE completo (Formulario 2) ───────────────────────────────────
+  ceeToken: text("cee_token").unique(),
+  ceeFormStatus: text("cee_form_status"),   // "enviado"|"abierto"|"completado"
+  ceeFormSentAt: timestamp("cee_form_sent_at"),
+  ceeFormOpenedAt: timestamp("cee_form_opened_at"),
+  ceeFormCompletedAt: timestamp("cee_form_completed_at"),
+
+  // ── Overall pipeline status ──────────────────────────────────────────────────
+  workflowStatus: text("workflow_status").default("nuevo"),
+
+  // ── Legacy simple form (backward compat) ────────────────────────────────────
   formToken: text("form_token").unique(),
-  formStatus: text("form_status"),    // "enviado" | "abierto" | "completado"
+  formStatus: text("form_status"),
   formSentAt: timestamp("form_sent_at"),
   formOpenedAt: timestamp("form_opened_at"),
   formCompletedAt: timestamp("form_completed_at"),
@@ -129,7 +210,12 @@ export const certifications = pgTable("certifications", {
   index("certifications_user_id_idx").on(t.userId),
   index("certifications_folder_id_idx").on(t.folderId),
   index("certifications_status_idx").on(t.status),
+  index("certifications_workflow_idx").on(t.workflowStatus),
   uniqueIndex("certifications_form_token_idx").on(t.formToken),
+  uniqueIndex("certifications_solicitud_token_idx").on(t.solicitudToken),
+  uniqueIndex("certifications_presupuesto_token_idx").on(t.presupuestoToken),
+  uniqueIndex("certifications_payment_token_idx").on(t.paymentToken),
+  uniqueIndex("certifications_cee_token_idx").on(t.ceeToken),
 ]);
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -174,6 +260,36 @@ export const formResponses = pgTable("form_responses", {
 ]);
 
 // ─────────────────────────────────────────────────────────────────────────────
+// DOCUMENTOS  (archivos subidos por cliente o certificador)
+// ─────────────────────────────────────────────────────────────────────────────
+export const documentos = pgTable("documentos", {
+  id: serial("id").primaryKey(),
+  certificationId: integer("certification_id")
+    .references(() => certifications.id, { onDelete: "cascade" })
+    .notNull(),
+
+  nombreOriginal: text("nombre_original").notNull(),
+  nombreArchivo: text("nombre_archivo").notNull(),
+  path: text("path").notNull(),
+  mimeType: text("mime_type"),
+  tamano: integer("tamano"),
+
+  // "factura_luz"|"factura_gas"|"referencia_catastral"|"planos"|"certificado"|"otro"
+  tipoDoc: text("tipo_doc").notNull().default("otro"),
+  // "cliente" | "certificador"
+  subidoPor: text("subido_por").notNull().default("cliente"),
+  // "pendiente" | "revisado" | "rechazado"
+  estadoRevision: text("estado_revision").default("pendiente").notNull(),
+  motivoRechazo: text("motivo_rechazo"),
+
+  fechaSubida: timestamp("fecha_subida").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => [
+  index("documentos_certification_id_idx").on(t.certificationId),
+  index("documentos_subido_por_idx").on(t.subidoPor),
+]);
+
+// ─────────────────────────────────────────────────────────────────────────────
 // PRICING RATES  (tarifas del certificador por tipo de inmueble)
 // ─────────────────────────────────────────────────────────────────────────────
 export const pricingRates = pgTable("pricing_rates", {
@@ -183,6 +299,10 @@ export const pricingRates = pgTable("pricing_rates", {
   basePrice: decimal("base_price", { precision: 10, scale: 2 }).notNull(),
   description: text("description"),
   isActive: boolean("is_active").default(true).notNull(),
+  // [{maxArea: 100, multiplier: 1.0}, {maxArea: 200, multiplier: 1.2}, {maxArea: null, multiplier: 1.5}]
+  areaTiers: jsonb("area_tiers"),
+  // {"madrid": 10, "barcelona": 15} — % surcharge per province slug
+  provinceSurcharges: jsonb("province_surcharges"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (t) => [
@@ -291,8 +411,20 @@ export const payments = pgTable("payments", {
   status: text("status").default("pending").notNull(),
 
   description: text("description"),
-  metadata: jsonb("metadata"),    // arbitrary Stripe metadata or internal tags
+  metadata: jsonb("metadata"),
   errorMessage: text("error_message"),
+
+  // ── Payment classification ───────────────────────────────────────────────────
+  tramo: integer("tramo"),          // 1 or 2
+  metodo: text("metodo"),           // "stripe"|"bizum"|"transferencia"|"efectivo"
+
+  // ── Manual confirmation flow ─────────────────────────────────────────────────
+  // "pendiente_confirmacion" | "confirmado" | "rechazado"
+  estadoConfirmacion: text("estado_confirmacion").default("pendiente_confirmacion"),
+  fechaNotificacion: timestamp("fecha_notificacion"),
+  fechaConfirmacion: timestamp("fecha_confirmacion"),
+  confirmadoPor: integer("confirmado_por").references(() => users.id, { onDelete: "set null" }),
+  notas: text("notas"),
 
   paidAt: timestamp("paid_at"),
   refundedAt: timestamp("refunded_at"),
@@ -303,6 +435,7 @@ export const payments = pgTable("payments", {
   index("payments_certification_id_idx").on(t.certificationId),
   index("payments_invoice_id_idx").on(t.invoiceId),
   index("payments_status_idx").on(t.status),
+  index("payments_estado_confirmacion_idx").on(t.estadoConfirmacion),
   uniqueIndex("payments_stripe_payment_intent_id_idx").on(t.stripePaymentIntentId),
 ]);
 
@@ -314,6 +447,90 @@ export const sessions = pgTable("sessions", {
   sess: jsonb("sess").notNull(),
   expire: timestamp("expire").notNull(),
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PLANTILLAS WHATSAPP  (custom message templates per certifier)
+// ─────────────────────────────────────────────────────────────────────────────
+export const plantillasWhatsapp = pgTable("plantillas_whatsapp", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  tipoMensaje: integer("tipo_mensaje").notNull(),   // 1–8
+  contenido: text("contenido").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (t) => [
+  index("plantillas_whatsapp_user_id_idx").on(t.userId),
+  uniqueIndex("plantillas_whatsapp_user_tipo_idx").on(t.userId, t.tipoMensaje),
+]);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MENSAJES COMUNICACION  (audit log of all sent messages per certification)
+// canal: "whatsapp" | "email"
+// tipo_mensaje: "1"–"8" | "manual"
+// estado: "enviado" | "entregado" | "leido" | "fallido"
+// ─────────────────────────────────────────────────────────────────────────────
+export const mensajesComunicacion = pgTable("mensajes_comunicacion", {
+  id: serial("id").primaryKey(),
+  certificationId: integer("certification_id")
+    .references(() => certifications.id, { onDelete: "cascade" })
+    .notNull(),
+  canal: text("canal").notNull().default("email"),
+  tipoMensaje: text("tipo_mensaje"),
+  contenido: text("contenido"),
+  estado: text("estado").notNull().default("enviado"),
+  fechaEnvio: timestamp("fecha_envio").defaultNow().notNull(),
+  fechaEntrega: timestamp("fecha_entrega"),
+  fechaLectura: timestamp("fecha_lectura"),
+  errorDetalle: text("error_detalle"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => [
+  index("mensajes_comunicacion_cert_id_idx").on(t.certificationId),
+  index("mensajes_comunicacion_canal_idx").on(t.canal),
+  index("mensajes_comunicacion_estado_idx").on(t.estado),
+]);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NOTIFICACIONES  (in-app notifications for the certifier)
+//
+// tipo values:
+//   "solicitud_completada" | "presupuesto_aceptado" | "pago_recibido"
+//   "pago_fallido" | "cee_completado" | "recordatorio_formulario"
+// ─────────────────────────────────────────────────────────────────────────────
+export const notificaciones = pgTable("notificaciones", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id")
+    .references(() => users.id, { onDelete: "cascade" })
+    .notNull(),
+  certificationId: integer("certification_id")
+    .references(() => certifications.id, { onDelete: "set null" }),
+  tipo: text("tipo").notNull(),
+  mensaje: text("mensaje").notNull(),
+  leida: boolean("leida").default(false).notNull(),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => [
+  index("notificaciones_user_id_idx").on(t.userId),
+  index("notificaciones_user_leida_idx").on(t.userId, t.leida),
+  index("notificaciones_created_at_idx").on(t.createdAt),
+]);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BETA LEADS  (landing page registrations)
+// ─────────────────────────────────────────────────────────────────────────────
+export const betaLeads = pgTable("beta_leads", {
+  id:                    serial("id").primaryKey(),
+  nombre:                text("nombre").notNull(),
+  email:                 text("email").notNull(),
+  telefono:              text("telefono"),
+  provincia:             text("provincia"),
+  certificacionesMes:    integer("certificaciones_mes"),
+  createdAt:             timestamp("created_at").defaultNow().notNull(),
+}, (t) => [
+  index("beta_leads_email_idx").on(t.email),
+  index("beta_leads_created_at_idx").on(t.createdAt),
+]);
+
+export type BetaLead = typeof betaLeads.$inferSelect;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // INSERT SCHEMAS (Zod validation for API endpoints)
@@ -342,6 +559,9 @@ export const insertFormResponseSchema = createInsertSchema(formResponses).omit({
 export const insertPaymentSchema = createInsertSchema(payments).omit({
   id: true, createdAt: true, updatedAt: true,
 });
+export const insertDocumentoSchema = createInsertSchema(documentos).omit({
+  id: true, createdAt: true, fechaSubida: true,
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // INFERRED TYPES
@@ -369,3 +589,13 @@ export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;
 
 export type Payment = typeof payments.$inferSelect;
 export type InsertPayment = z.infer<typeof insertPaymentSchema>;
+
+export type Documento = typeof documentos.$inferSelect;
+export type InsertDocumento = z.infer<typeof insertDocumentoSchema>;
+
+export type PlantillaWhatsapp = typeof plantillasWhatsapp.$inferSelect;
+export type MensajeComunicacion = typeof mensajesComunicacion.$inferSelect;
+export type Notificacion = typeof notificaciones.$inferSelect;
+
+export type PlantillaWhatsapp = typeof plantillasWhatsapp.$inferSelect;
+export type MensajeComunicacion = typeof mensajesComunicacion.$inferSelect;
