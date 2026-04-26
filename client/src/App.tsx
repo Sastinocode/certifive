@@ -6,6 +6,11 @@ import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import PublicForm from "./pages/PublicForm";
+import PublicSolicitud from "./pages/PublicSolicitud";
+import PublicPresupuesto from "./pages/PublicPresupuesto";
+import PublicPayment from "./pages/PublicPayment";
+import PublicCEEForm from "./pages/PublicCEEForm";
+import CertifierLanding from "./pages/CertifierLanding";
 import Layout from "./components/Layout";
 
 type View = "landing" | "login" | "register";
@@ -36,13 +41,58 @@ function AppContent() {
 }
 
 export default function App() {
-  // Public form route: /form/:token — rendered without authentication
   const path = window.location.pathname;
+
   const formMatch = path.match(/^\/form\/([A-Za-z0-9_-]+)$/);
   if (formMatch) {
     return (
       <QueryClientProvider client={queryClient}>
         <PublicForm token={formMatch[1]} />
+      </QueryClientProvider>
+    );
+  }
+
+  const solicitudMatch = path.match(/^\/solicitud\/([A-Za-z0-9_-]+)$/);
+  if (solicitudMatch) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <PublicSolicitud token={solicitudMatch[1]} />
+      </QueryClientProvider>
+    );
+  }
+
+  const presupuestoMatch = path.match(/^\/presupuesto\/([A-Za-z0-9_-]+)$/);
+  if (presupuestoMatch) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <PublicPresupuesto token={presupuestoMatch[1]} />
+      </QueryClientProvider>
+    );
+  }
+
+  const payMatch = path.match(/^\/pay\/([A-Za-z0-9_-]+)$/);
+  if (payMatch) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <PublicPayment token={payMatch[1]} />
+      </QueryClientProvider>
+    );
+  }
+
+  const ceeMatch = path.match(/^\/formulario-cee\/([A-Za-z0-9_-]+)$/);
+  if (ceeMatch) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <PublicCEEForm token={ceeMatch[1]} />
+      </QueryClientProvider>
+    );
+  }
+
+  const certifierMatch = path.match(/^\/c\/([A-Za-z0-9_-]+)$/);
+  if (certifierMatch) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <CertifierLanding slug={certifierMatch[1]} />
       </QueryClientProvider>
     );
   }

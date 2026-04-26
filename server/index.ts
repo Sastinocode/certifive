@@ -4,6 +4,8 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { registerRoutes } from "./routes";
 import { initEmail } from "./email";
+import { startReminderCron } from "./notifications";
+import { startDigestCron } from "./digest";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -24,6 +26,12 @@ app.use(session({
 
 // Initialize email service (no-op if SENDGRID_API_KEY is not set)
 initEmail();
+
+// Start hourly reminder cron jobs (48h solicitud, 72h CEE form)
+startReminderCron();
+
+// Start daily digest cron (08:00 Europe/Madrid)
+startDigestCron();
 
 registerRoutes(app);
 
