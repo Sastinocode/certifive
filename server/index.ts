@@ -6,6 +6,7 @@ import { registerRoutes } from "./routes";
 import { initEmail } from "./email";
 import { startReminderCron } from "./notifications";
 import { startDigestCron } from "./digest";
+import catastroRouter from "./routes/catastro";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -32,6 +33,9 @@ startReminderCron();
 
 // Start daily digest cron (08:00 Europe/Madrid)
 startDigestCron();
+
+// Catastro proxy (avoids CORS — browser can't call ovc.catastro.meh.es directly)
+app.use("/api/catastro", catastroRouter);
 
 registerRoutes(app);
 
