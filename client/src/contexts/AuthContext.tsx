@@ -2,10 +2,11 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 import { apiRequest } from "@/lib/queryClient";
 
 interface User {
-  id: string;
+  id: string | number;
   email: string;
-  firstName: string;
-  lastName: string;
+  firstName?: string;
+  lastName?: string;
+  username?: string;
   company?: string;
   role: string;
 }
@@ -16,7 +17,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (userData: RegisterData) => Promise<void>;
   logout: () => void;
-  loginDemo: () => void;
+  loginDemo: () => Promise<void>;
   isLoading: boolean;
   isAuthenticated: boolean;
 }
@@ -38,45 +39,53 @@ interface RegisterData {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const TOKEN_KEY = "token";
+const LOGOUT_KEY = "has_logged_out";
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem("auth_token"));
+  const [token, setToken] = useState<string | null>(localStorage.getItem(TOKEN_KEY));
   const [isLoading, setIsLoading] = useState(true);
-  const [hasLoggedOut, setHasLoggedOut] = useState(() => {
-    return localStorage.getItem("has_logged_out") === "true";
+  const [hasLoggedOut] = useState(() => {
+    return localStorage.getItem(LOGOUT_KEY) === "true" ||
+           localStorage.getItem("hasLoggedOut") === "true";
   });
 
-  // Check if user is authenticated on app load
+  const saveToken = (t: string) => {
+    setToken(t);
+    localStorage.setItem(TOKEN_KEY, t);
+    localStorage.removeItem(LOGOUT_KEY);
+    localStorage.removeItem("hasLoggedOut");
+  };
+
+  const clearToken = () => {
+    setToken(null);
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("demo_user");
+  };
+
   useEffect(() => {
     const checkAuth = async () => {
-      const savedToken = localStorage.getItem("auth_token");
+      const savedToken = localStorage.getItem(TOKEN_KEY);
       if (savedToken) {
         try {
-          const userData = await apiRequest("GET", "/api/auth/me", undefined, {
-            Authorization: `Bearer ${savedToken}`
-          });
+          const userData = await apiRequest("GET", "/api/auth/user");
           setUser(userData);
           setToken(savedToken);
-        } catch (error) {
-          localStorage.removeItem("auth_token");
-          setToken(null);
+        } catch {
+          clearToken();
         }
       } else if (!hasLoggedOut) {
-        // Demo mode - create a demo user for immediate access (only if not explicitly logged out)
-        const demoUser = {
-          id: "demo-user",
-          email: "demo@certificacion.com",
-          firstName: "Usuario",
-          lastName: "Demo",
-          company: "Empresa Demo",
-          role: "demo"
-        };
-        const demoToken = "demo-token-" + Date.now();
-        
-        setUser(demoUser);
-        setToken(demoToken);
-        localStorage.setItem("auth_token", demoToken);
-        localStorage.setItem("demo_user", JSON.stringify(demoUser));
+        try {
+          const response = await apiRequest("POST", "/api/auth/demo", {});
+          setUser(response.user);
+          saveToken(response.token);
+          if (response.refreshToken) localStorage.setItem("refreshToken", response.refreshToken);
+        } catch {
+          // Stay logged out if demo fails
+        }
       }
       setIsLoading(false);
     };
@@ -86,14 +95,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await apiRequest("POST", "/api/auth/login", {
-        email,
-        password,
-      });
-      
+      const response = await apiRequest("POST", "/api/auth/login", { email, password });
       setUser(response.user);
-      setToken(response.token);
-      localStorage.setItem("auth_token", response.token);
+      saveToken(response.token);
+      if (response.refreshToken) localStorage.setItem("refreshToken", response.refreshToken);
     } catch (error: any) {
       throw new Error(error.message || "Error en el inicio de sesión");
     }
@@ -102,10 +107,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = async (userData: RegisterData) => {
     try {
       const response = await apiRequest("POST", "/api/auth/register", userData);
-      
       setUser(response.user);
-      setToken(response.token);
-      localStorage.setItem("auth_token", response.token);
+      saveToken(response.token);
+      if (response.refreshToken) localStorage.setItem("refreshToken", response.refreshToken);
     } catch (error: any) {
       throw new Error(error.message || "Error en el registro");
     }
@@ -113,61 +117,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      // Call backend logout endpoint if token exists
       if (token) {
-        await apiRequest("POST", "/api/auth/logout", {}, {
-          Authorization: `Bearer ${token}`
-        });
+        await apiRequest("POST", "/api/auth/logout", {});
       }
-    } catch (error) {
-      console.log("Logout API call failed, continuing with local cleanup");
+    } catch {
+      // Ignore logout API errors
     }
-    
-    // Mark as explicitly logged out
-    setHasLoggedOut(true);
-    
-    // Clear all local state and storage
     setUser(null);
-    setToken(null);
-    localStorage.removeItem("auth_token");
-    localStorage.removeItem("auth-token");
-    localStorage.removeItem("demo_user");
-    
-    // Store logout flag BEFORE clearing localStorage
-    localStorage.setItem("has_logged_out", "true");
-    
-    // Clear session storage but preserve logout flag in localStorage
-    sessionStorage.clear();
-    
-    // Clear any cookies
-    document.cookie.split(";").forEach(function(c) { 
-      document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
-    });
-    
-    // Force page reload to ensure complete state reset and redirect to landing
+    clearToken();
+    localStorage.setItem(LOGOUT_KEY, "true");
+    localStorage.setItem("hasLoggedOut", "true");
     window.location.href = "/";
-    window.location.reload();
   };
 
-  const loginDemo = () => {
-    setHasLoggedOut(false);
-    // Clear logout flag when demo is explicitly requested
-    localStorage.removeItem("has_logged_out");
-    
-    const demoUser = {
-      id: "demo-user",
-      email: "demo@certificacion.com",
-      firstName: "Usuario",
-      lastName: "Demo",
-      company: "Empresa Demo",
-      role: "demo"
-    };
-    const demoToken = "demo-token-" + Date.now();
-    
-    setUser(demoUser);
-    setToken(demoToken);
-    localStorage.setItem("auth_token", demoToken);
-    localStorage.setItem("demo_user", JSON.stringify(demoUser));
+  const loginDemo = async () => {
+    localStorage.removeItem(LOGOUT_KEY);
+    localStorage.removeItem("hasLoggedOut");
+    try {
+      const response = await apiRequest("POST", "/api/auth/demo", {});
+      setUser(response.user);
+      saveToken(response.token);
+      if (response.refreshToken) localStorage.setItem("refreshToken", response.refreshToken);
+    } catch (error: any) {
+      throw new Error(error.message || "Error al acceder a la demo");
+    }
   };
 
   const value = {
