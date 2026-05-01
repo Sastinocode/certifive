@@ -2118,19 +2118,34 @@ export function registerRoutes(app: Express) {
         ownerName, ownerEmail, ownerPhone, ownerDni,
         address, city, postalCode, province,
         propertyType, constructionYear, totalArea, numPlantas, cadastralReference,
+        // Constructive envelope
         cerramientoExterior, tipoVentanas, tipoMarcos, superficieAcristalada,
-        tieneCalefaccion, tipoCalefaccion, anioCalefaccion, potenciaCalefaccion,
-        tipoACS, tieneSolares, numPaneles,
+        anchoVentana, altoVentana, tienePersiana, tipoPersiana,
+        // Position
+        esUltimaPlanta, tieneLocalDebajo,
+        // Heating
+        calefaccionTipoInstalacion, tipoCalefaccion, anioCalefaccion, potenciaCalefaccion,
+        // Legacy field kept for backward compat
+        tieneCalefaccion,
+        // ACS
+        acsTipoInstalacion, tipoACS, tieneSolares, numPaneles, numOcupantes,
+        // Cooling + lighting
         tieneAireAcondicionado, tipoAire, anioAire,
         tipoIluminacion, controlIluminacion,
+        // Reforms
+        tuvoReformas, reformas,
+        // Climate zone (set by frontend from postal code)
+        zonaClimatica,
       } = req.body;
 
       const formData = {
-        constructivas: { cerramientoExterior, tipoVentanas, tipoMarcos, superficieAcristalada },
-        calefaccion: { tieneCalefaccion, tipoCalefaccion, anioCalefaccion, potenciaCalefaccion },
-        acs: { tipoACS, tieneSolares, numPaneles },
+        constructivas: { cerramientoExterior, tipoVentanas, tipoMarcos, superficieAcristalada, anchoVentana, altoVentana, tienePersiana, tipoPersiana },
+        calefaccion: { calefaccionTipoInstalacion: calefaccionTipoInstalacion ?? tieneCalefaccion, tipoCalefaccion, anioCalefaccion, potenciaCalefaccion },
+        acs: { acsTipoInstalacion, tipoACS, tieneSolares, numPaneles, numOcupantes },
         refrigeracion: { tieneAireAcondicionado, tipoAire, anioAire },
         iluminacion: { tipoIluminacion, controlIluminacion },
+        posicion: { esUltimaPlanta, tieneLocalDebajo },
+        reformas: { tuvoReformas, lista: reformas ?? [] },
       };
 
       // Count uploaded documents
@@ -2153,6 +2168,17 @@ export function registerRoutes(app: Express) {
           numPlantas: numPlantas ? parseInt(numPlantas) : cert.numPlantas,
           cadastralReference: cadastralReference || cert.cadastralReference,
           formData: { ...(cert.formData as object ?? {}), ceeDetallado: formData },
+          // New dedicated columns
+          zonaClimatica: zonaClimatica || cert.zonaClimatica,
+          esUltimaPlanta: esUltimaPlanta === "si" ? true : esUltimaPlanta === "no" ? false : cert.esUltimaPlanta,
+          tieneLocalDebajo: tieneLocalDebajo === "si" ? true : tieneLocalDebajo === "no" ? false : cert.tieneLocalDebajo,
+          calefaccionTipoInstalacion: calefaccionTipoInstalacion ?? tieneCalefaccion ?? cert.calefaccionTipoInstalacion,
+          calefaccionSistema: tipoCalefaccion || cert.calefaccionSistema,
+          acsTipoInstalacion: acsTipoInstalacion || cert.acsTipoInstalacion,
+          acsSistema: tipoACS || cert.acsSistema,
+          numOcupantes: numOcupantes ? parseInt(String(numOcupantes)) : cert.numOcupantes,
+          tieneReformas: tuvoReformas === "si" ? true : tuvoReformas === "no" ? false : cert.tieneReformas,
+          reformas: Array.isArray(reformas) && reformas.length > 0 ? reformas : cert.reformas,
           ceeFormStatus: "completado",
           ceeFormCompletedAt: new Date(),
           workflowStatus: "formulario_cee_completado",
