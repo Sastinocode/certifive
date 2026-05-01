@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getZonaClimatica, zonaClimaticaColor } from "../lib/zonaClimatica";
 
 const PROVINCES = [
   "Álava","Albacete","Alicante","Almería","Asturias","Ávila","Badajoz","Baleares","Barcelona",
@@ -22,6 +23,23 @@ const PROPERTY_TYPES = [
 
 const STORAGE_KEY = (token: string) => `certifive_solicitud_${token}`;
 
+// Fields that can be auto-filled from Catastro
+type CatastroFillable = "address" | "city" | "postalCode" | "province" | "constructionYear" | "totalArea" | "propertyType";
+
+interface CatastroResult {
+  address?: string;
+  city?: string;
+  postalCode?: string;
+  province?: string;
+  comunidadAutonoma?: string;
+  constructionYear?: string;
+  totalArea?: string;
+  propertyType?: string;
+}
+
+// Which form fields were filled by Catastro (to show badges)
+type CatastroBadges = Partial<Record<CatastroFillable, boolean>>;
+
 interface Props { token: string }
 
 export default function PublicSolicitud({ token }: Props) {
@@ -40,6 +58,17 @@ export default function PublicSolicitud({ token }: Props) {
     propertyType: "", constructionYear: "", totalArea: "", numPlantas: "",
     cadastralReference: "",
   });
+
+  // ── Catastro state ──────────────────────────────────────────────────────────
+  type CatastroStatus = "idle" | "loading" | "success" | "error";
+  const [catastroStatus, setCatastroStatus] = useState<CatastroStatus>("idle");
+  const [catastroError, setCatastroError] = useState("");
+  const [catastroBadges, setCatastroBadges] = useState<CatastroBadges>({});
+  // Confirm-before-overwrite dialog
+  const [pendingCatastro, setPendingCatastro] = useState<CatastroResult | null>(null);
+
+  // ── Zona climática (derived from postalCode) ────────────────────────────────
+  const zonaClimatica = getZonaClimatica(form.postalCode);
 
   // Load from server + localStorage
   useEffect(() => {
@@ -81,6 +110,65 @@ export default function PublicSolicitud({ token }: Props) {
         .catch(() => setCalculating(false));
     }
   }, [step, certifier, form.propertyType, form.totalArea, form.province]);
+
+  // ── Catastro lookup ─────────────────────────────────────────────────────────
+  const lookupCatastro = async () => {
+    const rc = form.cadastralReference.trim();
+    if (!rc) return;
+
+    setCatastroStatus("loading");
+    setCatastroError("");
+
+    try {
+      const res = await fetch(`/api/catastro/lookup?rc=${encodeURIComponent(rc)}`);
+      const json = await res.json();
+
+      if (!res.ok || !json.ok) {
+        setCatastroStatus("error");
+        setCatastroError(json.error || "No se pudo obtener la información del Catastro");
+        return;
+      }
+
+      const data: CatastroResult = json.data;
+
+      // Check if any fields would overwrite existing non-empty values
+      const fillableKeys: CatastroFillable[] = ["address", "city", "postalCode", "province", "constructionYear", "totalArea", "propertyType"];
+      const wouldOverwrite = fillableKeys.some(k => data[k] && form[k as keyof typeof form] && form[k as keyof typeof form] !== data[k]);
+
+      if (wouldOverwrite) {
+        // Show confirmation dialog
+        setPendingCatastro(data);
+        setCatastroStatus("idle");
+      } else {
+        applyAutofill(data);
+        setCatastroStatus("success");
+      }
+    } catch {
+      setCatastroStatus("error");
+      setCatastroError("Error de conexión. Inténtalo de nuevo.");
+    }
+  };
+
+  // Apply autofill and mark badges
+  const applyAutofill = (data: CatastroResult) => {
+    const fillableKeys: CatastroFillable[] = ["address", "city", "postalCode", "province", "constructionYear", "totalArea", "propertyType"];
+    const newBadges: CatastroBadges = {};
+
+    setForm(f => {
+      const updated = { ...f };
+      for (const k of fillableKeys) {
+        if (data[k]) {
+          (updated as any)[k] = data[k];
+          newBadges[k] = true;
+        }
+      }
+      return updated;
+    });
+
+    setCatastroBadges(newBadges);
+    setCatastroStatus("success");
+    setPendingCatastro(null);
+  };
 
   const submit = async () => {
     setSubmitting(true);
@@ -208,8 +296,82 @@ export default function PublicSolicitud({ token }: Props) {
             </div>
 
             <div className="bg-white rounded-3xl p-6 shadow-sm border border-stone-100 space-y-4">
+
+              {/* Referencia catastral + Catastro button — moved to top of card */}
+              <div>
+                <label className={labelCls}>
+                  Referencia catastral{" "}
+                  <span className="text-stone-400 normal-case font-normal">(opcional · </span>
+                  <a href="https://www.catastro.meh.es" target="_blank" rel="noreferrer" className="text-emerald-600 normal-case font-normal underline">búscala aquí</a>
+                  <span className="text-stone-400 normal-case font-normal">)</span>
+                </label>
+                <input
+                  className={inputCls}
+                  value={form.cadastralReference}
+                  onChange={e => {
+                    set("cadastralReference", e.target.value);
+                    // Reset catastro status when RC changes
+                    if (catastroStatus !== "idle") {
+                      setCatastroStatus("idle");
+                      setCatastroBadges({});
+                    }
+                  }}
+                  placeholder="7837298VK4873N0001RR"
+                />
+
+                {/* Catastro lookup button */}
+                {form.cadastralReference.trim().length >= 14 && (
+                  <button
+                    type="button"
+                    onClick={lookupCatastro}
+                    disabled={catastroStatus === "loading"}
+                    className={`mt-2 w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl text-sm font-semibold transition-all ${
+                      catastroStatus === "success"
+                        ? "bg-emerald-100 text-emerald-700 border border-emerald-200"
+                        : catastroStatus === "error"
+                        ? "bg-red-50 text-red-600 border border-red-100"
+                        : "bg-emerald-700 text-white hover:bg-emerald-600 active:scale-[0.98]"
+                    } disabled:opacity-60`}
+                  >
+                    {catastroStatus === "loading" ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin flex-shrink-0" />
+                        Consultando Catastro…
+                      </>
+                    ) : catastroStatus === "success" ? (
+                      <>
+                        <span>✅</span>
+                        Datos importados del Catastro
+                      </>
+                    ) : catastroStatus === "error" ? (
+                      <>
+                        <span>⚠️</span>
+                        {catastroError || "Error. Reintentar"}
+                      </>
+                    ) : (
+                      <>
+                        <span>🔍</span>
+                        Buscar datos en Catastro
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+
+              {/* Divider */}
+              <div className="flex items-center gap-3 py-1">
+                <div className="flex-1 h-px bg-stone-100" />
+                <span className="text-xs text-stone-400 font-medium">o rellena manualmente</span>
+                <div className="flex-1 h-px bg-stone-100" />
+              </div>
+
               <div>
                 <label className={labelCls}>Tipo de inmueble *</label>
+                {catastroBadges.propertyType && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full mb-1.5">
+                    Catastro ✓
+                  </span>
+                )}
                 <div className="grid grid-cols-2 gap-2">
                   {PROPERTY_TYPES.map(pt => (
                     <button key={pt.value} type="button"
@@ -228,11 +390,21 @@ export default function PublicSolicitud({ token }: Props) {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className={labelCls}>Superficie (m²) *</label>
+                  <label className={labelCls}>
+                    Superficie (m²) *
+                    {catastroBadges.totalArea && (
+                      <span className="ml-1.5 text-[9px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded-full align-middle">Catastro ✓</span>
+                    )}
+                  </label>
                   <input className={inputCls} type="number" min="1" value={form.totalArea} onChange={e => set("totalArea", e.target.value)} placeholder="85" />
                 </div>
                 <div>
-                  <label className={labelCls}>Año construcción</label>
+                  <label className={labelCls}>
+                    Año construcción
+                    {catastroBadges.constructionYear && (
+                      <span className="ml-1.5 text-[9px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded-full align-middle">Catastro ✓</span>
+                    )}
+                  </label>
                   <input className={inputCls} type="number" min="1900" max={new Date().getFullYear()} value={form.constructionYear} onChange={e => set("constructionYear", e.target.value)} placeholder="1985" />
                 </div>
               </div>
@@ -243,7 +415,12 @@ export default function PublicSolicitud({ token }: Props) {
               </div>
 
               <div>
-                <label className={labelCls}>Provincia</label>
+                <label className={labelCls}>
+                  Provincia
+                  {catastroBadges.province && (
+                    <span className="ml-1.5 text-[9px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded-full align-middle">Catastro ✓</span>
+                  )}
+                </label>
                 <select className={inputCls} value={form.province} onChange={e => set("province", e.target.value)}>
                   <option value="">Selecciona provincia...</option>
                   {PROVINCES.map(p => <option key={p} value={p}>{p}</option>)}
@@ -251,29 +428,47 @@ export default function PublicSolicitud({ token }: Props) {
               </div>
 
               <div>
-                <label className={labelCls}>Municipio / Ciudad</label>
+                <label className={labelCls}>
+                  Municipio / Ciudad
+                  {catastroBadges.city && (
+                    <span className="ml-1.5 text-[9px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded-full align-middle">Catastro ✓</span>
+                  )}
+                </label>
                 <input className={inputCls} value={form.city} onChange={e => set("city", e.target.value)} placeholder="Madrid" />
               </div>
 
               <div>
-                <label className={labelCls}>Dirección completa *</label>
+                <label className={labelCls}>
+                  Dirección completa *
+                  {catastroBadges.address && (
+                    <span className="ml-1.5 text-[9px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded-full align-middle">Catastro ✓</span>
+                  )}
+                </label>
                 <input className={inputCls} value={form.address} onChange={e => set("address", e.target.value)} placeholder="Calle Mayor 1, 2º A" />
               </div>
 
               <div>
-                <label className={labelCls}>Código postal</label>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <label className={`${labelCls} mb-0`}>
+                    Código postal
+                    {catastroBadges.postalCode && (
+                      <span className="ml-1.5 text-[9px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded-full align-middle">Catastro ✓</span>
+                    )}
+                  </label>
+                  {zonaClimatica && (
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${zonaClimaticaColor(zonaClimatica)}`}>
+                      Zona {zonaClimatica}
+                    </span>
+                  )}
+                </div>
                 <input className={inputCls} value={form.postalCode} onChange={e => set("postalCode", e.target.value)} placeholder="28001" />
+                {zonaClimatica && (
+                  <p className="text-xs text-stone-400 mt-1">
+                    Zona climática CTE DB-HE: <strong className="text-stone-600">{zonaClimatica}</strong>
+                  </p>
+                )}
               </div>
 
-              <div>
-                <label className={labelCls}>
-                  Referencia catastral{" "}
-                  <span className="text-stone-400 normal-case font-normal">(opcional · </span>
-                  <a href="https://www.catastro.meh.es" target="_blank" rel="noreferrer" className="text-emerald-600 normal-case font-normal underline">búscala aquí</a>
-                  <span className="text-stone-400 normal-case font-normal">)</span>
-                </label>
-                <input className={inputCls} value={form.cadastralReference} onChange={e => set("cadastralReference", e.target.value)} placeholder="7837298VK4873N0001RR" />
-              </div>
             </div>
           </div>
         )}
@@ -337,6 +532,53 @@ export default function PublicSolicitud({ token }: Props) {
           </div>
         )}
       </div>
+
+      {/* ── Confirm-before-overwrite dialog ──────────────────────────────────── */}
+      {pendingCatastro && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 bg-orange-100 rounded-2xl flex items-center justify-center flex-shrink-0">
+                <span className="text-lg">⚠️</span>
+              </div>
+              <div>
+                <h3 className="font-bold text-stone-900 text-base">¿Sobreescribir datos existentes?</h3>
+                <p className="text-sm text-stone-500 mt-1 leading-relaxed">
+                  El Catastro tiene información distinta a la que ya rellenaste. ¿Quieres reemplazar los campos con los datos del Catastro?
+                </p>
+              </div>
+            </div>
+
+            {/* Preview of what will be filled */}
+            <div className="bg-stone-50 rounded-2xl p-4 space-y-2">
+              <p className="text-xs font-bold uppercase tracking-widest text-stone-400 mb-2">Datos del Catastro</p>
+              {(Object.entries(pendingCatastro) as [string, string][])
+                .filter(([, v]) => v)
+                .map(([k, v]) => (
+                  <div key={k} className="flex justify-between gap-2">
+                    <span className="text-xs text-stone-400 capitalize">{k === "constructionYear" ? "Año" : k === "totalArea" ? "Superficie" : k === "propertyType" ? "Tipo" : k === "postalCode" ? "CP" : k}</span>
+                    <span className="text-xs font-semibold text-stone-700 text-right">{k === "totalArea" ? `${v} m²` : v}</span>
+                  </div>
+                ))}
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setPendingCatastro(null); setCatastroStatus("idle"); }}
+                className="flex-1 py-3 rounded-2xl border border-stone-200 text-stone-600 font-semibold text-sm hover:bg-stone-50 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => applyAutofill(pendingCatastro)}
+                className="flex-1 py-3 rounded-2xl bg-emerald-700 text-white font-bold text-sm hover:bg-emerald-600 transition-colors active:scale-[0.98]"
+              >
+                Sí, importar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Sticky bottom nav – safe-area-inset-bottom for iOS notch/home bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-stone-100 px-4 pt-4" style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}>
