@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "../lib/queryClient";
 import { formatDate } from "../lib/utils";
+import CertDataDrawer from "../components/CertDataDrawer";
 
 const STATUS_OPTIONS = ["Nuevo", "En Proceso", "Finalizado"];
 
@@ -737,6 +738,7 @@ export default function Certifications() {
   const [statusFilter, setStatusFilter] = useState("Todos");
   const [search, setSearch] = useState("");
   const [openMenu, setOpenMenu] = useState<number | null>(null);
+  const [dataCert, setDataCert] = useState<any>(null);
 
   const { data: certifications, isLoading } = useQuery<any[]>({ queryKey: ["/api/certifications"] });
 
@@ -812,6 +814,10 @@ export default function Certifications() {
 
       {commsCert && (
         <CommunicationsDrawer cert={commsCert} onClose={() => setCommsCert(null)} />
+      )}
+
+      {dataCert && (
+        <CertDataDrawer certId={dataCert.id} onClose={() => setDataCert(null)} />
       )}
 
       <div className="flex flex-wrap items-start sm:items-end justify-between gap-3">
@@ -983,6 +989,15 @@ export default function Certifications() {
                             <span className="material-symbols-outlined text-[18px]">energy_program_saving</span>
                             Enviar formulario CEE
                           </button>
+                          {(cert.workflowStatus === "formulario_cee_completado" || cert.formData?.ceeDetallado) && (
+                            <button
+                              onClick={() => { setDataCert(cert); setOpenMenu(null); }}
+                              className="w-full flex items-center gap-3 px-4 py-3 text-sm text-teal-700 hover:bg-teal-50 transition-colors"
+                            >
+                              <span className="material-symbols-outlined text-[18px]">fact_check</span>
+                              Ver datos técnicos CEE
+                            </button>
+                          )}
                           <div className="border-t border-emerald-50 px-4 py-2">
                             <p className="text-[9px] font-bold uppercase tracking-widest text-emerald-700/40">Comunicación</p>
                           </div>

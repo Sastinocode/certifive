@@ -7,6 +7,7 @@ import {
   timestamp,
   jsonb,
   decimal,
+  real,
   index,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
@@ -168,6 +169,49 @@ export const certifications = pgTable("certifications", {
 
   // ── Free-form data ───────────────────────────────────────────────────────────
   formData: jsonb("form_data"),
+
+  // ── Datos del Catastro (auto-rellenados desde API pública) ───────────────────
+  provinciaCatastro: text("provincia_catastro"),
+  comunidadAutonomaCatastro: text("comunidad_autonoma_catastro"),
+  superficieTotalCatastro: real("superficie_total_catastro"),
+  zonaClimatica: text("zona_climatica"),                // p.ej. "D3"
+  datosCatastroActualizados: timestamp("datos_catastro_actualizados"),
+
+  // ── Posición vertical del inmueble ────────────────────────────────────────────
+  esUltimaPlanta: boolean("es_ultima_planta"),          // cubierta afecta
+  tieneLocalDebajo: boolean("tiene_local_debajo"),      // suelo afecta
+
+  // ── Tipo de edificio ampliado ─────────────────────────────────────────────────
+  esEdificioNuevo: boolean("es_edificio_nuevo").default(false),
+
+  // ── Instalaciones — calefacción ───────────────────────────────────────────────
+  calefaccionTipoInstalacion: text("calefaccion_tipo_instalacion"),  // "individual"|"comunitaria"|"no_tiene"
+  calefaccionSistema: text("calefaccion_sistema"),                   // valor detallado CEX
+
+  // ── Instalaciones — ACS ───────────────────────────────────────────────────────
+  acsTipoInstalacion: text("acs_tipo_instalacion"),    // "individual"|"comunitaria"|"no_tiene"
+  acsSistema: text("acs_sistema"),                     // valor detallado CEX
+  numOcupantes: integer("num_ocupantes"),              // personas → demanda ACS
+
+  // ── Reformas recientes (declaradas por el propietario) ────────────────────────
+  tieneReformas: boolean("tiene_reformas").default(false),
+  reformas: jsonb("reformas").$type<Array<{ tipo: string; periodo: string }>>(),
+
+  // ── Envolvente — ventanas detalladas ─────────────────────────────────────────
+  // Si se migra de texto simple a objetos: anchoM, altoM, superficieM2, marcoTipo, vidrio, persiana, persianaLamas
+  ventanasDetalladas: jsonb("ventanas_detalladas").$type<Array<{
+    id?: string;
+    orientacion?: string;
+    estancia?: string;
+    anchoM?: number;
+    altoM?: number;
+    superficieM2?: number;
+    marcoTipo?: string;   // aluminio_sin_rpt | aluminio_con_rpt | pvc | madera | mixto | no_se
+    vidrio?: string;      // simple | doble | triple | no_se
+    persiana?: boolean;
+    persianaLamas?: string; // lamas_plastico | lamas_metalico | lamas_madera | enrollable_otro
+    cantidad?: number;
+  }>(),
 
   // ── SOLICITUD (Formulario 1 — tasación) ─────────────────────────────────────
   solicitudToken: text("solicitud_token").unique(),
@@ -596,6 +640,3 @@ export type InsertDocumento = z.infer<typeof insertDocumentoSchema>;
 export type PlantillaWhatsapp = typeof plantillasWhatsapp.$inferSelect;
 export type MensajeComunicacion = typeof mensajesComunicacion.$inferSelect;
 export type Notificacion = typeof notificaciones.$inferSelect;
-
-export type PlantillaWhatsapp = typeof plantillasWhatsapp.$inferSelect;
-export type MensajeComunicacion = typeof mensajesComunicacion.$inferSelect;
