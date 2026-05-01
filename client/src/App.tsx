@@ -1,105 +1,98 @@
-import { useState } from "react";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
-import { useAuth } from "./hooks/useAuth";
-import Landing from "./pages/Landing";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import PublicForm from "./pages/PublicForm";
-import PublicSolicitud from "./pages/PublicSolicitud";
-import PublicPresupuesto from "./pages/PublicPresupuesto";
-import PublicPayment from "./pages/PublicPayment";
-import PublicCEEForm from "./pages/PublicCEEForm";
-import CertifierLanding from "./pages/CertifierLanding";
-import Layout from "./components/Layout";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { OnboardingModal } from "@/components/OnboardingModal";
+import Dashboard from "@/pages/dashboard";
+import CertificationWizard from "@/pages/certification-wizard";
+import CertificationForm from "@/pages/certification-form";
+import WhatsAppManagement from "@/pages/whatsapp-management";
+import WhatsAppFlowEditor from "@/pages/whatsapp-flow-editor";
+import WorkflowDemo from "@/pages/workflow-demo";
+import Certificates from "@/pages/certificates";
+import ViewCertificationRequest from "@/pages/view-certification-request";
+import EnhancedCertificationForm from "@/pages/enhanced-certification-form";
+import Properties from "@/pages/properties";
+import Pricing from "@/pages/pricing";
+import Reports from "@/pages/reports";
+import Marketing from "@/pages/marketing";
+import Automations from "@/pages/automations";
+import Settings from "@/pages/settings";
+import StripeIntegration from "@/pages/stripe-integration";
+import Landing from "@/pages/landing";
+import Login from "@/pages/login";
+import Register from "@/pages/register";
+import DemoRequest from "@/pages/demo-request";
+import PublicQuote from "@/pages/public-quote";
+import PublicTariffGenerator from "@/pages/public-tariff-generator";
+import NotFound from "@/pages/not-found";
 
-type View = "landing" | "login" | "register";
-
-function AppContent() {
-  const { user, isLoading } = useAuth();
-  const [view, setView] = useState<View>("landing");
+function Router() {
+  const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-emerald-50">
         <div className="text-center">
-          <div className="w-16 h-16 bg-gradient-to-br from-teal-400 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl">
-            <span className="text-white font-black text-2xl">C5</span>
-          </div>
-          <div className="animate-spin w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-800 mx-auto mb-4"></div>
+          <p className="text-emerald-700 font-semibold">Cargando...</p>
         </div>
       </div>
     );
   }
 
-  if (user) return <Layout />;
+  return (
+    <>
+      {isAuthenticated && <OnboardingModal />}
+      <Switch>
+        {/* Public routes */}
+        <Route path="/presupuesto/:uniqueLink" component={PublicQuote} />
+        <Route path="/certificacion-cliente/:uniqueLink" component={CertificationForm} />
+        <Route path="/generador-tarifas" component={PublicTariffGenerator} />
+        <Route path="/login" component={Login} />
+        <Route path="/registro" component={Register} />
+        <Route path="/solicitar-demo" component={DemoRequest} />
 
-  if (view === "login") return <Login onBack={() => setView("landing")} onShowRegister={() => setView("register")} />;
-  if (view === "register") return <Register onBack={() => setView("landing")} onShowLogin={() => setView("login")} />;
+        {/* Home: dashboard if authenticated, landing if not */}
+        <Route path="/" component={isAuthenticated ? Dashboard : Landing} />
 
-  return <Landing onShowLogin={() => setView("login")} onShowRegister={() => setView("register")} />;
+        {/* Authenticated routes — direct children of Switch so wouter can match them */}
+        <Route path="/certificacion/:id?" component={isAuthenticated ? CertificationWizard : Login} />
+        <Route path="/certificados/nuevo" component={isAuthenticated ? CertificationWizard : Login} />
+        <Route path="/certificacion-request/:id" component={isAuthenticated ? ViewCertificationRequest : Login} />
+        <Route path="/formulario-cee" component={isAuthenticated ? EnhancedCertificationForm : Login} />
+        <Route path="/whatsapp" component={isAuthenticated ? WhatsAppManagement : Login} />
+        <Route path="/whatsapp-flow-editor" component={isAuthenticated ? WhatsAppFlowEditor : Login} />
+        <Route path="/demo-flujo" component={isAuthenticated ? WorkflowDemo : Login} />
+        <Route path="/certificados" component={isAuthenticated ? Certificates : Login} />
+        <Route path="/propiedades" component={isAuthenticated ? Properties : Login} />
+        <Route path="/tarifas" component={isAuthenticated ? Pricing : Login} />
+        <Route path="/informes" component={isAuthenticated ? Reports : Login} />
+        <Route path="/marketing" component={isAuthenticated ? Marketing : Login} />
+        <Route path="/automatizaciones" component={isAuthenticated ? Automations : Login} />
+        <Route path="/stripe" component={isAuthenticated ? StripeIntegration : Login} />
+        <Route path="/configuracion" component={isAuthenticated ? Settings : Login} />
+        <Route path="/settings" component={isAuthenticated ? Settings : Login} />
+
+        <Route component={NotFound} />
+      </Switch>
+    </>
+  );
 }
 
-export default function App() {
-  const path = window.location.pathname;
-
-  const formMatch = path.match(/^\/form\/([A-Za-z0-9_-]+)$/);
-  if (formMatch) {
-    return (
-      <QueryClientProvider client={queryClient}>
-        <PublicForm token={formMatch[1]} />
-      </QueryClientProvider>
-    );
-  }
-
-  const solicitudMatch = path.match(/^\/solicitud\/([A-Za-z0-9_-]+)$/);
-  if (solicitudMatch) {
-    return (
-      <QueryClientProvider client={queryClient}>
-        <PublicSolicitud token={solicitudMatch[1]} />
-      </QueryClientProvider>
-    );
-  }
-
-  const presupuestoMatch = path.match(/^\/presupuesto\/([A-Za-z0-9_-]+)$/);
-  if (presupuestoMatch) {
-    return (
-      <QueryClientProvider client={queryClient}>
-        <PublicPresupuesto token={presupuestoMatch[1]} />
-      </QueryClientProvider>
-    );
-  }
-
-  const payMatch = path.match(/^\/pay\/([A-Za-z0-9_-]+)$/);
-  if (payMatch) {
-    return (
-      <QueryClientProvider client={queryClient}>
-        <PublicPayment token={payMatch[1]} />
-      </QueryClientProvider>
-    );
-  }
-
-  const ceeMatch = path.match(/^\/formulario-cee\/([A-Za-z0-9_-]+)$/);
-  if (ceeMatch) {
-    return (
-      <QueryClientProvider client={queryClient}>
-        <PublicCEEForm token={ceeMatch[1]} />
-      </QueryClientProvider>
-    );
-  }
-
-  const certifierMatch = path.match(/^\/c\/([A-Za-z0-9_-]+)$/);
-  if (certifierMatch) {
-    return (
-      <QueryClientProvider client={queryClient}>
-        <CertifierLanding slug={certifierMatch[1]} />
-      </QueryClientProvider>
-    );
-  }
-
+function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AppContent />
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Router />
+        </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
+
+export default App;
