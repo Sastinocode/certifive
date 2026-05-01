@@ -74,8 +74,8 @@ export default function Landing() {
               </Button>
               <Button 
                 variant="outline"
-                onClick={() => {
-                  loginDemo();
+                onClick={async () => {
+                  await loginDemo();
                   navigate("/");
                 }} 
                 size="lg" 
@@ -404,8 +404,8 @@ export default function Landing() {
               </Button>
               <Button 
                 variant="outline"
-                onClick={() => {
-                  loginDemo();
+                onClick={async () => {
+                  await loginDemo();
                   navigate("/");
                 }}
                 size="lg" 
