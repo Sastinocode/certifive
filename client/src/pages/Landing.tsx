@@ -1,663 +1,506 @@
-/**
- * CERTIFIVE — Landing page de captación beta
- *
- * 7 secciones:
- *   1. Hero (primera pantalla, oscura)
- *   2. Problema / Solución
- *   3. Cómo funciona (3 pasos)
- *   4. Funcionalidades clave (6 tarjetas)
- *   5. Precios beta (plan único)
- *   6. Formulario de registro beta
- *   7. Footer
- *
- * Stack: React 18 + Tailwind + Framer Motion
- * Colores: fondo #111827 (slate-900) + esmeralda #059669
- */
+import { useLocation } from "wouter";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Zap, Shield, FileText, Users, TrendingUp, MessageSquare, Play, ArrowRight, CheckCircle, BarChart3, Clock, DollarSign, UserPlus, Search, ClipboardCheck, CreditCard } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import certifiveLogo from "@assets/Logo_1750326352340.jpg";
 
-import { useState, useRef } from "react";
-import { motion, useInView } from "framer-motion";
+export default function Landing() {
+  const [, navigate] = useLocation();
+  const { loginDemo } = useAuth();
 
-// ── Provinces list ─────────────────────────────────────────────────────────────
-const PROVINCES = [
-  "Álava","Albacete","Alicante","Almería","Asturias","Ávila","Badajoz","Baleares",
-  "Barcelona","Burgos","Cáceres","Cádiz","Cantabria","Castellón","Ciudad Real","Córdoba",
-  "A Coruña","Cuenca","Girona","Granada","Guadalajara","Gipuzkoa","Huelva","Huesca",
-  "Jaén","León","Lleida","La Rioja","Lugo","Madrid","Málaga","Murcia","Navarra",
-  "Ourense","Palencia","Las Palmas","Pontevedra","Salamanca","Santa Cruz de Tenerife",
-  "Segovia","Sevilla","Soria","Tarragona","Teruel","Toledo","Valencia","Valladolid",
-  "Bizkaia","Zamora","Zaragoza","Ceuta","Melilla",
-];
-
-// ── Animation helpers ─────────────────────────────────────────────────────────
-interface FadeInProps { children: React.ReactNode; delay?: number; className?: string }
-function FadeIn({ children, delay = 0, className = "" }: FadeInProps) {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-80px" });
   return (
-    <motion.div
-      ref={ref}
-      className={className}
-      initial={{ opacity: 0, y: 28 }}
-      animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.55, delay, ease: [0.22, 1, 0.36, 1] }}
-    >
-      {children}
-    </motion.div>
-  );
-}
-
-interface Props {
-  onShowLogin: () => void;
-  onShowRegister: () => void;
-}
-
-// ── Input style ───────────────────────────────────────────────────────────────
-const inputCls =
-  "w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all";
-
-// ─────────────────────────────────────────────────────────────────────────────
-export default function Landing({ onShowLogin, onShowRegister }: Props) {
-  const formRef = useRef<HTMLDivElement>(null);
-
-  const [form, setForm] = useState({
-    nombre: "", email: "", telefono: "", provincia: "", certificacionesMes: "",
-  });
-  const [formState, setFormState] = useState<"idle" | "loading" | "success" | "error">("idle");
-  const [errorMsg, setErrorMsg] = useState("");
-
-  const scrollToForm = () => {
-    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.nombre.trim() || !form.email.trim()) {
-      setErrorMsg("El nombre y el email son obligatorios.");
-      return;
-    }
-    setFormState("loading");
-    setErrorMsg("");
-    try {
-      const res = await fetch("/api/beta-leads", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...form,
-          certificacionesMes: form.certificacionesMes ? parseInt(form.certificacionesMes) : undefined,
-        }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.message ?? "Error desconocido");
-      }
-      setFormState("success");
-    } catch (err: any) {
-      setErrorMsg(err.message ?? "Error al enviar el formulario.");
-      setFormState("error");
-    }
-  };
-
-  // ── Nav ─────────────────────────────────────────────────────────────────────
-  return (
-    <div className="min-h-screen bg-[#111827] text-white antialiased">
-
-      {/* ════════════ NAV ════════════ */}
-      <nav className="sticky top-0 z-50 bg-[#111827]/80 backdrop-blur-md border-b border-white/5">
-        <div className="max-w-6xl mx-auto px-4 sm:px-8 h-16 flex items-center justify-between">
-          {/* Logo */}
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-900/40">
-              <span className="material-symbols-outlined text-white text-[18px]">energy_savings_leaf</span>
+    <div className="min-h-screen bg-white">
+      {/* Header */}
+      <header className="border-b bg-white/95 backdrop-blur-sm sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <img 
+                src={certifiveLogo} 
+                alt="CERTIFIVE Logo" 
+                className="w-10 h-10 rounded-lg object-cover"
+              />
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-teal-500 to-blue-600 bg-clip-text text-transparent">CERTIFIVE</h1>
             </div>
-            <span className="font-black text-lg tracking-tight text-white">CERTIFIVE</span>
-          </div>
-
-          {/* Nav links — hidden on mobile */}
-          <div className="hidden sm:flex items-center gap-6 text-sm font-medium text-white/50">
-            <a href="#como-funciona" className="hover:text-white transition-colors">Cómo funciona</a>
-            <a href="#funcionalidades" className="hover:text-white transition-colors">Funcionalidades</a>
-            <a href="#precios" className="hover:text-white transition-colors">Precios</a>
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={onShowLogin}
-              className="text-white/60 hover:text-white px-3 py-2 rounded-xl text-sm font-semibold transition-colors hidden sm:block"
-            >
-              Iniciar sesión
-            </button>
-            <button
-              onClick={scrollToForm}
-              className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-sm font-bold transition-colors shadow-md shadow-emerald-900/30"
-            >
-              Acceso beta
-            </button>
-          </div>
-        </div>
-      </nav>
-
-      {/* ════════════ 1. HERO ════════════ */}
-      <section className="relative overflow-hidden">
-        {/* Background glow */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[700px] h-[700px] bg-emerald-600/10 rounded-full blur-[120px]" />
-          <div className="absolute top-20 right-0 w-[400px] h-[400px] bg-emerald-500/5 rounded-full blur-[100px]" />
-        </div>
-
-        <div className="relative max-w-6xl mx-auto px-4 sm:px-8 pt-20 pb-24 text-center">
-          {/* Badge */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4 }}
-            className="inline-flex items-center gap-2 bg-emerald-900/50 border border-emerald-700/50 rounded-full px-4 py-2 mb-8"
-          >
-            <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-            <span className="text-emerald-300 text-xs font-bold uppercase tracking-widest">
-              Programa beta — Plazas limitadas
-            </span>
-          </motion.div>
-
-          {/* Headline */}
-          <motion.h1
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-            className="text-4xl sm:text-5xl md:text-6xl font-black text-white leading-tight tracking-tight mb-6"
-          >
-            Gestiona tus certificaciones
-            <span className="block text-emerald-400 mt-1">energéticas en 3 clics</span>
-          </motion.h1>
-
-          {/* Sub */}
-          <motion.p
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-white/60 text-lg sm:text-xl max-w-2xl mx-auto mb-10 leading-relaxed"
-          >
-            La plataforma que automatiza el papeleo para que tú te centres en certificar.
-          </motion.p>
-
-          {/* CTAs */}
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            className="flex flex-col sm:flex-row gap-3 justify-center items-center"
-          >
-            <button
-              onClick={scrollToForm}
-              className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-4 rounded-2xl font-bold text-base transition-all shadow-xl shadow-emerald-900/40 hover:shadow-emerald-700/30 hover:-translate-y-0.5 min-h-[52px]"
-            >
-              Empieza gratis — 30 días sin tarjeta
-            </button>
-            <button
-              onClick={() => {}}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white px-8 py-4 rounded-2xl font-semibold text-base transition-all min-h-[52px]"
-            >
-              <span className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center">
-                <span className="material-symbols-outlined text-[14px]">play_arrow</span>
-              </span>
-              Ver demo en vídeo
-            </button>
-          </motion.div>
-
-          {/* Social proof */}
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.7 }}
-            className="mt-8 text-white/30 text-sm"
-          >
-            Sin tarjeta de crédito · Instalación en 2 minutos · Soporte en español
-          </motion.p>
-
-          {/* Stats row */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.5 }}
-            className="mt-16 grid grid-cols-3 gap-4 max-w-lg mx-auto"
-          >
-            {[
-              { value: "+200", label: "Certificadores" },
-              { value: "85%", label: "Menos papeleo" },
-              { value: "3 clics", label: "Por certificación" },
-            ].map(s => (
-              <div key={s.label} className="text-center">
-                <p className="text-2xl sm:text-3xl font-black text-emerald-400 tracking-tight">{s.value}</p>
-                <p className="text-white/40 text-xs mt-1 font-medium">{s.label}</p>
-              </div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ════════════ 2. PROBLEMA / SOLUCIÓN ════════════ */}
-      <section className="py-24 bg-[#0d1117]">
-        <div className="max-w-6xl mx-auto px-4 sm:px-8">
-          <FadeIn className="text-center mb-14">
-            <span className="text-emerald-400 text-xs font-bold uppercase tracking-widest">El antes y el después</span>
-            <h2 className="text-3xl sm:text-4xl font-black text-white mt-3 tracking-tight">¿Reconoces esta situación?</h2>
-          </FadeIn>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Sin Certifive */}
-            <FadeIn delay={0.1}>
-              <div className="rounded-2xl border border-red-900/40 bg-red-950/20 p-7">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-9 h-9 bg-red-900/40 rounded-xl flex items-center justify-center">
-                    <span className="material-symbols-outlined text-red-400 text-[18px]">close</span>
-                  </div>
-                  <h3 className="text-lg font-bold text-white">Sin Certifive</h3>
-                </div>
-                <ul className="space-y-4">
-                  {[
-                    { icon: "table_chart",   text: "Excel para todo — un horror de pestañas y fórmulas rotas" },
-                    { icon: "chat",          text: "WhatsApps manuales a cada cliente para pedir documentos" },
-                    { icon: "receipt_long",  text: "Facturas a mano en Word que tardan 20 minutos" },
-                    { icon: "schedule",      text: "Clientes que no pagan hasta que les persigues" },
-                    { icon: "folder_open",   text: "Expedientes dispersos entre el email y el escritorio" },
-                  ].map(p => (
-                    <li key={p.text} className="flex items-start gap-3">
-                      <div className="w-7 h-7 bg-red-900/30 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <span className="material-symbols-outlined text-red-400 text-[14px]">{p.icon}</span>
-                      </div>
-                      <span className="text-white/60 text-sm leading-relaxed">{p.text}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </FadeIn>
-
-            {/* Con Certifive */}
-            <FadeIn delay={0.2}>
-              <div className="rounded-2xl border border-emerald-700/40 bg-emerald-950/20 p-7">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-9 h-9 bg-emerald-800/50 rounded-xl flex items-center justify-center">
-                    <span className="material-symbols-outlined text-emerald-400 text-[18px]">check_circle</span>
-                  </div>
-                  <h3 className="text-lg font-bold text-white">Con Certifive</h3>
-                </div>
-                <ul className="space-y-4">
-                  {[
-                    { icon: "dashboard",     text: "Panel unificado — toda tu cartera de certificaciones en una sola pantalla" },
-                    { icon: "send",          text: "Link automático al propietario — rellena sus datos en el móvil sin llamadas" },
-                    { icon: "receipt_long",  text: "Facturas legales generadas en un clic, listas para descargar" },
-                    { icon: "payments",      text: "Pagos online con Stripe, Bizum o transferencia — con recordatorios automáticos" },
-                    { icon: "folder_special", text: "Expedientes ordenados y archivados automáticamente por cliente" },
-                  ].map(s => (
-                    <li key={s.text} className="flex items-start gap-3">
-                      <div className="w-7 h-7 bg-emerald-800/50 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <span className="material-symbols-outlined text-emerald-400 text-[14px]">{s.icon}</span>
-                      </div>
-                      <span className="text-white/80 text-sm leading-relaxed">{s.text}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </FadeIn>
-          </div>
-        </div>
-      </section>
-
-      {/* ════════════ 3. CÓMO FUNCIONA ════════════ */}
-      <section id="como-funciona" className="py-24 bg-[#111827]">
-        <div className="max-w-6xl mx-auto px-4 sm:px-8">
-          <FadeIn className="text-center mb-16">
-            <span className="text-emerald-400 text-xs font-bold uppercase tracking-widest">El proceso</span>
-            <h2 className="text-3xl sm:text-4xl font-black text-white mt-3 tracking-tight">3 pasos. Así de sencillo.</h2>
-            <p className="text-white/50 mt-3 max-w-xl mx-auto">Del primer contacto al certificado entregado, todo dentro de Certifive.</p>
-          </FadeIn>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
-            {/* Connecting line — desktop only */}
-            <div className="hidden md:block absolute top-14 left-[calc(16.67%+1.5rem)] right-[calc(16.67%+1.5rem)] h-px bg-gradient-to-r from-transparent via-emerald-700/40 to-transparent" />
-
-            {[
-              {
-                num: "01",
-                icon: "link",
-                title: "Mandas el enlace",
-                desc: "En un clic envías un formulario personalizado al propietario por email o WhatsApp. Él lo rellena desde el móvil en 5 minutos.",
-                tag: "Sin llamadas",
-              },
-              {
-                num: "02",
-                icon: "task_alt",
-                title: "Revisas y emites",
-                desc: "Recibes todos los datos y documentos ordenados. Revisas, ajustas si hace falta, y emites el certificado desde el panel.",
-                tag: "Todo centralizado",
-              },
-              {
-                num: "03",
-                icon: "payments",
-                title: "El cliente paga y recibe",
-                desc: "Cobras online con Stripe, Bizum o transferencia. El cliente recibe el certificado automáticamente al confirmar el pago.",
-                tag: "Cobro automático",
-              },
-            ].map((step, i) => (
-              <FadeIn key={step.num} delay={0.1 * (i + 1)}>
-                <div className="relative bg-white/4 border border-white/8 rounded-2xl p-7 hover:border-emerald-700/40 transition-colors group">
-                  <div className="flex items-start justify-between mb-5">
-                    <div className="w-12 h-12 bg-emerald-600/20 border border-emerald-700/30 rounded-2xl flex items-center justify-center group-hover:bg-emerald-600/30 transition-colors">
-                      <span className="material-symbols-outlined text-emerald-400 text-[22px]">{step.icon}</span>
-                    </div>
-                    <span className="text-4xl font-black text-white/5 leading-none">{step.num}</span>
-                  </div>
-                  <span className="inline-block text-[10px] font-bold uppercase tracking-wider text-emerald-500 bg-emerald-900/40 px-2 py-1 rounded-full mb-3">
-                    {step.tag}
-                  </span>
-                  <h3 className="text-lg font-bold text-white mb-2">{step.title}</h3>
-                  <p className="text-white/50 text-sm leading-relaxed">{step.desc}</p>
-                </div>
-              </FadeIn>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ════════════ 4. FUNCIONALIDADES ════════════ */}
-      <section id="funcionalidades" className="py-24 bg-[#0d1117]">
-        <div className="max-w-6xl mx-auto px-4 sm:px-8">
-          <FadeIn className="text-center mb-14">
-            <span className="text-emerald-400 text-xs font-bold uppercase tracking-widest">Funcionalidades</span>
-            <h2 className="text-3xl sm:text-4xl font-black text-white mt-3 tracking-tight">Todo lo que necesitas, nada de lo que no</h2>
-          </FadeIn>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {[
-              {
-                icon: "assignment",
-                color: "bg-blue-600/20 border-blue-700/30 text-blue-400",
-                title: "Formulario del propietario",
-                desc: "Link personalizado para que el cliente rellene sus datos de propiedad desde cualquier dispositivo, sin crear cuenta.",
-              },
-              {
-                icon: "payments",
-                color: "bg-emerald-600/20 border-emerald-700/30 text-emerald-400",
-                title: "Pagos automatizados",
-                desc: "Stripe, Bizum, transferencia y efectivo. Dos tramos de cobro con confirmación automática y recordatorios.",
-              },
-              {
-                icon: "chat",
-                color: "bg-green-600/20 border-green-700/30 text-green-400",
-                title: "WhatsApp integrado",
-                desc: "Envía mensajes a tus clientes directamente desde el panel con plantillas predefinidas y variables dinámicas.",
-              },
-              {
-                icon: "receipt_long",
-                color: "bg-violet-600/20 border-violet-700/30 text-violet-400",
-                title: "Facturas legales",
-                desc: "Generación automática de facturas conforme a la normativa española con tu logo y datos fiscales.",
-              },
-              {
-                icon: "folder_special",
-                color: "bg-amber-600/20 border-amber-700/30 text-amber-400",
-                title: "Gestión de expedientes",
-                desc: "Todos los documentos, notas y el historial de cada certificación organizados en un solo expediente.",
-              },
-              {
-                icon: "bar_chart",
-                color: "bg-teal-600/20 border-teal-700/30 text-teal-400",
-                title: "Generación de reportes",
-                desc: "Exporta tu actividad en Excel o PDF. Listados de certificaciones, ingresos y métricas de rendimiento.",
-              },
-            ].map((f, i) => (
-              <FadeIn key={f.title} delay={0.06 * i}>
-                <div className={`h-full rounded-2xl border bg-white/3 border-white/8 p-6 hover:border-white/15 transition-all group`}>
-                  <div className={`w-11 h-11 ${f.color} border rounded-xl flex items-center justify-center mb-4`}>
-                    <span className="material-symbols-outlined text-[20px]">{f.icon}</span>
-                  </div>
-                  <h3 className="text-base font-bold text-white mb-2">{f.title}</h3>
-                  <p className="text-white/50 text-sm leading-relaxed">{f.desc}</p>
-                </div>
-              </FadeIn>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ════════════ 5. PRECIOS ════════════ */}
-      <section id="precios" className="py-24 bg-[#111827]">
-        <div className="max-w-6xl mx-auto px-4 sm:px-8">
-          <FadeIn className="text-center mb-12">
-            <span className="text-emerald-400 text-xs font-bold uppercase tracking-widest">Precios</span>
-            <h2 className="text-3xl sm:text-4xl font-black text-white mt-3 tracking-tight">Sin letra pequeña</h2>
-            <p className="text-white/50 mt-3 max-w-xl mx-auto">Durante el programa beta, el acceso es completamente gratuito.</p>
-          </FadeIn>
-
-          <FadeIn delay={0.1} className="max-w-sm mx-auto">
-            <div className="relative rounded-3xl border border-emerald-700/50 bg-gradient-to-b from-emerald-950/50 to-[#111827] p-8 text-center shadow-2xl shadow-emerald-900/20">
-              {/* Best badge */}
-              <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-emerald-600 text-white text-[11px] font-bold uppercase tracking-wider px-4 py-1 rounded-full shadow-md">
-                Plan Beta
-              </span>
-
-              <div className="mt-3 mb-6">
-                <p className="text-5xl font-black text-white tracking-tighter">Gratis</p>
-                <p className="text-white/50 text-sm mt-1">30 días completos · Sin tarjeta</p>
-              </div>
-
-              <ul className="space-y-3 text-left mb-8">
-                {[
-                  "Certificaciones ilimitadas",
-                  "Formularios de propietario",
-                  "Pagos con Stripe + métodos manuales",
-                  "Facturas legales automáticas",
-                  "WhatsApp integrado",
-                  "Soporte prioritario en español",
-                  "Precio bloqueado al finalizar la beta",
-                ].map(f => (
-                  <li key={f} className="flex items-center gap-3 text-sm text-white/70">
-                    <span className="w-5 h-5 bg-emerald-700/40 rounded-full flex items-center justify-center flex-shrink-0">
-                      <span className="material-symbols-outlined text-emerald-400 text-[12px]">check</span>
-                    </span>
-                    {f}
-                  </li>
-                ))}
-              </ul>
-
-              <button
-                onClick={scrollToForm}
-                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-4 rounded-xl font-bold text-base transition-all shadow-lg shadow-emerald-900/30 min-h-[52px]"
+            <div className="flex items-center gap-3">
+              <Button 
+                variant="ghost" 
+                onClick={() => navigate("/login")}
+                className="text-gray-600 hover:text-teal-600"
               >
-                Solicitar acceso beta →
-              </button>
-
-              <p className="text-white/30 text-xs mt-3">Plazas limitadas · Respuesta en 24 h</p>
+                Iniciar Sesión
+              </Button>
+              <Button 
+                onClick={() => navigate("/registro")}
+                className="bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-600 hover:to-blue-700 text-white"
+              >
+                Registrarse
+              </Button>
             </div>
-          </FadeIn>
+          </div>
+        </div>
+      </header>
+
+      {/* Hero Section */}
+      <section className="py-20 bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto text-center">
+            <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-teal-100 to-blue-100 rounded-full mb-8">
+              <Clock className="w-4 h-4 text-teal-600 mr-2" />
+              <span className="text-sm font-medium text-teal-700">Certificación Energética Profesional</span>
+            </div>
+            
+            <h1 className="text-6xl md:text-7xl font-bold text-gray-900 mb-6 leading-tight">
+              <span className="block text-4xl md:text-5xl text-teal-600 mb-2">CERTIFICA EN 5 MINUTOS.</span>
+              <span className="block bg-gradient-to-r from-teal-500 to-blue-600 bg-clip-text text-transparent">
+                MULTIPLICA TUS INGRESOS X5
+              </span>
+            </h1>
+            
+            <p className="text-xl text-gray-600 mb-10 max-w-3xl mx-auto leading-relaxed">
+              La plataforma de automatización completa para certificadores energéticos. 
+              Desde el primer contacto hasta la facturación, todo en una sola herramienta profesional.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
+              <Button 
+                onClick={() => navigate("/registro")} 
+                size="lg" 
+                className="bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-600 hover:to-blue-700 text-white text-lg px-8 py-4 h-auto shadow-lg hover:shadow-xl transition-all"
+              >
+                <UserPlus className="w-5 h-5 mr-2" />
+                Empezar Gratis Ahora
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  loginDemo();
+                  navigate("/");
+                }} 
+                size="lg" 
+                className="border-2 border-teal-200 text-teal-700 hover:bg-teal-50 text-lg px-8 py-4 h-auto"
+              >
+                <Play className="w-5 h-5 mr-2" />
+                Ver Demo en Vivo
+              </Button>
+            </div>
+
+            {/* Trust indicators */}
+            <div className="flex flex-wrap justify-center items-center gap-8 text-sm text-gray-500">
+              <div className="flex items-center">
+                <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                <span>100% Cumplimiento CEE</span>
+              </div>
+              <div className="flex items-center">
+                <Shield className="w-4 h-4 text-blue-500 mr-2" />
+                <span>Datos Seguros</span>
+              </div>
+              <div className="flex items-center">
+                <Clock className="w-4 h-4 text-teal-500 mr-2" />
+                <span>Setup en 5 minutos</span>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* ════════════ 6. FORMULARIO ════════════ */}
-      <section id="registro" className="py-24 bg-[#0d1117]" ref={formRef}>
-        <div className="max-w-6xl mx-auto px-4 sm:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-
-            {/* Left — copy */}
-            <FadeIn>
-              <span className="text-emerald-400 text-xs font-bold uppercase tracking-widest">Acceso beta</span>
-              <h2 className="text-3xl sm:text-4xl font-black text-white mt-3 mb-5 tracking-tight leading-tight">
-                Sé de los primeros en automatizar tu gestión CEE
+      {/* 5-Step Process Section */}
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl font-bold text-gray-900 mb-4">
+                Tu proceso completo en <span className="text-teal-600">5 pasos</span>
               </h2>
-              <p className="text-white/50 leading-relaxed mb-8">
-                Rellena el formulario y te contactaremos en menos de 24 horas con tus credenciales de acceso. Sin coste, sin permanencia.
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                Desde el registro hasta la facturación, todo automatizado para maximizar tu productividad
               </p>
-              <ul className="space-y-4">
-                {[
-                  { icon: "lock",         text: "Datos protegidos — nunca los compartimos" },
-                  { icon: "calendar_today", text: "Acceso en 24 h laborables" },
-                  { icon: "star",         text: "Precio beta bloqueado de por vida" },
-                ].map(item => (
-                  <li key={item.text} className="flex items-center gap-3 text-sm text-white/60">
-                    <span className="w-8 h-8 bg-emerald-900/40 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <span className="material-symbols-outlined text-emerald-400 text-[16px]">{item.icon}</span>
-                    </span>
-                    {item.text}
-                  </li>
-                ))}
-              </ul>
-            </FadeIn>
+            </div>
 
-            {/* Right — form */}
-            <FadeIn delay={0.15}>
-              {formState === "success" ? (
-                <div className="rounded-3xl bg-emerald-900/20 border border-emerald-700/40 p-10 text-center">
-                  <div className="w-16 h-16 bg-emerald-700/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="material-symbols-outlined text-emerald-400 text-[32px]">check_circle</span>
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-8 md:gap-4">
+              {/* Step 1: CONECTA */}
+              <div className="relative">
+                <div className="text-center">
+                  <div className="w-20 h-20 bg-gradient-to-r from-teal-500 to-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                    <UserPlus className="w-10 h-10 text-white" />
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-2">¡Ya estás en lista!</h3>
-                  <p className="text-white/60 text-sm leading-relaxed">
-                    Hemos recibido tu solicitud y te hemos enviado un email de confirmación. Te contactaremos pronto con el acceso.
+                  <div className="absolute -top-2 -right-2 w-8 h-8 bg-teal-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                    1
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">CONECTA</h3>
+                  <p className="text-gray-600 text-sm leading-relaxed">
+                    Regístrate como profesional certificador energético y configura tu perfil profesional
                   </p>
                 </div>
-              ) : (
-                <form
-                  onSubmit={handleSubmit}
-                  className="rounded-3xl bg-white/3 border border-white/8 p-7 sm:p-8 space-y-4"
-                >
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-semibold text-white/50 uppercase tracking-wider mb-2">
-                        Nombre <span className="text-emerald-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="Tu nombre"
-                        required
-                        value={form.nombre}
-                        onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))}
-                        className={inputCls}
-                        style={{ fontSize: "16px" }}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-white/50 uppercase tracking-wider mb-2">
-                        Email <span className="text-emerald-500">*</span>
-                      </label>
-                      <input
-                        type="email"
-                        placeholder="tu@email.com"
-                        required
-                        value={form.email}
-                        onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-                        className={inputCls}
-                        style={{ fontSize: "16px" }}
-                      />
-                    </div>
+                {/* Arrow */}
+                <div className="hidden md:block absolute top-10 -right-6 text-teal-300">
+                  <ArrowRight className="w-6 h-6" />
+                </div>
+              </div>
+
+              {/* Step 2: EXPLORA */}
+              <div className="relative">
+                <div className="text-center">
+                  <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                    <Search className="w-10 h-10 text-white" />
                   </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-semibold text-white/50 uppercase tracking-wider mb-2">Teléfono</label>
-                      <input
-                        type="tel"
-                        placeholder="+34 600 000 000"
-                        value={form.telefono}
-                        onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))}
-                        className={inputCls}
-                        style={{ fontSize: "16px" }}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-white/50 uppercase tracking-wider mb-2">Provincia</label>
-                      <select
-                        value={form.provincia}
-                        onChange={e => setForm(f => ({ ...f, provincia: e.target.value }))}
-                        className={inputCls + " appearance-none"}
-                        style={{ fontSize: "16px" }}
-                      >
-                        <option value="">Selecciona...</option>
-                        {PROVINCES.map(p => <option key={p} value={p}>{p}</option>)}
-                      </select>
-                    </div>
+                  <div className="absolute -top-2 -right-2 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                    2
                   </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-white/50 uppercase tracking-wider mb-2">
-                      ¿Cuántas certificaciones haces al mes? (aproximado)
-                    </label>
-                    <select
-                      value={form.certificacionesMes}
-                      onChange={e => setForm(f => ({ ...f, certificacionesMes: e.target.value }))}
-                      className={inputCls + " appearance-none"}
-                      style={{ fontSize: "16px" }}
-                    >
-                      <option value="">Selecciona...</option>
-                      <option value="5">Menos de 5</option>
-                      <option value="10">Entre 5 y 15</option>
-                      <option value="25">Entre 15 y 30</option>
-                      <option value="50">Más de 30</option>
-                    </select>
-                  </div>
-
-                  {errorMsg && (
-                    <div className="bg-red-900/30 border border-red-700/40 rounded-xl px-4 py-3 text-sm text-red-300">
-                      {errorMsg}
-                    </div>
-                  )}
-
-                  <button
-                    type="submit"
-                    disabled={formState === "loading"}
-                    className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white py-4 rounded-xl font-bold text-base transition-all shadow-lg shadow-emerald-900/30 min-h-[56px] flex items-center justify-center gap-2"
-                  >
-                    {formState === "loading" ? (
-                      <>
-                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        Enviando...
-                      </>
-                    ) : (
-                      "Quiero acceso beta →"
-                    )}
-                  </button>
-
-                  <p className="text-white/25 text-xs text-center">
-                    Al enviar aceptas nuestra{" "}
-                    <button type="button" className="underline hover:text-white/50 transition-colors">
-                      política de privacidad
-                    </button>
-                    .
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">EXPLORA</h3>
+                  <p className="text-gray-600 text-sm leading-relaxed">
+                    Accede al dashboard de oportunidades y descubre nuevos proyectos de certificación
                   </p>
-                </form>
-              )}
-            </FadeIn>
+                </div>
+                {/* Arrow */}
+                <div className="hidden md:block absolute top-10 -right-6 text-blue-300">
+                  <ArrowRight className="w-6 h-6" />
+                </div>
+              </div>
+
+              {/* Step 3: REVISA */}
+              <div className="relative">
+                <div className="text-center">
+                  <div className="w-20 h-20 bg-gradient-to-r from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                    <BarChart3 className="w-10 h-10 text-white" />
+                  </div>
+                  <div className="absolute -top-2 -right-2 w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                    3
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">REVISA</h3>
+                  <p className="text-gray-600 text-sm leading-relaxed">
+                    Analiza los datos automáticamente recopilados y verifica la información del inmueble
+                  </p>
+                </div>
+                {/* Arrow */}
+                <div className="hidden md:block absolute top-10 -right-6 text-purple-300">
+                  <ArrowRight className="w-6 h-6" />
+                </div>
+              </div>
+
+              {/* Step 4: TRAMITA */}
+              <div className="relative">
+                <div className="text-center">
+                  <div className="w-20 h-20 bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                    <ClipboardCheck className="w-10 h-10 text-white" />
+                  </div>
+                  <div className="absolute -top-2 -right-2 w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                    4
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">TRAMITA</h3>
+                  <p className="text-gray-600 text-sm leading-relaxed">
+                    Recopila la información con un solo clic y tramita el CEE automáticamente
+                  </p>
+                </div>
+                {/* Arrow */}
+                <div className="hidden md:block absolute top-10 -right-6 text-orange-300">
+                  <ArrowRight className="w-6 h-6" />
+                </div>
+              </div>
+
+              {/* Step 5: FACTURA */}
+              <div className="relative">
+                <div className="text-center">
+                  <div className="w-20 h-20 bg-gradient-to-r from-green-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                    <CreditCard className="w-10 h-10 text-white" />
+                  </div>
+                  <div className="absolute -top-2 -right-2 w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                    5
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">FACTURA</h3>
+                  <p className="text-gray-600 text-sm leading-relaxed">
+                    Cobra instantáneamente por tu servicio, genera la factura y envía a la asesoría
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* CTA after process */}
+            <div className="text-center mt-16">
+              <div className="bg-gradient-to-r from-teal-50 to-blue-50 rounded-2xl p-8">
+                <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                  ¿Listo para multiplicar tus ingresos?
+                </h3>
+                <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+                  Únete a los profesionales que ya están automatizando su proceso de certificación energética
+                </p>
+                <Button 
+                  onClick={() => navigate("/registro")}
+                  size="lg" 
+                  className="bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-600 hover:to-blue-700 text-white text-lg px-8 py-4 h-auto shadow-lg hover:shadow-xl transition-all"
+                >
+                  <DollarSign className="w-5 h-5 mr-2" />
+                  Comenzar Ahora - Gratis
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ════════════ 7. FOOTER ════════════ */}
-      <footer className="bg-[#111827] border-t border-white/5 py-10">
-        <div className="max-w-6xl mx-auto px-4 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-6">
-          {/* Logo */}
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-emerald-700 rounded-lg flex items-center justify-center">
-              <span className="material-symbols-outlined text-white text-[16px]">energy_savings_leaf</span>
+      {/* Features Section */}
+      <section className="py-20 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl font-bold text-gray-900 mb-4">
+                Automatización completa para certificadores energéticos
+              </h2>
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                Todo lo que necesitas para gestionar tu negocio de certificación energética en una sola plataforma
+              </p>
             </div>
-            <span className="text-white font-bold text-sm">CERTIFIVE</span>
-          </div>
 
-          {/* Links */}
-          <div className="flex items-center gap-6">
-            {[
-              { label: "Privacidad",  href: "#" },
-              { label: "Cookies",     href: "#" },
-              { label: "Términos",    href: "#" },
-            ].map(l => (
-              <a key={l.label} href={l.href} className="text-white/30 hover:text-white/60 text-xs font-medium transition-colors">
-                {l.label}
-              </a>
-            ))}
-            <a href="mailto:hola@certifive.es" className="text-white/30 hover:text-white/60 text-xs font-medium transition-colors">
-              hola@certifive.es
-            </a>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white">
+                <CardContent className="p-8 text-center">
+                  <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                    <MessageSquare className="w-8 h-8 text-white" />
+                  </div>
+                  <h4 className="text-xl font-bold text-gray-900 mb-4">WhatsApp Business</h4>
+                  <p className="text-gray-600 leading-relaxed">
+                    Automatización completa desde la consulta hasta la entrega. Gestión de conversaciones y envío automático de presupuestos.
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white">
+                <CardContent className="p-8 text-center">
+                  <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                    <TrendingUp className="w-8 h-8 text-white" />
+                  </div>
+                  <h4 className="text-xl font-bold text-gray-900 mb-4">Gestión Financiera</h4>
+                  <p className="text-gray-600 leading-relaxed">
+                    Facturación automática, cobros instantáneos y reportes financieros completos para tu asesoría fiscal.
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white">
+                <CardContent className="p-8 text-center">
+                  <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                    <FileText className="w-8 h-8 text-white" />
+                  </div>
+                  <h4 className="text-xl font-bold text-gray-900 mb-4">Informes Técnicos</h4>
+                  <p className="text-gray-600 leading-relaxed">
+                    Generación automática de certificados en PDF, Word y Excel optimizados para el software oficial.
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white">
+                <CardContent className="p-8 text-center">
+                  <div className="w-16 h-16 bg-gradient-to-r from-teal-500 to-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                    <Shield className="w-8 h-8 text-white" />
+                  </div>
+                  <h4 className="text-xl font-bold text-gray-900 mb-4">Normativa CEE</h4>
+                  <p className="text-gray-600 leading-relaxed">
+                    Cumplimiento total con la normativa española de certificación energética y actualizaciones automáticas.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
           </div>
+        </div>
+      </section>
 
-          <p className="text-white/20 text-xs text-center">© {new Date().getFullYear()} CERTIFIVE</p>
+      {/* Benefits Section */}
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="max-w-6xl mx-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+              <div>
+                <h2 className="text-4xl font-bold text-gray-900 mb-6">
+                  Transforma tu negocio con <span className="text-teal-600">CERTIFIVE</span>
+                </h2>
+                <div className="space-y-6">
+                  <div className="flex items-start space-x-4">
+                    <div className="w-8 h-8 bg-teal-100 rounded-lg flex items-center justify-center mt-1">
+                      <Clock className="w-4 h-4 text-teal-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-semibold text-gray-900 mb-2">Ahorra 5 horas por certificación</h3>
+                      <p className="text-gray-600">Automatiza completamente el proceso desde la solicitud hasta la entrega del certificado.</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start space-x-4">
+                    <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mt-1">
+                      <DollarSign className="w-4 h-4 text-green-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-semibold text-gray-900 mb-2">Multiplica tus ingresos</h3>
+                      <p className="text-gray-600">Gestiona 5 veces más proyectos con el mismo tiempo de trabajo gracias a la automatización.</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start space-x-4">
+                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mt-1">
+                      <CheckCircle className="w-4 h-4 text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-semibold text-gray-900 mb-2">Cero errores administrativos</h3>
+                      <p className="text-gray-600">Formularios precargados y validación automática garantizan la precisión de los datos.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start space-x-4">
+                    <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mt-1">
+                      <Users className="w-4 h-4 text-purple-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-semibold text-gray-900 mb-2">Experiencia cliente premium</h3>
+                      <p className="text-gray-600">Comunicación fluida por WhatsApp y entregas instantáneas que impresionan a tus clientes.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="relative">
+                <div className="bg-gradient-to-r from-teal-500 to-blue-600 rounded-2xl p-8 text-white shadow-2xl">
+                  <h3 className="text-2xl font-bold mb-6">Resultados reales de nuestros usuarios</h3>
+                  <div className="space-y-4">
+                    <div className="bg-white/10 rounded-lg p-4">
+                      <div className="text-3xl font-bold text-teal-100">+400%</div>
+                      <div className="text-sm text-teal-100">Incremento promedio en ingresos</div>
+                    </div>
+                    <div className="bg-white/10 rounded-lg p-4">
+                      <div className="text-3xl font-bold text-blue-100">85%</div>
+                      <div className="text-sm text-blue-100">Reducción en tiempo administrativo</div>
+                    </div>
+                    <div className="bg-white/10 rounded-lg p-4">
+                      <div className="text-3xl font-bold text-cyan-100">24h</div>
+                      <div className="text-sm text-cyan-100">Tiempo promedio de entrega</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA Section */}
+      <section className="py-20 bg-gradient-to-r from-teal-500 to-blue-600">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto text-center">
+            <h2 className="text-5xl font-bold text-white mb-6">
+              ¿Listo para multiplicar tus ingresos?
+            </h2>
+            <p className="text-xl text-teal-100 mb-8 max-w-3xl mx-auto leading-relaxed">
+              Únete a los certificadores energéticos que han transformado su negocio con CERTIFIVE. 
+              Comienza gratis y experimenta la diferencia en solo 5 minutos.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-12">
+              <Button 
+                onClick={() => navigate("/registro")}
+                size="lg" 
+                className="bg-white text-teal-600 hover:bg-gray-50 text-xl px-10 py-5 h-auto shadow-lg hover:shadow-xl transition-all font-semibold"
+              >
+                <UserPlus className="w-6 h-6 mr-3" />
+                Empezar Gratis Ahora
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  loginDemo();
+                  navigate("/");
+                }}
+                size="lg" 
+                className="border-2 border-white text-white hover:bg-white/10 text-xl px-10 py-5 h-auto font-semibold"
+              >
+                <Play className="w-6 h-6 mr-3" />
+                Probar Demo
+              </Button>
+            </div>
+
+            {/* Trust badges */}
+            <div className="flex flex-wrap justify-center items-center gap-8 text-teal-100">
+              <div className="flex items-center">
+                <CheckCircle className="w-5 h-5 mr-2" />
+                <span className="text-sm">Sin permanencia</span>
+              </div>
+              <div className="flex items-center">
+                <Shield className="w-5 h-5 mr-2" />
+                <span className="text-sm">Datos seguros</span>
+              </div>
+              <div className="flex items-center">
+                <Clock className="w-5 h-5 mr-2" />
+                <span className="text-sm">Setup inmediato</span>
+              </div>
+              <div className="flex items-center">
+                <Users className="w-5 h-5 mr-2" />
+                <span className="text-sm">Soporte 24/7</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="py-12 bg-gray-900 text-white">
+        <div className="container mx-auto px-4">
+          <div className="max-w-6xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+              <div className="md:col-span-2">
+                <div className="flex items-center space-x-3 mb-4">
+                  <img 
+                    src={certifiveLogo} 
+                    alt="CERTIFIVE Logo" 
+                    className="w-10 h-10 rounded-lg object-cover"
+                  />
+                  <h4 className="text-2xl font-bold bg-gradient-to-r from-teal-400 to-blue-400 bg-clip-text text-transparent">CERTIFIVE</h4>
+                </div>
+                <p className="text-gray-400 leading-relaxed mb-4 max-w-md">
+                  La plataforma de automatización completa para certificadores energéticos en España. 
+                  Transforma tu negocio y multiplica tus ingresos con nuestra tecnología.
+                </p>
+                <div className="flex space-x-4">
+                  <div className="w-8 h-8 bg-teal-600 rounded-lg flex items-center justify-center">
+                    <MessageSquare className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <FileText className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
+                    <Shield className="w-4 h-4 text-white" />
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <h5 className="text-lg font-semibold mb-4 text-teal-400">Plataforma</h5>
+                <ul className="space-y-2 text-gray-400">
+                  <li><a href="#" className="hover:text-teal-400 transition-colors">WhatsApp Business</a></li>
+                  <li><a href="#" className="hover:text-teal-400 transition-colors">Gestión Financiera</a></li>
+                  <li><a href="#" className="hover:text-teal-400 transition-colors">Informes Técnicos</a></li>
+                  <li><a href="#" className="hover:text-teal-400 transition-colors">Automatización</a></li>
+                </ul>
+              </div>
+              
+              <div>
+                <h5 className="text-lg font-semibold mb-4 text-blue-400">Empresa</h5>
+                <ul className="space-y-2 text-gray-400">
+                  <li><a href="#" className="hover:text-blue-400 transition-colors">Sobre Nosotros</a></li>
+                  <li><a href="#" className="hover:text-blue-400 transition-colors">Contacto</a></li>
+                  <li><a href="#" className="hover:text-blue-400 transition-colors">Soporte</a></li>
+                  <li><a href="#" className="hover:text-blue-400 transition-colors">Términos y Condiciones</a></li>
+                </ul>
+              </div>
+            </div>
+            
+            <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center">
+              <p className="text-gray-400 text-sm">
+                © 2025 CERTIFIVE. Todos los derechos reservados. | Plataforma oficial para certificación energética en España.
+              </p>
+              <div className="flex items-center space-x-2 mt-4 md:mt-0">
+                <span className="text-gray-400 text-sm">Cumplimiento CEE</span>
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              </div>
+            </div>
+          </div>
         </div>
       </footer>
     </div>
