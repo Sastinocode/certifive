@@ -211,7 +211,7 @@ export const certifications = pgTable("certifications", {
     persiana?: boolean;
     persianaLamas?: string; // lamas_plastico | lamas_metalico | lamas_madera | enrollable_otro
     cantidad?: number;
-  }>(),
+  }>>(),
 
   // ── SOLICITUD (Formulario 1 — tasación) ─────────────────────────────────────
   solicitudToken: text("solicitud_token").unique(),
