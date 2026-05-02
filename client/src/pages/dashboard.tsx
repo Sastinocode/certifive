@@ -154,23 +154,23 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen" style={{ background: "#F8FAFC" }}>
       <Sidebar selectedTab={selectedTab} onTabChange={setSelectedTab} />
       
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile header */}
-        <div className="lg:hidden backdrop-blur-md bg-white/70 border-b border-white/30 px-4 py-3">
-          <h1 className="text-lg font-semibold text-gray-900">CERTIFIVE</h1>
+        <div className="lg:hidden px-4 py-3" style={{ background: "#fff", borderBottom: "1px solid #E2E8F0" }}>
+          <h1 className="text-lg font-semibold" style={{ color: "#0F172A" }}>CERTIFIVE</h1>
         </div>
 
         {/* Main content */}
         <div className="flex-1 overflow-auto p-6">
           <div className="mb-8 flex justify-between items-start">
             <div>
-              <h2 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent mb-2">
-                Dashboard Energético
+              <h2 className="text-2xl font-bold mb-1" style={{ color: "#0F172A", letterSpacing: "-.02em" }}>
+                Dashboard
               </h2>
-              <p className="text-gray-600">Gestiona tus certificaciones energéticas de forma eficiente y sostenible</p>
+              <p style={{ fontSize: 14, color: "#64748B" }}>Gestiona tus certificaciones energéticas</p>
             </div>
             <div className="flex items-center space-x-4">
               <NotificationModal />
@@ -179,137 +179,61 @@ export default function Dashboard() {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div className="stat-card floating-card">
-              <div className="flex items-center">
-                <div className="w-14 h-14 energy-gradient-a rounded-xl flex items-center justify-center shadow-lg">
-                  <IdCard className="w-7 h-7 text-white" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            {[
+              { label: "Certificados Activos", value: statsLoading ? "..." : String(stats.activeCertificates || 0), icon: IdCard, iconBg: "#0D7C66" },
+              { label: "En Proceso", value: statsLoading ? "..." : String(stats.inProgress || 0), icon: Clock, iconBg: "#0891B2" },
+              { label: "Próximos a Vencer", value: statsLoading ? "..." : String(stats.expiringSoon || 0), icon: AlertTriangle, iconBg: "#D97706" },
+              { label: "Ingresos Mensuales", value: statsLoading ? "..." : `€${(stats.monthlyIncome || 0).toLocaleString()}`, icon: Euro, iconBg: "#0D7C66" },
+            ].map(({ label, value, icon: Icon, iconBg }) => (
+              <div key={label} style={{ background: "#fff", border: "1px solid #E2E8F0", borderRadius: 8, padding: "20px 20px", display: "flex", alignItems: "center", gap: 16 }}>
+                <div style={{ width: 44, height: 44, borderRadius: 8, background: iconBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <Icon size={20} color="#fff" />
                 </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Certificados Activos</p>
-                  <p className="text-3xl font-bold bg-gradient-to-r from-green-600 to-green-700 bg-clip-text text-transparent">
-                    {statsLoading ? "..." : stats.activeCertificates || 0}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="stat-card floating-card">
-              <div className="flex items-center">
-                <div className="w-14 h-14 energy-gradient-b rounded-xl flex items-center justify-center shadow-lg">
-                  <Clock className="w-7 h-7 text-white" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">En Proceso</p>
-                  <p className="text-3xl font-bold bg-gradient-to-r from-lime-600 to-green-600 bg-clip-text text-transparent">
-                    {statsLoading ? "..." : stats.inProgress || 0}
-                  </p>
+                <div>
+                  <p style={{ fontSize: 12, fontWeight: 500, color: "#64748B", marginBottom: 2 }}>{label}</p>
+                  <p style={{ fontSize: 24, fontWeight: 700, color: "#0F172A", letterSpacing: "-.02em" }}>{value}</p>
                 </div>
               </div>
-            </div>
-
-            <div className="stat-card floating-card">
-              <div className="flex items-center">
-                <div className="w-14 h-14 energy-gradient-c rounded-xl flex items-center justify-center shadow-lg">
-                  <AlertTriangle className="w-7 h-7 text-white" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Próximos a Vencer</p>
-                  <p className="text-3xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
-                    {statsLoading ? "..." : stats.expiringSoon || 0}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="stat-card floating-card">
-              <div className="flex items-center">
-                <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center shadow-lg">
-                  <Euro className="w-7 h-7 text-white" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Ingresos Mensuales</p>
-                  <p className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-                    {statsLoading ? "..." : `€${(stats.monthlyIncome || 0).toLocaleString()}`}
-                  </p>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
 
           {/* Quick Actions */}
-          <div className="glass-card p-6 mb-8">
-            <h3 className="text-xl font-semibold text-gray-900 mb-6">Acciones Rápidas</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Link href="/certificacion">
-                <div className="energy-card p-6 cursor-pointer group">
-                  <div className="flex items-center">
-                    <div className="w-12 h-12 energy-gradient-a rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
-                      <Plus className="w-6 h-6 text-white" />
+          <div style={{ background: "#fff", border: "1px solid #E2E8F0", borderRadius: 8, padding: "24px", marginBottom: 20 }}>
+            <h3 style={{ fontSize: 15, fontWeight: 600, color: "#0F172A", marginBottom: 16 }}>Acciones Rápidas</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+              {[
+                { href: "/certificacion", label: "Nueva Certificación", sub: "Crear certificado", iconBg: "#0D7C66", Icon: Plus },
+                { href: "/whatsapp", label: "Gestión WhatsApp", sub: "Clientes y conversaciones", iconBg: "#16A34A", Icon: MessageCircle },
+                { href: "/demo-flujo", label: "Demo Automatizado", sub: "Ver flujo completo", iconBg: "#0891B2", Icon: Zap },
+                { href: "/tarifas", label: "Gestionar Tarifas", sub: "Configurar precios", iconBg: "#D97706", Icon: Settings },
+              ].map(({ href, label, sub, iconBg, Icon }) => (
+                <Link key={href} href={href}>
+                  <div style={{ border: "1px solid #E2E8F0", borderRadius: 6, padding: "16px", cursor: "pointer", display: "flex", alignItems: "center", gap: 12, transition: "border-color .15s, background .15s" }}
+                    onMouseOver={e => { (e.currentTarget as HTMLElement).style.background = "#F8FAFC"; (e.currentTarget as HTMLElement).style.borderColor = "#CBD5E1"; }}
+                    onMouseOut={e => { (e.currentTarget as HTMLElement).style.background = "#fff"; (e.currentTarget as HTMLElement).style.borderColor = "#E2E8F0"; }}>
+                    <div style={{ width: 40, height: 40, borderRadius: 8, background: iconBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      <Icon size={18} color="#fff" />
                     </div>
                     <div>
-                      <h4 className="font-semibold text-gray-900">Nueva Certificación</h4>
-                      <p className="text-sm text-gray-600">Crear certificado</p>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: "#0F172A" }}>{label}</div>
+                      <div style={{ fontSize: 12, color: "#64748B", marginTop: 1 }}>{sub}</div>
                     </div>
                   </div>
-                </div>
-              </Link>
-
-              <Link href="/whatsapp">
-                <div className="energy-card p-6 cursor-pointer group bg-gradient-to-br from-green-50 to-blue-50 border-green-200">
-                  <div className="flex items-center">
-                    <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-blue-500 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
-                      <MessageCircle className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900">Gestión WhatsApp</h4>
-                      <p className="text-sm text-gray-600">Clientes y conversaciones</p>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-
-              <Link href="/demo-flujo">
-                <div className="energy-card p-6 cursor-pointer group bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200">
-                  <div className="flex items-center">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
-                      <Zap className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900">Demo Automatizado</h4>
-                      <p className="text-sm text-gray-600">Ver flujo completo</p>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-
-              <Link href="/tarifas">
-                <div className="energy-card p-6 cursor-pointer group">
-                  <div className="flex items-center">
-                    <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-yellow-500 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
-                      <Settings className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900">Gestionar Tarifas</h4>
-                      <p className="text-sm text-gray-600">Configurar precios</p>
-                    </div>
-                  </div>
-                </div>
-              </Link>
+                </Link>
+              ))}
             </div>
-
-
           </div>
 
           {/* Recent Certificates */}
-          <div className="glass-card p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-gray-900">Certificados Recientes</h3>
+          <div style={{ background: "#fff", border: "1px solid #E2E8F0", borderRadius: 8, padding: "24px" }}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 style={{ fontSize: 15, fontWeight: 600, color: "#0F172A" }}>Certificados Recientes</h3>
               <Link href="/certificados">
-                <Button variant="outline" className="border-green-300 text-green-700 hover:bg-green-50">
+                <button style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 500, color: "#0D7C66", background: "none", border: "1px solid #E2E8F0", borderRadius: 6, padding: "6px 14px", cursor: "pointer" }}>
                   Ver todos
-                  <ExternalLink className="w-4 h-4 ml-2" />
-                </Button>
+                  <ExternalLink size={13} />
+                </button>
               </Link>
             </div>
             {certificationsLoading ? (

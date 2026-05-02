@@ -111,66 +111,56 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
+    <div style={{ minHeight: "100vh", background: "#F8FAFC" }}>
       {/* Header */}
-      <div className="absolute top-6 left-6">
-        <div className="flex items-center space-x-3">
-          <img src={certifiveLogo} alt="CERTIFIVE" className="h-10 w-10 rounded-lg" />
-          <span className="text-2xl font-bold bg-gradient-to-r from-teal-600 to-blue-600 bg-clip-text text-transparent">
-            CERTIFIVE
-          </span>
+      <div style={{ position: "absolute", top: 24, left: 24 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ width: 28, height: 28, background: "#0D7C66", borderRadius: 5, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+              <rect x="2" y="2" width="5" height="5" rx="1" fill="white" opacity="0.9"/>
+              <rect x="9" y="2" width="5" height="5" rx="1" fill="white" opacity="0.6"/>
+              <rect x="2" y="9" width="5" height="5" rx="1" fill="white" opacity="0.6"/>
+              <rect x="9" y="9" width="5" height="5" rx="1" fill="white" opacity="0.9"/>
+            </svg>
+          </div>
+          <span style={{ fontSize: 15, fontWeight: 700, color: "#0F172A", letterSpacing: "-.01em" }}>CERTIFIVE</span>
         </div>
       </div>
 
-      <div className="flex min-h-screen">
+      <div style={{ display: "flex", minHeight: "100vh" }}>
         {/* Left side - Benefits */}
-        <div className="hidden lg:flex lg:w-1/2 flex-col justify-center px-12">
-          <div className="max-w-md mx-auto">
-            <h1 className="text-4xl font-bold text-gray-900 mb-6">
+        <div className="hidden lg:flex lg:w-1/2" style={{ flexDirection: "column", justifyContent: "center", padding: "80px 64px", borderRight: "1px solid #E2E8F0" }}>
+          <div style={{ maxWidth: 420 }}>
+            <h1 style={{ fontSize: 36, fontWeight: 700, color: "#0F172A", letterSpacing: "-.02em", marginBottom: 16, lineHeight: 1.2 }}>
               Únete a la plataforma líder en certificación energética
             </h1>
-            <p className="text-lg text-gray-600 mb-8">
+            <p style={{ fontSize: 16, color: "#64748B", marginBottom: 40, lineHeight: 1.6 }}>
               Automatiza tu flujo de trabajo, gestiona clientes y genera certificados profesionales en minutos.
             </p>
-            
-            <div className="space-y-6">
-              <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-r from-teal-500 to-blue-500 rounded-lg flex items-center justify-center">
-                  <Zap className="w-5 h-5 text-white" />
+            <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+              {[
+                { Icon: Zap, title: "Automatización completa", desc: "Desde WhatsApp hasta entrega final del certificado" },
+                { Icon: Shield, title: "Cumplimiento normativo", desc: "Certificados que cumplen toda la normativa española" },
+                { Icon: TrendingUp, title: "Gestión financiera", desc: "Control total de pagos, facturas y contabilidad" },
+              ].map(({ Icon, title, desc }) => (
+                <div key={title} style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
+                  <div style={{ width: 40, height: 40, background: "#e6f4f1", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <Icon size={18} color="#0D7C66" />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: "#0F172A", marginBottom: 2 }}>{title}</div>
+                    <div style={{ fontSize: 13, color: "#64748B" }}>{desc}</div>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-1">Automatización completa</h3>
-                  <p className="text-gray-600 text-sm">Desde WhatsApp hasta entrega final del certificado</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-r from-teal-500 to-blue-500 rounded-lg flex items-center justify-center">
-                  <Shield className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-1">Cumplimiento normativo</h3>
-                  <p className="text-gray-600 text-sm">Certificados que cumplen toda la normativa española</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-r from-teal-500 to-blue-500 rounded-lg flex items-center justify-center">
-                  <TrendingUp className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-1">Gestión financiera</h3>
-                  <p className="text-gray-600 text-sm">Control total de pagos, facturas y contabilidad</p>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         </div>
 
         {/* Right side - Form */}
-        <div className="w-full lg:w-1/2 flex flex-col justify-center px-6 py-12 overflow-y-auto">
-          <div className="max-w-md mx-auto w-full">
-            <Card className="border-0 shadow-2xl">
+        <div className="w-full lg:w-1/2" style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "80px 48px", overflowY: "auto" }}>
+          <div style={{ maxWidth: 440, width: "100%", margin: "0 auto" }}>
+            <Card className="border-0 shadow-xl" style={{ borderRadius: 8 }}>
               <CardHeader className="text-center pb-6">
                 <CardTitle className="text-2xl font-bold text-gray-900">Registro Profesional</CardTitle>
                 <CardDescription className="text-gray-600">
@@ -449,7 +439,8 @@ export default function Register() {
                   <Button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full h-12 bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-600 hover:to-blue-700 text-white font-medium"
+                    className="w-full h-12 font-medium"
+                    style={{ background: "#0D7C66", color: "#fff" }}
                   >
                     {isLoading ? (
                       <>
