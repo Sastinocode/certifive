@@ -138,7 +138,7 @@ export function registerRoutes(app: Express) {
   /** List last 20 notifications for the authenticated user. */
   app.get("/api/notifications", authenticate, async (req: Request, res: Response) => {
     try {
-      const userId = (req as any).userId ?? (req as any).user?.id;
+      const userId = (req as any).user?.id ?? (req as any).userId;
       const rows = await db
         .select()
         .from(notificaciones)
@@ -156,7 +156,7 @@ export function registerRoutes(app: Express) {
   /** Activity feed for the dashboard — last 10 events from the past 24 h. */
   app.get("/api/activity", authenticate, async (req: Request, res: Response) => {
     try {
-      const userId = (req as any).userId ?? (req as any).user?.id;
+      const userId = (req as any).user?.id ?? (req as any).userId;
       const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
       const rows = await db
         .select()
@@ -592,6 +592,33 @@ export function registerRoutes(app: Express) {
     }
   });
 
+  app.get("/api/certifications/recent", authenticate, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user.id;
+      const results = await db.select().from(certifications)
+        .where(and(eq(certifications.userId, userId), eq(certifications.isArchived, false)))
+        .orderBy(desc(certifications.createdAt))
+        .limit(10);
+      res.json(results);
+    } catch {
+      res.status(500).json({ message: "Error al obtener certificaciones recientes" });
+    }
+  });
+
+  app.get("/api/certifications/pending", authenticate, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user.id;
+      const results = await db.select().from(certifications)
+        .where(and(eq(certifications.userId, userId), eq(certifications.isArchived, false)))
+        .orderBy(desc(certifications.createdAt))
+        .limit(20);
+      const pending = results.filter(c => c.status !== "Finalizado" && c.status !== "Cancelado");
+      res.json(pending);
+    } catch {
+      res.status(500).json({ message: "Error al obtener certificaciones pendientes" });
+    }
+  });
+
   app.get("/api/certifications/:id", authenticate, async (req: Request, res: Response) => {
     try {
       const userId = (req as any).user.id;
@@ -781,6 +808,103 @@ export function registerRoutes(app: Express) {
       res.status(201).json(inv);
     } catch {
       res.status(500).json({ message: "Error al crear factura" });
+    }
+  });
+
+  app.put("/api/invoices/:id", authenticate, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user.id;
+      const id = parseInt(req.params.id);
+      const [inv] = await db.update(invoices)
+        .set({ ...req.body, updatedAt: new Date() })
+        .where(and(eq(invoices.id, id), eq(invoices.userId, userId)))
+        .returning();
+      if (!inv) return res.status(404).json({ message: "Factura no encontrada" });
+      res.json(inv);
+    } catch {
+      res.status(500).json({ message: "Error al actualizar factura" });
+    }
+  });
+
+  app.get("/api/financial/summary", authenticate, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user.id;
+      const allInvoices = await db.select().from(invoices).where(eq(invoices.userId, userId));
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+
+      const toNum = (v: any) => parseFloat(v ?? "0") || 0;
+
+      const totalInvoiced = allInvoices.reduce((s, i) => s + toNum(i.totalAmount), 0);
+      const totalPaid = allInvoices.filter(i => i.status === "paid").reduce((s, i) => s + toNum(i.totalAmount), 0);
+      const totalPending = allInvoices.filter(i => i.status === "issued").reduce((s, i) => s + toNum(i.totalAmount), 0);
+      const totalOverdue = allInvoices.filter(i => i.status === "overdue" || (i.status === "issued" && i.dueDate && new Date(i.dueDate) < now)).reduce((s, i) => s + toNum(i.totalAmount), 0);
+
+      const currentMonthRevenue = allInvoices.filter(i => i.paidAt && new Date(i.paidAt) >= startOfMonth).reduce((s, i) => s + toNum(i.totalAmount), 0);
+      const previousMonthRevenue = allInvoices.filter(i => i.paidAt && new Date(i.paidAt) >= startOfLastMonth && new Date(i.paidAt) <= endOfLastMonth).reduce((s, i) => s + toNum(i.totalAmount), 0);
+      const revenueGrowth = previousMonthRevenue > 0 ? ((currentMonthRevenue - previousMonthRevenue) / previousMonthRevenue) * 100 : 0;
+
+      res.json({ totalInvoiced, totalPaid, totalPending, totalOverdue, totalCollections: totalPaid, netIncome: totalPaid, currentMonthRevenue, previousMonthRevenue, revenueGrowth });
+    } catch {
+      res.status(500).json({ message: "Error al obtener resumen financiero" });
+    }
+  });
+
+  app.get("/api/payments", authenticate, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user.id;
+      const result = await db.select().from(payments).where(eq(payments.userId, userId)).orderBy(desc(payments.createdAt));
+      res.json(result);
+    } catch {
+      res.status(500).json({ message: "Error al obtener pagos" });
+    }
+  });
+
+  app.post("/api/payments", authenticate, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user.id;
+      const [pay] = await db.insert(payments).values({ ...req.body, userId, amount: req.body.amount?.toString() ?? "0" }).returning();
+      res.status(201).json(pay);
+    } catch {
+      res.status(500).json({ message: "Error al registrar pago" });
+    }
+  });
+
+  app.get("/api/collections", authenticate, async (_req: Request, res: Response) => {
+    res.json([]);
+  });
+
+  app.post("/api/collections", authenticate, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user.id;
+      const [pay] = await db.insert(payments).values({
+        userId,
+        amount: req.body.amount?.toString() ?? "0",
+        metodo: req.body.paymentMethod,
+        notas: req.body.notes,
+        status: "succeeded",
+        estadoConfirmacion: "confirmado",
+      }).returning();
+      res.status(201).json(pay);
+    } catch {
+      res.status(500).json({ message: "Error al registrar cobro" });
+    }
+  });
+
+  app.get("/api/manager/financial-records", authenticate, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user.id;
+      const allInvoices = await db.select().from(invoices).where(eq(invoices.userId, userId)).orderBy(desc(invoices.createdAt));
+      const allPayments = await db.select().from(payments).where(eq(payments.userId, userId)).orderBy(desc(payments.createdAt));
+      const records = [
+        ...allInvoices.map(i => ({ type: "invoice", ...i })),
+        ...allPayments.map(p => ({ type: "payment", ...p })),
+      ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      res.json(records);
+    } catch {
+      res.status(500).json({ message: "Error al obtener registros financieros" });
     }
   });
 
@@ -2440,7 +2564,8 @@ export function registerRoutes(app: Express) {
   // GET /api/whatsapp/status — current connection state
   app.get("/api/whatsapp/status", authenticate, async (req: any, res) => {
     try {
-      const [u] = await db.select().from(users).where(eq(users.id, req.userId));
+      const userId = req.user?.id ?? req.userId;
+      const [u] = await db.select().from(users).where(eq(users.id, userId));
       const connected = !!(u as any).whatsappApiKey;
       res.json({
         connected,
