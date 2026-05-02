@@ -42,114 +42,104 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div style={{ minHeight: "100vh", background: "#F8FAFC", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+      <div style={{ width: "100%", maxWidth: 400 }}>
         {/* Back to Home */}
-        <Button
-          variant="ghost"
+        <button
           onClick={() => navigate("/")}
-          className="mb-6 text-teal-600 hover:text-teal-700 hover:bg-teal-50"
+          style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 500, color: "#0D7C66", background: "none", border: "none", cursor: "pointer", marginBottom: 24, padding: "4px 0" }}
         >
-          <ArrowLeft className="w-4 h-4 mr-2" />
+          <ArrowLeft size={15} />
           Volver al inicio
-        </Button>
+        </button>
 
-        <Card className="backdrop-blur-sm bg-white/90 border-0 shadow-xl">
-          <CardHeader className="text-center space-y-4">
-            <div className="flex justify-center">
-              <div className="w-12 h-12 bg-gradient-to-r from-teal-500 to-blue-600 rounded-xl flex items-center justify-center">
-                <Zap className="w-7 h-7 text-white" />
-              </div>
+        <div style={{ background: "#fff", border: "1px solid #E2E8F0", borderRadius: 8, padding: "36px 32px", boxShadow: "0 4px 24px rgba(15,23,42,.06)" }}>
+          <div style={{ textAlign: "center", marginBottom: 28 }}>
+            <div style={{ width: 40, height: 40, background: "#0D7C66", borderRadius: 8, display: "inline-flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
+              <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
+                <rect x="2" y="2" width="5" height="5" rx="1" fill="white" opacity="0.9"/>
+                <rect x="9" y="2" width="5" height="5" rx="1" fill="white" opacity="0.6"/>
+                <rect x="2" y="9" width="5" height="5" rx="1" fill="white" opacity="0.6"/>
+                <rect x="9" y="9" width="5" height="5" rx="1" fill="white" opacity="0.9"/>
+              </svg>
             </div>
-            <CardTitle className="text-2xl font-bold text-gray-900">
-              Iniciar Sesión
-            </CardTitle>
-            <CardDescription className="text-gray-600">
-              Accede a tu cuenta de CERTIFIVE
-            </CardDescription>
-          </CardHeader>
-          
-          <CardContent className="space-y-6">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="tu@email.com"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            <h1 style={{ fontSize: 20, fontWeight: 700, color: "#0F172A", letterSpacing: "-.02em", marginBottom: 4 }}>Iniciar Sesión</h1>
+            <p style={{ fontSize: 13, color: "#64748B" }}>Accede a tu cuenta de CERTIFIVE</p>
+          </div>
+
+          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div>
+              <label style={{ fontSize: 13, fontWeight: 500, color: "#334155", display: "block", marginBottom: 6 }}>Email</label>
+              <input
+                type="email"
+                placeholder="tu@email.com"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                required
+                style={{ width: "100%", height: 40, padding: "0 12px", border: "1px solid #E2E8F0", borderRadius: 6, fontSize: 14, color: "#0F172A", outline: "none", background: "#fff", boxSizing: "border-box" }}
+                onFocus={e => (e.target.style.borderColor = "#0D7C66")}
+                onBlur={e => (e.target.style.borderColor = "#E2E8F0")}
+              />
+            </div>
+
+            <div>
+              <label style={{ fontSize: 13, fontWeight: 500, color: "#334155", display: "block", marginBottom: 6 }}>Contraseña</label>
+              <div style={{ position: "relative" }}>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Tu contraseña"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   required
-                  className="h-11"
+                  style={{ width: "100%", height: 40, padding: "0 40px 0 12px", border: "1px solid #E2E8F0", borderRadius: 6, fontSize: 14, color: "#0F172A", outline: "none", background: "#fff", boxSizing: "border-box" }}
+                  onFocus={e => (e.target.style.borderColor = "#0D7C66")}
+                  onBlur={e => (e.target.style.borderColor = "#E2E8F0")}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#94A3B8", display: "flex", alignItems: "center" }}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
               </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="password">Contraseña</Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Tu contraseña"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    required
-                    className="h-11 pr-10"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </Button>
-                </div>
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full h-11 bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-600 hover:to-blue-700"
-                disabled={isLoading}
-              >
-                {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
-              </Button>
-            </form>
-
-            <div className="space-y-4">
-              <div className="text-center">
-                <p className="text-sm text-gray-600">
-                  ¿No tienes cuenta?{" "}
-                  <Button
-                    variant="link"
-                    className="p-0 h-auto text-teal-600 hover:text-teal-700"
-                    onClick={() => navigate("/registro")}
-                  >
-                    Regístrate aquí
-                  </Button>
-                </p>
-              </div>
-
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-200" />
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">o</span>
-                </div>
-              </div>
-
-              <Button
-                variant="outline"
-                onClick={() => navigate("/solicitar-demo")}
-                className="w-full h-11 border-teal-200 text-teal-700 hover:bg-teal-50"
-              >
-                Solicitar Cuenta Demo
-              </Button>
             </div>
-          </CardContent>
-        </Card>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              style={{ width: "100%", height: 40, background: "#0D7C66", color: "#fff", border: "none", borderRadius: 6, fontSize: 14, fontWeight: 600, cursor: isLoading ? "not-allowed" : "pointer", opacity: isLoading ? .7 : 1, transition: "background .15s", marginTop: 4 }}
+              onMouseOver={e => { if (!isLoading) e.currentTarget.style.background = "#0a6454"; }}
+              onMouseOut={e => { e.currentTarget.style.background = "#0D7C66"; }}
+            >
+              {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
+            </button>
+          </form>
+
+          <div style={{ marginTop: 20 }}>
+            <p style={{ fontSize: 13, color: "#64748B", textAlign: "center", marginBottom: 16 }}>
+              ¿No tienes cuenta?{" "}
+              <button onClick={() => navigate("/registro")} style={{ color: "#0D7C66", fontWeight: 600, background: "none", border: "none", cursor: "pointer", fontSize: 13 }}>
+                Regístrate aquí
+              </button>
+            </p>
+
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+              <div style={{ flex: 1, height: 1, background: "#E2E8F0" }}/>
+              <span style={{ fontSize: 12, color: "#94A3B8" }}>o</span>
+              <div style={{ flex: 1, height: 1, background: "#E2E8F0" }}/>
+            </div>
+
+            <button
+              onClick={() => navigate("/solicitar-demo")}
+              style={{ width: "100%", height: 40, background: "transparent", color: "#0D7C66", border: "1px solid #E2E8F0", borderRadius: 6, fontSize: 14, fontWeight: 500, cursor: "pointer", transition: "all .15s" }}
+              onMouseOver={e => { e.currentTarget.style.background = "#F8FAFC"; e.currentTarget.style.borderColor = "#CBD5E1"; }}
+              onMouseOut={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "#E2E8F0"; }}
+            >
+              Solicitar Cuenta Demo
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

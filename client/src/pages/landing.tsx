@@ -1,379 +1,223 @@
 import { useLocation } from "wouter";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Zap, Shield, FileText, Users, TrendingUp, MessageSquare, Play, ArrowRight, CheckCircle, BarChart3, Clock, DollarSign, UserPlus, Search, ClipboardCheck, CreditCard } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import certifiveLogo from "@assets/Logo_1750326352340.jpg";
 
 export default function Landing() {
   const [, navigate] = useLocation();
   const { loginDemo } = useAuth();
+  const [scrolled, setScrolled] = useState(false);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            e.target.classList.add("fu-visible");
+            observerRef.current?.unobserve(e.target);
+          }
+        });
+      },
+      { threshold: 0.12 }
+    );
+    document.querySelectorAll(".fu").forEach((el) => observerRef.current?.observe(el));
+    return () => observerRef.current?.disconnect();
+  }, []);
+
+  const handleDemo = async () => {
+    await loginDemo();
+    navigate("/");
+  };
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="border-b bg-white/95 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <img 
-                src={certifiveLogo} 
-                alt="CERTIFIVE Logo" 
-                className="w-10 h-10 rounded-lg object-cover"
-              />
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-teal-500 to-blue-600 bg-clip-text text-transparent">CERTIFIVE</h1>
+    <div style={{ fontFamily: "'Inter', system-ui, sans-serif", color: "#0F172A", background: "#fff", overflowX: "hidden" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        :root {
+          --teal: #0D7C66;
+          --teal-dk: #0a6454;
+          --teal-lt: #e6f4f1;
+          --s900: #0F172A;
+          --s700: #334155;
+          --s500: #64748B;
+          --s400: #94A3B8;
+          --s300: #CBD5E1;
+          --s200: #E2E8F0;
+          --s100: #F1F5F9;
+          --s50: #F8FAFC;
+          --r: 6px;
+          --mw: 1200px;
+        }
+        html { scroll-behavior: smooth; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.8)} }
+        @keyframes fu { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+        .fu { opacity: 0; }
+        .fu-visible { animation: fu .5s cubic-bezier(.16,1,.3,1) forwards; }
+        .fu-d1 { animation-delay: .1s; }
+        .fu-d2 { animation-delay: .2s; }
+        .badge-dot { width:6px;height:6px;border-radius:50%;background:var(--teal);animation:pulse 2s infinite; }
+        .mockup-item:hover { background:rgba(255,255,255,.07) !important; }
+        .feature-card:hover { border-color:var(--s300) !important; box-shadow:0 4px 24px rgba(15,23,42,.07) !important; transform:translateY(-2px) !important; }
+        .step:hover .step-num { background:var(--teal) !important; color:#fff !important; border-color:var(--teal) !important; }
+        .sp-logo:hover { color:var(--s400) !important; }
+        .nav-link:hover { color:var(--s900) !important; }
+        .btn-ghost:hover { border-color:var(--s300) !important; background:var(--s50) !important; color:var(--s900) !important; }
+        .testi-card:hover { box-shadow:0 4px 24px rgba(15,23,42,.07); }
+        .footer-link:hover { color:var(--s300) !important; }
+      `}</style>
+
+      {/* ── NAVBAR ── */}
+      <nav style={{
+        position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
+        background: "rgba(255,255,255,0.92)",
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
+        borderBottom: "1px solid var(--s200)",
+        transition: "box-shadow .2s",
+        boxShadow: scrolled ? "0 1px 12px rgba(15,23,42,.06)" : "none",
+      }}>
+        <div style={{ maxWidth: "var(--mw)", margin: "0 auto", padding: "0 32px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <a href="#" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", color: "var(--s900)" }}>
+            <div style={{ width: 28, height: 28, background: "var(--teal)", borderRadius: 5, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <rect x="2" y="2" width="5" height="5" rx="1" fill="white" opacity="0.9"/>
+                <rect x="9" y="2" width="5" height="5" rx="1" fill="white" opacity="0.6"/>
+                <rect x="2" y="9" width="5" height="5" rx="1" fill="white" opacity="0.6"/>
+                <rect x="9" y="9" width="5" height="5" rx="1" fill="white" opacity="0.9"/>
+              </svg>
             </div>
-            <div className="flex items-center gap-3">
-              <Button 
-                variant="ghost" 
-                onClick={() => navigate("/login")}
-                className="text-gray-600 hover:text-teal-600"
-              >
-                Iniciar Sesión
-              </Button>
-              <Button 
-                onClick={() => navigate("/registro")}
-                className="bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-600 hover:to-blue-700 text-white"
-              >
-                Registrarse
-              </Button>
-            </div>
+            <span style={{ fontSize: 15, fontWeight: 700, letterSpacing: "-.02em" }}>CERTIFIVE</span>
+          </a>
+
+          <ul style={{ display: "flex", alignItems: "center", gap: 32, listStyle: "none" }}>
+            {[["#features","Funcionalidades"],["#how","Cómo funciona"],["#metrics","Resultados"],["#testimonials","Clientes"]].map(([href, label]) => (
+              <li key={href}><a href={href} className="nav-link" style={{ fontSize: 14, fontWeight: 500, color: "var(--s500)", textDecoration: "none", transition: "color .15s" }}>{label}</a></li>
+            ))}
+          </ul>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <button onClick={() => navigate("/login")} style={{ fontSize: 14, fontWeight: 500, color: "var(--s700)", background: "none", border: "none", cursor: "pointer", padding: "6px 0", transition: "color .15s" }}>
+              Iniciar Sesión
+            </button>
+            <button onClick={() => navigate("/registro")} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "9px 20px", background: "var(--teal)", color: "#fff", border: "none", borderRadius: "var(--r)", fontSize: 14, fontWeight: 600, cursor: "pointer", transition: "background .15s" }}
+              onMouseOver={e => (e.currentTarget.style.background = "var(--teal-dk)")}
+              onMouseOut={e => (e.currentTarget.style.background = "var(--teal)")}>
+              Empezar Gratis
+            </button>
           </div>
         </div>
-      </header>
+      </nav>
 
-      {/* Hero Section */}
-      <section className="py-20 bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-teal-100 to-blue-100 rounded-full mb-8">
-              <Clock className="w-4 h-4 text-teal-600 mr-2" />
-              <span className="text-sm font-medium text-teal-700">Certificación Energética Profesional</span>
+      {/* ── HERO ── */}
+      <section style={{ paddingTop: 148, paddingBottom: 100, paddingLeft: 32, paddingRight: 32, background: "linear-gradient(180deg,#fff 0%,#F8FAFC 100%)" }}>
+        <div style={{ maxWidth: "var(--mw)", margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center" }}>
+          <div>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "var(--teal-lt)", color: "var(--teal)", fontSize: 12, fontWeight: 600, letterSpacing: ".04em", textTransform: "uppercase", padding: "5px 12px", borderRadius: 4, marginBottom: 28 }}>
+              <div className="badge-dot" />
+              Plataforma profesional de certificación
             </div>
-            
-            <h1 className="text-6xl md:text-7xl font-bold text-gray-900 mb-6 leading-tight">
-              <span className="block text-4xl md:text-5xl text-teal-600 mb-2">CERTIFICA EN 5 MINUTOS.</span>
-              <span className="block bg-gradient-to-r from-teal-500 to-blue-600 bg-clip-text text-transparent">
-                MULTIPLICA TUS INGRESOS X5
-              </span>
+            <h1 style={{ fontSize: 56, fontWeight: 800, lineHeight: 1.08, letterSpacing: "-.03em", color: "var(--s900)", marginBottom: 20, textWrap: "balance" } as any}>
+              Automatiza tu negocio de{" "}
+              <em style={{ fontStyle: "normal", color: "var(--teal)" }}>certificación energética.</em>
             </h1>
-            
-            <p className="text-xl text-gray-600 mb-10 max-w-3xl mx-auto leading-relaxed">
-              La plataforma de automatización completa para certificadores energéticos. 
-              Desde el primer contacto hasta la facturación, todo en una sola herramienta profesional.
+            <p style={{ fontSize: 18, lineHeight: 1.7, color: "var(--s500)", marginBottom: 40, maxWidth: 480, fontWeight: 400 }}>
+              Gestiona expedientes, genera certificados CEE y presenta ante el registro autonómico — todo desde una sola plataforma diseñada para técnicos habilitados.
             </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-              <Button 
-                onClick={() => navigate("/registro")} 
-                size="lg" 
-                className="bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-600 hover:to-blue-700 text-white text-lg px-8 py-4 h-auto shadow-lg hover:shadow-xl transition-all"
-              >
-                <UserPlus className="w-5 h-5 mr-2" />
-                Empezar Gratis Ahora
-              </Button>
-              <Button 
-                variant="outline"
-                onClick={async () => {
-                  await loginDemo();
-                  navigate("/");
-                }} 
-                size="lg" 
-                className="border-2 border-teal-200 text-teal-700 hover:bg-teal-50 text-lg px-8 py-4 h-auto"
-              >
-                <Play className="w-5 h-5 mr-2" />
-                Ver Demo en Vivo
-              </Button>
+            <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 44 }}>
+              <button onClick={() => navigate("/registro")}
+                style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "13px 28px", background: "var(--teal)", color: "#fff", border: "none", borderRadius: "var(--r)", fontSize: 15, fontWeight: 600, cursor: "pointer", transition: "background .15s" }}
+                onMouseOver={e => (e.currentTarget.style.background = "var(--teal-dk)")}
+                onMouseOut={e => (e.currentTarget.style.background = "var(--teal)")}>
+                Empezar Gratis
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              </button>
+              <button onClick={handleDemo} className="btn-ghost"
+                style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 24px", background: "transparent", color: "var(--s700)", border: "1px solid var(--s200)", borderRadius: "var(--r)", fontSize: 15, fontWeight: 500, cursor: "pointer", transition: "all .15s" }}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5"/><path d="M6.5 6C6.5 5.17 7.17 4.5 8 4.5s1.5.67 1.5 1.5c0 .69-.46 1.27-1.1 1.44L8 7.6V9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><circle cx="8" cy="11" r=".75" fill="currentColor"/></svg>
+                Ver Demo en vivo
+              </button>
             </div>
-
-            {/* Trust indicators */}
-            <div className="flex flex-wrap justify-center items-center gap-8 text-sm text-gray-500">
-              <div className="flex items-center">
-                <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-                <span>100% Cumplimiento CEE</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 13, color: "var(--s400)" }}>
+              <div style={{ display: "flex" }}>
+                {["M","A","R","L","+"].map((l, i) => (
+                  <div key={i} style={{ width: 28, height: 28, borderRadius: "50%", border: "2px solid #fff", background: "var(--s200)", marginRight: i < 4 ? -8 : 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 600, color: "var(--s500)", zIndex: 5 - i }}>{l}</div>
+                ))}
               </div>
-              <div className="flex items-center">
-                <Shield className="w-4 h-4 text-blue-500 mr-2" />
-                <span>Datos Seguros</span>
-              </div>
-              <div className="flex items-center">
-                <Clock className="w-4 h-4 text-teal-500 mr-2" />
-                <span>Setup en 5 minutos</span>
-              </div>
+              <span>+2.400 técnicos certificadores en España</span>
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* 5-Step Process Section */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold text-gray-900 mb-4">
-                Tu proceso completo en <span className="text-teal-600">5 pasos</span>
-              </h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Desde el registro hasta la facturación, todo automatizado para maximizar tu productividad
-              </p>
+          {/* Dark mockup */}
+          <div style={{ position: "relative" }}>
+            <div style={{ position: "absolute", top: -16, right: -20, background: "#fff", border: "1px solid var(--s200)", borderRadius: 8, padding: "12px 16px", boxShadow: "0 8px 24px rgba(15,23,42,.10)", display: "flex", alignItems: "center", gap: 10, whiteSpace: "nowrap", zIndex: 10 }}>
+              <div style={{ width: 32, height: 32, background: "var(--teal-lt)", borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2l1.5 3 3.5.5-2.5 2.5.5 3.5L8 10l-3 1.5.5-3.5L3 5.5 6.5 5 8 2z" fill="#0D7C66"/></svg>
+              </div>
+              <div style={{ fontSize: 12 }}>
+                <div style={{ fontWeight: 600, color: "var(--s900)" }}>Certificado generado</div>
+                <div style={{ color: "var(--s500)", fontSize: 11 }}>C/ Serrano 44, Madrid · hace 2 min</div>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-8 md:gap-4">
-              {/* Step 1: CONECTA */}
-              <div className="relative">
-                <div className="text-center">
-                  <div className="w-20 h-20 bg-gradient-to-r from-teal-500 to-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-                    <UserPlus className="w-10 h-10 text-white" />
-                  </div>
-                  <div className="absolute -top-2 -right-2 w-8 h-8 bg-teal-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
-                    1
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-3">CONECTA</h3>
-                  <p className="text-gray-600 text-sm leading-relaxed">
-                    Regístrate como profesional certificador energético y configura tu perfil profesional
-                  </p>
-                </div>
-                {/* Arrow */}
-                <div className="hidden md:block absolute top-10 -right-6 text-teal-300">
-                  <ArrowRight className="w-6 h-6" />
+            <div style={{ background: "var(--s900)", borderRadius: 10, overflow: "hidden", boxShadow: "0 24px 64px rgba(15,23,42,.18),0 2px 8px rgba(15,23,42,.08)", border: "1px solid rgba(255,255,255,.06)" }}>
+              <div style={{ background: "rgba(255,255,255,.04)", padding: "14px 20px", display: "flex", alignItems: "center", gap: 8, borderBottom: "1px solid rgba(255,255,255,.06)" }}>
+                <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#ff5f57" }}/>
+                <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#febc2e" }}/>
+                <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#28c840" }}/>
+                <div style={{ flex: 1, background: "rgba(255,255,255,.05)", height: 22, borderRadius: 4, margin: "0 16px", display: "flex", alignItems: "center", padding: "0 10px" }}>
+                  <span style={{ fontSize: 11, color: "rgba(255,255,255,.25)", fontFamily: "monospace" }}>certifive.app/dashboard</span>
                 </div>
               </div>
-
-              {/* Step 2: EXPLORA */}
-              <div className="relative">
-                <div className="text-center">
-                  <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-                    <Search className="w-10 h-10 text-white" />
-                  </div>
-                  <div className="absolute -top-2 -right-2 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
-                    2
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-3">EXPLORA</h3>
-                  <p className="text-gray-600 text-sm leading-relaxed">
-                    Accede al dashboard de oportunidades y descubre nuevos proyectos de certificación
-                  </p>
+              <div style={{ padding: 20 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,.8)" }}>Expedientes activos</span>
+                  <span style={{ fontSize: 10, background: "var(--teal)", color: "#fff", padding: "2px 8px", borderRadius: 3, fontWeight: 600, letterSpacing: ".04em" }}>LIVE</span>
                 </div>
-                {/* Arrow */}
-                <div className="hidden md:block absolute top-10 -right-6 text-blue-300">
-                  <ArrowRight className="w-6 h-6" />
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {[
+                    { name: "Edificio Paseo de Gracia 78", meta: "Barcelona · Vivienda unifamiliar", status: "Completado", done: true },
+                    { name: "C/ Alcalá 200, Madrid", meta: "Madrid · Oficinas", status: "En revisión", rev: true },
+                    { name: "Avda. Diagonal 550, Barcelona", meta: "Barcelona · Bloque plurifamiliar", status: "Pendiente", done: false },
+                    { name: "Plaza España 1, Sevilla", meta: "Sevilla · Vivienda unifamiliar", status: "Completado", done: true },
+                  ].map((item, i) => (
+                    <div key={i} className="mockup-item" style={{ background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.07)", borderRadius: 5, padding: "10px 14px", display: "flex", alignItems: "center", gap: 12, cursor: "default", transition: "background .15s" }}>
+                      <div style={{ width: 28, height: 28, borderRadius: 4, background: item.done ? "rgba(13,124,102,.15)" : "rgba(100,116,139,.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="2" y="1" width="10" height="12" rx="1.5" stroke={item.done ? "#0D7C66" : "#64748B"} strokeWidth="1.2"/><path d="M4.5 5h5M4.5 7.5h5M4.5 10h3" stroke={item.done ? "#0D7C66" : "#64748B"} strokeWidth="1.2" strokeLinecap="round"/></svg>
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 12, fontWeight: 500, color: "rgba(255,255,255,.75)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{item.name}</div>
+                        <div style={{ fontSize: 10, color: "rgba(255,255,255,.3)", marginTop: 2 }}>{item.meta}</div>
+                      </div>
+                      <div style={{ fontSize: 10, padding: "2px 7px", borderRadius: 3, fontWeight: 600, flexShrink: 0, background: item.done ? "rgba(13,124,102,.2)" : item.rev ? "rgba(234,179,8,.15)" : "rgba(100,116,139,.15)", color: item.done ? "#34d399" : item.rev ? "#fbbf24" : "rgba(255,255,255,.4)" }}>
+                        {item.status}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
-
-              {/* Step 3: REVISA */}
-              <div className="relative">
-                <div className="text-center">
-                  <div className="w-20 h-20 bg-gradient-to-r from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-                    <BarChart3 className="w-10 h-10 text-white" />
-                  </div>
-                  <div className="absolute -top-2 -right-2 w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
-                    3
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-3">REVISA</h3>
-                  <p className="text-gray-600 text-sm leading-relaxed">
-                    Analiza los datos automáticamente recopilados y verifica la información del inmueble
-                  </p>
-                </div>
-                {/* Arrow */}
-                <div className="hidden md:block absolute top-10 -right-6 text-purple-300">
-                  <ArrowRight className="w-6 h-6" />
-                </div>
-              </div>
-
-              {/* Step 4: TRAMITA */}
-              <div className="relative">
-                <div className="text-center">
-                  <div className="w-20 h-20 bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-                    <ClipboardCheck className="w-10 h-10 text-white" />
-                  </div>
-                  <div className="absolute -top-2 -right-2 w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
-                    4
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-3">TRAMITA</h3>
-                  <p className="text-gray-600 text-sm leading-relaxed">
-                    Recopila la información con un solo clic y tramita el CEE automáticamente
-                  </p>
-                </div>
-                {/* Arrow */}
-                <div className="hidden md:block absolute top-10 -right-6 text-orange-300">
-                  <ArrowRight className="w-6 h-6" />
-                </div>
-              </div>
-
-              {/* Step 5: FACTURA */}
-              <div className="relative">
-                <div className="text-center">
-                  <div className="w-20 h-20 bg-gradient-to-r from-green-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-                    <CreditCard className="w-10 h-10 text-white" />
-                  </div>
-                  <div className="absolute -top-2 -right-2 w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
-                    5
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-3">FACTURA</h3>
-                  <p className="text-gray-600 text-sm leading-relaxed">
-                    Cobra instantáneamente por tu servicio, genera la factura y envía a la asesoría
-                  </p>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginTop: 14 }}>
+                  {[["38","Este mes"],["4.2h","Ahorro/cert."],["99%","Aprobados"]].map(([n, l]) => (
+                    <div key={l} style={{ background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.07)", borderRadius: 5, padding: "10px 12px" }}>
+                      <div style={{ fontSize: 18, fontWeight: 700, color: "var(--teal)", letterSpacing: "-.02em" }}>{n}</div>
+                      <div style={{ fontSize: 9, color: "rgba(255,255,255,.3)", marginTop: 2, textTransform: "uppercase", letterSpacing: ".05em" }}>{l}</div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
 
-            {/* CTA after process */}
-            <div className="text-center mt-16">
-              <div className="bg-gradient-to-r from-teal-50 to-blue-50 rounded-2xl p-8">
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                  ¿Listo para multiplicar tus ingresos?
-                </h3>
-                <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-                  Únete a los profesionales que ya están automatizando su proceso de certificación energética
-                </p>
-                <Button 
-                  onClick={() => navigate("/registro")}
-                  size="lg" 
-                  className="bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-600 hover:to-blue-700 text-white text-lg px-8 py-4 h-auto shadow-lg hover:shadow-xl transition-all"
-                >
-                  <DollarSign className="w-5 h-5 mr-2" />
-                  Comenzar Ahora - Gratis
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="py-20 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold text-gray-900 mb-4">
-                Automatización completa para certificadores energéticos
-              </h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Todo lo que necesitas para gestionar tu negocio de certificación energética en una sola plataforma
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white">
-                <CardContent className="p-8 text-center">
-                  <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-                    <MessageSquare className="w-8 h-8 text-white" />
-                  </div>
-                  <h4 className="text-xl font-bold text-gray-900 mb-4">WhatsApp Business</h4>
-                  <p className="text-gray-600 leading-relaxed">
-                    Automatización completa desde la consulta hasta la entrega. Gestión de conversaciones y envío automático de presupuestos.
-                  </p>
-                </CardContent>
-              </Card>
-              
-              <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white">
-                <CardContent className="p-8 text-center">
-                  <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-                    <TrendingUp className="w-8 h-8 text-white" />
-                  </div>
-                  <h4 className="text-xl font-bold text-gray-900 mb-4">Gestión Financiera</h4>
-                  <p className="text-gray-600 leading-relaxed">
-                    Facturación automática, cobros instantáneos y reportes financieros completos para tu asesoría fiscal.
-                  </p>
-                </CardContent>
-              </Card>
-              
-              <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white">
-                <CardContent className="p-8 text-center">
-                  <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-                    <FileText className="w-8 h-8 text-white" />
-                  </div>
-                  <h4 className="text-xl font-bold text-gray-900 mb-4">Informes Técnicos</h4>
-                  <p className="text-gray-600 leading-relaxed">
-                    Generación automática de certificados en PDF, Word y Excel optimizados para el software oficial.
-                  </p>
-                </CardContent>
-              </Card>
-              
-              <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white">
-                <CardContent className="p-8 text-center">
-                  <div className="w-16 h-16 bg-gradient-to-r from-teal-500 to-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-                    <Shield className="w-8 h-8 text-white" />
-                  </div>
-                  <h4 className="text-xl font-bold text-gray-900 mb-4">Normativa CEE</h4>
-                  <p className="text-gray-600 leading-relaxed">
-                    Cumplimiento total con la normativa española de certificación energética y actualizaciones automáticas.
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Benefits Section */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-              <div>
-                <h2 className="text-4xl font-bold text-gray-900 mb-6">
-                  Transforma tu negocio con <span className="text-teal-600">CERTIFIVE</span>
-                </h2>
-                <div className="space-y-6">
-                  <div className="flex items-start space-x-4">
-                    <div className="w-8 h-8 bg-teal-100 rounded-lg flex items-center justify-center mt-1">
-                      <Clock className="w-4 h-4 text-teal-600" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-semibold text-gray-900 mb-2">Ahorra 5 horas por certificación</h3>
-                      <p className="text-gray-600">Automatiza completamente el proceso desde la solicitud hasta la entrega del certificado.</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start space-x-4">
-                    <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mt-1">
-                      <DollarSign className="w-4 h-4 text-green-600" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-semibold text-gray-900 mb-2">Multiplica tus ingresos</h3>
-                      <p className="text-gray-600">Gestiona 5 veces más proyectos con el mismo tiempo de trabajo gracias a la automatización.</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start space-x-4">
-                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mt-1">
-                      <CheckCircle className="w-4 h-4 text-blue-600" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-semibold text-gray-900 mb-2">Cero errores administrativos</h3>
-                      <p className="text-gray-600">Formularios precargados y validación automática garantizan la precisión de los datos.</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start space-x-4">
-                    <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mt-1">
-                      <Users className="w-4 h-4 text-purple-600" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-semibold text-gray-900 mb-2">Experiencia cliente premium</h3>
-                      <p className="text-gray-600">Comunicación fluida por WhatsApp y entregas instantáneas que impresionan a tus clientes.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="relative">
-                <div className="bg-gradient-to-r from-teal-500 to-blue-600 rounded-2xl p-8 text-white shadow-2xl">
-                  <h3 className="text-2xl font-bold mb-6">Resultados reales de nuestros usuarios</h3>
-                  <div className="space-y-4">
-                    <div className="bg-white/10 rounded-lg p-4">
-                      <div className="text-3xl font-bold text-teal-100">+400%</div>
-                      <div className="text-sm text-teal-100">Incremento promedio en ingresos</div>
-                    </div>
-                    <div className="bg-white/10 rounded-lg p-4">
-                      <div className="text-3xl font-bold text-blue-100">85%</div>
-                      <div className="text-sm text-blue-100">Reducción en tiempo administrativo</div>
-                    </div>
-                    <div className="bg-white/10 rounded-lg p-4">
-                      <div className="text-3xl font-bold text-cyan-100">24h</div>
-                      <div className="text-sm text-cyan-100">Tiempo promedio de entrega</div>
-                    </div>
-                  </div>
+            <div style={{ position: "absolute", bottom: -16, left: -24, background: "#fff", border: "1px solid var(--s200)", borderRadius: 8, padding: "10px 14px", boxShadow: "0 8px 24px rgba(15,23,42,.10)", zIndex: 10 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 20, fontWeight: 800, color: "var(--teal)", letterSpacing: "-.03em" }}>A</span>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 500, color: "var(--s500)" }}>Calificación media</div>
+                  <div style={{ fontSize: 10, color: "var(--s400)", marginTop: 2 }}>+12% vs. mes anterior</div>
                 </div>
               </div>
             </div>
@@ -381,124 +225,181 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Final CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-teal-500 to-blue-600">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-5xl font-bold text-white mb-6">
-              ¿Listo para multiplicar tus ingresos?
-            </h2>
-            <p className="text-xl text-teal-100 mb-8 max-w-3xl mx-auto leading-relaxed">
-              Únete a los certificadores energéticos que han transformado su negocio con CERTIFIVE. 
-              Comienza gratis y experimenta la diferencia en solo 5 minutos.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-12">
-              <Button 
-                onClick={() => navigate("/registro")}
-                size="lg" 
-                className="bg-white text-teal-600 hover:bg-gray-50 text-xl px-10 py-5 h-auto shadow-lg hover:shadow-xl transition-all font-semibold"
-              >
-                <UserPlus className="w-6 h-6 mr-3" />
-                Empezar Gratis Ahora
-              </Button>
-              <Button 
-                variant="outline"
-                onClick={async () => {
-                  await loginDemo();
-                  navigate("/");
-                }}
-                size="lg" 
-                className="border-2 border-white text-white hover:bg-white/10 text-xl px-10 py-5 h-auto font-semibold"
-              >
-                <Play className="w-6 h-6 mr-3" />
-                Probar Demo
-              </Button>
-            </div>
+      {/* ── SOCIAL PROOF ── */}
+      <div style={{ background: "var(--s50)", borderTop: "1px solid var(--s200)", borderBottom: "1px solid var(--s200)", padding: "32px 32px" }}>
+        <div style={{ maxWidth: "var(--mw)", margin: "0 auto", display: "flex", alignItems: "center", gap: 48 }}>
+          <span style={{ fontSize: 12, color: "var(--s400)", fontWeight: 500, textTransform: "uppercase", letterSpacing: ".06em", whiteSpace: "nowrap", flexShrink: 0 }}>Usado por técnicos en</span>
+          <div style={{ width: 1, height: 32, background: "var(--s200)", flexShrink: 0 }}/>
+          <div style={{ display: "flex", alignItems: "center", gap: 40, flex: 1 }}>
+            {["Comunidad de Madrid","Generalitat de Catalunya","Junta de Andalucía","País Vasco","C. Valenciana"].map(r => (
+              <span key={r} className="sp-logo" style={{ fontSize: 13, fontWeight: 700, color: "var(--s300)", letterSpacing: "-.01em", whiteSpace: "nowrap", transition: "color .2s", cursor: "default" }}>{r}</span>
+            ))}
+          </div>
+        </div>
+      </div>
 
-            {/* Trust badges */}
-            <div className="flex flex-wrap justify-center items-center gap-8 text-teal-100">
-              <div className="flex items-center">
-                <CheckCircle className="w-5 h-5 mr-2" />
-                <span className="text-sm">Sin permanencia</span>
-              </div>
-              <div className="flex items-center">
-                <Shield className="w-5 h-5 mr-2" />
-                <span className="text-sm">Datos seguros</span>
-              </div>
-              <div className="flex items-center">
-                <Clock className="w-5 h-5 mr-2" />
-                <span className="text-sm">Setup inmediato</span>
-              </div>
-              <div className="flex items-center">
-                <Users className="w-5 h-5 mr-2" />
-                <span className="text-sm">Soporte 24/7</span>
-              </div>
+      {/* ── FEATURES ── */}
+      <section id="features" style={{ padding: "100px 32px" }}>
+        <div style={{ maxWidth: "var(--mw)", margin: "0 auto 56px" }}>
+          <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--teal)", marginBottom: 12 }}>Funcionalidades</div>
+          <h2 style={{ fontSize: 36, fontWeight: 700, letterSpacing: "-.02em", color: "var(--s900)", marginBottom: 16, textWrap: "balance" } as any}>Todo lo que necesita un técnico habilitado</h2>
+          <p style={{ fontSize: 17, color: "var(--s500)", maxWidth: 540, lineHeight: 1.65 }}>Construida desde cero para los flujos reales de la certificación energética en España. Sin compromiso.</p>
+        </div>
+        <div style={{ maxWidth: "var(--mw)", margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 24 }}>
+          {[
+            { title: "Gestión de expedientes", desc: "Centraliza todos tus proyectos con seguimiento en tiempo real. Documentación, planos, datos del cliente y estado del registro, todo en un mismo lugar.", icon: <svg viewBox="0 0 40 40" fill="none" style={{ width: 40, height: 40, color: "var(--teal)", marginBottom: 20 }}><rect x="6" y="4" width="28" height="32" rx="3" stroke="currentColor" strokeWidth="1.8"/><path d="M12 14h16M12 20h16M12 26h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg> },
+            { title: "Automatización CE3X / HULC", desc: "Importa resultados directamente desde CE3X y HULC. La plataforma genera el certificado CEE listo para presentar al registro autonómico.", icon: <svg viewBox="0 0 40 40" fill="none" style={{ width: 40, height: 40, color: "var(--teal)", marginBottom: 20 }}><path d="M8 20c0-6.627 5.373-12 12-12s12 5.373 12 12-5.373 12-12 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/><path d="M20 12v8l5 3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/><path d="M4 28l4-4 4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg> },
+            { title: "Registro autonómico directo", desc: "Presentación automática ante RUCE y registros autonómicos. Trazabilidad completa de cada trámite con confirmación de recepción integrada.", icon: <svg viewBox="0 0 40 40" fill="none" style={{ width: 40, height: 40, color: "var(--teal)", marginBottom: 20 }}><path d="M20 6l3 8h9l-7 5 3 8-8-6-8 6 3-8-7-5h9z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/></svg> },
+            { title: "Facturación integrada", desc: "Genera facturas automáticamente al completar un expediente. Control de cobros, recordatorios y exportación contable directa sin apps adicionales.", icon: <svg viewBox="0 0 40 40" fill="none" style={{ width: 40, height: 40, color: "var(--teal)", marginBottom: 20 }}><rect x="8" y="8" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="1.8"/><rect x="22" y="8" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="1.8"/><rect x="8" y="22" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="1.8"/><rect x="22" y="22" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="1.8"/></svg> },
+            { title: "Portal del cliente", desc: "Tus clientes reciben acceso a un portal propio para ver el estado de su certificado, descargar documentos y firmar online. Profesionaliza tu servicio.", icon: <svg viewBox="0 0 40 40" fill="none" style={{ width: 40, height: 40, color: "var(--teal)", marginBottom: 20 }}><circle cx="20" cy="20" r="12" stroke="currentColor" strokeWidth="1.8"/><path d="M14 20h12M20 14v12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg> },
+            { title: "Análisis y métricas", desc: "Panel de control con ingresos por periodo, rendimiento por tipo de inmueble, tiempo medio por expediente y comparativas mensuales detalladas.", icon: <svg viewBox="0 0 40 40" fill="none" style={{ width: 40, height: 40, color: "var(--teal)", marginBottom: 20 }}><path d="M8 28V16l12-8 12 8v12" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/><rect x="14" y="22" width="12" height="10" rx="1" stroke="currentColor" strokeWidth="1.8"/><path d="M20 22v10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg> },
+          ].map((f, i) => (
+            <div key={i} className={`feature-card fu ${i > 0 ? (i % 3 === 1 ? "fu-d1" : "fu-d2") : ""}`} style={{ background: "#fff", border: "1px solid var(--s200)", borderRadius: 8, padding: "32px 28px", transition: "border-color .2s,box-shadow .2s,transform .2s", cursor: "default" }}>
+              {f.icon}
+              <div style={{ fontSize: 16, fontWeight: 700, color: "var(--s900)", marginBottom: 8, letterSpacing: "-.01em" }}>{f.title}</div>
+              <p style={{ fontSize: 14, color: "var(--s500)", lineHeight: 1.65 }}>{f.desc}</p>
             </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── HOW IT WORKS ── */}
+      <section id="how" style={{ padding: "100px 32px", background: "var(--s50)", borderTop: "1px solid var(--s200)", borderBottom: "1px solid var(--s200)" }}>
+        <div style={{ maxWidth: "var(--mw)", margin: "0 auto" }}>
+          <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--teal)", marginBottom: 12 }}>Proceso</div>
+          <h2 style={{ fontSize: 36, fontWeight: 700, letterSpacing: "-.02em", color: "var(--s900)", marginBottom: 16 }}>De la visita al certificado en cuatro pasos</h2>
+          <p style={{ fontSize: 17, color: "var(--s500)", maxWidth: 540, lineHeight: 1.65 }}>Un flujo diseñado para eliminar el trabajo administrativo repetitivo y que puedas centrarte en lo técnico.</p>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 0, position: "relative", marginTop: 56 }}>
+            <div style={{ position: "absolute", top: 24, left: "calc(12.5% + 20px)", right: "calc(12.5% + 20px)", height: 1, background: "var(--s200)" }}/>
+            {[
+              { n: "01", title: "Alta del expediente", desc: "Crea el proyecto con los datos del inmueble y el propietario. La plataforma genera automáticamente la documentación inicial." },
+              { n: "02", title: "Cálculo y simulación", desc: "Importa tu archivo de CE3X o HULC. CERTIFIVE extrae los datos, calcula la calificación y detecta posibles incidencias antes de presentar." },
+              { n: "03", title: "Generación del certificado", desc: "El sistema genera el certificado CEE con todos los campos requeridos por la normativa vigente, listo para firma digital cualificada." },
+              { n: "04", title: "Presentación al registro", desc: "Presentación automática ante el registro autonómico correspondiente. Recibirás confirmación y el número de inscripción en tu panel." },
+            ].map((s, i) => (
+              <div key={i} className="step" style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", padding: i === 0 ? "0 24px 0 0" : i === 3 ? "0 0 0 24px" : "0 24px", position: "relative" }}>
+                <div className="step-num fu" style={{ width: 48, height: 48, borderRadius: "50%", background: "#fff", border: "1px solid var(--s200)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, color: "var(--teal)", marginBottom: 24, position: "relative", zIndex: 1, transition: "background .2s,border-color .2s,color .2s" }}>{s.n}</div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: "var(--s900)", marginBottom: 8, letterSpacing: "-.01em" }}>{s.title}</div>
+                <p style={{ fontSize: 13, color: "var(--s500)", lineHeight: 1.6 }}>{s.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-12 bg-gray-900 text-white">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-              <div className="md:col-span-2">
-                <div className="flex items-center space-x-3 mb-4">
-                  <img 
-                    src={certifiveLogo} 
-                    alt="CERTIFIVE Logo" 
-                    className="w-10 h-10 rounded-lg object-cover"
-                  />
-                  <h4 className="text-2xl font-bold bg-gradient-to-r from-teal-400 to-blue-400 bg-clip-text text-transparent">CERTIFIVE</h4>
+      {/* ── METRICS ── */}
+      <section id="metrics" style={{ background: "var(--s900)", padding: "100px 32px" }}>
+        <div style={{ maxWidth: "var(--mw)", margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center" }}>
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--teal)", marginBottom: 12 }}>Resultados</div>
+            <h2 style={{ fontSize: 36, fontWeight: 700, letterSpacing: "-.02em", color: "#fff", marginBottom: 16 }}>Cifras que hablan por sí solas</h2>
+            <p style={{ fontSize: 17, color: "var(--s400)", maxWidth: 440, lineHeight: 1.65 }}>Los técnicos que usan CERTIFIVE procesan más expedientes, cometen menos errores y cobran antes. Los datos son de nuestra propia plataforma.</p>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 40 }}>
+            {[
+              { n: "4.2h", l: "ahorradas por expediente frente al proceso manual" },
+              { n: "+2.400", l: "técnicos certificadores activos en España" },
+              { n: "98.7%", l: "de expedientes aprobados al primer intento" },
+            ].map((m, i) => (
+              <div key={i} className={`fu ${i > 0 ? (i === 1 ? "fu-d1" : "fu-d2") : ""}`} style={{ borderTop: "1px solid rgba(255,255,255,.07)", paddingTop: 28 }}>
+                <div style={{ fontSize: 52, fontWeight: 800, color: "var(--teal)", letterSpacing: "-.04em", lineHeight: 1, marginBottom: 6 }}>{m.n}</div>
+                <div style={{ fontSize: 15, color: "rgba(255,255,255,.55)", fontWeight: 400 }}>{m.l}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── TESTIMONIALS ── */}
+      <section id="testimonials" style={{ padding: "100px 32px", background: "#fff" }}>
+        <div style={{ maxWidth: "var(--mw)", margin: "0 auto" }}>
+          <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--teal)", marginBottom: 12 }}>Testimonios</div>
+          <h2 style={{ fontSize: 36, fontWeight: 700, letterSpacing: "-.02em", color: "var(--s900)", marginBottom: 8 }}>Lo que dicen los técnicos</h2>
+          <p style={{ fontSize: 17, color: "var(--s500)", marginBottom: 56 }}>Profesionales reales. Resultados reales.</p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 20 }}>
+            {[
+              { text: '"Antes tardaba un día entero en completar un expediente. Con CERTIFIVE lo tengo listo en dos horas y el registro autonómico lo acepta a la primera. La diferencia es brutal."', name: "Miguel Ángel Torres", role: "Ingeniero Industrial · Madrid", init: "MA" },
+              { text: '"La integración con CE3X es un antes y un después. Nada de copiar datos a mano. El sistema los importa, los valida y genera el certificado en minutos. Puro ahorro."', name: "Laura García Fonts", role: "Arquitecta Técnica · Barcelona", init: "LG" },
+              { text: '"Gestiono más de 60 expedientes al mes yo solo. Sin CERTIFIVE sería imposible. El portal del cliente también me ha diferenciado mucho frente a otros técnicos de la zona."', name: "Roberto Vega Morales", role: "Ingeniero de Edificación · Sevilla", init: "RV" },
+            ].map((t, i) => (
+              <div key={i} className="testi-card fu" style={{ border: "1px solid var(--s200)", borderRadius: 8, padding: "28px 24px", background: "#fff", transition: "box-shadow .2s" }}>
+                <div style={{ display: "flex", gap: 3, marginBottom: 16 }}>
+                  {"★★★★★".split("").map((s, j) => <span key={j} style={{ color: "var(--teal)", fontSize: 14 }}>{s}</span>)}
                 </div>
-                <p className="text-gray-400 leading-relaxed mb-4 max-w-md">
-                  La plataforma de automatización completa para certificadores energéticos en España. 
-                  Transforma tu negocio y multiplica tus ingresos con nuestra tecnología.
-                </p>
-                <div className="flex space-x-4">
-                  <div className="w-8 h-8 bg-teal-600 rounded-lg flex items-center justify-center">
-                    <MessageSquare className="w-4 h-4 text-white" />
-                  </div>
-                  <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                    <FileText className="w-4 h-4 text-white" />
-                  </div>
-                  <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
-                    <Shield className="w-4 h-4 text-white" />
+                <p style={{ fontSize: 14, color: "var(--s700)", lineHeight: 1.7, marginBottom: 20, fontStyle: "italic" }}>{t.text}</p>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--s100)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "var(--s500)" }}>{t.init}</div>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--s900)" }}>{t.name}</div>
+                    <div style={{ fontSize: 12, color: "var(--s400)" }}>{t.role}</div>
                   </div>
                 </div>
               </div>
-              
-              <div>
-                <h5 className="text-lg font-semibold mb-4 text-teal-400">Plataforma</h5>
-                <ul className="space-y-2 text-gray-400">
-                  <li><a href="#" className="hover:text-teal-400 transition-colors">WhatsApp Business</a></li>
-                  <li><a href="#" className="hover:text-teal-400 transition-colors">Gestión Financiera</a></li>
-                  <li><a href="#" className="hover:text-teal-400 transition-colors">Informes Técnicos</a></li>
-                  <li><a href="#" className="hover:text-teal-400 transition-colors">Automatización</a></li>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── FINAL CTA ── */}
+      <section style={{ padding: "100px 32px", textAlign: "center", background: "var(--s50)", borderTop: "1px solid var(--s200)" }}>
+        <div style={{ maxWidth: 600, margin: "0 auto" }}>
+          <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--teal)", marginBottom: 12, textAlign: "center" }}>Empieza hoy</div>
+          <h2 style={{ fontSize: 40, fontWeight: 700, letterSpacing: "-.02em", color: "var(--s900)", marginBottom: 16 }}>Tu despacho merece herramientas profesionales</h2>
+          <p style={{ fontSize: 17, color: "var(--s500)", margin: "0 auto 40px", lineHeight: 1.65 }}>14 días de prueba gratuita. Sin tarjeta de crédito. Sin permanencia.</p>
+          <div style={{ display: "flex", justifyContent: "center", gap: 16, marginBottom: 20 }}>
+            <button onClick={() => navigate("/registro")}
+              style={{ padding: "14px 32px", fontSize: 15, fontWeight: 600, borderRadius: "var(--r)", cursor: "pointer", textDecoration: "none", transition: "all .15s", background: "var(--teal)", color: "#fff", border: "none" }}
+              onMouseOver={e => (e.currentTarget.style.background = "var(--teal-dk)")}
+              onMouseOut={e => (e.currentTarget.style.background = "var(--teal)")}>
+              Empezar Gratis — 14 días
+            </button>
+            <button onClick={handleDemo} className="btn-ghost"
+              style={{ padding: "14px 32px", fontSize: 15, fontWeight: 600, borderRadius: "var(--r)", cursor: "pointer", transition: "all .15s", background: "transparent", color: "var(--s700)", border: "1px solid var(--s200)" }}>
+              Ver Demo
+            </button>
+          </div>
+          <p style={{ fontSize: 13, color: "var(--s400)" }}>
+            ¿Tienes un equipo grande?{" "}
+            <a href="#" style={{ color: "var(--teal)", textDecoration: "none", fontWeight: 500 }}>Contacta para precios Enterprise.</a>
+          </p>
+        </div>
+      </section>
+
+      {/* ── FOOTER ── */}
+      <footer style={{ background: "var(--s900)", padding: "60px 32px 40px", color: "var(--s400)" }}>
+        <div style={{ maxWidth: "var(--mw)", margin: "0 auto" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr 1fr 1fr", gap: 48, marginBottom: 48 }}>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+                <div style={{ width: 24, height: 24, background: "var(--teal)", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="5" height="5" rx="1" fill="white" opacity="0.9"/><rect x="9" y="2" width="5" height="5" rx="1" fill="white" opacity="0.6"/><rect x="2" y="9" width="5" height="5" rx="1" fill="white" opacity="0.6"/><rect x="9" y="9" width="5" height="5" rx="1" fill="white" opacity="0.9"/></svg>
+                </div>
+                <span style={{ fontSize: 14, fontWeight: 700, color: "#fff", letterSpacing: "-.02em" }}>CERTIFIVE</span>
+              </div>
+              <p style={{ fontSize: 13, lineHeight: 1.65, color: "var(--s500)", maxWidth: 240 }}>Plataforma de automatización para técnicos de certificación energética en España.</p>
+            </div>
+            {[
+              { title: "Producto", links: ["Funcionalidades","Precios","Novedades","Hoja de ruta","API"] },
+              { title: "Recursos", links: ["Documentación","Guías de inicio","Webinars","Blog","Soporte"] },
+              { title: "Empresa", links: ["Sobre nosotros","Contacto","Prensa","Afiliados"] },
+            ].map(col => (
+              <div key={col.title}>
+                <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: ".06em", textTransform: "uppercase", color: "rgba(255,255,255,.45)", marginBottom: 16 }}>{col.title}</div>
+                <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: 10 }}>
+                  {col.links.map(l => (
+                    <li key={l}><a href="#" className="footer-link" style={{ fontSize: 13, color: "var(--s500)", textDecoration: "none", transition: "color .15s" }}>{l}</a></li>
+                  ))}
                 </ul>
               </div>
-              
-              <div>
-                <h5 className="text-lg font-semibold mb-4 text-blue-400">Empresa</h5>
-                <ul className="space-y-2 text-gray-400">
-                  <li><a href="#" className="hover:text-blue-400 transition-colors">Sobre Nosotros</a></li>
-                  <li><a href="#" className="hover:text-blue-400 transition-colors">Contacto</a></li>
-                  <li><a href="#" className="hover:text-blue-400 transition-colors">Soporte</a></li>
-                  <li><a href="#" className="hover:text-blue-400 transition-colors">Términos y Condiciones</a></li>
-                </ul>
-              </div>
-            </div>
-            
-            <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center">
-              <p className="text-gray-400 text-sm">
-                © 2025 CERTIFIVE. Todos los derechos reservados. | Plataforma oficial para certificación energética en España.
-              </p>
-              <div className="flex items-center space-x-2 mt-4 md:mt-0">
-                <span className="text-gray-400 text-sm">Cumplimiento CEE</span>
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              </div>
+            ))}
+          </div>
+          <div style={{ borderTop: "1px solid rgba(255,255,255,.06)", paddingTop: 28, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ fontSize: 12, color: "var(--s500)" }}>© 2026 CERTIFIVE Technologies S.L. Todos los derechos reservados.</span>
+            <div style={{ display: "flex", gap: 24 }}>
+              {["Privacidad","Términos","Cookies","RGPD"].map(l => (
+                <a key={l} href="#" className="footer-link" style={{ fontSize: 12, color: "var(--s500)", textDecoration: "none", transition: "color .15s" }}>{l}</a>
+              ))}
             </div>
           </div>
         </div>
