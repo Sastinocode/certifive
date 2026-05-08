@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "../lib/queryClient";
 import { formatDate } from "../lib/utils";
@@ -115,16 +115,45 @@ function SolicitudModal({ cert, onClose }: { cert: any; onClose: () => void }) {
 
 function PresupuestoModal({ cert, onClose }: { cert: any; onClose: () => void }) {
   const [finalPrice, setFinalPrice] = useState(cert.finalPrice ?? "");
-  const [loading, setLoading] = useState(false);
-  const [done, setDone] = useState(false);
-  const [err, setErr] = useState("");
+  const [loading, setLoading]       = useState(false);
+  const [done, setDone]             = useState(false);
+  const [err, setErr]               = useState("");
+
+  // Suggested price state
+  const [suggestion, setSuggestion]     = useState<any>(null);
+  const [suggestLoading, setSuggestLoading] = useState(true);
+
+  // Fetch price suggestion on mount
+  useEffect(() => {
+    const fetchSuggestion = async () => {
+      try {
+        const res = await fetch(`/api/certifications/${cert.id}/suggest-price`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("auth_token")}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setSuggestion(data);
+          // Only pre-fill if price is not set yet
+          if (!cert.finalPrice && data.suggestedPrice) {
+            setFinalPrice(String(data.suggestedPrice));
+          }
+        }
+      } catch { /* ignore */ }
+      setSuggestLoading(false);
+    };
+    fetchSuggestion();
+  }, [cert.id, cert.finalPrice]);
 
   const send = async () => {
     if (!finalPrice) return;
     setLoading(true);
     setErr("");
     try {
-      await apiRequest("POST", `/api/certifications/${cert.id}/generate-presupuesto`, { finalPrice });
+      const deliveryDays = suggestion?.matchedRate?.deliveryDays ?? undefined;
+      await apiRequest("POST", `/api/certifications/${cert.id}/generate-presupuesto`, {
+        finalPrice,
+        ...(deliveryDays ? { plazoEntregaDias: deliveryDays } : {}),
+      });
       queryClient.invalidateQueries({ queryKey: ["/api/certifications"] });
       setDone(true);
     } catch {
@@ -134,49 +163,140 @@ function PresupuestoModal({ cert, onClose }: { cert: any; onClose: () => void })
     }
   };
 
+  const fmt = (n: number) => n.toFixed(2);
+
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center sm:p-4">
       <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
-        <div className="bg-emerald-50 px-6 py-5 flex items-center justify-between border-b border-emerald-100">
+        {/* Header */}
+        <div className="bg-teal-700 px-6 py-5 flex items-center justify-between">
           <div>
-            <h3 className="text-base font-bold text-emerald-900">Enviar presupuesto</h3>
-            {cert.ownerName && <p className="text-xs text-emerald-700/60 mt-0.5">{cert.ownerName}</p>}
+            <h3 className="text-base font-bold text-white">Enviar presupuesto</h3>
+            {cert.ownerName && <p className="text-xs text-teal-200 mt-0.5">{cert.ownerName}</p>}
           </div>
-          <button onClick={onClose} className="text-emerald-700/40 hover:text-emerald-900">
+          <button onClick={onClose} className="text-teal-300 hover:text-white transition-colors">
             <span className="material-symbols-outlined text-[22px]">close</span>
           </button>
         </div>
-        <div className="p-6 space-y-4">
+
+        <div className="p-6 space-y-5">
           {done ? (
-            <div className="text-center py-4">
-              <div className="text-4xl mb-3">✅</div>
-              <p className="font-bold text-emerald-900">Presupuesto enviado</p>
-              <p className="text-sm text-stone-500 mt-1">El cliente recibirá el enlace por email.</p>
+            <div className="text-center py-6">
+              <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-3xl">✅</span>
+              </div>
+              <p className="font-bold text-slate-800 text-lg">Presupuesto enviado</p>
+              <p className="text-sm text-slate-500 mt-1">El cliente recibirá el enlace por email para aceptarlo o solicitar cambios.</p>
+              <button onClick={onClose} className="mt-5 px-6 py-2 bg-teal-700 text-white rounded-xl text-sm font-semibold hover:bg-teal-600">
+                Cerrar
+              </button>
             </div>
           ) : (
             <>
-              <p className="text-sm text-stone-600">Introduce el precio final. El cliente recibirá un enlace para aceptarlo o solicitar cambios.</p>
-              {cert.finalPrice && <p className="text-xs text-emerald-700/60">Precio calculado: <strong>{parseFloat(cert.finalPrice).toFixed(2)} €</strong></p>}
+              {/* Suggested price section */}
+              {suggestLoading ? (
+                <div className="bg-slate-50 rounded-xl px-4 py-3 flex items-center gap-3">
+                  <div className="w-4 h-4 border-2 border-teal-500 border-t-transparent rounded-full animate-spin flex-shrink-0" />
+                  <p className="text-xs text-slate-500">Calculando precio sugerido…</p>
+                </div>
+              ) : suggestion?.hasRate ? (
+                <div className="bg-teal-50 border border-teal-100 rounded-xl p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-teal-600">Precio sugerido según tarifas</p>
+                      <p className="text-2xl font-black text-teal-800 mt-0.5">{fmt(suggestion.suggestedPrice)} €</p>
+                    </div>
+                    <button
+                      onClick={() => setFinalPrice(String(suggestion.suggestedPrice))}
+                      className="text-[10px] font-bold bg-teal-600 text-white px-2.5 py-1 rounded-full hover:bg-teal-700 transition-colors whitespace-nowrap"
+                    >
+                      Usar este precio
+                    </button>
+                  </div>
+                  {/* Breakdown */}
+                  <div className="border-t border-teal-200 pt-3 space-y-1.5 text-xs text-teal-700">
+                    <div className="flex justify-between">
+                      <span>Precio base ({suggestion.matchedRate.propertyType})</span>
+                      <span className="font-semibold">{fmt(suggestion.breakdown.basePrice)} €</span>
+                    </div>
+                    {suggestion.breakdown.surchargeArea > 0 && (
+                      <div className="flex justify-between text-teal-600">
+                        <span>Ajuste por superficie</span>
+                        <span>+{fmt(suggestion.breakdown.surchargeArea)} €</span>
+                      </div>
+                    )}
+                    {suggestion.breakdown.surchargeProvince > 0 && (
+                      <div className="flex justify-between text-teal-600">
+                        <span>Recargo provincia ({suggestion.breakdown.province})</span>
+                        <span>+{fmt(suggestion.breakdown.surchargeProvince)} €</span>
+                      </div>
+                    )}
+                    {suggestion.breakdown.m2Addition > 0 && (
+                      <div className="flex justify-between text-teal-600">
+                        <span>Por m² ({suggestion.breakdown.totalArea} m² × {fmt(suggestion.breakdown.pricePerM2)} €)</span>
+                        <span>+{fmt(suggestion.breakdown.m2Addition)} €</span>
+                      </div>
+                    )}
+                    {suggestion.propertyInfo.totalArea && (
+                      <p className="text-teal-500 text-[10px] pt-0.5">
+                        Superficie: {suggestion.propertyInfo.totalArea} m²
+                        {suggestion.propertyInfo.province ? ` · ${suggestion.propertyInfo.province}` : ""}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ) : suggestion && !suggestion.hasRate ? (
+                <div className="bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 text-sm text-amber-800">
+                  <p className="font-semibold">Sin tarifas configuradas</p>
+                  <p className="text-xs mt-0.5">{suggestion.message}</p>
+                  <a href="/tarifas" className="text-xs font-bold text-teal-700 underline mt-1 inline-block">
+                    Ir a Ajustes → Tarifas →
+                  </a>
+                </div>
+              ) : null}
+
+              {/* Price input */}
               <div>
-                <label className="text-[10px] font-bold uppercase tracking-widest text-emerald-700/60 block mb-1.5">Precio total (€, IVA incluido) *</label>
-                <input
-                  type="number"
-                  min={0}
-                  step={0.01}
-                  value={finalPrice}
-                  onChange={e => setFinalPrice(e.target.value)}
-                  className="w-full bg-emerald-50 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-300 outline-none"
-                  placeholder="150.00"
-                />
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block mb-1.5">
+                  Precio final (€, IVA incluido) *
+                  <span className="ml-1 text-[10px] font-normal text-slate-400 normal-case">(puedes modificarlo)</span>
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-semibold text-sm">€</span>
+                  <input
+                    type="number"
+                    min={0}
+                    step={0.01}
+                    value={finalPrice}
+                    onChange={e => setFinalPrice(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-7 pr-4 py-3 text-sm font-semibold focus:ring-2 focus:ring-teal-300 focus:border-teal-300 outline-none"
+                    placeholder="0.00"
+                    data-testid="input-final-price"
+                  />
+                </div>
+                {suggestion?.matchedRate?.deliveryDays && (
+                  <p className="text-xs text-slate-400 mt-1.5">
+                    Plazo de entrega según tarifa: <strong>{suggestion.matchedRate.deliveryDays} días laborables</strong>
+                  </p>
+                )}
               </div>
-              {err && <div className="bg-red-50 border border-red-100 rounded-xl px-4 py-3 text-sm text-red-700">{err}</div>}
+
+              {err && (
+                <div className="bg-red-50 border border-red-100 rounded-xl px-4 py-3 text-sm text-red-700">{err}</div>
+              )}
+
               <button
                 onClick={send}
                 disabled={!finalPrice || loading}
-                className="w-full py-3 bg-emerald-800 text-white rounded-xl font-bold text-sm disabled:opacity-40 hover:bg-emerald-700 transition-colors"
+                className="w-full py-3.5 bg-teal-700 text-white rounded-xl font-bold text-sm disabled:opacity-40 hover:bg-teal-600 transition-colors"
+                data-testid="button-send-presupuesto"
               >
                 {loading ? "Enviando…" : "Enviar presupuesto al cliente →"}
               </button>
+
+              <p className="text-center text-xs text-slate-400">
+                El cliente recibirá un enlace para aceptar o solicitar cambios
+              </p>
             </>
           )}
         </div>
