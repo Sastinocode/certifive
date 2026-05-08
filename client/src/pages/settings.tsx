@@ -280,6 +280,38 @@ export default function Settings() {
           </div>
 
           <div className="max-w-4xl space-y-8">
+            {/* Quick links */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <a
+                href="/tarifas"
+                className="group flex items-center gap-4 bg-white rounded-2xl border border-slate-200 px-5 py-4 hover:border-teal-400 hover:shadow-md transition-all"
+                data-testid="link-tarifas-settings"
+              >
+                <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center flex-shrink-0 group-hover:bg-teal-100 transition-colors">
+                  <span className="text-teal-700 text-lg">€</span>
+                </div>
+                <div className="min-w-0">
+                  <p className="font-semibold text-slate-800 text-sm">Tarifas y precios</p>
+                  <p className="text-xs text-slate-500 mt-0.5">Configura los precios para generar presupuestos automáticos</p>
+                </div>
+                <span className="ml-auto text-slate-300 group-hover:text-teal-500 transition-colors flex-shrink-0">→</span>
+              </a>
+              <a
+                href="/facturas"
+                className="group flex items-center gap-4 bg-white rounded-2xl border border-slate-200 px-5 py-4 hover:border-teal-400 hover:shadow-md transition-all"
+                data-testid="link-facturas-settings"
+              >
+                <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center flex-shrink-0 group-hover:bg-slate-100 transition-colors">
+                  <FileText className="w-5 h-5 text-slate-600" />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-semibold text-slate-800 text-sm">Facturas</p>
+                  <p className="text-xs text-slate-500 mt-0.5">Gestiona y descarga tus facturas emitidas</p>
+                </div>
+                <span className="ml-auto text-slate-300 group-hover:text-teal-500 transition-colors flex-shrink-0">→</span>
+              </a>
+            </div>
+
             {/* Profile Settings */}
             <Card>
               <CardHeader>

@@ -745,7 +745,7 @@ export function registerRoutes(app: Express) {
 
   // --- PRICING ---
 
-  app.get("/api/pricing", authenticate, async (req: Request, res: Response) => {
+  const getPricingRates = async (req: Request, res: Response) => {
     try {
       const userId = (req as any).user.id;
       const result = await db.select().from(pricingRates).where(eq(pricingRates.userId, userId));
@@ -753,9 +753,9 @@ export function registerRoutes(app: Express) {
     } catch {
       res.status(500).json({ message: "Error al obtener tarifas" });
     }
-  });
+  };
 
-  app.post("/api/pricing", authenticate, async (req: Request, res: Response) => {
+  const createPricingRate = async (req: Request, res: Response) => {
     try {
       const userId = (req as any).user.id;
       const [rate] = await db.insert(pricingRates).values({ ...req.body, userId }).returning();
@@ -763,9 +763,9 @@ export function registerRoutes(app: Express) {
     } catch {
       res.status(500).json({ message: "Error al crear tarifa" });
     }
-  });
+  };
 
-  app.put("/api/pricing/:id", authenticate, async (req: Request, res: Response) => {
+  const updatePricingRate = async (req: Request, res: Response) => {
     try {
       const userId = (req as any).user.id;
       const [rate] = await db.update(pricingRates)
@@ -776,9 +776,9 @@ export function registerRoutes(app: Express) {
     } catch {
       res.status(500).json({ message: "Error al actualizar tarifa" });
     }
-  });
+  };
 
-  app.delete("/api/pricing/:id", authenticate, async (req: Request, res: Response) => {
+  const deletePricingRate = async (req: Request, res: Response) => {
     try {
       const userId = (req as any).user.id;
       await db.delete(pricingRates).where(and(eq(pricingRates.id, parseInt(req.params.id)), eq(pricingRates.userId, userId)));
@@ -786,7 +786,19 @@ export function registerRoutes(app: Express) {
     } catch {
       res.status(500).json({ message: "Error al eliminar tarifa" });
     }
-  });
+  };
+
+  // Primary routes
+  app.get("/api/pricing", authenticate, getPricingRates);
+  app.post("/api/pricing", authenticate, createPricingRate);
+  app.put("/api/pricing/:id", authenticate, updatePricingRate);
+  app.delete("/api/pricing/:id", authenticate, deletePricingRate);
+
+  // Alias routes used by the frontend pricing page
+  app.get("/api/pricing-rates", authenticate, getPricingRates);
+  app.post("/api/pricing-rates", authenticate, createPricingRate);
+  app.patch("/api/pricing-rates/:id", authenticate, updatePricingRate);
+  app.delete("/api/pricing-rates/:id", authenticate, deletePricingRate);
 
   // --- INVOICES ---
 
@@ -1786,6 +1798,85 @@ export function registerRoutes(app: Express) {
   // PRESUPUESTO FLOW
   // ─────────────────────────────────────────────────────────────────────────
 
+  // Suggest price from catastro data + pricing rates
+  app.get("/api/certifications/:id/suggest-price", authenticate, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user.id;
+      const certId = parseInt(req.params.id);
+
+      const [cert] = await db.select().from(certifications)
+        .where(and(eq(certifications.id, certId), eq(certifications.userId, userId)))
+        .limit(1);
+      if (!cert) return res.status(404).json({ message: "Certificación no encontrada" });
+
+      // Property data — prefer catastro values
+      const propertyType = cert.propertyType ?? null;
+      const totalAreaNum = cert.superficieTotalCatastro
+        ? parseFloat(String(cert.superficieTotalCatastro))
+        : (cert.totalArea ? parseFloat(cert.totalArea as any) : null);
+      const province = cert.provinciaCatastro ?? cert.province ?? null;
+
+      // Get all active pricing rates for this user
+      const rates = await db.select().from(pricingRates)
+        .where(and(eq(pricingRates.userId, userId), eq(pricingRates.isActive, true)));
+
+      if (!rates.length) {
+        return res.json({
+          hasRate: false,
+          message: "No tienes tarifas configuradas. Ve a Ajustes → Tarifas para establecer tus precios.",
+          suggestedPrice: null,
+        });
+      }
+
+      // Match rate by propertyType, fallback to first active rate
+      let matchedRate: any = null;
+      if (propertyType) {
+        matchedRate = rates.find(r => r.propertyType === propertyType)
+          ?? rates.find(r => (r.propertyType ?? "").toLowerCase().includes((propertyType ?? "").toLowerCase()));
+      }
+      if (!matchedRate) matchedRate = rates[0];
+
+      const basePrice = parseFloat(matchedRate.basePrice as any);
+
+      const pricing = calcularPrecio(
+        basePrice,
+        totalAreaNum,
+        province,
+        matchedRate.areaTiers,
+        matchedRate.provinceSurcharges,
+      );
+
+      // pricePerM2 is stored as raw JSON column extra field (not in Drizzle schema)
+      const pricePerM2 = (matchedRate as any).pricePerM2 ? parseFloat((matchedRate as any).pricePerM2) : 0;
+      const m2Addition = (pricePerM2 > 0 && totalAreaNum) ? parseFloat((pricePerM2 * totalAreaNum).toFixed(2)) : 0;
+      const suggestedPrice = parseFloat((pricing.total + m2Addition).toFixed(2));
+      const deliveryDays = (matchedRate as any).deliveryDays ?? cert.plazoEntregaDias ?? null;
+
+      return res.json({
+        hasRate: true,
+        suggestedPrice,
+        breakdown: {
+          basePrice: pricing.base,
+          surchargeArea: pricing.surchargeArea,
+          surchargeProvince: pricing.surchargeProvince,
+          m2Addition,
+          totalArea: totalAreaNum,
+          pricePerM2,
+          province,
+        },
+        matchedRate: {
+          id: matchedRate.id,
+          propertyType: matchedRate.propertyType,
+          basePrice: matchedRate.basePrice,
+          deliveryDays,
+        },
+        propertyInfo: { propertyType, totalArea: totalAreaNum, province },
+      });
+    } catch {
+      res.status(500).json({ message: "Error al calcular precio sugerido" });
+    }
+  });
+
   // Certifier generates presupuesto
   app.post("/api/certifications/:id/generate-presupuesto", authenticate, async (req: Request, res: Response) => {
     try {
@@ -1874,10 +1965,13 @@ export function registerRoutes(app: Express) {
           ownerName: cert.ownerName,
           address: cert.address,
           city: cert.city,
-          province: cert.province,
+          province: cert.province ?? cert.provinciaCatastro,
           propertyType: cert.propertyType,
-          totalArea: cert.totalArea,
+          totalArea: cert.superficieTotalCatastro
+            ? String(cert.superficieTotalCatastro)
+            : (cert.totalArea ?? null),
           constructionYear: cert.constructionYear,
+          cadastralReference: cert.cadastralReference,
           finalPrice: cert.finalPrice,
           tramo1Amount: cert.tramo1Amount,
           tramo2Amount: cert.tramo2Amount,
