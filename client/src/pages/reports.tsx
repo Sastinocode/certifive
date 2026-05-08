@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -535,7 +535,7 @@ export default function Reports() {
                   onRecordPayment={(invoice) => {
                     recordPaymentMutation.mutate({
                       invoiceId: invoice.id,
-                      amount: parseFloat(invoice.total) - parseFloat(invoice.paidDate || "0"),
+                      amount: parseFloat(invoice.total) || 0,
                       paymentMethod: "transfer",
                       paymentDate: new Date().toISOString().split('T')[0]
                     });
