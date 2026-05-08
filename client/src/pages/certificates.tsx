@@ -238,7 +238,7 @@ export default function Certificates() {
                 Información recibida de formularios de clientes - {filteredCertifications.length} solicitud{filteredCertifications.length !== 1 ? 'es' : ''}
               </p>
             </div>
-            <Link to="/certificacion">
+            <Link to="/certificados/nuevo">
               <Button className="btn-certifive">
                 <Plus className="w-4 h-4 mr-2" />
                 Procesar Nueva Solicitud
@@ -317,7 +317,7 @@ export default function Certificates() {
                     }
                   </p>
                   {!searchTerm && statusFilter === "all" && (
-                    <Link to="/certificacion">
+                    <Link to="/certificados/nuevo">
                       <Button className="btn-certifive">
                         <Plus className="w-4 h-4 mr-2" />
                         Crear primer certificado

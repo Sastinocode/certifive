@@ -60,7 +60,7 @@ function Router() {
 
         {/* Authenticated routes — direct children of Switch so wouter can match them */}
         <Route path="/certificacion/:id?" component={isAuthenticated ? CertificationWizard : Login} />
-        <Route path="/certificados/nuevo" component={isAuthenticated ? CertificationWizard : Login} />
+        <Route path="/certificados/nuevo" component={isAuthenticated ? EnhancedCertificationForm : Login} />
         <Route path="/certificacion-request/:id" component={isAuthenticated ? ViewCertificationRequest : Login} />
         <Route path="/formulario-cee" component={isAuthenticated ? EnhancedCertificationForm : Login} />
         <Route path="/whatsapp" component={isAuthenticated ? WhatsAppManagement : Login} />
