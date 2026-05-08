@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
@@ -16,10 +16,24 @@ import {
   Home, User, Building2, Wind, Zap, Camera,
   ChevronLeft, ChevronRight, CheckCircle2, Send, ArrowLeft,
   MapPin, IdCard, Phone, Mail, Layers, AlignLeft, Thermometer,
-  Flame, Droplets, LayoutGrid
+  Flame, Droplets, LayoutGrid, Search, AlertCircle, CalendarDays,
+  Maximize2, Tag, Loader2
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { z } from "zod";
+
+// ── Catastro types ───────────────────────────────────────────────────────────
+type CatastroStatus = "idle" | "loading" | "success" | "error";
+interface CatastroData {
+  address?:          string;
+  city?:             string;
+  postalCode?:       string;
+  province?:         string;
+  comunidadAutonoma?: string;
+  constructionYear?: string;
+  totalArea?:        string;
+  propertyType?:     string;
+}
 
 const schema = z.object({
   propertyAddress:      z.string().min(10, "Mínimo 10 caracteres"),
@@ -68,8 +82,8 @@ const STEPS = [
 ];
 
 const STEP_FIELDS: Record<number, (keyof FormValues)[]> = {
-  1: ["propertyAddress"],
-  2: ["ownerName", "ownerDni", "cadastralRef"],
+  1: ["cadastralRef", "propertyAddress"],
+  2: ["ownerName", "ownerDni"],
   3: ["buildingFloors", "propertyFloors", "rooms"],
   4: [],
   5: [],
@@ -108,11 +122,15 @@ function Section({ title, children }: { title?: string; children: React.ReactNod
 }
 
 export default function EnhancedCertificationForm() {
-  const [step, setStep]     = useState(1);
-  const [dir, setDir]       = useState(1);
-  const [photos, setPhotos] = useState<PhotoItem[]>([]);
-  const [, navigate]        = useLocation();
-  const { toast }           = useToast();
+  const [step, setStep]               = useState(1);
+  const [dir, setDir]                 = useState(1);
+  const [photos, setPhotos]           = useState<PhotoItem[]>([]);
+  const [catastroStatus, setCatastroStatus] = useState<CatastroStatus>("idle");
+  const [catastroData, setCatastroData]     = useState<CatastroData | null>(null);
+  const [catastroError, setCatastroError]   = useState<string>("");
+  const [autofilled, setAutofilled]         = useState(false);
+  const [, navigate]                  = useLocation();
+  const { toast }                     = useToast();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -129,6 +147,48 @@ export default function EnhancedCertificationForm() {
       waterHeaterCapacity: undefined, photos: [],
     },
   });
+
+  // ── Catastro lookup ─────────────────────────────────────────────────────────
+  const lookupCatastro = async () => {
+    const rc = form.getValues("cadastralRef")?.trim().toUpperCase().replace(/[\s-]/g, "");
+    if (!rc || rc.length < 14) {
+      setCatastroError("Introduce al menos 14 caracteres de la referencia catastral");
+      return;
+    }
+    setCatastroStatus("loading");
+    setCatastroError("");
+    setCatastroData(null);
+    setAutofilled(false);
+    try {
+      const res = await fetch(`/api/catastro/lookup?rc=${encodeURIComponent(rc)}`);
+      const json = await res.json();
+      if (!res.ok || !json.ok) {
+        setCatastroStatus("error");
+        setCatastroError(json.error ?? "Error consultando el Catastro");
+        return;
+      }
+      const data: CatastroData = json.data;
+      setCatastroData(data);
+      setCatastroStatus("success");
+      // Autofill address if we got one and address is currently empty
+      if (data.address) {
+        const parts: string[] = [data.address];
+        if (data.city)       parts.push(data.city);
+        if (data.postalCode) parts.push(data.postalCode);
+        if (data.province)   parts.push(data.province);
+        const combined = [...new Set(parts)].join(", ");
+        const current = form.getValues("propertyAddress") ?? "";
+        if (!current.trim() || current.length < 5) {
+          form.setValue("propertyAddress", combined, { shouldValidate: true });
+          setAutofilled(true);
+        }
+      }
+      toast({ title: "Catastro consultado ✓", description: "Datos del inmueble obtenidos correctamente." });
+    } catch {
+      setCatastroStatus("error");
+      setCatastroError("No se pudo conectar con el Catastro. Comprueba tu conexión.");
+    }
+  };
 
   const mutation = useMutation({
     mutationFn: (data: FormValues) => apiRequest("POST", "/api/certifications", data),
@@ -258,21 +318,155 @@ export default function EnhancedCertificationForm() {
                 {/* ── PASO 1: Propiedad ── */}
                 {step === 1 && (
                   <>
-                    <StepHeading icon={Home} title="Datos de la Propiedad" subtitle="Dirección completa del inmueble a certificar" />
-                    <Section>
+                    <StepHeading icon={Home} title="Datos de la Propiedad" subtitle="Introduce la referencia catastral para autocompletar los datos del inmueble" />
+
+                    {/* RC field + lookup button */}
+                    <Section title="Referencia Catastral">
+                      <FieldGroup icon={LayoutGrid}>
+                        <FormField
+                          control={form.control}
+                          name="cadastralRef"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Referencia Catastral *</FormLabel>
+                              <FormControl>
+                                <div className="flex gap-2">
+                                  <Input
+                                    placeholder="Ej: 9299801XG9799N0075RX"
+                                    className="font-mono flex-1"
+                                    data-testid="input-cadastral-ref"
+                                    {...field}
+                                    onChange={e => {
+                                      field.onChange(e);
+                                      // Reset catastro if user edits RC
+                                      if (catastroStatus !== "idle") {
+                                        setCatastroStatus("idle");
+                                        setCatastroData(null);
+                                        setCatastroError("");
+                                        setAutofilled(false);
+                                      }
+                                    }}
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    data-testid="button-catastro-lookup"
+                                    className={[
+                                      "shrink-0 gap-1.5 border-teal-200 text-teal-700 hover:bg-teal-50 transition-colors",
+                                      catastroStatus === "success" ? "border-teal-400 bg-teal-50" : "",
+                                    ].join(" ")}
+                                    disabled={catastroStatus === "loading" || (field.value?.length ?? 0) < 14}
+                                    onClick={lookupCatastro}
+                                  >
+                                    {catastroStatus === "loading" ? (
+                                      <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : catastroStatus === "success" ? (
+                                      <CheckCircle2 className="w-4 h-4 text-teal-600" />
+                                    ) : (
+                                      <Search className="w-4 h-4" />
+                                    )}
+                                    <span className="hidden sm:inline">
+                                      {catastroStatus === "loading" ? "Consultando…" : catastroStatus === "success" ? "Consultado" : "Consultar Catastro"}
+                                    </span>
+                                  </Button>
+                                </div>
+                              </FormControl>
+                              <FormMessage />
+                              {(field.value?.length ?? 0) >= 14 && catastroStatus === "idle" && (
+                                <p className="text-xs text-slate-400 mt-1">Pulsa "Consultar Catastro" para autocompletar los datos del inmueble</p>
+                              )}
+                            </FormItem>
+                          )}
+                        />
+                      </FieldGroup>
+
+                      {/* Error state */}
+                      <AnimatePresence>
+                        {catastroStatus === "error" && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
+                            className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3"
+                            data-testid="catastro-error"
+                          >
+                            <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
+                            <div>
+                              <p className="text-sm font-medium text-red-700">No se pudo obtener datos del Catastro</p>
+                              <p className="text-xs text-red-600 mt-0.5">{catastroError}</p>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+
+                      {/* Success data cards */}
+                      <AnimatePresence>
+                        {catastroStatus === "success" && catastroData && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                            className="space-y-3"
+                            data-testid="catastro-data"
+                          >
+                            <div className="flex items-center gap-2">
+                              <CheckCircle2 className="w-4 h-4 text-teal-600" />
+                              <p className="text-sm font-semibold text-teal-700">Datos obtenidos del Catastro</p>
+                            </div>
+                            <div className="grid grid-cols-3 gap-2">
+                              {catastroData.constructionYear && (
+                                <div className="rounded-lg border border-teal-100 bg-teal-50 px-3 py-2 text-center" data-testid="catastro-year">
+                                  <CalendarDays className="w-4 h-4 text-teal-500 mx-auto mb-1" />
+                                  <p className="text-xs text-slate-500">Año construcción</p>
+                                  <p className="text-sm font-bold text-slate-800">{catastroData.constructionYear}</p>
+                                </div>
+                              )}
+                              {catastroData.totalArea && (
+                                <div className="rounded-lg border border-teal-100 bg-teal-50 px-3 py-2 text-center" data-testid="catastro-area">
+                                  <Maximize2 className="w-4 h-4 text-teal-500 mx-auto mb-1" />
+                                  <p className="text-xs text-slate-500">Superficie</p>
+                                  <p className="text-sm font-bold text-slate-800">{catastroData.totalArea} m²</p>
+                                </div>
+                              )}
+                              {catastroData.propertyType && (
+                                <div className="rounded-lg border border-teal-100 bg-teal-50 px-3 py-2 text-center" data-testid="catastro-type">
+                                  <Tag className="w-4 h-4 text-teal-500 mx-auto mb-1" />
+                                  <p className="text-xs text-slate-500">Tipo de inmueble</p>
+                                  <p className="text-sm font-bold text-slate-800 leading-tight">{catastroData.propertyType}</p>
+                                </div>
+                              )}
+                            </div>
+                            {catastroData.city && (
+                              <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                                <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                                {[catastroData.city, catastroData.province, catastroData.postalCode].filter(Boolean).join(" · ")}
+                              </div>
+                            )}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </Section>
+
+                    {/* Address field (autofilled) */}
+                    <Section title="Dirección del Inmueble">
                       <FieldGroup icon={MapPin}>
                         <FormField
                           control={form.control}
                           name="propertyAddress"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Dirección Completa *</FormLabel>
+                              <FormLabel className="flex items-center gap-2">
+                                Dirección Completa *
+                                {autofilled && (
+                                  <span className="text-[10px] font-semibold bg-teal-100 text-teal-700 px-1.5 py-0.5 rounded-full">
+                                    Autocompletado ✓
+                                  </span>
+                                )}
+                              </FormLabel>
                               <FormControl>
                                 <Textarea
                                   placeholder="Ej: PUERTO LATINO 1; BLOQUE 2, PUERTA 4, DÚPLEX 7; LA MANGA DEL MAR MENOR. 30380 SAN JAVIER"
                                   rows={4}
-                                  className="resize-none"
+                                  data-testid="input-property-address"
+                                  className={["resize-none transition-colors", autofilled ? "border-teal-300 bg-teal-50/40" : ""].join(" ")}
                                   {...field}
+                                  onChange={e => { field.onChange(e); setAutofilled(false); }}
                                 />
                               </FormControl>
                               <FormMessage />
@@ -309,15 +503,6 @@ export default function EnhancedCertificationForm() {
                           )} />
                         </FieldGroup>
                       </div>
-                      <FieldGroup icon={LayoutGrid}>
-                        <FormField control={form.control} name="cadastralRef" render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Referencia Catastral *</FormLabel>
-                            <FormControl><Input placeholder="Ej: 9299801XG9799N0075RX" className="font-mono" {...field} /></FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )} />
-                      </FieldGroup>
                     </Section>
 
                     <Section title="Contacto">
