@@ -14,7 +14,7 @@ import {
   createDemoUser,
   verifyToken,
 } from "./auth";
-import { insertUserSchema, insertCertificationSchema, insertFolderSchema, insertPricingRateSchema, documentos, payments, refreshTokens, plantillasWhatsapp, mensajesComunicacion, notificaciones, betaLeads } from "../shared/schema";
+import { insertUserSchema, insertCertificationSchema, insertFolderSchema, insertPricingRateSchema, documentos, payments, refreshTokens, plantillasWhatsapp, mensajesComunicacion, notificaciones, betaLeads, waitlist } from "../shared/schema";
 import { encryptApiKey, validateApiKey, DEFAULT_TEMPLATES, TEMPLATE_LABELS, AVAILABLE_PLACEHOLDERS } from "./whatsapp";
 import { sendNotification, retryMensaje } from "./notifications";
 import { subscribe as sseSubscribe } from "./sse";
@@ -1088,7 +1088,45 @@ export function registerRoutes(app: Express) {
     }
   });
 
-  // Waitlist notifications
+  // ─── WAITLIST ────────────────────────────────────────────────────────────────
+
+  // Ensure waitlist table exists (auto-create on first run)
+  db.execute(`
+    CREATE TABLE IF NOT EXISTS waitlist (
+      id SERIAL PRIMARY KEY,
+      email TEXT,
+      phone TEXT,
+      module TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT NOW() NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS waitlist_module_idx ON waitlist (module);
+  `).catch(() => {});
+
+  app.post("/api/waitlist", async (req: Request, res: Response) => {
+    try {
+      const { email, phone, module: mod } = req.body;
+      if (!mod) return res.status(400).json({ message: "El campo 'module' es obligatorio" });
+      if (!email && !phone) return res.status(400).json({ message: "Introduce un email o teléfono" });
+      await db.insert(waitlist).values({ email: email?.trim() || null, phone: phone?.trim() || null, module: mod });
+      const [{ count }] = await db.execute(`SELECT COUNT(*)::int AS count FROM waitlist WHERE module = '${mod.replace(/'/g, "''")}'`) as any;
+      res.status(201).json({ success: true, count: Number(count) });
+    } catch (e: any) {
+      res.status(500).json({ message: "Error al guardar el registro", detail: e?.message });
+    }
+  });
+
+  app.get("/api/waitlist/count/:module", async (req: Request, res: Response) => {
+    try {
+      const mod = req.params.module;
+      const result = await db.execute(`SELECT COUNT(*)::int AS count FROM waitlist WHERE module = '${mod.replace(/'/g, "''")}'`) as any;
+      const count = Number(result[0]?.count ?? result?.rows?.[0]?.count ?? 0);
+      res.json({ count });
+    } catch {
+      res.json({ count: 0 });
+    }
+  });
+
+  // Legacy stub (kept for backwards compat)
   app.post("/api/notify-waitlist", async (req: Request, res: Response) => {
     res.json({ success: true, message: "Email registrado en lista de espera" });
   });

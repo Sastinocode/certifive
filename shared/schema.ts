@@ -577,6 +577,21 @@ export const betaLeads = pgTable("beta_leads", {
 export type BetaLead = typeof betaLeads.$inferSelect;
 
 // ─────────────────────────────────────────────────────────────────────────────
+// WAITLIST  (module interest — marketing / automations)
+// ─────────────────────────────────────────────────────────────────────────────
+export const waitlist = pgTable("waitlist", {
+  id:        serial("id").primaryKey(),
+  email:     text("email"),
+  phone:     text("phone"),
+  module:    text("module").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => [
+  index("waitlist_module_idx").on(t.module),
+]);
+
+export type Waitlist = typeof waitlist.$inferSelect;
+
+// ─────────────────────────────────────────────────────────────────────────────
 // INSERT SCHEMAS (Zod validation for API endpoints)
 // ─────────────────────────────────────────────────────────────────────────────
 export const insertUserSchema = createInsertSchema(users).omit({
