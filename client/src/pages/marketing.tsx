@@ -1,168 +1,224 @@
-import { useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
 import Sidebar from "@/components/layout/sidebar";
-import {
-  TrendingUp,
-  Target,
-  BarChart3,
-  Users,
-  Megaphone,
-  MousePointer,
-  Bell,
-  CheckCircle,
-  Mail
-} from "lucide-react";
+import { Megaphone, ArrowRight, CheckCircle, Users, Sparkles } from "lucide-react";
 
-const features = [
-  {
-    icon: Megaphone,
-    title: "Campañas publicitarias",
-    desc: "Gestiona anuncios en Google Ads, Facebook e Instagram directamente desde CERTIFIVE, segmentados por zona y tipo de inmueble.",
-  },
-  {
-    icon: Target,
-    title: "Audiencias inteligentes",
-    desc: "Crea audiencias basadas en tus clientes actuales y llega a propietarios con perfil similar en tu área de trabajo.",
-  },
-  {
-    icon: BarChart3,
-    title: "Analítica de captación",
-    desc: "Métricas unificadas de conversión, coste por lead y retorno de inversión por canal de marketing.",
-  },
-  {
-    icon: Users,
-    title: "CRM de prospectos",
-    desc: "Pipeline de clientes potenciales con seguimiento automático, recordatorios y plantillas de contacto.",
-  },
-  {
-    icon: MousePointer,
-    title: "Landing pages automáticas",
-    desc: "Genera páginas de captación personalizadas con tu marca, certificados de ejemplo y formulario de contacto.",
-  },
-  {
-    icon: TrendingUp,
-    title: "Informes de marketing",
-    desc: "Reportes mensuales con el rendimiento de cada canal y recomendaciones automáticas para optimizar la inversión.",
-  },
-];
+const PARTICLES = Array.from({ length: 18 }, (_, i) => ({
+  id: i,
+  x: Math.random() * 100,
+  y: Math.random() * 100,
+  size: 2 + Math.random() * 3,
+  duration: 4 + Math.random() * 6,
+  delay: Math.random() * 4,
+}));
 
 export default function Marketing() {
   const [selectedTab, setSelectedTab] = useState("marketing");
-  const [email, setEmail] = useState("");
+  const [contact, setContact] = useState("");
   const [submitted, setSubmitted] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const { user } = useAuth();
   const { toast } = useToast();
 
-  const handleNotify = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const notifyEmail = email || user?.email || "";
-    if (!notifyEmail) return;
-    setLoading(true);
-    try {
-      await apiRequest("POST", "/api/notify-waitlist", { email: notifyEmail, module: "marketing" });
-    } catch (_) {
-      // fail silently — endpoint may not exist yet
-    } finally {
-      setLoading(false);
+  const { data: countData } = useQuery<{ count: number }>({
+    queryKey: ["/api/waitlist/count/marketing"],
+  });
+
+  const joinMutation = useMutation({
+    mutationFn: (data: { email?: string; phone?: string; module: string }) =>
+      apiRequest("POST", "/api/waitlist", data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/waitlist/count/marketing"] });
       setSubmitted(true);
-      toast({ title: "¡Anotado!", description: "Te avisaremos cuando el módulo de Marketing esté disponible." });
-    }
+    },
+    onError: () => {
+      toast({ title: "Error", description: "No se pudo guardar tu registro. Inténtalo de nuevo.", variant: "destructive" });
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!contact.trim()) return;
+    const isEmail = contact.includes("@");
+    joinMutation.mutate({
+      module: "marketing",
+      ...(isEmail ? { email: contact.trim() } : { phone: contact.trim() }),
+    });
   };
 
+  const count = countData?.count ?? 0;
+
   return (
-    <div className="flex h-screen" style={{ background: "#F8FAFC" }}>
+    <div className="flex h-screen overflow-hidden" style={{ background: "#0F172A" }}>
       <Sidebar selectedTab={selectedTab} onTabChange={setSelectedTab} />
 
-      <div className="flex-1 overflow-y-auto">
-        <div style={{ maxWidth: 900, margin: "0 auto", padding: "48px 32px" }}>
+      <div className="flex-1 overflow-y-auto relative">
+        {/* Animated background gradient */}
+        <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
+          <motion.div
+            animate={{ scale: [1, 1.15, 1], opacity: [0.18, 0.28, 0.18] }}
+            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+            style={{ position: "absolute", top: "-20%", left: "-10%", width: "60%", height: "60%", borderRadius: "50%", background: "radial-gradient(circle, #0D7C66 0%, transparent 70%)" }}
+          />
+          <motion.div
+            animate={{ scale: [1, 1.2, 1], opacity: [0.12, 0.2, 0.12] }}
+            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+            style={{ position: "absolute", bottom: "-10%", right: "-5%", width: "50%", height: "50%", borderRadius: "50%", background: "radial-gradient(circle, #0a5a4a 0%, transparent 70%)" }}
+          />
+          {/* Particles */}
+          {PARTICLES.map((p) => (
+            <motion.div
+              key={p.id}
+              animate={{ y: [0, -30, 0], opacity: [0.15, 0.5, 0.15] }}
+              transition={{ duration: p.duration, repeat: Infinity, delay: p.delay, ease: "easeInOut" }}
+              style={{ position: "absolute", left: `${p.x}%`, top: `${p.y}%`, width: p.size, height: p.size, borderRadius: "50%", background: "#0D7C66" }}
+            />
+          ))}
+        </div>
 
-          {/* Header */}
-          <div style={{ marginBottom: 40 }}>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#e6f4f1", color: "#0D7C66", fontSize: 11, fontWeight: 600, letterSpacing: ".06em", textTransform: "uppercase", padding: "4px 10px", borderRadius: 4, marginBottom: 16 }}>
-              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#0D7C66", display: "inline-block" }} />
-              Próximamente
-            </div>
-            <h1 style={{ fontSize: 32, fontWeight: 700, color: "#0F172A", letterSpacing: "-.02em", marginBottom: 10 }}>
-              Módulo de Marketing
-            </h1>
-            <p style={{ fontSize: 16, color: "#64748B", maxWidth: 600, lineHeight: 1.65 }}>
-              Herramientas de captación y publicidad integradas en tu plataforma de certificación. Atrae más clientes sin salir de CERTIFIVE.
-            </p>
-          </div>
+        {/* Content */}
+        <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", padding: "60px 32px", textAlign: "center" }}>
 
-          {/* Features grid */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 48 }}>
-            {features.map((f) => {
-              const Icon = f.icon;
-              return (
-                <div key={f.title} style={{ background: "#fff", border: "1px solid #E2E8F0", borderRadius: 8, padding: "24px 20px", position: "relative", overflow: "hidden" }}>
-                  <div style={{ position: "absolute", inset: 0, background: "repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(226,232,240,.25) 8px, rgba(226,232,240,.25) 9px)", pointerEvents: "none" }} />
-                  <div style={{ width: 36, height: 36, background: "#e6f4f1", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
-                    <Icon size={18} color="#0D7C66" />
-                  </div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: "#0F172A", marginBottom: 6 }}>{f.title}</div>
-                  <p style={{ fontSize: 13, color: "#64748B", lineHeight: 1.6 }}>{f.desc}</p>
-                  <div style={{ position: "absolute", top: 12, right: 12, fontSize: 10, fontWeight: 600, letterSpacing: ".05em", textTransform: "uppercase", background: "#F1F5F9", color: "#94A3B8", padding: "2px 7px", borderRadius: 3 }}>
-                    Pronto
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          {/* Icon badge */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6, type: "spring" }}
+            style={{ width: 72, height: 72, borderRadius: "50%", background: "rgba(13,124,102,0.2)", border: "1px solid rgba(13,124,102,0.4)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 32 }}
+          >
+            <motion.div
+              animate={{ rotate: [0, 8, -8, 0] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            >
+              <Megaphone size={32} color="#0D7C66" />
+            </motion.div>
+          </motion.div>
 
-          {/* Notify CTA */}
-          <div style={{ background: "#fff", border: "1px solid #E2E8F0", borderRadius: 8, padding: "40px 48px", textAlign: "center" }}>
-            {submitted ? (
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
-                <div style={{ width: 48, height: 48, background: "#e6f4f1", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <CheckCircle size={24} color="#0D7C66" />
-                </div>
-                <div style={{ fontSize: 18, fontWeight: 700, color: "#0F172A" }}>¡Estás en la lista!</div>
-                <p style={{ fontSize: 14, color: "#64748B", maxWidth: 380 }}>
-                  Te notificaremos en cuanto el módulo de Marketing esté disponible. Serás de los primeros en acceder.
-                </p>
-              </div>
-            ) : (
-              <>
-                <div style={{ width: 48, height: 48, background: "#e6f4f1", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
-                  <Bell size={22} color="#0D7C66" />
-                </div>
-                <h2 style={{ fontSize: 20, fontWeight: 700, color: "#0F172A", marginBottom: 8 }}>
-                  Avísame cuando esté disponible
-                </h2>
-                <p style={{ fontSize: 14, color: "#64748B", marginBottom: 28, maxWidth: 420, margin: "0 auto 28px" }}>
-                  El módulo de Marketing está en desarrollo activo. Déjanos tu email y serás el primero en saber cuándo se lanza.
-                </p>
-                <form onSubmit={handleNotify} style={{ display: "flex", gap: 10, maxWidth: 420, margin: "0 auto" }}>
-                  <div style={{ flex: 1, position: "relative" }}>
-                    <Mail size={14} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#94A3B8" }} />
+          {/* Pill badge */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "rgba(13,124,102,0.15)", border: "1px solid rgba(13,124,102,0.35)", borderRadius: 999, padding: "5px 14px", marginBottom: 24 }}
+          >
+            <motion.span
+              animate={{ scale: [1, 1.4, 1] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+              style={{ width: 7, height: 7, borderRadius: "50%", background: "#0D7C66", display: "inline-block" }}
+            />
+            <span style={{ fontSize: 12, fontWeight: 600, color: "#0D7C66", letterSpacing: ".06em", textTransform: "uppercase" }}>Módulo en Desarrollo</span>
+          </motion.div>
+
+          {/* Headline */}
+          <motion.h1
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35, duration: 0.7 }}
+            style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)", fontWeight: 800, color: "#fff", letterSpacing: "-.03em", lineHeight: 1.1, marginBottom: 20, maxWidth: 640 }}
+          >
+            Marketing que trabaja{" "}
+            <span style={{ color: "#0D7C66" }}>mientras tú certificas</span>
+          </motion.h1>
+
+          {/* Subtext */}
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            style={{ fontSize: 18, color: "#94A3B8", lineHeight: 1.65, maxWidth: 480, marginBottom: 48 }}
+          >
+            Más clientes, menos esfuerzo. El módulo de marketing llega pronto a CERTIFIVE.
+          </motion.p>
+
+          {/* Form card */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.65 }}
+            style={{ width: "100%", maxWidth: 480, background: "rgba(255,255,255,0.05)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: "32px 28px" }}
+          >
+            <AnimatePresence mode="wait">
+              {submitted ? (
+                <motion.div
+                  key="success"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ type: "spring", stiffness: 200 }}
+                  style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}
+                >
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.1 }}
+                    style={{ width: 56, height: 56, borderRadius: "50%", background: "rgba(13,124,102,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}
+                  >
+                    <CheckCircle size={28} color="#0D7C66" />
+                  </motion.div>
+                  <p style={{ fontSize: 18, fontWeight: 700, color: "#fff" }}>¡Estás en la lista!</p>
+                  <p style={{ fontSize: 14, color: "#94A3B8", textAlign: "center" }}>
+                    Serás de los primeros en acceder al módulo de Marketing.
+                  </p>
+                </motion.div>
+              ) : (
+                <motion.form key="form" onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  <p style={{ fontSize: 14, color: "#CBD5E1", marginBottom: 4 }}>
+                    Déjanos tu email o teléfono y te avisamos el día del lanzamiento.
+                  </p>
+                  <div style={{ position: "relative" }}>
                     <input
-                      type="email"
-                      placeholder={user?.email || "tu@email.com"}
-                      value={email}
-                      onChange={e => setEmail(e.target.value)}
-                      style={{ width: "100%", height: 40, paddingLeft: 34, paddingRight: 12, border: "1px solid #E2E8F0", borderRadius: 6, fontSize: 13, color: "#0F172A", outline: "none", background: "#F8FAFC", boxSizing: "border-box" }}
-                      onFocus={e => (e.target.style.borderColor = "#0D7C66")}
-                      onBlur={e => (e.target.style.borderColor = "#E2E8F0")}
+                      type="text"
+                      placeholder="tu@email.com o +34 600 000 000"
+                      value={contact}
+                      onChange={(e) => setContact(e.target.value)}
+                      required
+                      style={{ width: "100%", height: 48, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 10, padding: "0 16px", fontSize: 14, color: "#fff", outline: "none", boxSizing: "border-box" }}
+                      onFocus={(e) => (e.target.style.borderColor = "#0D7C66")}
+                      onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.15)")}
                     />
                   </div>
-                  <button
+                  <motion.button
                     type="submit"
-                    disabled={loading}
-                    style={{ padding: "0 20px", height: 40, background: "#0D7C66", color: "#fff", border: "none", borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", opacity: loading ? .7 : 1, transition: "background .15s" }}
-                    onMouseOver={e => (e.currentTarget.style.background = "#0a6454")}
-                    onMouseOut={e => (e.currentTarget.style.background = "#0D7C66")}
+                    disabled={joinMutation.isPending || !contact.trim()}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    style={{ height: 48, background: "#0D7C66", color: "#fff", border: "none", borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, opacity: joinMutation.isPending ? 0.7 : 1, transition: "background .15s" }}
+                    onMouseOver={(e) => { if (!joinMutation.isPending) e.currentTarget.style.background = "#0a6454"; }}
+                    onMouseOut={(e) => { e.currentTarget.style.background = "#0D7C66"; }}
                   >
-                    {loading ? "Enviando..." : "Avisarme"}
-                  </button>
-                </form>
-              </>
-            )}
-          </div>
+                    {joinMutation.isPending ? (
+                      <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} style={{ width: 16, height: 16, border: "2px solid rgba(255,255,255,.4)", borderTopColor: "#fff", borderRadius: "50%" }} />
+                    ) : (
+                      <>Notifícame cuando esté listo <ArrowRight size={16} /></>
+                    )}
+                  </motion.button>
+                </motion.form>
+              )}
+            </AnimatePresence>
+          </motion.div>
 
+          {/* Counter */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.9 }}
+            style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 28, color: "#64748B", fontSize: 13 }}
+          >
+            <Users size={14} />
+            <span>
+              <motion.span
+                key={count}
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                style={{ color: "#0D7C66", fontWeight: 700 }}
+              >
+                {count > 0 ? count : "…"}
+              </motion.span>
+              {" "}profesionales ya esperando
+            </span>
+            <Sparkles size={13} color="#0D7C66" />
+          </motion.div>
         </div>
       </div>
     </div>
