@@ -6,6 +6,7 @@ export default function Landing() {
   const [, navigate] = useLocation();
   const { loginDemo } = useAuth();
   const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const observerRef = useRef<IntersectionObserver | null>(null);
 
   useEffect(() => {
@@ -24,7 +25,7 @@ export default function Landing() {
           }
         });
       },
-      { threshold: 0.12 }
+      { threshold: 0.1 }
     );
     document.querySelectorAll(".fu").forEach((el) => observerRef.current?.observe(el));
     return () => observerRef.current?.disconnect();
@@ -62,7 +63,7 @@ export default function Landing() {
         .fu-visible { animation: fu .5s cubic-bezier(.16,1,.3,1) forwards; }
         .fu-d1 { animation-delay: .1s; }
         .fu-d2 { animation-delay: .2s; }
-        .badge-dot { width:6px;height:6px;border-radius:50%;background:var(--teal);animation:pulse 2s infinite; }
+        .badge-dot { width:6px;height:6px;border-radius:50%;background:var(--teal);animation:pulse 2s infinite;flex-shrink:0; }
         .mockup-item:hover { background:rgba(255,255,255,.07) !important; }
         .feature-card:hover { border-color:var(--s300) !important; box-shadow:0 4px 24px rgba(15,23,42,.07) !important; transform:translateY(-2px) !important; }
         .step:hover .step-num { background:var(--teal) !important; color:#fff !important; border-color:var(--teal) !important; }
@@ -71,20 +72,100 @@ export default function Landing() {
         .btn-ghost:hover { border-color:var(--s300) !important; background:var(--s50) !important; color:var(--s900) !important; }
         .testi-card:hover { box-shadow:0 4px 24px rgba(15,23,42,.07); }
         .footer-link:hover { color:var(--s300) !important; }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 768px) {
+          .nav-links { display: none !important; }
+          .nav-actions-full { display: none !important; }
+          .nav-mobile-cta { display: flex !important; }
+          .hamburger { display: flex !important; }
+
+          .mobile-menu {
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 64px; left: 0; right: 0;
+            background: #fff;
+            border-bottom: 1px solid var(--s200);
+            padding: 20px 20px 28px;
+            gap: 4px;
+            z-index: 99;
+            box-shadow: 0 8px 24px rgba(15,23,42,.08);
+          }
+          .mobile-menu a, .mobile-menu button {
+            font-size: 15px; font-weight: 500;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--s100);
+            color: var(--s700);
+            text-decoration: none;
+            background: none;
+            border-left: none; border-right: none; border-top: none;
+            text-align: left;
+            cursor: pointer;
+          }
+          .mobile-menu .menu-cta {
+            margin-top: 12px;
+            padding: 13px 20px;
+            background: var(--teal);
+            color: #fff !important;
+            border: none !important;
+            border-radius: var(--r);
+            text-align: center;
+            font-weight: 600;
+          }
+
+          .hero-grid { grid-template-columns: 1fr !important; gap: 40px !important; }
+          .hero-h1 { font-size: 36px !important; line-height: 1.12 !important; }
+          .hero-p { font-size: 16px !important; }
+          .hero-btns { flex-direction: column !important; align-items: stretch !important; }
+          .hero-btns button { width: 100% !important; justify-content: center !important; }
+          .hero-pill { display: none !important; }
+          .hero-mockup-float-top { display: none !important; }
+          .hero-mockup-float-bot { display: none !important; }
+
+          .social-proof-inner { flex-wrap: wrap !important; gap: 16px !important; }
+          .social-proof-logos { flex-wrap: wrap !important; gap: 16px !important; }
+          .social-divider { display: none !important; }
+
+          .features-grid { grid-template-columns: 1fr !important; }
+          .section-h2 { font-size: 28px !important; }
+          .section-pad { padding: 64px 20px !important; }
+          .steps-grid { grid-template-columns: 1fr 1fr !important; gap: 32px !important; }
+          .step-connector { display: none !important; }
+
+          .metrics-grid { grid-template-columns: 1fr !important; gap: 48px !important; }
+          .metric-num { font-size: 40px !important; }
+
+          .testi-grid { grid-template-columns: 1fr !important; }
+
+          .cta-btns { flex-direction: column !important; align-items: center !important; }
+          .cta-btns button { width: 100% !important; max-width: 320px !important; justify-content: center !important; }
+
+          .footer-grid { grid-template-columns: 1fr 1fr !important; gap: 32px !important; }
+          .footer-brand { grid-column: 1 / -1 !important; }
+          .footer-bottom-inner { flex-direction: column !important; gap: 12px !important; text-align: center !important; }
+          .footer-legal-links { flex-wrap: wrap !important; justify-content: center !important; gap: 16px !important; }
+        }
+
+        @media (max-width: 480px) {
+          .hero-h1 { font-size: 30px !important; }
+          .steps-grid { grid-template-columns: 1fr !important; }
+          .footer-grid { grid-template-columns: 1fr !important; }
+        }
       `}</style>
 
       {/* ── NAVBAR ── */}
       <nav style={{
         position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
-        background: "rgba(255,255,255,0.92)",
+        background: "rgba(255,255,255,0.95)",
         backdropFilter: "blur(12px)",
         WebkitBackdropFilter: "blur(12px)",
         borderBottom: "1px solid var(--s200)",
         transition: "box-shadow .2s",
         boxShadow: scrolled ? "0 1px 12px rgba(15,23,42,.06)" : "none",
       }}>
-        <div style={{ maxWidth: "var(--mw)", margin: "0 auto", padding: "0 32px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <a href="#" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", color: "var(--s900)" }}>
+        <div style={{ maxWidth: "var(--mw)", margin: "0 auto", padding: "0 24px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <a href="#" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", color: "var(--s900)", flexShrink: 0 }}>
             <div style={{ width: 28, height: 28, background: "var(--teal)", borderRadius: 5, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <rect x="2" y="2" width="5" height="5" rx="1" fill="white" opacity="0.9"/>
@@ -96,13 +177,13 @@ export default function Landing() {
             <span style={{ fontSize: 15, fontWeight: 700, letterSpacing: "-.02em" }}>CERTIFIVE</span>
           </a>
 
-          <ul style={{ display: "flex", alignItems: "center", gap: 32, listStyle: "none" }}>
+          <ul className="nav-links" style={{ display: "flex", alignItems: "center", gap: 32, listStyle: "none" }}>
             {[["#features","Funcionalidades"],["#how","Cómo funciona"],["#metrics","Resultados"],["#testimonials","Clientes"]].map(([href, label]) => (
               <li key={href}><a href={href} className="nav-link" style={{ fontSize: 14, fontWeight: 500, color: "var(--s500)", textDecoration: "none", transition: "color .15s" }}>{label}</a></li>
             ))}
           </ul>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <div className="nav-actions-full" style={{ display: "flex", alignItems: "center", gap: 16 }}>
             <button onClick={() => navigate("/login")} style={{ fontSize: 14, fontWeight: 500, color: "var(--s700)", background: "none", border: "none", cursor: "pointer", padding: "6px 0", transition: "color .15s" }}>
               Iniciar Sesión
             </button>
@@ -112,25 +193,54 @@ export default function Landing() {
               Empezar Gratis
             </button>
           </div>
+
+          {/* Mobile right side */}
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <button
+              className="nav-mobile-cta"
+              onClick={() => navigate("/registro")}
+              style={{ display: "none", padding: "8px 16px", background: "var(--teal)", color: "#fff", border: "none", borderRadius: "var(--r)", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+              Empezar
+            </button>
+            <button
+              className="hamburger"
+              onClick={() => setMenuOpen(o => !o)}
+              style={{ display: "none", flexDirection: "column", gap: 5, background: "none", border: "none", cursor: "pointer", padding: 4 }}>
+              <span style={{ width: 22, height: 2, background: "var(--s700)", borderRadius: 2, transition: "all .2s", transform: menuOpen ? "rotate(45deg) translate(5px,5px)" : "none" }}/>
+              <span style={{ width: 22, height: 2, background: "var(--s700)", borderRadius: 2, transition: "all .2s", opacity: menuOpen ? 0 : 1 }}/>
+              <span style={{ width: 22, height: 2, background: "var(--s700)", borderRadius: 2, transition: "all .2s", transform: menuOpen ? "rotate(-45deg) translate(5px,-5px)" : "none" }}/>
+            </button>
+          </div>
         </div>
+
+        {/* Mobile menu */}
+        {menuOpen && (
+          <div className="mobile-menu">
+            {[["#features","Funcionalidades"],["#how","Cómo funciona"],["#metrics","Resultados"],["#testimonials","Clientes"]].map(([href, label]) => (
+              <a key={href} href={href} onClick={() => setMenuOpen(false)}>{label}</a>
+            ))}
+            <button onClick={() => { setMenuOpen(false); navigate("/login"); }}>Iniciar Sesión</button>
+            <button className="menu-cta" onClick={() => { setMenuOpen(false); navigate("/registro"); }}>Empezar Gratis</button>
+          </div>
+        )}
       </nav>
 
       {/* ── HERO ── */}
-      <section style={{ paddingTop: 148, paddingBottom: 100, paddingLeft: 32, paddingRight: 32, background: "linear-gradient(180deg,#fff 0%,#F8FAFC 100%)" }}>
-        <div style={{ maxWidth: "var(--mw)", margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center" }}>
+      <section className="section-pad" style={{ paddingTop: 148, paddingBottom: 100, background: "linear-gradient(180deg,#fff 0%,#F8FAFC 100%)" }}>
+        <div className="hero-grid" style={{ maxWidth: "var(--mw)", margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center" }}>
           <div>
             <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "var(--teal-lt)", color: "var(--teal)", fontSize: 12, fontWeight: 600, letterSpacing: ".04em", textTransform: "uppercase", padding: "5px 12px", borderRadius: 4, marginBottom: 28 }}>
               <div className="badge-dot" />
               Plataforma profesional de certificación
             </div>
-            <h1 style={{ fontSize: 56, fontWeight: 800, lineHeight: 1.08, letterSpacing: "-.03em", color: "var(--s900)", marginBottom: 20, textWrap: "balance" } as any}>
+            <h1 className="hero-h1" style={{ fontSize: 56, fontWeight: 800, lineHeight: 1.08, letterSpacing: "-.03em", color: "var(--s900)", marginBottom: 20, textWrap: "balance" } as any}>
               Automatiza tu negocio de{" "}
               <em style={{ fontStyle: "normal", color: "var(--teal)" }}>certificación energética.</em>
             </h1>
-            <p style={{ fontSize: 18, lineHeight: 1.7, color: "var(--s500)", marginBottom: 40, maxWidth: 480, fontWeight: 400 }}>
+            <p className="hero-p" style={{ fontSize: 18, lineHeight: 1.7, color: "var(--s500)", marginBottom: 40, maxWidth: 480, fontWeight: 400 }}>
               Gestiona expedientes, genera certificados CEE y presenta ante el registro autonómico — todo desde una sola plataforma diseñada para técnicos habilitados.
             </p>
-            <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 44 }}>
+            <div className="hero-btns" style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 44 }}>
               <button onClick={() => navigate("/registro")}
                 style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "13px 28px", background: "var(--teal)", color: "#fff", border: "none", borderRadius: "var(--r)", fontSize: 15, fontWeight: 600, cursor: "pointer", transition: "background .15s" }}
                 onMouseOver={e => (e.currentTarget.style.background = "var(--teal-dk)")}
@@ -156,7 +266,7 @@ export default function Landing() {
 
           {/* Dark mockup */}
           <div style={{ position: "relative" }}>
-            <div style={{ position: "absolute", top: -16, right: -20, background: "#fff", border: "1px solid var(--s200)", borderRadius: 8, padding: "12px 16px", boxShadow: "0 8px 24px rgba(15,23,42,.10)", display: "flex", alignItems: "center", gap: 10, whiteSpace: "nowrap", zIndex: 10 }}>
+            <div className="hero-mockup-float-top" style={{ position: "absolute", top: -16, right: -20, background: "#fff", border: "1px solid var(--s200)", borderRadius: 8, padding: "12px 16px", boxShadow: "0 8px 24px rgba(15,23,42,.10)", display: "flex", alignItems: "center", gap: 10, whiteSpace: "nowrap", zIndex: 10 }}>
               <div style={{ width: 32, height: 32, background: "var(--teal-lt)", borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2l1.5 3 3.5.5-2.5 2.5.5 3.5L8 10l-3 1.5.5-3.5L3 5.5 6.5 5 8 2z" fill="#0D7C66"/></svg>
               </div>
@@ -182,10 +292,10 @@ export default function Landing() {
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                   {[
-                    { name: "Edificio Paseo de Gracia 78", meta: "Barcelona · Vivienda unifamiliar", status: "Completado", done: true },
-                    { name: "C/ Alcalá 200, Madrid", meta: "Madrid · Oficinas", status: "En revisión", rev: true },
-                    { name: "Avda. Diagonal 550, Barcelona", meta: "Barcelona · Bloque plurifamiliar", status: "Pendiente", done: false },
-                    { name: "Plaza España 1, Sevilla", meta: "Sevilla · Vivienda unifamiliar", status: "Completado", done: true },
+                    { name: "Edificio Paseo de Gracia 78", meta: "Barcelona · Vivienda unifamiliar", status: "Completado", done: true, rev: false },
+                    { name: "C/ Alcalá 200, Madrid", meta: "Madrid · Oficinas", status: "En revisión", done: false, rev: true },
+                    { name: "Avda. Diagonal 550, Barcelona", meta: "Barcelona · Bloque plurifamiliar", status: "Pendiente", done: false, rev: false },
+                    { name: "Plaza España 1, Sevilla", meta: "Sevilla · Vivienda unifamiliar", status: "Completado", done: true, rev: false },
                   ].map((item, i) => (
                     <div key={i} className="mockup-item" style={{ background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.07)", borderRadius: 5, padding: "10px 14px", display: "flex", alignItems: "center", gap: 12, cursor: "default", transition: "background .15s" }}>
                       <div style={{ width: 28, height: 28, borderRadius: 4, background: item.done ? "rgba(13,124,102,.15)" : "rgba(100,116,139,.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -212,7 +322,7 @@ export default function Landing() {
               </div>
             </div>
 
-            <div style={{ position: "absolute", bottom: -16, left: -24, background: "#fff", border: "1px solid var(--s200)", borderRadius: 8, padding: "10px 14px", boxShadow: "0 8px 24px rgba(15,23,42,.10)", zIndex: 10 }}>
+            <div className="hero-mockup-float-bot" style={{ position: "absolute", bottom: -16, left: -24, background: "#fff", border: "1px solid var(--s200)", borderRadius: 8, padding: "10px 14px", boxShadow: "0 8px 24px rgba(15,23,42,.10)", zIndex: 10 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span style={{ fontSize: 20, fontWeight: 800, color: "var(--teal)", letterSpacing: "-.03em" }}>A</span>
                 <div>
@@ -226,12 +336,12 @@ export default function Landing() {
       </section>
 
       {/* ── SOCIAL PROOF ── */}
-      <div style={{ background: "var(--s50)", borderTop: "1px solid var(--s200)", borderBottom: "1px solid var(--s200)", padding: "32px 32px" }}>
-        <div style={{ maxWidth: "var(--mw)", margin: "0 auto", display: "flex", alignItems: "center", gap: 48 }}>
-          <span style={{ fontSize: 12, color: "var(--s400)", fontWeight: 500, textTransform: "uppercase", letterSpacing: ".06em", whiteSpace: "nowrap", flexShrink: 0 }}>Usado por técnicos en</span>
-          <div style={{ width: 1, height: 32, background: "var(--s200)", flexShrink: 0 }}/>
-          <div style={{ display: "flex", alignItems: "center", gap: 40, flex: 1 }}>
-            {["Comunidad de Madrid","Generalitat de Catalunya","Junta de Andalucía","País Vasco","C. Valenciana"].map(r => (
+      <div style={{ background: "var(--s50)", borderTop: "1px solid var(--s200)", borderBottom: "1px solid var(--s200)", padding: "28px 24px" }}>
+        <div className="social-proof-inner" style={{ maxWidth: "var(--mw)", margin: "0 auto", display: "flex", alignItems: "center", gap: 32 }}>
+          <span style={{ fontSize: 12, color: "var(--s400)", fontWeight: 500, textTransform: "uppercase", letterSpacing: ".06em", whiteSpace: "nowrap", flexShrink: 0 }}>Usado en</span>
+          <div className="social-divider" style={{ width: 1, height: 32, background: "var(--s200)", flexShrink: 0 }}/>
+          <div className="social-proof-logos" style={{ display: "flex", alignItems: "center", gap: 32, flex: 1, flexWrap: "nowrap" }}>
+            {["Madrid","Catalunya","Andalucía","País Vasco","C. Valenciana"].map(r => (
               <span key={r} className="sp-logo" style={{ fontSize: 13, fontWeight: 700, color: "var(--s300)", letterSpacing: "-.01em", whiteSpace: "nowrap", transition: "color .2s", cursor: "default" }}>{r}</span>
             ))}
           </div>
@@ -239,19 +349,19 @@ export default function Landing() {
       </div>
 
       {/* ── FEATURES ── */}
-      <section id="features" style={{ padding: "100px 32px" }}>
+      <section id="features" className="section-pad" style={{ padding: "100px 32px" }}>
         <div style={{ maxWidth: "var(--mw)", margin: "0 auto 56px" }}>
           <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--teal)", marginBottom: 12 }}>Funcionalidades</div>
-          <h2 style={{ fontSize: 36, fontWeight: 700, letterSpacing: "-.02em", color: "var(--s900)", marginBottom: 16, textWrap: "balance" } as any}>Todo lo que necesita un técnico habilitado</h2>
+          <h2 className="section-h2" style={{ fontSize: 36, fontWeight: 700, letterSpacing: "-.02em", color: "var(--s900)", marginBottom: 16, textWrap: "balance" } as any}>Todo lo que necesita un técnico habilitado</h2>
           <p style={{ fontSize: 17, color: "var(--s500)", maxWidth: 540, lineHeight: 1.65 }}>Construida desde cero para los flujos reales de la certificación energética en España. Sin compromiso.</p>
         </div>
-        <div style={{ maxWidth: "var(--mw)", margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 24 }}>
+        <div className="features-grid" style={{ maxWidth: "var(--mw)", margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 24 }}>
           {[
             { title: "Gestión de expedientes", desc: "Centraliza todos tus proyectos con seguimiento en tiempo real. Documentación, planos, datos del cliente y estado del registro, todo en un mismo lugar.", icon: <svg viewBox="0 0 40 40" fill="none" style={{ width: 40, height: 40, color: "var(--teal)", marginBottom: 20 }}><rect x="6" y="4" width="28" height="32" rx="3" stroke="currentColor" strokeWidth="1.8"/><path d="M12 14h16M12 20h16M12 26h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg> },
             { title: "Automatización CE3X / HULC", desc: "Importa resultados directamente desde CE3X y HULC. La plataforma genera el certificado CEE listo para presentar al registro autonómico.", icon: <svg viewBox="0 0 40 40" fill="none" style={{ width: 40, height: 40, color: "var(--teal)", marginBottom: 20 }}><path d="M8 20c0-6.627 5.373-12 12-12s12 5.373 12 12-5.373 12-12 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/><path d="M20 12v8l5 3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/><path d="M4 28l4-4 4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg> },
             { title: "Registro autonómico directo", desc: "Presentación automática ante RUCE y registros autonómicos. Trazabilidad completa de cada trámite con confirmación de recepción integrada.", icon: <svg viewBox="0 0 40 40" fill="none" style={{ width: 40, height: 40, color: "var(--teal)", marginBottom: 20 }}><path d="M20 6l3 8h9l-7 5 3 8-8-6-8 6 3-8-7-5h9z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/></svg> },
             { title: "Facturación integrada", desc: "Genera facturas automáticamente al completar un expediente. Control de cobros, recordatorios y exportación contable directa sin apps adicionales.", icon: <svg viewBox="0 0 40 40" fill="none" style={{ width: 40, height: 40, color: "var(--teal)", marginBottom: 20 }}><rect x="8" y="8" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="1.8"/><rect x="22" y="8" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="1.8"/><rect x="8" y="22" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="1.8"/><rect x="22" y="22" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="1.8"/></svg> },
-            { title: "Portal del cliente", desc: "Tus clientes reciben acceso a un portal propio para ver el estado de su certificado, descargar documentos y firmar online. Profesionaliza tu servicio.", icon: <svg viewBox="0 0 40 40" fill="none" style={{ width: 40, height: 40, color: "var(--teal)", marginBottom: 20 }}><circle cx="20" cy="20" r="12" stroke="currentColor" strokeWidth="1.8"/><path d="M14 20h12M20 14v12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg> },
+            { title: "Portal del cliente", desc: "Tus clientes reciben acceso a un portal propio para ver el estado de su certificado, descargar documentos y firmar online. Profesionaliza tu servicio.", icon: <svg viewBox="0 0 40 40" fill="none" style={{ width: 40, height: 40, color: "var(--teal)", marginBottom: 20 }}><circle cx="20" cy="16" r="6" stroke="currentColor" strokeWidth="1.8"/><path d="M8 36c0-6.627 5.373-12 12-12s12 5.373 12 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg> },
             { title: "Análisis y métricas", desc: "Panel de control con ingresos por periodo, rendimiento por tipo de inmueble, tiempo medio por expediente y comparativas mensuales detalladas.", icon: <svg viewBox="0 0 40 40" fill="none" style={{ width: 40, height: 40, color: "var(--teal)", marginBottom: 20 }}><path d="M8 28V16l12-8 12 8v12" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/><rect x="14" y="22" width="12" height="10" rx="1" stroke="currentColor" strokeWidth="1.8"/><path d="M20 22v10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg> },
           ].map((f, i) => (
             <div key={i} className={`feature-card fu ${i > 0 ? (i % 3 === 1 ? "fu-d1" : "fu-d2") : ""}`} style={{ background: "#fff", border: "1px solid var(--s200)", borderRadius: 8, padding: "32px 28px", transition: "border-color .2s,box-shadow .2s,transform .2s", cursor: "default" }}>
@@ -264,21 +374,21 @@ export default function Landing() {
       </section>
 
       {/* ── HOW IT WORKS ── */}
-      <section id="how" style={{ padding: "100px 32px", background: "var(--s50)", borderTop: "1px solid var(--s200)", borderBottom: "1px solid var(--s200)" }}>
+      <section id="how" className="section-pad" style={{ padding: "100px 32px", background: "var(--s50)", borderTop: "1px solid var(--s200)", borderBottom: "1px solid var(--s200)" }}>
         <div style={{ maxWidth: "var(--mw)", margin: "0 auto" }}>
           <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--teal)", marginBottom: 12 }}>Proceso</div>
-          <h2 style={{ fontSize: 36, fontWeight: 700, letterSpacing: "-.02em", color: "var(--s900)", marginBottom: 16 }}>De la visita al certificado en cuatro pasos</h2>
+          <h2 className="section-h2" style={{ fontSize: 36, fontWeight: 700, letterSpacing: "-.02em", color: "var(--s900)", marginBottom: 16 }}>De la visita al certificado en cuatro pasos</h2>
           <p style={{ fontSize: 17, color: "var(--s500)", maxWidth: 540, lineHeight: 1.65 }}>Un flujo diseñado para eliminar el trabajo administrativo repetitivo y que puedas centrarte en lo técnico.</p>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 0, position: "relative", marginTop: 56 }}>
-            <div style={{ position: "absolute", top: 24, left: "calc(12.5% + 20px)", right: "calc(12.5% + 20px)", height: 1, background: "var(--s200)" }}/>
+          <div className="steps-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 0, position: "relative", marginTop: 56 }}>
+            <div className="step-connector" style={{ position: "absolute", top: 24, left: "calc(12.5% + 20px)", right: "calc(12.5% + 20px)", height: 1, background: "var(--s200)" }}/>
             {[
               { n: "01", title: "Alta del expediente", desc: "Crea el proyecto con los datos del inmueble y el propietario. La plataforma genera automáticamente la documentación inicial." },
               { n: "02", title: "Cálculo y simulación", desc: "Importa tu archivo de CE3X o HULC. CERTIFIVE extrae los datos, calcula la calificación y detecta posibles incidencias antes de presentar." },
               { n: "03", title: "Generación del certificado", desc: "El sistema genera el certificado CEE con todos los campos requeridos por la normativa vigente, listo para firma digital cualificada." },
               { n: "04", title: "Presentación al registro", desc: "Presentación automática ante el registro autonómico correspondiente. Recibirás confirmación y el número de inscripción en tu panel." },
             ].map((s, i) => (
-              <div key={i} className="step" style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", padding: i === 0 ? "0 24px 0 0" : i === 3 ? "0 0 0 24px" : "0 24px", position: "relative" }}>
+              <div key={i} className="step" style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", padding: "0 20px", position: "relative" }}>
                 <div className="step-num fu" style={{ width: 48, height: 48, borderRadius: "50%", background: "#fff", border: "1px solid var(--s200)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, color: "var(--teal)", marginBottom: 24, position: "relative", zIndex: 1, transition: "background .2s,border-color .2s,color .2s" }}>{s.n}</div>
                 <div style={{ fontSize: 15, fontWeight: 700, color: "var(--s900)", marginBottom: 8, letterSpacing: "-.01em" }}>{s.title}</div>
                 <p style={{ fontSize: 13, color: "var(--s500)", lineHeight: 1.6 }}>{s.desc}</p>
@@ -289,11 +399,11 @@ export default function Landing() {
       </section>
 
       {/* ── METRICS ── */}
-      <section id="metrics" style={{ background: "var(--s900)", padding: "100px 32px" }}>
-        <div style={{ maxWidth: "var(--mw)", margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center" }}>
+      <section id="metrics" className="section-pad" style={{ background: "var(--s900)", padding: "100px 32px" }}>
+        <div className="metrics-grid" style={{ maxWidth: "var(--mw)", margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center" }}>
           <div>
             <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--teal)", marginBottom: 12 }}>Resultados</div>
-            <h2 style={{ fontSize: 36, fontWeight: 700, letterSpacing: "-.02em", color: "#fff", marginBottom: 16 }}>Cifras que hablan por sí solas</h2>
+            <h2 className="section-h2" style={{ fontSize: 36, fontWeight: 700, letterSpacing: "-.02em", color: "#fff", marginBottom: 16 }}>Cifras que hablan por sí solas</h2>
             <p style={{ fontSize: 17, color: "var(--s400)", maxWidth: 440, lineHeight: 1.65 }}>Los técnicos que usan CERTIFIVE procesan más expedientes, cometen menos errores y cobran antes. Los datos son de nuestra propia plataforma.</p>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 40 }}>
@@ -303,7 +413,7 @@ export default function Landing() {
               { n: "98.7%", l: "de expedientes aprobados al primer intento" },
             ].map((m, i) => (
               <div key={i} className={`fu ${i > 0 ? (i === 1 ? "fu-d1" : "fu-d2") : ""}`} style={{ borderTop: "1px solid rgba(255,255,255,.07)", paddingTop: 28 }}>
-                <div style={{ fontSize: 52, fontWeight: 800, color: "var(--teal)", letterSpacing: "-.04em", lineHeight: 1, marginBottom: 6 }}>{m.n}</div>
+                <div className="metric-num" style={{ fontSize: 52, fontWeight: 800, color: "var(--teal)", letterSpacing: "-.04em", lineHeight: 1, marginBottom: 6 }}>{m.n}</div>
                 <div style={{ fontSize: 15, color: "rgba(255,255,255,.55)", fontWeight: 400 }}>{m.l}</div>
               </div>
             ))}
@@ -312,12 +422,12 @@ export default function Landing() {
       </section>
 
       {/* ── TESTIMONIALS ── */}
-      <section id="testimonials" style={{ padding: "100px 32px", background: "#fff" }}>
+      <section id="testimonials" className="section-pad" style={{ padding: "100px 32px", background: "#fff" }}>
         <div style={{ maxWidth: "var(--mw)", margin: "0 auto" }}>
           <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--teal)", marginBottom: 12 }}>Testimonios</div>
-          <h2 style={{ fontSize: 36, fontWeight: 700, letterSpacing: "-.02em", color: "var(--s900)", marginBottom: 8 }}>Lo que dicen los técnicos</h2>
-          <p style={{ fontSize: 17, color: "var(--s500)", marginBottom: 56 }}>Profesionales reales. Resultados reales.</p>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 20 }}>
+          <h2 className="section-h2" style={{ fontSize: 36, fontWeight: 700, letterSpacing: "-.02em", color: "var(--s900)", marginBottom: 8 }}>Lo que dicen los técnicos</h2>
+          <p style={{ fontSize: 17, color: "var(--s500)", marginBottom: 48 }}>Profesionales reales. Resultados reales.</p>
+          <div className="testi-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 20 }}>
             {[
               { text: '"Antes tardaba un día entero en completar un expediente. Con CERTIFIVE lo tengo listo en dos horas y el registro autonómico lo acepta a la primera. La diferencia es brutal."', name: "Miguel Ángel Torres", role: "Ingeniero Industrial · Madrid", init: "MA" },
               { text: '"La integración con CE3X es un antes y un después. Nada de copiar datos a mano. El sistema los importa, los valida y genera el certificado en minutos. Puro ahorro."', name: "Laura García Fonts", role: "Arquitecta Técnica · Barcelona", init: "LG" },
@@ -329,7 +439,7 @@ export default function Landing() {
                 </div>
                 <p style={{ fontSize: 14, color: "var(--s700)", lineHeight: 1.7, marginBottom: 20, fontStyle: "italic" }}>{t.text}</p>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--s100)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "var(--s500)" }}>{t.init}</div>
+                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--s100)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "var(--s500)", flexShrink: 0 }}>{t.init}</div>
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 700, color: "var(--s900)" }}>{t.name}</div>
                     <div style={{ fontSize: 12, color: "var(--s400)" }}>{t.role}</div>
@@ -342,14 +452,14 @@ export default function Landing() {
       </section>
 
       {/* ── FINAL CTA ── */}
-      <section style={{ padding: "100px 32px", textAlign: "center", background: "var(--s50)", borderTop: "1px solid var(--s200)" }}>
+      <section className="section-pad" style={{ padding: "100px 32px", textAlign: "center", background: "var(--s50)", borderTop: "1px solid var(--s200)" }}>
         <div style={{ maxWidth: 600, margin: "0 auto" }}>
-          <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--teal)", marginBottom: 12, textAlign: "center" }}>Empieza hoy</div>
-          <h2 style={{ fontSize: 40, fontWeight: 700, letterSpacing: "-.02em", color: "var(--s900)", marginBottom: 16 }}>Tu despacho merece herramientas profesionales</h2>
+          <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--teal)", marginBottom: 12 }}>Empieza hoy</div>
+          <h2 className="section-h2" style={{ fontSize: 40, fontWeight: 700, letterSpacing: "-.02em", color: "var(--s900)", marginBottom: 16 }}>Tu despacho merece herramientas profesionales</h2>
           <p style={{ fontSize: 17, color: "var(--s500)", margin: "0 auto 40px", lineHeight: 1.65 }}>14 días de prueba gratuita. Sin tarjeta de crédito. Sin permanencia.</p>
-          <div style={{ display: "flex", justifyContent: "center", gap: 16, marginBottom: 20 }}>
+          <div className="cta-btns" style={{ display: "flex", justifyContent: "center", gap: 16, marginBottom: 20 }}>
             <button onClick={() => navigate("/registro")}
-              style={{ padding: "14px 32px", fontSize: 15, fontWeight: 600, borderRadius: "var(--r)", cursor: "pointer", textDecoration: "none", transition: "all .15s", background: "var(--teal)", color: "#fff", border: "none" }}
+              style={{ padding: "14px 32px", fontSize: 15, fontWeight: 600, borderRadius: "var(--r)", cursor: "pointer", transition: "all .15s", background: "var(--teal)", color: "#fff", border: "none" }}
               onMouseOver={e => (e.currentTarget.style.background = "var(--teal-dk)")}
               onMouseOut={e => (e.currentTarget.style.background = "var(--teal)")}>
               Empezar Gratis — 14 días
@@ -367,10 +477,10 @@ export default function Landing() {
       </section>
 
       {/* ── FOOTER ── */}
-      <footer style={{ background: "var(--s900)", padding: "60px 32px 40px", color: "var(--s400)" }}>
+      <footer style={{ background: "var(--s900)", padding: "60px 24px 40px", color: "var(--s400)" }}>
         <div style={{ maxWidth: "var(--mw)", margin: "0 auto" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr 1fr 1fr", gap: 48, marginBottom: 48 }}>
-            <div>
+          <div className="footer-grid" style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr 1fr 1fr", gap: 48, marginBottom: 48 }}>
+            <div className="footer-brand">
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
                 <div style={{ width: 24, height: 24, background: "var(--teal)", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="5" height="5" rx="1" fill="white" opacity="0.9"/><rect x="9" y="2" width="5" height="5" rx="1" fill="white" opacity="0.6"/><rect x="2" y="9" width="5" height="5" rx="1" fill="white" opacity="0.6"/><rect x="9" y="9" width="5" height="5" rx="1" fill="white" opacity="0.9"/></svg>
@@ -394,12 +504,14 @@ export default function Landing() {
               </div>
             ))}
           </div>
-          <div style={{ borderTop: "1px solid rgba(255,255,255,.06)", paddingTop: 28, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: 12, color: "var(--s500)" }}>© 2026 CERTIFIVE Technologies S.L. Todos los derechos reservados.</span>
-            <div style={{ display: "flex", gap: 24 }}>
-              {["Privacidad","Términos","Cookies","RGPD"].map(l => (
-                <a key={l} href="#" className="footer-link" style={{ fontSize: 12, color: "var(--s500)", textDecoration: "none", transition: "color .15s" }}>{l}</a>
-              ))}
+          <div style={{ borderTop: "1px solid rgba(255,255,255,.06)", paddingTop: 28 }}>
+            <div className="footer-bottom-inner" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: 12, color: "var(--s500)" }}>© 2026 CERTIFIVE Technologies S.L. Todos los derechos reservados.</span>
+              <div className="footer-legal-links" style={{ display: "flex", gap: 24 }}>
+                {["Privacidad","Términos","Cookies","RGPD"].map(l => (
+                  <a key={l} href="#" className="footer-link" style={{ fontSize: 12, color: "var(--s500)", textDecoration: "none", transition: "color .15s" }}>{l}</a>
+                ))}
+              </div>
             </div>
           </div>
         </div>
