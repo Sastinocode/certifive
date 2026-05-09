@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import Sidebar from "@/components/layout/sidebar";
 import { useToast } from "@/hooks/use-toast";
 import { NotificationStatus } from "@/components/notifications/NotificationStatus";
@@ -26,7 +27,11 @@ import {
   Calendar,
   HardDrive,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Wallet,
+  CreditCard,
+  Banknote,
+  Smartphone
 } from "lucide-react";
 
 export default function Settings() {
@@ -45,6 +50,14 @@ export default function Settings() {
     address: "",
     dni: ""
   });
+
+  // Payment method settings
+  const [paymentSettings, setPaymentSettings] = useState({
+    bizumPhone: "",
+    iban: "",
+    enabledPaymentMethods: ["stripe", "bizum", "transferencia", "efectivo"] as string[],
+  });
+  const [isSavingPayment, setIsSavingPayment] = useState(false);
 
   // Notification settings
   const [notifications, setNotifications] = useState({
@@ -75,7 +88,7 @@ export default function Settings() {
     missingFields: [] as string[]
   });
 
-  // Load profile validation on mount
+  // Load profile validation and payment settings on mount
   useEffect(() => {
     const loadProfileValidation = async () => {
       try {
@@ -89,8 +102,57 @@ export default function Settings() {
       }
     };
 
+    const loadPaymentSettings = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        const response = await fetch('/api/auth/user', { headers });
+        if (response.ok) {
+          const userData = await response.json();
+          setPaymentSettings({
+            bizumPhone: userData.bizumPhone || "",
+            iban: userData.iban || "",
+            enabledPaymentMethods: (userData.enabledPaymentMethods as string[]) ?? ["stripe", "bizum", "transferencia", "efectivo"],
+          });
+        }
+      } catch (error) {
+        console.error('Error loading payment settings:', error);
+      }
+    };
+
     loadProfileValidation();
+    loadPaymentSettings();
   }, []);
+
+  const handlePaymentSettingsSave = async () => {
+    setIsSavingPayment(true);
+    try {
+      const response = await fetch('/api/auth/user/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bizumPhone: paymentSettings.bizumPhone || null,
+          iban: paymentSettings.iban || null,
+          enabledPaymentMethods: paymentSettings.enabledPaymentMethods,
+        }),
+      });
+      if (!response.ok) throw new Error();
+      toast({ title: "Métodos de cobro guardados", description: "Los datos de pago se han actualizado correctamente." });
+    } catch {
+      toast({ title: "Error", description: "No se pudo guardar la configuración de cobro.", variant: "destructive" });
+    }
+    setIsSavingPayment(false);
+  };
+
+  const togglePaymentMethod = (method: string) => {
+    setPaymentSettings(prev => ({
+      ...prev,
+      enabledPaymentMethods: prev.enabledPaymentMethods.includes(method)
+        ? prev.enabledPaymentMethods.filter(m => m !== method)
+        : [...prev.enabledPaymentMethods, method],
+    }));
+  };
 
   const handleProfileSave = async () => {
     setIsSaving(true);
@@ -661,6 +723,112 @@ export default function Settings() {
                 <Button onClick={handleCertificateSettingsSave} disabled={isSaving}>
                   <Save className="w-4 h-4 mr-2" />
                   {isSaving ? "Guardando..." : "Guardar Configuración"}
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Payment Methods Settings */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center">
+                  <Wallet className="w-5 h-5 text-primary mr-2" />
+                  <CardTitle>Métodos de Cobro</CardTitle>
+                </div>
+                <p className="text-sm text-gray-500 mt-1">
+                  Configura cómo pueden pagarte tus clientes al aceptar un presupuesto
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Enabled methods */}
+                <div>
+                  <Label className="text-sm font-semibold mb-3 block">Métodos activos para el cliente</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { key: "stripe",        icon: <CreditCard className="w-4 h-4" />, label: "Tarjeta bancaria",    desc: "Pago online con Stripe" },
+                      { key: "bizum",         icon: <Smartphone className="w-4 h-4" />, label: "Bizum",              desc: "Transferencia instantánea" },
+                      { key: "transferencia", icon: <Banknote className="w-4 h-4" />,   label: "Transferencia SEPA", desc: "Banco a banco" },
+                      { key: "efectivo",      icon: <Wallet className="w-4 h-4" />,     label: "Efectivo",           desc: "Pago en mano" },
+                    ].map(({ key, icon, label, desc }) => {
+                      const active = paymentSettings.enabledPaymentMethods.includes(key);
+                      return (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() => togglePaymentMethod(key)}
+                          data-testid={`toggle-method-${key}`}
+                          className={`flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all ${
+                            active
+                              ? "border-teal-500 bg-teal-50"
+                              : "border-gray-200 bg-white hover:border-gray-300"
+                          }`}
+                        >
+                          <div className={`mt-0.5 flex-shrink-0 ${active ? "text-teal-700" : "text-gray-400"}`}>{icon}</div>
+                          <div className="min-w-0">
+                            <p className={`text-sm font-semibold ${active ? "text-teal-800" : "text-gray-700"}`}>{label}</p>
+                            <p className="text-xs text-gray-400">{desc}</p>
+                          </div>
+                          <div className={`ml-auto flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                            active ? "border-teal-500 bg-teal-500" : "border-gray-300"
+                          }`}>
+                            {active && <CheckCircle className="w-3 h-3 text-white fill-white" />}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Bizum phone */}
+                <div>
+                  <Label htmlFor="bizumPhone" className="flex items-center gap-2">
+                    <Smartphone className="w-4 h-4 text-violet-600" />
+                    Número Bizum
+                  </Label>
+                  <p className="text-xs text-gray-500 mb-2">Número de teléfono donde recibirás los pagos por Bizum</p>
+                  <Input
+                    id="bizumPhone"
+                    type="tel"
+                    value={paymentSettings.bizumPhone}
+                    onChange={(e) => setPaymentSettings(prev => ({ ...prev, bizumPhone: e.target.value }))}
+                    placeholder="Ej: 612 345 678"
+                    data-testid="input-bizum-phone"
+                  />
+                  {paymentSettings.enabledPaymentMethods.includes("bizum") && !paymentSettings.bizumPhone && (
+                    <p className="text-xs text-amber-600 mt-1.5 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" />
+                      Bizum está activo pero no has introducido tu número. Los clientes no podrán usarlo.
+                    </p>
+                  )}
+                </div>
+
+                {/* IBAN */}
+                <div>
+                  <Label htmlFor="iban" className="flex items-center gap-2">
+                    <Banknote className="w-4 h-4 text-blue-600" />
+                    IBAN para transferencias
+                  </Label>
+                  <p className="text-xs text-gray-500 mb-2">Número de cuenta donde recibirás las transferencias bancarias</p>
+                  <Input
+                    id="iban"
+                    value={paymentSettings.iban}
+                    onChange={(e) => setPaymentSettings(prev => ({ ...prev, iban: e.target.value.toUpperCase() }))}
+                    placeholder="Ej: ES12 1234 5678 9012 3456 7890"
+                    className="font-mono"
+                    data-testid="input-iban"
+                  />
+                  {paymentSettings.enabledPaymentMethods.includes("transferencia") && !paymentSettings.iban && (
+                    <p className="text-xs text-amber-600 mt-1.5 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" />
+                      Transferencia está activa pero no has introducido tu IBAN. Los clientes no podrán usarla.
+                    </p>
+                  )}
+                </div>
+
+                <Button onClick={handlePaymentSettingsSave} disabled={isSavingPayment} data-testid="btn-save-payment-settings">
+                  <Save className="w-4 h-4 mr-2" />
+                  {isSavingPayment ? "Guardando..." : "Guardar Métodos de Cobro"}
                 </Button>
               </CardContent>
             </Card>
