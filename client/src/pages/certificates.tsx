@@ -12,6 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import Sidebar from "@/components/layout/sidebar";
+import { downloadPDF, downloadWord, downloadExcel } from "@/lib/certDownload";
 import { 
   IdCard, 
   Plus, 
@@ -233,51 +234,32 @@ export default function Certificates() {
     },
   });
 
-  const downloadReportMutation = useMutation({
-    mutationFn: async ({ certificationId, format }: { certificationId: number; format: string }) => {
-      const response = await fetch(`/api/certifications/${certificationId}/report/${format}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+  const [downloadingId, setDownloadingId] = useState<number | null>(null);
 
-      if (!response.ok) {
-        throw new Error('Error al generar el reporte');
+  const handleDownload = async (cert: Certification, format: "pdf" | "word" | "excel") => {
+    setDownloadingId(cert.id);
+    try {
+      if (format === "pdf") {
+        downloadPDF(cert);
+        toast({ title: "PDF generado", description: `CEE_${cert.cadastralRef || cert.id}_*.pdf descargado correctamente.` });
+      } else if (format === "word") {
+        await downloadWord(cert);
+        toast({ title: "Word generado", description: `CEE_${cert.cadastralRef || cert.id}_*.docx descargado correctamente.` });
+      } else {
+        downloadExcel(cert);
+        toast({ title: "Excel generado", description: `CEE_${cert.cadastralRef || cert.id}_*.xlsx descargado correctamente.` });
       }
-
-      const blob = await response.blob();
-      const contentDisposition = response.headers.get('Content-Disposition');
-      const filename = contentDisposition
-        ? contentDisposition.split('filename=')[1]?.replace(/"/g, '')
-        : `certificacion_${certificationId}_${format}.${format === 'pdf' ? 'pdf' : format === 'word' ? 'docx' : 'xlsx'}`;
-
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.style.display = 'none';
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-
-      return { filename };
-    },
-    onSuccess: (data) => {
+    } catch (err) {
+      console.error("Error generando documento:", err);
       toast({
-        title: "Reporte generado",
-        description: `El archivo ${data.filename} se ha descargado correctamente`,
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Error al generar el reporte técnico",
+        title: "Error al generar el documento",
+        description: `No se pudo crear el archivo ${format.toUpperCase()}. Comprueba que la certificación tiene datos completos.`,
         variant: "destructive",
       });
-    },
-  });
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   const archiveCertificationMutation = useMutation({
     mutationFn: async (certificationId: number) => {
@@ -702,46 +684,40 @@ export default function Certificates() {
                                 
                                 <DropdownMenu>
                                   <DropdownMenuTrigger asChild>
-                                    <Button 
-                                      variant="outline" 
+                                    <Button
+                                      variant="outline"
                                       size="sm"
-                                      disabled={typedCert.status !== "completed" && downloadReportMutation.isPending}
+                                      disabled={downloadingId === typedCert.id}
                                       data-testid={`btn-descargar-${typedCert.id}`}
                                     >
                                       <Download className="w-4 h-4 mr-1" />
-                                      Descargar
+                                      {downloadingId === typedCert.id ? "Generando..." : "Descargar"}
                                     </Button>
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent align="end">
                                     <DropdownMenuItem
-                                      onClick={() => downloadReportMutation.mutate({
-                                        certificationId: typedCert.id,
-                                        format: 'pdf'
-                                      })}
-                                      disabled={typedCert.status !== "completed"}
+                                      onClick={() => handleDownload(typedCert, "pdf")}
+                                      disabled={downloadingId === typedCert.id}
+                                      data-testid={`btn-pdf-${typedCert.id}`}
                                     >
-                                      <FileText className="w-4 h-4 mr-2" />
-                                      Reporte PDF
+                                      <FileText className="w-4 h-4 mr-2 text-red-500" />
+                                      Descargar PDF
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
-                                      onClick={() => downloadReportMutation.mutate({
-                                        certificationId: typedCert.id,
-                                        format: 'word'
-                                      })}
-                                      disabled={typedCert.status !== "completed"}
+                                      onClick={() => handleDownload(typedCert, "word")}
+                                      disabled={downloadingId === typedCert.id}
+                                      data-testid={`btn-word-${typedCert.id}`}
                                     >
-                                      <File className="w-4 h-4 mr-2" />
-                                      Documento Word
+                                      <File className="w-4 h-4 mr-2 text-blue-500" />
+                                      Descargar Word
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
-                                      onClick={() => downloadReportMutation.mutate({
-                                        certificationId: typedCert.id,
-                                        format: 'excel'
-                                      })}
-                                      disabled={typedCert.status !== "completed"}
+                                      onClick={() => handleDownload(typedCert, "excel")}
+                                      disabled={downloadingId === typedCert.id}
+                                      data-testid={`btn-excel-${typedCert.id}`}
                                     >
-                                      <Sheet className="w-4 h-4 mr-2" />
-                                      Hoja Excel
+                                      <Sheet className="w-4 h-4 mr-2 text-green-600" />
+                                      Descargar Excel
                                     </DropdownMenuItem>
                                   </DropdownMenuContent>
                                 </DropdownMenu>
