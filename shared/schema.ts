@@ -36,8 +36,14 @@ export const users = pgTable("users", {
   role: text("role").notNull().default("user"),   // "user" | "admin"
   replitId: text("replit_id").unique(),
   profileImageUrl: text("profile_image_url"),
-  // Stripe customer
+  // Stripe customer & subscription
   stripeCustomerId: text("stripe_customer_id").unique(),
+  stripeSubscriptionId: text("stripe_subscription_id").unique(),
+  stripePriceId: text("stripe_price_id"),
+  subscriptionPlan: text("subscription_plan").default("free"),  // "free"|"basico"|"pro"|"enterprise"
+  subscriptionStatus: text("subscription_status").default("active"), // "active"|"trialing"|"canceled"|"past_due"|"incomplete"
+  subscriptionCurrentPeriodEnd: timestamp("subscription_current_period_end"),
+  subscriptionCanceledAt: timestamp("subscription_canceled_at"),
   // Email verification
   emailVerifiedAt: timestamp("email_verified_at"),
   emailVerificationToken: text("email_verification_token"),

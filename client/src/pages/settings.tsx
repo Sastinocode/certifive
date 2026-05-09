@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import Sidebar from "@/components/layout/sidebar";
 import { useToast } from "@/hooks/use-toast";
 import { NotificationStatus } from "@/components/notifications/NotificationStatus";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { 
   Settings as SettingsIcon, 
   User, 
@@ -31,7 +33,16 @@ import {
   Wallet,
   CreditCard,
   Banknote,
-  Smartphone
+  Smartphone,
+  Crown,
+  Star,
+  Zap,
+  Check,
+  ExternalLink,
+  RefreshCw,
+  Package,
+  Receipt,
+  Building2
 } from "lucide-react";
 
 export default function Settings() {
@@ -324,6 +335,145 @@ export default function Settings() {
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  // ── Subscription ────────────────────────────────────────────────────────────
+  const { data: subData, isLoading: subLoading, refetch: refetchSub } = useQuery<{
+    plan: string;
+    status: string;
+    currentPeriodEnd: string | null;
+    cancelAtPeriodEnd: boolean;
+    cancelAt: string | null;
+    stripeCustomerId: string | null;
+    stripeConfigured: boolean;
+    priceIds: Record<string, string | undefined>;
+  }>({
+    queryKey: ["/api/subscription"],
+  });
+
+  const { data: invoiceData, isLoading: invoicesLoading } = useQuery<{
+    invoices: Array<{
+      id: string;
+      number: string | null;
+      amount: number;
+      currency: string;
+      status: string;
+      created: string;
+      pdfUrl: string | null;
+      hostedUrl: string | null;
+      description: string | null;
+    }>;
+    stripeConfigured: boolean;
+  }>({
+    queryKey: ["/api/subscription/invoices"],
+  });
+
+  const [openingPortal, setOpeningPortal] = useState(false);
+  const [checkingOut, setCheckingOut] = useState<string | null>(null);
+
+  const openBillingPortal = async () => {
+    setOpeningPortal(true);
+    try {
+      const res = await apiRequest("POST", "/api/subscription/portal", {
+        returnUrl: window.location.href,
+      });
+      const { url } = await res.json();
+      window.open(url, "_blank");
+    } catch (err: any) {
+      toast({ title: "Error", description: err?.message ?? "No se pudo abrir el portal de facturación", variant: "destructive" });
+    }
+    setOpeningPortal(false);
+  };
+
+  const startCheckout = async (plan: string) => {
+    setCheckingOut(plan);
+    try {
+      const res = await apiRequest("POST", "/api/subscription/checkout", {
+        plan,
+        returnUrl: window.location.href,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+      window.open(data.url, "_blank");
+    } catch (err: any) {
+      toast({ title: "Error", description: err?.message ?? "No se pudo iniciar el checkout", variant: "destructive" });
+    }
+    setCheckingOut(null);
+  };
+
+  const PLANS = [
+    {
+      key: "free",
+      name: "Gratuito",
+      price: 0,
+      period: "",
+      icon: <Package className="w-5 h-5" />,
+      color: "text-slate-600",
+      bg: "bg-slate-50",
+      border: "border-slate-200",
+      certs: "5 certificados/mes",
+      features: ["Gestión básica de certificados", "Exportación PDF", "Soporte por email"],
+      notIncluded: ["WhatsApp automatizado", "Clientes ilimitados", "Informes avanzados", "Facturación integrada"],
+    },
+    {
+      key: "basico",
+      name: "Básico",
+      price: 29,
+      period: "/mes",
+      icon: <Star className="w-5 h-5" />,
+      color: "text-blue-600",
+      bg: "bg-blue-50",
+      border: "border-blue-200",
+      certs: "30 certificados/mes",
+      features: ["Todo lo del plan Gratuito", "WhatsApp automatizado", "Exportación Word y Excel", "Gestión de carpetas", "Soporte prioritario"],
+      notIncluded: ["Clientes ilimitados", "API acceso"],
+    },
+    {
+      key: "pro",
+      name: "Pro",
+      price: 59,
+      period: "/mes",
+      icon: <Zap className="w-5 h-5" />,
+      color: "text-teal-600",
+      bg: "bg-teal-50",
+      border: "border-teal-200",
+      certs: "100 certificados/mes",
+      features: ["Todo lo del plan Básico", "Flujos WhatsApp personalizados", "Facturación integrada", "Informes avanzados", "Tarifas dinámicas por zona", "Acceso API"],
+      notIncluded: [],
+      recommended: true,
+    },
+    {
+      key: "enterprise",
+      name: "Enterprise",
+      price: 99,
+      period: "/mes",
+      icon: <Building2 className="w-5 h-5" />,
+      color: "text-purple-600",
+      bg: "bg-purple-50",
+      border: "border-purple-200",
+      certs: "Ilimitados",
+      features: ["Todo lo del plan Pro", "Multi-usuario / equipo", "SLA garantizado", "Onboarding personalizado", "Gestor de cuenta dedicado"],
+      notIncluded: [],
+    },
+  ];
+
+  const currentPlan = PLANS.find(p => p.key === (subData?.plan ?? "free")) ?? PLANS[0];
+
+  const statusLabel = (s: string) => {
+    if (s === "active") return { text: "Activo", cls: "bg-green-100 text-green-700" };
+    if (s === "trialing") return { text: "Prueba", cls: "bg-blue-100 text-blue-700" };
+    if (s === "past_due") return { text: "Pago pendiente", cls: "bg-amber-100 text-amber-700" };
+    if (s === "canceled") return { text: "Cancelado", cls: "bg-red-100 text-red-700" };
+    return { text: s, cls: "bg-slate-100 text-slate-700" };
+  };
+
+  const fmtDate = (iso: string | null | undefined) => {
+    if (!iso) return "—";
+    return new Intl.DateTimeFormat("es-ES", { day: "2-digit", month: "long", year: "numeric" }).format(new Date(iso));
+  };
+
+  const fmtAmount = (amt: number, currency: string) => {
+    return new Intl.NumberFormat("es-ES", { style: "currency", currency: currency.toUpperCase() }).format(amt);
   };
 
   return (
@@ -830,6 +980,288 @@ export default function Settings() {
                   <Save className="w-4 h-4 mr-2" />
                   {isSavingPayment ? "Guardando..." : "Guardar Métodos de Cobro"}
                 </Button>
+              </CardContent>
+            </Card>
+
+            {/* ── Subscription Management ── */}
+            <Card id="suscripcion" data-testid="card-subscription">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Crown className="w-5 h-5 text-primary mr-2" />
+                    <CardTitle>Suscripción</CardTitle>
+                  </div>
+                  <button
+                    onClick={() => refetchSub()}
+                    className="text-slate-400 hover:text-slate-600 transition-colors"
+                    title="Actualizar"
+                    data-testid="btn-refresh-subscription"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                  </button>
+                </div>
+              </CardHeader>
+
+              <CardContent className="space-y-8">
+                {/* Current plan status bar */}
+                {subLoading ? (
+                  <div className="h-20 bg-slate-100 animate-pulse rounded-xl" />
+                ) : (
+                  <div className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-xl border-2 p-5 ${currentPlan.border} ${currentPlan.bg}`} data-testid="panel-current-plan">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-white border ${currentPlan.border} ${currentPlan.color}`}>
+                        {currentPlan.icon}
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">Plan actual</p>
+                        <p className="text-lg font-bold text-slate-800">{currentPlan.name}</p>
+                        <p className="text-xs text-slate-500">{currentPlan.certs}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col items-start sm:items-end gap-1.5">
+                      {subData && (
+                        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${statusLabel(subData.status).cls}`} data-testid="badge-sub-status">
+                          {statusLabel(subData.status).text}
+                        </span>
+                      )}
+                      {subData?.currentPeriodEnd && (
+                        <p className="text-xs text-slate-500">
+                          {subData.cancelAtPeriodEnd
+                            ? `Cancela el ${fmtDate(subData.currentPeriodEnd)}`
+                            : `Renueva el ${fmtDate(subData.currentPeriodEnd)}`}
+                        </p>
+                      )}
+                      {subData?.plan !== "free" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={openBillingPortal}
+                          disabled={openingPortal}
+                          className="text-xs mt-1"
+                          data-testid="btn-billing-portal"
+                        >
+                          {openingPortal ? (
+                            <RefreshCw className="w-3 h-3 mr-1.5 animate-spin" />
+                          ) : (
+                            <ExternalLink className="w-3 h-3 mr-1.5" />
+                          )}
+                          Gestionar suscripción
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Stripe not configured warning */}
+                {subData && !subData.stripeConfigured && (
+                  <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm" data-testid="alert-stripe-missing">
+                    <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-amber-800">Stripe no configurado</p>
+                      <p className="text-amber-700 mt-0.5">
+                        Añade <code className="bg-amber-100 px-1 rounded font-mono text-xs">STRIPE_SECRET_KEY</code> en las variables de entorno para activar la gestión de suscripciones y pagos.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <Separator />
+
+                {/* Plans comparison grid */}
+                <div>
+                  <p className="text-sm font-semibold text-slate-700 mb-4">Planes disponibles</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {PLANS.map(plan => {
+                      const isCurrent = plan.key === (subData?.plan ?? "free");
+                      return (
+                        <div
+                          key={plan.key}
+                          className={`relative rounded-xl border-2 p-4 flex flex-col gap-3 transition-all ${
+                            isCurrent
+                              ? `${plan.border} ${plan.bg}`
+                              : "border-slate-200 bg-white hover:border-slate-300"
+                          }`}
+                          data-testid={`card-plan-${plan.key}`}
+                        >
+                          {plan.recommended && !isCurrent && (
+                            <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-teal-600 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wide">
+                              Recomendado
+                            </span>
+                          )}
+                          {isCurrent && (
+                            <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-slate-700 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wide">
+                              Plan actual
+                            </span>
+                          )}
+
+                          <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${plan.bg} border ${plan.border} ${plan.color}`}>
+                            {plan.icon}
+                          </div>
+
+                          <div>
+                            <p className="font-bold text-slate-800">{plan.name}</p>
+                            <p className="text-xs text-slate-500">{plan.certs}</p>
+                          </div>
+
+                          <div className="flex items-baseline gap-0.5">
+                            <span className="text-2xl font-bold text-slate-800">{plan.price === 0 ? "Gratis" : `${plan.price}€`}</span>
+                            {plan.period && <span className="text-xs text-slate-400">{plan.period}</span>}
+                          </div>
+
+                          <ul className="space-y-1.5 flex-1">
+                            {plan.features.map(f => (
+                              <li key={f} className="flex items-start gap-1.5 text-xs text-slate-600">
+                                <Check className="w-3.5 h-3.5 text-green-500 flex-shrink-0 mt-0.5" />
+                                {f}
+                              </li>
+                            ))}
+                            {plan.notIncluded?.map(f => (
+                              <li key={f} className="flex items-start gap-1.5 text-xs text-slate-400 line-through">
+                                <span className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-center">—</span>
+                                {f}
+                              </li>
+                            ))}
+                          </ul>
+
+                          {isCurrent ? (
+                            plan.key !== "free" ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="w-full text-xs"
+                                onClick={openBillingPortal}
+                                disabled={openingPortal}
+                                data-testid={`btn-manage-plan-${plan.key}`}
+                              >
+                                <ExternalLink className="w-3 h-3 mr-1" />
+                                Gestionar
+                              </Button>
+                            ) : (
+                              <div className="w-full text-center text-xs text-slate-400 py-1">Plan activo</div>
+                            )
+                          ) : plan.key === "free" ? (
+                            <div className="w-full text-center text-xs text-slate-400 py-1">Sin cargo</div>
+                          ) : (
+                            <Button
+                              size="sm"
+                              className="w-full text-xs bg-teal-600 hover:bg-teal-700 text-white"
+                              onClick={() => startCheckout(plan.key)}
+                              disabled={checkingOut === plan.key || !subData?.stripeConfigured}
+                              data-testid={`btn-subscribe-${plan.key}`}
+                            >
+                              {checkingOut === plan.key ? (
+                                <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+                              ) : null}
+                              {checkingOut === plan.key ? "Redirigiendo..." : "Contratar"}
+                            </Button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Invoice history */}
+                <div>
+                  <p className="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2">
+                    <Receipt className="w-4 h-4" />
+                    Historial de facturas Stripe
+                  </p>
+
+                  {invoicesLoading ? (
+                    <div className="space-y-2">
+                      {[1, 2, 3].map(i => (
+                        <div key={i} className="h-12 bg-slate-100 animate-pulse rounded-lg" />
+                      ))}
+                    </div>
+                  ) : !invoiceData?.stripeConfigured ? (
+                    <p className="text-sm text-slate-400 py-4 text-center">Stripe no configurado — las facturas aparecerán aquí una vez activado.</p>
+                  ) : !invoiceData?.invoices?.length ? (
+                    <p className="text-sm text-slate-400 py-4 text-center">No hay facturas aún. Aparecerán aquí tras tu primera suscripción.</p>
+                  ) : (
+                    <div className="rounded-xl border border-slate-200 overflow-hidden">
+                      <table className="w-full text-sm">
+                        <thead className="bg-slate-50 border-b border-slate-200">
+                          <tr>
+                            <th className="text-left px-4 py-3 font-medium text-slate-600 text-xs">Factura</th>
+                            <th className="text-left px-4 py-3 font-medium text-slate-600 text-xs hidden sm:table-cell">Fecha</th>
+                            <th className="text-left px-4 py-3 font-medium text-slate-600 text-xs">Importe</th>
+                            <th className="text-left px-4 py-3 font-medium text-slate-600 text-xs hidden md:table-cell">Estado</th>
+                            <th className="text-right px-4 py-3 font-medium text-slate-600 text-xs">PDF</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {invoiceData.invoices.map((inv, idx) => {
+                            const st = inv.status === "paid"
+                              ? { text: "Pagada", cls: "bg-green-100 text-green-700" }
+                              : inv.status === "open"
+                              ? { text: "Pendiente", cls: "bg-amber-100 text-amber-700" }
+                              : { text: inv.status, cls: "bg-slate-100 text-slate-600" };
+                            return (
+                              <tr key={inv.id} className="hover:bg-slate-50 transition-colors" data-testid={`row-invoice-${idx}`}>
+                                <td className="px-4 py-3">
+                                  <p className="font-medium text-slate-700">{inv.number ?? inv.id.slice(0, 12)}</p>
+                                  {inv.description && (
+                                    <p className="text-xs text-slate-400 truncate max-w-[160px]">{inv.description}</p>
+                                  )}
+                                </td>
+                                <td className="px-4 py-3 text-slate-500 text-xs hidden sm:table-cell">{fmtDate(inv.created)}</td>
+                                <td className="px-4 py-3 font-semibold text-slate-700">{fmtAmount(inv.amount, inv.currency)}</td>
+                                <td className="px-4 py-3 hidden md:table-cell">
+                                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${st.cls}`}>{st.text}</span>
+                                </td>
+                                <td className="px-4 py-3 text-right">
+                                  {inv.pdfUrl ? (
+                                    <a
+                                      href={inv.pdfUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 text-xs text-teal-600 hover:text-teal-700 font-medium"
+                                      data-testid={`btn-download-invoice-${idx}`}
+                                    >
+                                      <Download className="w-3.5 h-3.5" />
+                                      PDF
+                                    </a>
+                                  ) : inv.hostedUrl ? (
+                                    <a
+                                      href={inv.hostedUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700"
+                                      data-testid={`btn-view-invoice-${idx}`}
+                                    >
+                                      <ExternalLink className="w-3.5 h-3.5" />
+                                      Ver
+                                    </a>
+                                  ) : (
+                                    <span className="text-xs text-slate-300">—</span>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+
+                {/* Cancel / manage footer note */}
+                {subData?.plan !== "free" && subData?.stripeConfigured && (
+                  <p className="text-xs text-slate-400 text-center">
+                    Para cancelar tu suscripción, usar otro método de pago o cambiar de plan,{" "}
+                    <button
+                      onClick={openBillingPortal}
+                      className="text-teal-600 hover:underline font-medium"
+                      data-testid="btn-portal-link-footer"
+                    >
+                      abre el portal de facturación
+                    </button>.
+                  </p>
+                )}
               </CardContent>
             </Card>
 
