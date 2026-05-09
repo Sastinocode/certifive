@@ -40,38 +40,56 @@ interface RegisterData {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const TOKEN_KEY = "token";
-const LOGOUT_KEY = "has_logged_out";
+const EXPLICIT_DEMO_KEY = "explicitDemo";
+
+function isDemoUser(user: any) {
+  return user?.username === "demo" || user?.email === "demo@certifive.es";
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem(TOKEN_KEY));
+  const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
   const saveToken = (t: string) => {
     setToken(t);
     localStorage.setItem(TOKEN_KEY, t);
-    localStorage.removeItem(LOGOUT_KEY);
-    localStorage.removeItem("hasLoggedOut");
   };
 
-  const clearToken = () => {
+  const clearAll = () => {
     setToken(null);
+    setUser(null);
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem("refreshToken");
     localStorage.removeItem("auth_token");
     localStorage.removeItem("demo_user");
+    localStorage.removeItem(EXPLICIT_DEMO_KEY);
+    localStorage.removeItem("hasLoggedOut");
+    localStorage.removeItem("has_logged_out");
   };
 
   useEffect(() => {
     const checkAuth = async () => {
       const savedToken = localStorage.getItem(TOKEN_KEY);
-      if (savedToken) {
-        try {
-          const userData = await apiRequest("GET", "/api/auth/user");
-          setUser(userData);
-          setToken(savedToken);
-        } catch {
-          clearToken();
+      if (!savedToken) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const userData = await apiRequest("GET", "/api/auth/user");
+
+        // Demo tokens only count if the user explicitly chose demo mode
+        if (isDemoUser(userData) && localStorage.getItem(EXPLICIT_DEMO_KEY) !== "true") {
+          clearAll();
+          setIsLoading(false);
+          return;
         }
+
+        setUser(userData);
+        setToken(savedToken);
+      } catch {
+        clearAll();
       }
       setIsLoading(false);
     };
@@ -82,6 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       const response = await apiRequest("POST", "/api/auth/login", { email, password });
+      localStorage.removeItem(EXPLICIT_DEMO_KEY);
       setUser(response.user);
       saveToken(response.token);
       if (response.refreshToken) localStorage.setItem("refreshToken", response.refreshToken);
@@ -93,6 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = async (userData: RegisterData) => {
     try {
       const response = await apiRequest("POST", "/api/auth/register", userData);
+      localStorage.removeItem(EXPLICIT_DEMO_KEY);
       setUser(response.user);
       saveToken(response.token);
       if (response.refreshToken) localStorage.setItem("refreshToken", response.refreshToken);
@@ -103,24 +123,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      if (token) {
-        await apiRequest("POST", "/api/auth/logout", {});
-      }
+      if (token) await apiRequest("POST", "/api/auth/logout", {});
     } catch {
-      // Ignore logout API errors
+      // ignore
     }
-    setUser(null);
-    clearToken();
-    localStorage.setItem(LOGOUT_KEY, "true");
-    localStorage.setItem("hasLoggedOut", "true");
+    clearAll();
     window.location.href = "/";
   };
 
   const loginDemo = async () => {
-    localStorage.removeItem(LOGOUT_KEY);
-    localStorage.removeItem("hasLoggedOut");
     try {
       const response = await apiRequest("POST", "/api/auth/demo", {});
+      // Mark this as an intentional demo session
+      localStorage.setItem(EXPLICIT_DEMO_KEY, "true");
       setUser(response.user);
       saveToken(response.token);
       if (response.refreshToken) localStorage.setItem("refreshToken", response.refreshToken);
