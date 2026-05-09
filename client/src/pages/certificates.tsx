@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import Sidebar from "@/components/layout/sidebar";
@@ -18,13 +18,16 @@ import {
   Search,
   Download, 
   Eye,
-  Edit,
-  Filter,
   MoreVertical,
   FileText,
   Sheet,
   File,
-  Archive
+  Archive,
+  Copy,
+  ExternalLink,
+  X,
+  Link2,
+  FileCheck
 } from "lucide-react";
 
 interface Certification {
@@ -50,11 +53,118 @@ interface Certification {
   windowDetails: string | null;
   roofType: string | null;
   airConditioningSystem: string | null;
+  presupuestoToken: string | null;
+  ceeToken: string | null;
+  solicitudToken: string | null;
+}
+
+interface PreviewLink {
+  label: string;
+  url: string;
+  icon: React.ReactNode;
+}
+
+function ClientLinkPreviewModal({
+  open,
+  onClose,
+  links,
+  clientName,
+}: {
+  open: boolean;
+  onClose: () => void;
+  links: PreviewLink[];
+  clientName: string;
+}) {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const { toast } = useToast();
+
+  const activeLink = links[activeIndex];
+
+  const copyToClipboard = (url: string) => {
+    navigator.clipboard.writeText(url).then(() => {
+      toast({ title: "Enlace copiado", description: "URL copiada al portapapeles" });
+    });
+  };
+
+  if (!open || links.length === 0) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl w-full h-[80vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="px-6 pt-5 pb-4 border-b border-gray-100 flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <DialogTitle className="text-lg font-semibold text-gray-900">
+              Enlaces de cliente — {clientName}
+            </DialogTitle>
+            <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0">
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+
+          {/* Tab selector */}
+          {links.length > 1 && (
+            <div className="flex gap-2 mt-3">
+              {links.map((link, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActiveIndex(i)}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                    activeIndex === i
+                      ? "bg-teal-700 text-white"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  }`}
+                >
+                  {link.icon}
+                  {link.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </DialogHeader>
+
+        {/* URL bar */}
+        <div className="px-6 py-3 bg-gray-50 border-b border-gray-100 flex-shrink-0 flex items-center gap-2">
+          <div className="flex-1 flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-600 font-mono truncate">
+            <span className="truncate">{activeLink?.url}</span>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => copyToClipboard(activeLink?.url)}
+            className="flex-shrink-0 gap-1"
+          >
+            <Copy className="w-4 h-4" />
+            Copiar
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.open(activeLink?.url, "_blank")}
+            className="flex-shrink-0 gap-1"
+          >
+            <ExternalLink className="w-4 h-4" />
+            Abrir
+          </Button>
+        </div>
+
+        {/* iFrame preview */}
+        <div className="flex-1 overflow-hidden">
+          <iframe
+            key={activeLink?.url}
+            src={activeLink?.url}
+            className="w-full h-full border-0"
+            title={activeLink?.label}
+          />
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 export default function Certificates() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [previewCert, setPreviewCert] = useState<Certification | null>(null);
   const { toast } = useToast();
 
   const { data: certifications = [], isLoading } = useQuery({
@@ -80,7 +190,6 @@ export default function Certificates() {
         ? contentDisposition.split('filename=')[1]?.replace(/"/g, '')
         : `certificacion_${certificationId}_${format}.${format === 'pdf' ? 'pdf' : format === 'word' ? 'docx' : 'xlsx'}`;
 
-      // Create download link
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.style.display = 'none';
@@ -99,7 +208,7 @@ export default function Certificates() {
         description: `El archivo ${data.filename} se ha descargado correctamente`,
       });
     },
-    onError: (error) => {
+    onError: () => {
       toast({
         title: "Error",
         description: "Error al generar el reporte técnico",
@@ -155,7 +264,6 @@ export default function Certificates() {
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/certifications"] });
       
-      // Si el estado es "finalizado", archivar automáticamente
       if (variables.status === "finalizado") {
         archiveCertificationMutation.mutate(variables.certificationId);
       } else {
@@ -214,7 +322,33 @@ export default function Certificates() {
     );
   };
 
+  const buildPreviewLinks = (cert: Certification): PreviewLink[] => {
+    const links: PreviewLink[] = [];
+    const origin = window.location.origin;
 
+    if (cert.presupuestoToken) {
+      links.push({
+        label: "Tarifa / Presupuesto",
+        url: `${origin}/presupuesto/${cert.presupuestoToken}`,
+        icon: <Link2 className="w-3.5 h-3.5" />,
+      });
+    }
+    if (cert.ceeToken) {
+      links.push({
+        label: "Formulario CEE",
+        url: `${origin}/formulario-cee/${cert.ceeToken}`,
+        icon: <FileCheck className="w-3.5 h-3.5" />,
+      });
+    }
+    if (cert.solicitudToken) {
+      links.push({
+        label: "Solicitud",
+        url: `${origin}/solicitud/${cert.solicitudToken}`,
+        icon: <FileText className="w-3.5 h-3.5" />,
+      });
+    }
+    return links;
+  };
 
   const filteredCertifications = (certifications as Certification[]).filter((cert: Certification) => {
     const matchesSearch = (cert.ownerName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -223,6 +357,8 @@ export default function Certificates() {
     
     return matchesSearch && matchesStatus;
   });
+
+  const previewLinks = previewCert ? buildPreviewLinks(previewCert) : [];
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -334,115 +470,138 @@ export default function Certificates() {
                         <th className="text-left py-3 px-4 font-medium text-gray-700">Referencia Catastral</th>
                         <th className="text-left py-3 px-4 font-medium text-gray-700">Estado</th>
                         <th className="text-left py-3 px-4 font-medium text-gray-700">Fecha</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">Enlaces cliente</th>
                         <th className="text-right py-3 px-4 font-medium text-gray-700">Acciones</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredCertifications.map((cert) => (
-                        <tr key={cert.id} className="border-b border-gray-100 hover:bg-gray-50">
-                          <td className="py-4 px-4">
-                            <div className="font-medium text-gray-900">{cert.ownerName}</div>
-                            <div className="text-sm text-gray-500">{cert.ownerDni}</div>
-                          </td>
-                          <td className="py-4 px-4">
-                            <span className="text-sm text-gray-600">{cert.cadastralRef}</span>
-                          </td>
-                          <td className="py-4 px-4">
-                            {getStatusSelect(cert)}
-                          </td>
-                          <td className="py-4 px-4">
-                            <span className="text-sm text-gray-600">
-                              {cert.createdAt ? new Date(cert.createdAt).toLocaleDateString('es-ES') : 'N/A'}
-                            </span>
-                          </td>
-                          <td className="py-4 px-4">
-                            <div className="flex items-center justify-end gap-2">
-                              <Link to={`/certificacion-request/${cert.id}`}>
-                                <Button variant="outline" size="sm">
-                                  <Eye className="w-4 h-4 mr-1" />
-                                  Ver
+                      {filteredCertifications.map((cert) => {
+                        const typedCert = cert as Certification;
+                        const hasLinks = typedCert.presupuestoToken || typedCert.ceeToken || typedCert.solicitudToken;
+                        return (
+                          <tr key={typedCert.id} className="border-b border-gray-100 hover:bg-gray-50">
+                            <td className="py-4 px-4">
+                              <div className="font-medium text-gray-900">{typedCert.ownerName}</div>
+                              <div className="text-sm text-gray-500">{typedCert.ownerDni}</div>
+                            </td>
+                            <td className="py-4 px-4">
+                              <span className="text-sm text-gray-600">{typedCert.cadastralRef}</span>
+                            </td>
+                            <td className="py-4 px-4">
+                              {getStatusSelect(typedCert)}
+                            </td>
+                            <td className="py-4 px-4">
+                              <span className="text-sm text-gray-600">
+                                {typedCert.createdAt ? new Date(typedCert.createdAt).toLocaleDateString('es-ES') : 'N/A'}
+                              </span>
+                            </td>
+                            <td className="py-4 px-4">
+                              {hasLinks ? (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setPreviewCert(typedCert)}
+                                  className="gap-1.5 text-teal-700 border-teal-200 hover:bg-teal-50 hover:border-teal-300"
+                                  data-testid={`btn-preview-links-${typedCert.id}`}
+                                >
+                                  <Eye className="w-3.5 h-3.5" />
+                                  Ver enlaces
                                 </Button>
-                              </Link>
-                              
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button 
-                                    variant="outline" 
-                                    size="sm"
-                                    disabled={cert.status !== "completed" && downloadReportMutation.isPending}
-                                  >
-                                    <Download className="w-4 h-4 mr-1" />
-                                    Descargar
+                              ) : (
+                                <span className="text-xs text-gray-400 italic">Sin enlaces</span>
+                              )}
+                            </td>
+                            <td className="py-4 px-4">
+                              <div className="flex items-center justify-end gap-2">
+                                <Link to={`/certificacion-request/${typedCert.id}`}>
+                                  <Button variant="outline" size="sm" data-testid={`btn-ver-${typedCert.id}`}>
+                                    <Eye className="w-4 h-4 mr-1" />
+                                    Ver
                                   </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem
-                                    onClick={() => downloadReportMutation.mutate({
-                                      certificationId: cert.id,
-                                      format: 'pdf'
-                                    })}
-                                    disabled={cert.status !== "completed"}
-                                  >
-                                    <FileText className="w-4 h-4 mr-2" />
-                                    Reporte PDF
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() => downloadReportMutation.mutate({
-                                      certificationId: cert.id,
-                                      format: 'word'
-                                    })}
-                                    disabled={cert.status !== "completed"}
-                                  >
-                                    <File className="w-4 h-4 mr-2" />
-                                    Documento Word
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() => downloadReportMutation.mutate({
-                                      certificationId: cert.id,
-                                      format: 'excel'
-                                    })}
-                                    disabled={cert.status !== "completed"}
-                                  >
-                                    <Sheet className="w-4 h-4 mr-2" />
-                                    Hoja Excel
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                              
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => archiveCertificationMutation.mutate(cert.id)}
-                                disabled={archiveCertificationMutation.isPending}
-                              >
-                                <Archive className="w-4 h-4 mr-1" />
-                                Archivar
-                              </Button>
+                                </Link>
+                                
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm"
+                                      disabled={typedCert.status !== "completed" && downloadReportMutation.isPending}
+                                      data-testid={`btn-descargar-${typedCert.id}`}
+                                    >
+                                      <Download className="w-4 h-4 mr-1" />
+                                      Descargar
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem
+                                      onClick={() => downloadReportMutation.mutate({
+                                        certificationId: typedCert.id,
+                                        format: 'pdf'
+                                      })}
+                                      disabled={typedCert.status !== "completed"}
+                                    >
+                                      <FileText className="w-4 h-4 mr-2" />
+                                      Reporte PDF
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() => downloadReportMutation.mutate({
+                                        certificationId: typedCert.id,
+                                        format: 'word'
+                                      })}
+                                      disabled={typedCert.status !== "completed"}
+                                    >
+                                      <File className="w-4 h-4 mr-2" />
+                                      Documento Word
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() => downloadReportMutation.mutate({
+                                        certificationId: typedCert.id,
+                                        format: 'excel'
+                                      })}
+                                      disabled={typedCert.status !== "completed"}
+                                    >
+                                      <Sheet className="w-4 h-4 mr-2" />
+                                      Hoja Excel
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                                
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => archiveCertificationMutation.mutate(typedCert.id)}
+                                  disabled={archiveCertificationMutation.isPending}
+                                  data-testid={`btn-archivar-${typedCert.id}`}
+                                >
+                                  <Archive className="w-4 h-4 mr-1" />
+                                  Archivar
+                                </Button>
 
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="outline" size="sm">
-                                    <MoreVertical className="w-4 h-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem
-                                    onClick={() => {
-                                      if (confirm('¿Estás seguro de que quieres eliminar esta certificación? Esta acción no se puede deshacer.')) {
-                                        deleteCertificationMutation.mutate(cert.id);
-                                      }
-                                    }}
-                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                  >
-                                    <FileText className="w-4 h-4 mr-2" />
-                                    Eliminar
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" size="sm" data-testid={`btn-more-${typedCert.id}`}>
+                                      <MoreVertical className="w-4 h-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem
+                                      onClick={() => {
+                                        if (confirm('¿Estás seguro de que quieres eliminar esta certificación? Esta acción no se puede deshacer.')) {
+                                          deleteCertificationMutation.mutate(typedCert.id);
+                                        }
+                                      }}
+                                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                    >
+                                      <FileText className="w-4 h-4 mr-2" />
+                                      Eliminar
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -451,6 +610,14 @@ export default function Certificates() {
           </Card>
         </div>
       </div>
+
+      {/* Client Link Preview Modal */}
+      <ClientLinkPreviewModal
+        open={!!previewCert}
+        onClose={() => setPreviewCert(null)}
+        links={previewLinks}
+        clientName={previewCert?.ownerName || ""}
+      />
     </div>
   );
 }

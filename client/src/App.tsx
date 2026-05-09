@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useParams } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -26,8 +26,32 @@ import Login from "@/pages/login";
 import Register from "@/pages/register";
 import DemoRequest from "@/pages/demo-request";
 import PublicQuote from "@/pages/public-quote";
+import PublicPresupuesto from "@/pages/PublicPresupuesto";
+import PublicSolicitud from "@/pages/PublicSolicitud";
+import PublicCEEForm from "@/pages/PublicCEEForm";
+import PublicPayment from "@/pages/PublicPayment";
 import PublicTariffGenerator from "@/pages/public-tariff-generator";
 import NotFound from "@/pages/not-found";
+
+function PresupuestoWrapper() {
+  const { token } = useParams<{ token: string }>();
+  return <PublicPresupuesto token={token || ""} />;
+}
+
+function SolicitudWrapper() {
+  const { token } = useParams<{ token: string }>();
+  return <PublicSolicitud token={token || ""} />;
+}
+
+function CEEFormWrapper() {
+  const { token } = useParams<{ token: string }>();
+  return <PublicCEEForm token={token || ""} />;
+}
+
+function PaymentWrapper() {
+  const { token } = useParams<{ token: string }>();
+  return <PublicPayment token={token || ""} />;
+}
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -47,8 +71,12 @@ function Router() {
     <>
       {isAuthenticated && <OnboardingModal />}
       <Switch>
-        {/* Public routes */}
-        <Route path="/presupuesto/:uniqueLink" component={PublicQuote} />
+        {/* Public client-facing routes */}
+        <Route path="/presupuesto/:token" component={PresupuestoWrapper} />
+        <Route path="/cotizacion/:uniqueLink" component={PublicQuote} />
+        <Route path="/solicitud/:token" component={SolicitudWrapper} />
+        <Route path="/formulario-cee/:token" component={CEEFormWrapper} />
+        <Route path="/pay/:token" component={PaymentWrapper} />
         <Route path="/certificacion-cliente/:uniqueLink" component={CertificationForm} />
         <Route path="/generador-tarifas" component={PublicTariffGenerator} />
         <Route path="/login" component={Login} />
@@ -58,7 +86,7 @@ function Router() {
         {/* Home: dashboard if authenticated, landing if not */}
         <Route path="/" component={isAuthenticated ? Dashboard : Landing} />
 
-        {/* Authenticated routes — direct children of Switch so wouter can match them */}
+        {/* Authenticated routes */}
         <Route path="/certificacion/:id?" component={isAuthenticated ? CertificationWizard : Login} />
         <Route path="/certificados/nuevo" component={isAuthenticated ? EnhancedCertificationForm : Login} />
         <Route path="/certificacion-request/:id" component={isAuthenticated ? ViewCertificationRequest : Login} />

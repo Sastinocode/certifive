@@ -111,6 +111,96 @@ function SolicitudModal({ cert, onClose }: { cert: any; onClose: () => void }) {
   );
 }
 
+// ── Client link preview modal ─────────────────────────────────────────────────
+
+function ClientLinkPreviewModal({
+  title, subtitle, url, icon, onClose,
+}: {
+  title: string; subtitle: string; url: string; icon: string; onClose: () => void;
+}) {
+  const [copied, setCopied] = useState(false);
+  const [iframeLoaded, setIframeLoaded] = useState(false);
+
+  const copy = () => {
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-6">
+      <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl flex flex-col overflow-hidden" style={{ maxHeight: "92vh" }}>
+        {/* Header */}
+        <div className="bg-teal-700 px-5 py-4 flex items-center gap-3 flex-shrink-0">
+          <span className="text-xl">{icon}</span>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-bold text-white leading-tight">{title}</h3>
+            <p className="text-xs text-teal-200 mt-0.5 truncate">{subtitle}</p>
+          </div>
+          <button onClick={onClose} className="text-teal-300 hover:text-white transition-colors p-1 flex-shrink-0">
+            <span className="material-symbols-outlined text-[22px]">close</span>
+          </button>
+        </div>
+
+        {/* URL bar */}
+        <div className="px-4 py-3 bg-slate-50 border-b border-slate-100 flex items-center gap-2 flex-shrink-0">
+          <div className="flex-1 min-w-0 bg-white border border-slate-200 rounded-lg px-3 py-2 flex items-center gap-2">
+            <span className="material-symbols-outlined text-[14px] text-slate-400 flex-shrink-0">link</span>
+            <span className="text-xs text-slate-500 font-mono truncate flex-1">{url}</span>
+          </div>
+          <button
+            onClick={copy}
+            data-testid="button-copy-client-link"
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all flex-shrink-0 ${
+              copied
+                ? "bg-teal-600 text-white"
+                : "bg-white border border-slate-200 text-slate-700 hover:border-teal-400 hover:text-teal-700"
+            }`}
+          >
+            <span className="material-symbols-outlined text-[14px]">{copied ? "check" : "content_copy"}</span>
+            {copied ? "¡Copiado!" : "Copiar"}
+          </button>
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 px-3 py-2 bg-teal-700 text-white rounded-lg text-xs font-bold hover:bg-teal-600 transition-colors flex-shrink-0"
+          >
+            <span className="material-symbols-outlined text-[14px]">open_in_new</span>
+            Abrir
+          </a>
+        </div>
+
+        {/* iframe preview */}
+        <div className="flex-1 relative overflow-hidden min-h-0">
+          {!iframeLoaded && (
+            <div className="absolute inset-0 flex items-center justify-center bg-slate-50">
+              <div className="text-center">
+                <div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                <p className="text-xs text-slate-400">Cargando vista del cliente…</p>
+              </div>
+            </div>
+          )}
+          <iframe
+            src={url}
+            onLoad={() => setIframeLoaded(true)}
+            className="w-full h-full border-0"
+            style={{ minHeight: 420 }}
+            title="Vista previa del cliente"
+          />
+        </div>
+
+        {/* Footer hint */}
+        <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-100 flex items-center gap-2 flex-shrink-0">
+          <span className="material-symbols-outlined text-[14px] text-slate-400">info</span>
+          <p className="text-[10px] text-slate-400">Esta es la vista exacta que verá el cliente al abrir el enlace.</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Presupuesto modal ────────────────────────────────────────────────────────
 
 function PresupuestoModal({ cert, onClose }: { cert: any; onClose: () => void }) {
@@ -859,6 +949,7 @@ export default function Certifications() {
   const [search, setSearch] = useState("");
   const [openMenu, setOpenMenu] = useState<number | null>(null);
   const [dataCert, setDataCert] = useState<any>(null);
+  const [previewLink, setPreviewLink] = useState<{ title: string; subtitle: string; url: string; icon: string } | null>(null);
 
   const { data: certifications, isLoading } = useQuery<any[]>({ queryKey: ["/api/certifications"] });
 
@@ -938,6 +1029,16 @@ export default function Certifications() {
 
       {dataCert && (
         <CertDataDrawer certId={dataCert.id} onClose={() => setDataCert(null)} />
+      )}
+
+      {previewLink && (
+        <ClientLinkPreviewModal
+          title={previewLink.title}
+          subtitle={previewLink.subtitle}
+          url={previewLink.url}
+          icon={previewLink.icon}
+          onClose={() => setPreviewLink(null)}
+        />
       )}
 
       <div className="flex flex-wrap items-start sm:items-end justify-between gap-3">
@@ -1060,13 +1161,75 @@ export default function Certifications() {
                       </div>
                     </td>
                     <td className="px-8 py-5 text-right relative">
-                      <button
-                        data-testid={`btn-menu-${cert.id}`}
-                        onClick={() => setOpenMenu(openMenu === cert.id ? null : cert.id)}
-                        className="p-2 hover:bg-emerald-100 rounded-xl transition-colors text-emerald-700/60 hover:text-emerald-900"
-                      >
-                        <span className="material-symbols-outlined text-[20px]">more_vert</span>
-                      </button>
+                      <div className="flex items-center justify-end gap-1">
+                        {/* Preview: presupuesto */}
+                        {cert.presupuestoToken && (
+                          <button
+                            data-testid={`btn-preview-presupuesto-${cert.id}`}
+                            title="Ver enlace de tarifa (vista cliente)"
+                            onClick={() => {
+                              setPreviewLink({
+                                title: "Vista previa: Presupuesto",
+                                subtitle: cert.ownerName ? `Para ${cert.ownerName}` : "Vista del cliente",
+                                url: `${window.location.origin}/presupuesto/${cert.presupuestoToken}`,
+                                icon: "💰",
+                              });
+                              setOpenMenu(null);
+                            }}
+                            className="flex items-center gap-1 px-2.5 py-1.5 bg-violet-50 border border-violet-100 text-violet-700 rounded-lg text-[11px] font-bold hover:bg-violet-100 transition-colors"
+                          >
+                            <span className="material-symbols-outlined text-[13px]">visibility</span>
+                            <span className="hidden sm:inline">Tarifa</span>
+                          </button>
+                        )}
+                        {/* Preview: formulario CEE */}
+                        {cert.ceeToken && (
+                          <button
+                            data-testid={`btn-preview-cee-${cert.id}`}
+                            title="Ver enlace del formulario CEE (vista cliente)"
+                            onClick={() => {
+                              setPreviewLink({
+                                title: "Vista previa: Formulario CEE",
+                                subtitle: cert.ownerName ? `Para ${cert.ownerName}` : "Vista del cliente",
+                                url: `${window.location.origin}/formulario-cee/${cert.ceeToken}`,
+                                icon: "📋",
+                              });
+                              setOpenMenu(null);
+                            }}
+                            className="flex items-center gap-1 px-2.5 py-1.5 bg-teal-50 border border-teal-100 text-teal-700 rounded-lg text-[11px] font-bold hover:bg-teal-100 transition-colors"
+                          >
+                            <span className="material-symbols-outlined text-[13px]">visibility</span>
+                            <span className="hidden sm:inline">CEE</span>
+                          </button>
+                        )}
+                        {/* Preview: solicitud (tasación) */}
+                        {cert.solicitudToken && (
+                          <button
+                            data-testid={`btn-preview-solicitud-${cert.id}`}
+                            title="Ver enlace del formulario de tasación (vista cliente)"
+                            onClick={() => {
+                              setPreviewLink({
+                                title: "Vista previa: Formulario de tasación",
+                                subtitle: cert.ownerName ? `Para ${cert.ownerName}` : "Vista del cliente",
+                                url: `${window.location.origin}/solicitud/${cert.solicitudToken}`,
+                                icon: "📝",
+                              });
+                              setOpenMenu(null);
+                            }}
+                            className="flex items-center gap-1 px-2.5 py-1.5 bg-blue-50 border border-blue-100 text-blue-700 rounded-lg text-[11px] font-bold hover:bg-blue-100 transition-colors"
+                          >
+                            <span className="material-symbols-outlined text-[13px]">visibility</span>
+                            <span className="hidden sm:inline">Tasación</span>
+                          </button>
+                        )}
+                        <button
+                          data-testid={`btn-menu-${cert.id}`}
+                          onClick={() => setOpenMenu(openMenu === cert.id ? null : cert.id)}
+                          className="p-2 hover:bg-emerald-100 rounded-xl transition-colors text-emerald-700/60 hover:text-emerald-900"
+                        >
+                          <span className="material-symbols-outlined text-[20px]">more_vert</span>
+                        </button>
+                      </div>
                       {openMenu === cert.id && (
                         <div className="absolute right-6 top-14 bg-white border border-emerald-100 rounded-xl shadow-xl z-10 min-w-[200px] overflow-hidden">
                           <button
@@ -1084,6 +1247,68 @@ export default function Certifications() {
                             <span className="material-symbols-outlined text-[18px]">link</span>
                             {cert.formToken ? "Ver enlace CEE clásico" : "Enlace formulario clásico"}
                           </button>
+                          {/* Preview links section */}
+                          {(cert.presupuestoToken || cert.ceeToken || cert.solicitudToken) && (
+                            <>
+                              <div className="border-t border-emerald-50 px-4 py-2">
+                                <p className="text-[9px] font-bold uppercase tracking-widest text-emerald-700/40">Vista previa enlace cliente</p>
+                              </div>
+                              {cert.presupuestoToken && (
+                                <button
+                                  data-testid={`btn-menu-preview-presupuesto-${cert.id}`}
+                                  onClick={() => {
+                                    setPreviewLink({
+                                      title: "Vista previa: Presupuesto",
+                                      subtitle: cert.ownerName ? `Para ${cert.ownerName}` : "Vista del cliente",
+                                      url: `${window.location.origin}/presupuesto/${cert.presupuestoToken}`,
+                                      icon: "💰",
+                                    });
+                                    setOpenMenu(null);
+                                  }}
+                                  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-violet-700 hover:bg-violet-50 transition-colors"
+                                >
+                                  <span className="material-symbols-outlined text-[18px]">visibility</span>
+                                  👁 Ver enlace de tarifa
+                                </button>
+                              )}
+                              {cert.ceeToken && (
+                                <button
+                                  data-testid={`btn-menu-preview-cee-${cert.id}`}
+                                  onClick={() => {
+                                    setPreviewLink({
+                                      title: "Vista previa: Formulario CEE",
+                                      subtitle: cert.ownerName ? `Para ${cert.ownerName}` : "Vista del cliente",
+                                      url: `${window.location.origin}/formulario-cee/${cert.ceeToken}`,
+                                      icon: "📋",
+                                    });
+                                    setOpenMenu(null);
+                                  }}
+                                  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-teal-700 hover:bg-teal-50 transition-colors"
+                                >
+                                  <span className="material-symbols-outlined text-[18px]">visibility</span>
+                                  👁 Ver enlace formulario CEE
+                                </button>
+                              )}
+                              {cert.solicitudToken && (
+                                <button
+                                  data-testid={`btn-menu-preview-solicitud-${cert.id}`}
+                                  onClick={() => {
+                                    setPreviewLink({
+                                      title: "Vista previa: Formulario de tasación",
+                                      subtitle: cert.ownerName ? `Para ${cert.ownerName}` : "Vista del cliente",
+                                      url: `${window.location.origin}/solicitud/${cert.solicitudToken}`,
+                                      icon: "📝",
+                                    });
+                                    setOpenMenu(null);
+                                  }}
+                                  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-blue-700 hover:bg-blue-50 transition-colors"
+                                >
+                                  <span className="material-symbols-outlined text-[18px]">visibility</span>
+                                  👁 Ver enlace formulario tasación
+                                </button>
+                              )}
+                            </>
+                          )}
                           <div className="border-t border-emerald-50 px-4 py-2">
                             <p className="text-[9px] font-bold uppercase tracking-widest text-emerald-700/40">Flujo de certificación</p>
                           </div>
