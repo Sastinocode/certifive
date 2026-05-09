@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import Sidebar from "@/components/layout/sidebar";
 import { downloadPDF, downloadWord, downloadExcel } from "@/lib/certDownload";
+import ClientFlowWizard from "@/components/ClientFlowWizard";
 import { 
   IdCard, 
   Plus, 
@@ -33,19 +34,24 @@ import {
   XCircle,
   Clock,
   AlertCircle,
-  Wallet
+  Wallet,
+  Send
 } from "lucide-react";
 
 interface Certification {
   id: number;
   ownerName: string;
   ownerDni: string;
+  ownerEmail: string | null;
+  ownerPhone: string | null;
   propertyAddress: string;
   email: string | null;
   phone: string | null;
   cadastralRef: string;
   energyRating: string | null;
   status: string;
+  workflowStatus: string | null;
+  presupuestoStatus: string | null;
   createdAt: Date | null;
   updatedAt: Date | null;
   folderId: number | null;
@@ -60,8 +66,15 @@ interface Certification {
   roofType: string | null;
   airConditioningSystem: string | null;
   presupuestoToken: string | null;
+  paymentToken: string | null;
   ceeToken: string | null;
   solicitudToken: string | null;
+  finalPrice: string | null;
+  tramo1Amount: string | null;
+  tramo2Amount: string | null;
+  tramo1PaidAt: string | null;
+  ceeFormStatus: string | null;
+  ceeFormSentAt: string | null;
 }
 
 interface PreviewLink {
@@ -194,6 +207,7 @@ export default function Certificates() {
   const [previewCert, setPreviewCert] = useState<Certification | null>(null);
   const [rejectingId, setRejectingId] = useState<number | null>(null);
   const [rejectMotivo, setRejectMotivo] = useState("");
+  const [wizardCertId, setWizardCertId] = useState<number | null>(null);
   const { toast } = useToast();
 
   const { data: certifications = [], isLoading } = useQuery({
@@ -675,6 +689,17 @@ export default function Certificates() {
                             </td>
                             <td className="py-4 px-4">
                               <div className="flex items-center justify-end gap-2">
+                                {/* Enviar a cliente — primary CTA */}
+                                <Button
+                                  size="sm"
+                                  className="bg-teal-700 hover:bg-teal-600 text-white gap-1.5"
+                                  onClick={() => setWizardCertId(typedCert.id)}
+                                  data-testid={`btn-enviar-cliente-${typedCert.id}`}
+                                >
+                                  <Send className="w-3.5 h-3.5" />
+                                  Enviar
+                                </Button>
+
                                 <Link to={`/certificacion-request/${typedCert.id}`}>
                                   <Button variant="outline" size="sm" data-testid={`btn-ver-${typedCert.id}`}>
                                     <Eye className="w-4 h-4 mr-1" />
@@ -774,6 +799,15 @@ export default function Certificates() {
         links={previewLinks}
         clientName={previewCert?.ownerName || ""}
       />
+
+      {/* Client Flow Wizard */}
+      {wizardCertId !== null && (
+        <ClientFlowWizard
+          certId={wizardCertId}
+          open={wizardCertId !== null}
+          onClose={() => setWizardCertId(null)}
+        />
+      )}
     </div>
   );
 }
