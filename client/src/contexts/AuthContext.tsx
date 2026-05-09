@@ -46,11 +46,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(localStorage.getItem(TOKEN_KEY));
   const [isLoading, setIsLoading] = useState(true);
-  const [hasLoggedOut] = useState(() => {
-    return localStorage.getItem(LOGOUT_KEY) === "true" ||
-           localStorage.getItem("hasLoggedOut") === "true";
-  });
-
   const saveToken = (t: string) => {
     setToken(t);
     localStorage.setItem(TOKEN_KEY, t);
@@ -76,15 +71,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setToken(savedToken);
         } catch {
           clearToken();
-        }
-      } else if (!hasLoggedOut) {
-        try {
-          const response = await apiRequest("POST", "/api/auth/demo", {});
-          setUser(response.user);
-          saveToken(response.token);
-          if (response.refreshToken) localStorage.setItem("refreshToken", response.refreshToken);
-        } catch {
-          // Stay logged out if demo fails
         }
       }
       setIsLoading(false);
