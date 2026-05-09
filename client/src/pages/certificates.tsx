@@ -27,7 +27,12 @@ import {
   ExternalLink,
   X,
   Link2,
-  FileCheck
+  FileCheck,
+  CheckCircle,
+  XCircle,
+  Clock,
+  AlertCircle,
+  Wallet
 } from "lucide-react";
 
 interface Certification {
@@ -161,14 +166,71 @@ function ClientLinkPreviewModal({
   );
 }
 
+interface PendingPayment {
+  id: number;
+  certificationId: number | null;
+  amount: string;
+  metodo: string;
+  tramo: number | null;
+  notas: string | null;
+  estadoConfirmacion: string;
+  fechaNotificacion: string | null;
+  ownerName: string | null;
+  address: string | null;
+  city: string | null;
+}
+
+const METHOD_LABELS: Record<string, { label: string; icon: string; color: string }> = {
+  bizum:         { label: "Bizum",               icon: "🟣", color: "bg-violet-100 text-violet-800 border-violet-200" },
+  transferencia: { label: "Transferencia",        icon: "🏦", color: "bg-blue-100 text-blue-800 border-blue-200" },
+  efectivo:      { label: "Efectivo",             icon: "💵", color: "bg-amber-100 text-amber-800 border-amber-200" },
+  stripe:        { label: "Tarjeta",              icon: "💳", color: "bg-emerald-100 text-emerald-800 border-emerald-200" },
+};
+
 export default function Certificates() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [previewCert, setPreviewCert] = useState<Certification | null>(null);
+  const [rejectingId, setRejectingId] = useState<number | null>(null);
+  const [rejectMotivo, setRejectMotivo] = useState("");
   const { toast } = useToast();
 
   const { data: certifications = [], isLoading } = useQuery({
     queryKey: ["/api/certifications"],
+  });
+
+  const { data: pendingPayments = [], isLoading: pendingLoading } = useQuery({
+    queryKey: ["/api/payments/pending"],
+    refetchInterval: 30000,
+  });
+
+  const confirmPaymentMutation = useMutation({
+    mutationFn: async (paymentId: number) => {
+      return await apiRequest("POST", `/api/payments/${paymentId}/confirm`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/payments/pending"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/certifications"] });
+      toast({ title: "Pago confirmado", description: "El pago ha sido verificado y el cliente ha sido notificado." });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "No se pudo confirmar el pago.", variant: "destructive" });
+    },
+  });
+
+  const rejectPaymentMutation = useMutation({
+    mutationFn: async ({ id, motivo }: { id: number; motivo: string }) => {
+      return await apiRequest("POST", `/api/payments/${id}/reject`, { motivo });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/payments/pending"] });
+      setRejectingId(null);
+      setRejectMotivo("");
+      toast({ title: "Pago rechazado", description: "El pago ha sido marcado como rechazado." });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "No se pudo rechazar el pago.", variant: "destructive" });
+    },
   });
 
   const downloadReportMutation = useMutation({
@@ -381,6 +443,124 @@ export default function Certificates() {
               </Button>
             </Link>
           </div>
+
+          {/* Pending Payments Panel */}
+          {(pendingPayments as PendingPayment[]).length > 0 && (
+            <div className="mb-6">
+              <Card className="border-amber-200 bg-amber-50">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0">
+                      <Clock className="w-5 h-5 text-amber-700" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-amber-900 text-base flex items-center gap-2">
+                        Pagos pendientes de verificación
+                        <Badge className="bg-amber-600 text-white text-xs">
+                          {(pendingPayments as PendingPayment[]).length}
+                        </Badge>
+                      </CardTitle>
+                      <p className="text-xs text-amber-700 mt-0.5">
+                        Clientes que han notificado un pago manual. Confírmalo o recházalo para avanzar en el flujo.
+                      </p>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-3 pt-0">
+                  {(pendingPayments as PendingPayment[]).map((pay) => {
+                    const meta = METHOD_LABELS[pay.metodo] ?? { label: pay.metodo, icon: "💳", color: "bg-gray-100 text-gray-700 border-gray-200" };
+                    const isRejectingThis = rejectingId === pay.id;
+                    return (
+                      <div key={pay.id} className="bg-white rounded-2xl border border-amber-100 p-4 space-y-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-start gap-3 min-w-0">
+                            <span className="text-2xl flex-shrink-0 mt-0.5">{meta.icon}</span>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-semibold text-gray-900 text-sm">{pay.ownerName ?? "Cliente"}</span>
+                                <Badge variant="outline" className={`text-xs border ${meta.color}`}>
+                                  {meta.label}
+                                </Badge>
+                                <Badge variant="outline" className="text-xs">
+                                  Tramo {pay.tramo}
+                                </Badge>
+                              </div>
+                              <p className="text-sm text-gray-500 mt-0.5 truncate">
+                                {pay.address ?? pay.city ?? "—"}
+                              </p>
+                              {pay.notas && (
+                                <p className="text-xs text-gray-400 mt-1 italic">"{pay.notas}"</p>
+                              )}
+                              <p className="text-xs text-gray-400 mt-1">
+                                {pay.fechaNotificacion ? new Date(pay.fechaNotificacion).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' }) : ''}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex-shrink-0 text-right">
+                            <p className="text-lg font-black text-gray-900">{parseFloat(pay.amount).toFixed(2)} €</p>
+                          </div>
+                        </div>
+
+                        {!isRejectingThis ? (
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              className="flex-1 bg-teal-700 hover:bg-teal-600 text-white gap-1.5"
+                              onClick={() => confirmPaymentMutation.mutate(pay.id)}
+                              disabled={confirmPaymentMutation.isPending}
+                              data-testid={`btn-confirm-payment-${pay.id}`}
+                            >
+                              <CheckCircle className="w-4 h-4" />
+                              Confirmar pago
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="flex-1 gap-1.5 text-red-600 border-red-200 hover:bg-red-50"
+                              onClick={() => { setRejectingId(pay.id); setRejectMotivo(""); }}
+                              data-testid={`btn-reject-payment-${pay.id}`}
+                            >
+                              <XCircle className="w-4 h-4" />
+                              Rechazar
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            <textarea
+                              value={rejectMotivo}
+                              onChange={e => setRejectMotivo(e.target.value)}
+                              placeholder="Motivo del rechazo (opcional)..."
+                              rows={2}
+                              className="w-full text-sm bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-300 resize-none"
+                            />
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="flex-1"
+                                onClick={() => setRejectingId(null)}
+                              >
+                                Cancelar
+                              </Button>
+                              <Button
+                                size="sm"
+                                className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                                onClick={() => rejectPaymentMutation.mutate({ id: pay.id, motivo: rejectMotivo })}
+                                disabled={rejectPaymentMutation.isPending}
+                                data-testid={`btn-confirm-reject-${pay.id}`}
+                              >
+                                Confirmar rechazo
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
           {/* Search and Filters */}
           <div className="mb-6 flex flex-col sm:flex-row gap-4">
