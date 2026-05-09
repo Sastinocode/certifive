@@ -110,7 +110,7 @@ export default function Dashboard() {
       return response.json();
     },
     onSuccess: (data) => {
-      const link = `${window.location.origin}/presupuesto/${data.uniqueLink}`;
+      const link = `${window.location.origin}/cotizacion/${data.uniqueLink}`;
       const whatsappMessage = `Hola! Aquí tienes el enlace para solicitar tu certificación energética: ${link}`;
       const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(whatsappMessage)}`;
       window.open(whatsappUrl, '_blank');
