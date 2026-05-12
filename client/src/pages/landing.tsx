@@ -1,10 +1,8 @@
 import { useLocation } from "wouter";
 import { useEffect, useRef, useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
 
 export default function Landing() {
   const [, navigate] = useLocation();
-  const { loginDemo } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -30,11 +28,6 @@ export default function Landing() {
     document.querySelectorAll(".fu").forEach((el) => observerRef.current?.observe(el));
     return () => observerRef.current?.disconnect();
   }, []);
-
-  const handleDemo = async () => {
-    await loginDemo();
-    navigate("/");
-  };
 
   return (
     <div style={{ fontFamily: "'Inter', system-ui, sans-serif", color: "#0F172A", background: "#fff", overflowX: "hidden" }}>
@@ -245,13 +238,8 @@ export default function Landing() {
                 style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "13px 28px", background: "var(--teal)", color: "#fff", border: "none", borderRadius: "var(--r)", fontSize: 15, fontWeight: 600, cursor: "pointer", transition: "background .15s" }}
                 onMouseOver={e => (e.currentTarget.style.background = "var(--teal-dk)")}
                 onMouseOut={e => (e.currentTarget.style.background = "var(--teal)")}>
-                Empezar Gratis
+                Empezar Gratis — 7 días gratis
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              </button>
-              <button onClick={handleDemo} className="btn-ghost"
-                style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 24px", background: "transparent", color: "var(--s700)", border: "1px solid var(--s200)", borderRadius: "var(--r)", fontSize: 15, fontWeight: 500, cursor: "pointer", transition: "all .15s" }}>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5"/><path d="M6.5 6C6.5 5.17 7.17 4.5 8 4.5s1.5.67 1.5 1.5c0 .69-.46 1.27-1.1 1.44L8 7.6V9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><circle cx="8" cy="11" r=".75" fill="currentColor"/></svg>
-                Ver Demo en vivo
               </button>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 13, color: "var(--s400)" }}>
@@ -456,17 +444,13 @@ export default function Landing() {
         <div style={{ maxWidth: 600, margin: "0 auto" }}>
           <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--teal)", marginBottom: 12 }}>Empieza hoy</div>
           <h2 className="section-h2" style={{ fontSize: 40, fontWeight: 700, letterSpacing: "-.02em", color: "var(--s900)", marginBottom: 16 }}>Tu despacho merece herramientas profesionales</h2>
-          <p style={{ fontSize: 17, color: "var(--s500)", margin: "0 auto 40px", lineHeight: 1.65 }}>14 días de prueba gratuita. Sin tarjeta de crédito. Sin permanencia.</p>
+          <p style={{ fontSize: 17, color: "var(--s500)", margin: "0 auto 40px", lineHeight: 1.65 }}>7 días de prueba gratuita. Sin tarjeta de crédito. Sin permanencia.</p>
           <div className="cta-btns" style={{ display: "flex", justifyContent: "center", gap: 16, marginBottom: 20 }}>
             <button onClick={() => navigate("/registro")}
               style={{ padding: "14px 32px", fontSize: 15, fontWeight: 600, borderRadius: "var(--r)", cursor: "pointer", transition: "all .15s", background: "var(--teal)", color: "#fff", border: "none" }}
               onMouseOver={e => (e.currentTarget.style.background = "var(--teal-dk)")}
               onMouseOut={e => (e.currentTarget.style.background = "var(--teal)")}>
-              Empezar Gratis — 14 días
-            </button>
-            <button onClick={handleDemo} className="btn-ghost"
-              style={{ padding: "14px 32px", fontSize: 15, fontWeight: 600, borderRadius: "var(--r)", cursor: "pointer", transition: "all .15s", background: "transparent", color: "var(--s700)", border: "1px solid var(--s200)" }}>
-              Ver Demo
+              Empezar Gratis — 7 días
             </button>
           </div>
           <p style={{ fontSize: 13, color: "var(--s400)" }}>
@@ -519,3 +503,4 @@ export default function Landing() {
     </div>
   );
 }
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
