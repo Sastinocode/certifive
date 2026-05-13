@@ -1,379 +1,387 @@
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Zap, Shield, FileText, Users, TrendingUp, MessageSquare, Play, ArrowRight, CheckCircle, BarChart3, Clock, DollarSign, UserPlus, Search, ClipboardCheck, CreditCard } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
-import certifiveLogo from "@assets/Logo_1750326352340.jpg";
 
 export default function Landing() {
   const [, navigate] = useLocation();
-  const { loginDemo } = useAuth();
+  const [scrolled, setScrolled]   = useState(false);
+  const [isAnnual, setIsAnnual]   = useState(false);
+
+  // Navbar scroll shadow
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Smooth scroll helper for anchor links
+  const scrollTo = (id: string) => (e: React.MouseEvent) => {
+    e.preventDefault();
+    const el = document.getElementById(id);
+    if (el) {
+      const top = el.getBoundingClientRect().top + window.scrollY - 72;
+      window.scrollTo({ top, behavior: "smooth" });
+    }
+  };
+
+  // Pricing display
+  const prices = {
+    basic:   { m: "19", a: "15", annual: "190€/año — 2 meses gratis" },
+    pro:     { m: "49", a: "40", annual: "490€/año — 2 meses gratis" },
+    empresa: { m: "99", a: "82", annual: "990€/año — 2 meses gratis" },
+  };
+  const P = (key: keyof typeof prices) =>
+    isAnnual ? prices[key].a : prices[key].m;
+  const Ann = (key: keyof typeof prices) =>
+    isAnnual ? prices[key].annual : "";
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="border-b bg-white/95 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <img 
-                src={certifiveLogo} 
-                alt="CERTIFIVE Logo" 
-                className="w-10 h-10 rounded-lg object-cover"
-              />
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-teal-500 to-blue-600 bg-clip-text text-transparent">CERTIFIVE</h1>
+    <div style={{ fontFamily:"'Inter',system-ui,sans-serif", color:"#0F172A", background:"#fff", overflowX:"hidden" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        html{scroll-behavior:smooth}
+        :root{
+          --teal:#0D7C66;--teal-dk:#0a6454;--teal-lt:#e6f4f1;--teal-50:#f0faf8;
+          --s900:#0F172A;--s800:#1E293B;--s700:#334155;--s600:#475569;
+          --s500:#64748B;--s400:#94A3B8;--s300:#CBD5E1;--s200:#E2E8F0;
+          --s100:#F1F5F9;--s50:#F8FAFC;
+          --r:8px;--rl:14px;--rxl:20px;--mw:1180px;
+        }
+        @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.75)}}
+
+        /* ── NAV ── */
+        .lp-nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(255,255,255,.94);backdrop-filter:blur(14px);border-bottom:1px solid var(--s200);transition:box-shadow .25s}
+        .lp-nav.sc{box-shadow:0 1px 18px rgba(15,23,42,.07)}
+        .lp-nav-inner{max-width:var(--mw);margin:0 auto;padding:0 28px;height:64px;display:flex;align-items:center;justify-content:space-between;gap:32px}
+        .lp-logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;flex-shrink:0;cursor:pointer}
+        .lp-logo-mark{width:30px;height:30px;background:var(--teal);border-radius:7px;display:flex;align-items:center;justify-content:center}
+        .lp-logo-text{font-size:15px;font-weight:700;letter-spacing:-.02em}
+        .lp-nav-links{display:flex;align-items:center;gap:28px;list-style:none;flex:1;justify-content:center}
+        .lp-nav-links a{font-size:14px;font-weight:500;color:var(--s500);text-decoration:none;transition:color .15s;cursor:pointer}
+        .lp-nav-links a:hover{color:var(--s900)}
+        .lp-nav-actions{display:flex;align-items:center;gap:10px;flex-shrink:0}
+        .btn-ghost-sm{font-size:14px;font-weight:500;color:var(--s600);text-decoration:none;padding:7px 16px;border:1px solid var(--s200);border-radius:var(--r);transition:border-color .15s,color .15s;cursor:pointer;background:none}
+        .btn-ghost-sm:hover{border-color:var(--s300);color:var(--s900)}
+        .btn-teal-sm{display:inline-flex;align-items:center;gap:5px;padding:8px 18px;background:var(--teal);color:#fff;border:none;border-radius:var(--r);font-size:14px;font-weight:600;cursor:pointer;text-decoration:none;transition:background .15s;white-space:nowrap}
+        .btn-teal-sm:hover{background:var(--teal-dk)}
+
+        /* ── HERO ── */
+        .lp-hero{padding:140px 28px 96px;background:linear-gradient(175deg,#fff 55%,#f4f9f8 100%)}
+        .lp-hero-inner{max-width:var(--mw);margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center}
+        .hero-badge{display:inline-flex;align-items:center;gap:8px;background:var(--teal-lt);color:var(--teal);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:5px 12px;border-radius:4px;margin-bottom:22px}
+        .hero-badge-dot{width:6px;height:6px;background:var(--teal);border-radius:50%;animation:pulse 2s infinite}
+        .lp-h1{font-size:52px;font-weight:800;line-height:1.07;letter-spacing:-.033em;color:var(--s900);margin-bottom:6px}
+        .lp-h1 em{font-style:normal;color:var(--teal)}
+        .lp-h1-sub{font-size:26px;font-weight:700;line-height:1.3;letter-spacing:-.02em;color:var(--s600);margin-bottom:22px}
+        .lp-hero-p{font-size:17px;line-height:1.75;color:var(--s500);margin-bottom:10px;max-width:510px}
+        .lp-hero-note{font-size:13px;color:var(--s400);margin-bottom:36px;max-width:480px;font-style:italic;line-height:1.6}
+        .lp-hero-ctas{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+        .btn-hero{display:inline-flex;align-items:center;gap:8px;padding:13px 28px;background:var(--teal);color:#fff;border:none;border-radius:var(--r);font-size:15px;font-weight:600;cursor:pointer;text-decoration:none;transition:background .15s}
+        .btn-hero:hover{background:var(--teal-dk)}
+        .btn-hero-ghost{display:inline-flex;align-items:center;gap:8px;padding:12px 22px;background:transparent;color:var(--s700);border:1px solid var(--s200);border-radius:var(--r);font-size:15px;font-weight:500;cursor:pointer;text-decoration:none;transition:border-color .15s,background .15s}
+        .btn-hero-ghost:hover{border-color:var(--s300);background:var(--s50)}
+        .hero-trust{margin-top:30px;display:flex;align-items:center;gap:7px;font-size:12px;color:var(--s400)}
+        .hero-trust svg{color:var(--teal);flex-shrink:0}
+
+        /* HERO MOCKUP */
+        .hero-visual{position:relative}
+        .app-card{background:var(--s900);border-radius:18px;overflow:hidden;box-shadow:0 32px 80px rgba(15,23,42,.22),0 2px 8px rgba(15,23,42,.1);border:1px solid rgba(255,255,255,.05)}
+        .app-topbar{background:rgba(255,255,255,.04);padding:13px 18px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:7px}
+        .app-dot{width:10px;height:10px;border-radius:50%}
+        .app-url{flex:1;background:rgba(255,255,255,.05);border-radius:5px;height:22px;margin:0 12px;display:flex;align-items:center;padding:0 10px;font-size:11px;color:rgba(255,255,255,.2);font-family:monospace}
+        .app-body{padding:20px}
+        .app-sec-lbl{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:14px}
+        .app-split{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+        .app-path{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:14px}
+        .app-path.active{border-color:rgba(13,124,102,.35);background:rgba(13,124,102,.08)}
+        .app-path-name{font-size:11px;font-weight:600;color:rgba(255,255,255,.8);margin-bottom:4px}
+        .app-path-desc{font-size:10px;color:rgba(255,255,255,.35);line-height:1.5}
+        .app-path-items{margin-top:10px;display:flex;flex-direction:column;gap:5px}
+        .app-item-done{font-size:10px;color:#34d399}
+        .app-item-pend{font-size:10px;color:rgba(255,255,255,.25)}
+        .app-divider{border:none;border-top:1px solid rgba(255,255,255,.07);margin-bottom:14px}
+        .app-footer-row{display:flex;align-items:center;justify-content:space-between}
+        .app-footer-lbl{font-size:11px;color:rgba(255,255,255,.35)}
+        .app-status{font-size:10px;font-weight:700;background:rgba(13,124,102,.2);color:#34d399;padding:3px 10px;border-radius:20px}
+        .hero-float{position:absolute;top:-18px;right:-14px;background:#fff;border-radius:12px;padding:10px 14px;box-shadow:0 8px 28px rgba(15,23,42,.14);display:flex;align-items:center;gap:9px}
+        .hero-float-icon{width:30px;height:30px;border-radius:8px;background:var(--teal-lt);display:flex;align-items:center;justify-content:center;font-size:15px}
+        .hero-float-lbl{font-size:11px;color:var(--s400);font-weight:400}
+        .hero-float-val{font-size:13px;font-weight:700;color:var(--s900)}
+
+        /* ── SP BAR ── */
+        .sp-bar{padding:28px;background:var(--s50);border-top:1px solid var(--s200);border-bottom:1px solid var(--s200)}
+        .sp-bar-inner{max-width:var(--mw);margin:0 auto;display:flex;align-items:center;justify-content:center}
+        .sp-pill{display:inline-flex;align-items:center;gap:10px;background:var(--teal-lt);color:var(--teal);font-size:14px;font-weight:600;padding:10px 20px;border-radius:8px}
+        .sp-dot{width:8px;height:8px;background:var(--teal);border-radius:50%;animation:pulse 2s infinite}
+        .sp-pill a{color:var(--teal);font-weight:700;text-decoration:none;cursor:pointer}
+        .sp-pill a:hover{text-decoration:underline}
+
+        /* ── SECCIÓN ── */
+        .lp-section{padding:96px 0}
+        .lp-section-sm{padding:64px 0}
+        .lp-container{max-width:var(--mw);margin:0 auto;padding:0 28px}
+        .sec-label{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--teal);margin-bottom:14px}
+        .sec-h2{font-size:38px;font-weight:800;letter-spacing:-.025em;line-height:1.12;color:var(--s900);margin-bottom:16px}
+        .sec-h2 em{font-style:normal;color:var(--teal)}
+        .sec-sub{font-size:17px;color:var(--s500);line-height:1.7;max-width:640px}
+        .sec-intro{margin-bottom:56px}
+
+        /* ── FEATURES ── */
+        .feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+        .feat-card{background:var(--s50);border:1px solid var(--s200);border-radius:var(--rl);padding:28px;transition:border-color .2s,box-shadow .2s}
+        .feat-card:hover{border-color:var(--s300);box-shadow:0 4px 20px rgba(15,23,42,.06)}
+        .feat-card.star{background:var(--teal-50);border-color:rgba(13,124,102,.18)}
+        .feat-card.star:hover{border-color:rgba(13,124,102,.32)}
+        .feat-icon{width:42px;height:42px;border-radius:10px;background:#fff;border:1px solid var(--s200);display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:16px;box-shadow:0 1px 4px rgba(15,23,42,.06)}
+        .feat-card.star .feat-icon{background:var(--teal-lt);border-color:transparent}
+        .feat-tag{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--teal);background:var(--teal-lt);padding:2px 8px;border-radius:3px;margin-bottom:8px}
+        .feat-h{font-size:15px;font-weight:700;color:var(--s900);margin-bottom:8px;line-height:1.35}
+        .feat-p{font-size:14px;color:var(--s500);line-height:1.65}
+
+        /* ── CÓMO FUNCIONA ── */
+        .how-bg{background:var(--s900);border-radius:24px;padding:64px;position:relative;overflow:hidden}
+        .how-bg::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(13,124,102,.5),transparent)}
+        .how-bg::after{content:'';position:absolute;top:-80px;right:-80px;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(13,124,102,.12) 0%,transparent 70%);pointer-events:none}
+        .how-bg .sec-label{color:rgba(13,124,102,.8)}
+        .how-bg .sec-h2{color:#fff}
+        .how-bg .sec-h2 em{color:#34d399}
+        .steps{display:flex;flex-direction:column;margin-top:48px}
+        .step{display:grid;grid-template-columns:48px 1fr;gap:0 24px;position:relative}
+        .step-line{position:absolute;left:23px;top:50px;bottom:0;width:2px;background:rgba(255,255,255,.06)}
+        .step-num{width:38px;height:38px;border-radius:50%;background:rgba(13,124,102,.15);border:1px solid rgba(13,124,102,.3);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#34d399;flex-shrink:0;margin-top:4px}
+        .step-body{padding-bottom:40px}
+        .step-h{font-size:18px;font-weight:700;color:#fff;margin-bottom:8px}
+        .step-p{font-size:14px;color:rgba(255,255,255,.5);line-height:1.7}
+        .bifurcacion{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
+        .bif-path{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:20px}
+        .bif-path.ca{border-color:rgba(13,124,102,.28);background:rgba(13,124,102,.07)}
+        .bif-label{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px}
+        .ca .bif-label{color:#34d399}
+        .cb .bif-label{color:rgba(255,255,255,.35)}
+        .bif-h{font-size:13px;font-weight:600;color:#fff;margin-bottom:8px}
+        .bif-p{font-size:12px;color:rgba(255,255,255,.4);line-height:1.65}
+        .bif-note{margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.07);font-size:11px;color:rgba(255,255,255,.3);font-style:italic;line-height:1.55}
+
+        /* ── LO QUE NO SOMOS ── */
+        .nosomos-bg{background:var(--s50)}
+        .nosomos-grid{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:48px}
+        .nosomos-col-h{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-bottom:20px}
+        .nosomos-col-h.no{color:var(--s400)}
+        .nosomos-col-h.si{color:var(--teal)}
+        .nosomos-item{display:flex;align-items:flex-start;gap:12px;padding:16px 0;border-bottom:1px solid var(--s200)}
+        .nosomos-item:last-child{border-bottom:none}
+        .nosomos-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+        .nosomos-strong{display:block;color:var(--s900);font-weight:600;margin-bottom:3px;font-size:14px}
+        .nosomos-small{font-size:12px;color:var(--s400);line-height:1.6}
+
+        /* ── PRECIOS ── */
+        .pricing-header{text-align:center}
+        .toggle-wrap{display:flex;align-items:center;justify-content:center;gap:12px;margin:36px 0 52px}
+        .toggle-lbl{font-size:14px;font-weight:500;color:var(--s400);transition:color .2s}
+        .toggle-lbl.on{color:var(--s900);font-weight:600}
+        .toggle-switch{position:relative;width:46px;height:26px;cursor:pointer;display:inline-block}
+        .toggle-switch input{opacity:0;width:0;height:0;position:absolute}
+        .toggle-track{position:absolute;inset:0;background:var(--teal);border-radius:13px;transition:background .2s}
+        .toggle-thumb{position:absolute;width:20px;height:20px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+        .toggle-badge{font-size:11px;font-weight:700;letter-spacing:.02em;color:var(--teal);background:var(--teal-lt);padding:3px 10px;border-radius:5px}
+        .pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:stretch}
+        .pricing-card{background:#fff;border:1px solid var(--s200);border-radius:var(--rxl);padding:32px;display:flex;flex-direction:column;transition:border-color .2s,box-shadow .2s;position:relative}
+        .pricing-card:hover{border-color:var(--s300);box-shadow:0 8px 32px rgba(15,23,42,.07)}
+        .pricing-card.featured{background:var(--s900);border-color:var(--s900);box-shadow:0 20px 56px rgba(15,23,42,.2);transform:scale(1.025);z-index:1}
+        .pricing-card.featured:hover{box-shadow:0 24px 64px rgba(15,23,42,.26)}
+        .feat-badge{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:var(--teal);color:#fff;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:4px 14px;border-radius:20px;white-space:nowrap}
+        .plan-name{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--s400);margin-bottom:16px}
+        .featured .plan-name{color:rgba(255,255,255,.45)}
+        .plan-price{display:flex;align-items:baseline;gap:3px;margin-bottom:4px}
+        .plan-amount{font-size:44px;font-weight:800;letter-spacing:-.03em;color:var(--s900)}
+        .featured .plan-amount{color:#fff}
+        .plan-unit{font-size:16px;color:var(--s400);font-weight:500}
+        .featured .plan-unit{color:rgba(255,255,255,.35)}
+        .plan-annual{font-size:12px;color:var(--s400);margin-bottom:6px;min-height:18px}
+        .featured .plan-annual{color:rgba(255,255,255,.3)}
+        .plan-desc{font-size:13px;color:var(--s500);line-height:1.55;margin-bottom:24px;padding-bottom:24px;border-bottom:1px solid var(--s100)}
+        .featured .plan-desc{color:rgba(255,255,255,.4);border-bottom-color:rgba(255,255,255,.07)}
+        .plan-feats{flex:1;display:flex;flex-direction:column;gap:11px;margin-bottom:28px}
+        .plan-feat{display:flex;align-items:flex-start;gap:9px;font-size:14px;color:var(--s600);line-height:1.4}
+        .featured .plan-feat{color:rgba(255,255,255,.7)}
+        .feat-check{color:var(--teal);flex-shrink:0;font-weight:700}
+        .featured .feat-check{color:#34d399}
+        .btn-plan{display:block;text-align:center;padding:12px 20px;border-radius:var(--r);font-size:14px;font-weight:600;text-decoration:none;cursor:pointer;border:none;transition:all .15s}
+        .btn-plan-teal{background:var(--teal);color:#fff}
+        .btn-plan-teal:hover{background:var(--teal-dk)}
+        .btn-plan-outline{background:transparent;color:var(--s700);border:1px solid var(--s200)}
+        .btn-plan-outline:hover{border-color:var(--s300);background:var(--s50)}
+        .btn-plan-white{background:#fff;color:var(--s900)}
+        .btn-plan-white:hover{background:var(--s50)}
+        .ppu-card{margin-top:18px;background:var(--s50);border:1px solid var(--s200);border-radius:var(--rl);padding:26px 32px;display:flex;align-items:center;justify-content:space-between;gap:24px}
+        .ppu-lbl{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--s400);margin-bottom:5px}
+        .ppu-price{font-size:22px;font-weight:800;letter-spacing:-.02em;color:var(--s900);margin-bottom:3px}
+        .ppu-desc{font-size:13px;color:var(--s500)}
+        .ppu-feats{display:flex;gap:20px;flex-wrap:wrap}
+        .ppu-feat{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--s600)}
+        .ppu-chk{color:var(--teal);font-weight:700}
+        .btn-ppu{display:inline-flex;align-items:center;gap:6px;padding:10px 22px;border:1px solid var(--s300);border-radius:var(--r);font-size:14px;font-weight:600;color:var(--s700);text-decoration:none;white-space:nowrap;transition:all .15s;flex-shrink:0;background:none;cursor:pointer}
+        .btn-ppu:hover{border-color:var(--s400);background:#fff;color:var(--s900)}
+        .pricing-note{text-align:center;margin-top:28px;font-size:13px;color:var(--s400)}
+        .pricing-note a{color:var(--teal);text-decoration:none;cursor:pointer}
+        .pricing-note a:hover{text-decoration:underline}
+
+        /* ── CTA FINAL ── */
+        .cta-wrap{background:var(--s900);border-radius:24px;padding:80px;text-align:center;position:relative;overflow:hidden}
+        .cta-wrap::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 65% 55% at 50% -15%,rgba(13,124,102,.28) 0%,transparent 65%)}
+        .cta-wrap > *{position:relative}
+        .cta-wrap .sec-label{display:flex;justify-content:center;color:rgba(13,124,102,.7)}
+        .cta-h2{font-size:44px;font-weight:800;letter-spacing:-.03em;color:#fff;margin-bottom:18px;line-height:1.1}
+        .cta-sub{font-size:17px;color:rgba(255,255,255,.5);line-height:1.7;margin-bottom:40px;max-width:500px;margin-left:auto;margin-right:auto}
+        .cta-actions{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+        .btn-cta{display:inline-flex;align-items:center;gap:8px;padding:15px 34px;border-radius:var(--r);background:var(--teal);color:#fff;font-size:16px;font-weight:700;text-decoration:none;transition:background .15s;cursor:pointer}
+        .btn-cta:hover{background:var(--teal-dk)}
+        .cta-fine{font-size:13px;color:rgba(255,255,255,.28)}
+
+        /* ── FOOTER ── */
+        .lp-footer{padding:56px 28px 36px;border-top:1px solid var(--s100)}
+        .lp-footer-inner{max-width:var(--mw);margin:0 auto;display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:48px}
+        .footer-logo-row{display:flex;align-items:center;gap:9px;margin-bottom:14px}
+        .footer-logo-mark{width:28px;height:28px;border-radius:6px;background:var(--teal);display:flex;align-items:center;justify-content:center}
+        .footer-logo-text{font-size:14px;font-weight:700;letter-spacing:-.02em;color:var(--s900)}
+        .footer-tagline{font-size:13px;color:var(--s400);line-height:1.6;margin-bottom:16px;max-width:210px}
+        .footer-email{font-size:13px;font-weight:500;color:var(--teal);text-decoration:none}
+        .footer-email:hover{text-decoration:underline}
+        .footer-col-h{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--s400);margin-bottom:16px}
+        .footer-links{list-style:none;display:flex;flex-direction:column;gap:10px}
+        .footer-links a{font-size:13px;color:var(--s500);text-decoration:none;transition:color .15s;cursor:pointer}
+        .footer-links a:hover{color:var(--s900)}
+        .footer-bottom{max-width:var(--mw);margin:36px auto 0;padding-top:22px;border-top:1px solid var(--s100);display:flex;align-items:flex-start;justify-content:space-between;gap:24px;flex-wrap:wrap}
+        .footer-copy{font-size:12px;color:var(--s400)}
+        .footer-disclaimer{font-size:11px;color:var(--s400);line-height:1.65;max-width:560px;text-align:right}
+
+        /* ── RESPONSIVE ── */
+        @media(max-width:1024px){
+          .lp-hero-inner{grid-template-columns:1fr}
+          .hero-visual{display:none}
+          .feat-grid{grid-template-columns:repeat(2,1fr)}
+          .pricing-grid{grid-template-columns:1fr}
+          .pricing-card.featured{transform:scale(1)}
+          .lp-footer-inner{grid-template-columns:1fr 1fr;gap:32px}
+          .how-bg{padding:40px 28px}
+          .nosomos-grid{grid-template-columns:1fr}
+          .ppu-card{flex-direction:column;align-items:flex-start}
+          .cta-wrap{padding:56px 32px}
+        }
+        @media(max-width:768px){
+          .lp-hero{padding:120px 20px 64px}
+          .lp-h1{font-size:36px}
+          .lp-h1-sub{font-size:20px}
+          .sec-h2{font-size:28px}
+          .cta-h2{font-size:28px}
+          .cta-wrap{padding:44px 20px}
+          .bifurcacion{grid-template-columns:1fr}
+          .feat-grid{grid-template-columns:1fr}
+          .lp-footer-inner{grid-template-columns:1fr;gap:28px}
+          .lp-nav-links{display:none}
+          .footer-disclaimer{text-align:left}
+        }
+      `}</style>
+
+      {/* ══ NAVBAR ══ */}
+      <nav className={`lp-nav${scrolled ? " sc" : ""}`}>
+        <div className="lp-nav-inner">
+          <div className="lp-logo" onClick={() => navigate("/")}>
+            <div className="lp-logo-mark">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M3 13L8 3L13 13" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M5.2 9.5H10.8" stroke="white" strokeWidth="1.6" strokeLinecap="round"/>
+              </svg>
             </div>
-            <div className="flex items-center gap-3">
-              <Button 
-                variant="ghost" 
-                onClick={() => navigate("/login")}
-                className="text-gray-600 hover:text-teal-600"
-              >
-                Iniciar Sesión
-              </Button>
-              <Button 
-                onClick={() => navigate("/registro")}
-                className="bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-600 hover:to-blue-700 text-white"
-              >
-                Registrarse
-              </Button>
-            </div>
+            <span className="lp-logo-text">CERTIFIVE</span>
+          </div>
+          <ul className="lp-nav-links">
+            <li><a onClick={scrollTo("funcionalidades")}>Funcionalidades</a></li>
+            <li><a onClick={scrollTo("como-funciona")}>Cómo funciona</a></li>
+            <li><a onClick={scrollTo("precios")}>Precios</a></li>
+          </ul>
+          <div className="lp-nav-actions">
+            <button className="btn-ghost-sm" onClick={() => navigate("/login")}>Iniciar sesión</button>
+            <button className="btn-teal-sm" onClick={() => navigate("/register")}>
+              Empezar gratis
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6H9.5M6.5 3L9.5 6L6.5 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </button>
           </div>
         </div>
-      </header>
+      </nav>
 
-      {/* Hero Section */}
-      <section className="py-20 bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-teal-100 to-blue-100 rounded-full mb-8">
-              <Clock className="w-4 h-4 text-teal-600 mr-2" />
-              <span className="text-sm font-medium text-teal-700">Certificación Energética Profesional</span>
+      {/* ══ HERO ══ */}
+      <section className="lp-hero">
+        <div className="lp-hero-inner">
+          <div>
+            <div className="hero-badge">
+              <span className="hero-badge-dot" />
+              Beta abierta para técnicos certificadores
             </div>
-            
-            <h1 className="text-6xl md:text-7xl font-bold text-gray-900 mb-6 leading-tight">
-              <span className="block text-4xl md:text-5xl text-teal-600 mb-2">CERTIFICA EN 5 MINUTOS.</span>
-              <span className="block bg-gradient-to-r from-teal-500 to-blue-600 bg-clip-text text-transparent">
-                MULTIPLICA TUS INGRESOS X5
-              </span>
-            </h1>
-            
-            <p className="text-xl text-gray-600 mb-10 max-w-3xl mx-auto leading-relaxed">
-              La plataforma de automatización completa para certificadores energéticos. 
-              Desde el primer contacto hasta la facturación, todo en una sola herramienta profesional.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-              <Button 
-                onClick={() => navigate("/registro")} 
-                size="lg" 
-                className="bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-600 hover:to-blue-700 text-white text-lg px-8 py-4 h-auto shadow-lg hover:shadow-xl transition-all"
-              >
-                <UserPlus className="w-5 h-5 mr-2" />
-                Empezar Gratis Ahora
-              </Button>
-              <Button 
-                variant="outline"
-                onClick={async () => {
-                  await loginDemo();
-                  navigate("/");
-                }} 
-                size="lg" 
-                className="border-2 border-teal-200 text-teal-700 hover:bg-teal-50 text-lg px-8 py-4 h-auto"
-              >
-                <Play className="w-5 h-5 mr-2" />
-                Ver Demo en Vivo
-              </Button>
+            <h1 className="lp-h1">Dos maneras de hacer<br/>el <em>trabajo de campo.</em></h1>
+            <p className="lp-h1-sub">El propietario desde su móvil.<br/>Tú desde tu tablet en la visita.</p>
+            <p className="lp-hero-p">Certifive guía al propietario paso a paso para recoger los datos de su propio inmueble: fotos, medidas, instalaciones. Con esos datos sobre la mesa, tú decides si necesitas ir o no — eso es tu criterio profesional, no el nuestro. Si vas, usas la app en tablet y sales con todo hecho.</p>
+            <p className="lp-hero-note">El certificado oficial lo sigues generando tú en CE3X. De eso no nos encargamos nosotros.</p>
+            <div className="lp-hero-ctas">
+              <button className="btn-hero" onClick={() => navigate("/register")}>Probar gratis 14 días — sin tarjeta</button>
+              <a className="btn-hero-ghost" onClick={scrollTo("como-funciona")}>
+                Ver cómo funciona
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7H11M7.5 4L11 7L7.5 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              </a>
             </div>
-
-            {/* Trust indicators */}
-            <div className="flex flex-wrap justify-center items-center gap-8 text-sm text-gray-500">
-              <div className="flex items-center">
-                <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-                <span>100% Cumplimiento CEE</span>
-              </div>
-              <div className="flex items-center">
-                <Shield className="w-4 h-4 text-blue-500 mr-2" />
-                <span>Datos Seguros</span>
-              </div>
-              <div className="flex items-center">
-                <Clock className="w-4 h-4 text-teal-500 mr-2" />
-                <span>Setup en 5 minutos</span>
-              </div>
+            <div className="hero-trust">
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><path d="M6.5 1L7.8 4.8H12L8.8 7.1L10 11L6.5 8.6L3 11L4.2 7.1L1 4.8H5.2L6.5 1Z"/></svg>
+              Sin permanencia · Sin tarjeta de crédito · Cancela cuando quieras
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* 5-Step Process Section */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold text-gray-900 mb-4">
-                Tu proceso completo en <span className="text-teal-600">5 pasos</span>
-              </h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Desde el registro hasta la facturación, todo automatizado para maximizar tu productividad
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-8 md:gap-4">
-              {/* Step 1: CONECTA */}
-              <div className="relative">
-                <div className="text-center">
-                  <div className="w-20 h-20 bg-gradient-to-r from-teal-500 to-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-                    <UserPlus className="w-10 h-10 text-white" />
-                  </div>
-                  <div className="absolute -top-2 -right-2 w-8 h-8 bg-teal-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
-                    1
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-3">CONECTA</h3>
-                  <p className="text-gray-600 text-sm leading-relaxed">
-                    Regístrate como profesional certificador energético y configura tu perfil profesional
-                  </p>
+          {/* VISUAL MOCKUP */}
+          <div className="hero-visual">
+            <div style={{ position:"relative" }}>
+              <div className="app-card">
+                <div className="app-topbar">
+                  <div className="app-dot" style={{ background:"#ff5f57" }} />
+                  <div className="app-dot" style={{ background:"#febc2e" }} />
+                  <div className="app-dot" style={{ background:"#28c840" }} />
+                  <div className="app-url">app.certifive.es/expediente/2847</div>
                 </div>
-                {/* Arrow */}
-                <div className="hidden md:block absolute top-10 -right-6 text-teal-300">
-                  <ArrowRight className="w-6 h-6" />
-                </div>
-              </div>
-
-              {/* Step 2: EXPLORA */}
-              <div className="relative">
-                <div className="text-center">
-                  <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-                    <Search className="w-10 h-10 text-white" />
-                  </div>
-                  <div className="absolute -top-2 -right-2 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
-                    2
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-3">EXPLORA</h3>
-                  <p className="text-gray-600 text-sm leading-relaxed">
-                    Accede al dashboard de oportunidades y descubre nuevos proyectos de certificación
-                  </p>
-                </div>
-                {/* Arrow */}
-                <div className="hidden md:block absolute top-10 -right-6 text-blue-300">
-                  <ArrowRight className="w-6 h-6" />
-                </div>
-              </div>
-
-              {/* Step 3: REVISA */}
-              <div className="relative">
-                <div className="text-center">
-                  <div className="w-20 h-20 bg-gradient-to-r from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-                    <BarChart3 className="w-10 h-10 text-white" />
-                  </div>
-                  <div className="absolute -top-2 -right-2 w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
-                    3
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-3">REVISA</h3>
-                  <p className="text-gray-600 text-sm leading-relaxed">
-                    Analiza los datos automáticamente recopilados y verifica la información del inmueble
-                  </p>
-                </div>
-                {/* Arrow */}
-                <div className="hidden md:block absolute top-10 -right-6 text-purple-300">
-                  <ArrowRight className="w-6 h-6" />
-                </div>
-              </div>
-
-              {/* Step 4: TRAMITA */}
-              <div className="relative">
-                <div className="text-center">
-                  <div className="w-20 h-20 bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-                    <ClipboardCheck className="w-10 h-10 text-white" />
-                  </div>
-                  <div className="absolute -top-2 -right-2 w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
-                    4
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-3">TRAMITA</h3>
-                  <p className="text-gray-600 text-sm leading-relaxed">
-                    Recopila la información con un solo clic y tramita el CEE automáticamente
-                  </p>
-                </div>
-                {/* Arrow */}
-                <div className="hidden md:block absolute top-10 -right-6 text-orange-300">
-                  <ArrowRight className="w-6 h-6" />
-                </div>
-              </div>
-
-              {/* Step 5: FACTURA */}
-              <div className="relative">
-                <div className="text-center">
-                  <div className="w-20 h-20 bg-gradient-to-r from-green-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-                    <CreditCard className="w-10 h-10 text-white" />
-                  </div>
-                  <div className="absolute -top-2 -right-2 w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
-                    5
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-3">FACTURA</h3>
-                  <p className="text-gray-600 text-sm leading-relaxed">
-                    Cobra instantáneamente por tu servicio, genera la factura y envía a la asesoría
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* CTA after process */}
-            <div className="text-center mt-16">
-              <div className="bg-gradient-to-r from-teal-50 to-blue-50 rounded-2xl p-8">
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                  ¿Listo para multiplicar tus ingresos?
-                </h3>
-                <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-                  Únete a los profesionales que ya están automatizando su proceso de certificación energética
-                </p>
-                <Button 
-                  onClick={() => navigate("/registro")}
-                  size="lg" 
-                  className="bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-600 hover:to-blue-700 text-white text-lg px-8 py-4 h-auto shadow-lg hover:shadow-xl transition-all"
-                >
-                  <DollarSign className="w-5 h-5 mr-2" />
-                  Comenzar Ahora - Gratis
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="py-20 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold text-gray-900 mb-4">
-                Automatización completa para certificadores energéticos
-              </h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Todo lo que necesitas para gestionar tu negocio de certificación energética en una sola plataforma
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white">
-                <CardContent className="p-8 text-center">
-                  <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-                    <MessageSquare className="w-8 h-8 text-white" />
-                  </div>
-                  <h4 className="text-xl font-bold text-gray-900 mb-4">WhatsApp Business</h4>
-                  <p className="text-gray-600 leading-relaxed">
-                    Automatización completa desde la consulta hasta la entrega. Gestión de conversaciones y envío automático de presupuestos.
-                  </p>
-                </CardContent>
-              </Card>
-              
-              <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white">
-                <CardContent className="p-8 text-center">
-                  <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-                    <TrendingUp className="w-8 h-8 text-white" />
-                  </div>
-                  <h4 className="text-xl font-bold text-gray-900 mb-4">Gestión Financiera</h4>
-                  <p className="text-gray-600 leading-relaxed">
-                    Facturación automática, cobros instantáneos y reportes financieros completos para tu asesoría fiscal.
-                  </p>
-                </CardContent>
-              </Card>
-              
-              <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white">
-                <CardContent className="p-8 text-center">
-                  <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-                    <FileText className="w-8 h-8 text-white" />
-                  </div>
-                  <h4 className="text-xl font-bold text-gray-900 mb-4">Informes Técnicos</h4>
-                  <p className="text-gray-600 leading-relaxed">
-                    Generación automática de certificados en PDF, Word y Excel optimizados para el software oficial.
-                  </p>
-                </CardContent>
-              </Card>
-              
-              <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white">
-                <CardContent className="p-8 text-center">
-                  <div className="w-16 h-16 bg-gradient-to-r from-teal-500 to-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-                    <Shield className="w-8 h-8 text-white" />
-                  </div>
-                  <h4 className="text-xl font-bold text-gray-900 mb-4">Normativa CEE</h4>
-                  <p className="text-gray-600 leading-relaxed">
-                    Cumplimiento total con la normativa española de certificación energética y actualizaciones automáticas.
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Benefits Section */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-              <div>
-                <h2 className="text-4xl font-bold text-gray-900 mb-6">
-                  Transforma tu negocio con <span className="text-teal-600">CERTIFIVE</span>
-                </h2>
-                <div className="space-y-6">
-                  <div className="flex items-start space-x-4">
-                    <div className="w-8 h-8 bg-teal-100 rounded-lg flex items-center justify-center mt-1">
-                      <Clock className="w-4 h-4 text-teal-600" />
+                <div className="app-body">
+                  <div className="app-sec-lbl">Expediente #2847 · Calle Mayor 12, 3ºB · Madrid</div>
+                  <div className="app-split">
+                    <div className="app-path active">
+                      <div style={{ fontSize:20, marginBottom:8 }}>📱</div>
+                      <div className="app-path-name">Camino A — Propietario recoge datos</div>
+                      <div className="app-path-desc">Formulario guiado enviado por WhatsApp</div>
+                      <div className="app-path-items">
+                        <div className="app-item-done">✓ Fachadas y orientación</div>
+                        <div className="app-item-done">✓ Ventanas y huecos</div>
+                        <div className="app-item-done">✓ Caldera e instalaciones</div>
+                        <div className="app-item-pend">◦ Fotos pendientes (2)</div>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-xl font-semibold text-gray-900 mb-2">Ahorra 5 horas por certificación</h3>
-                      <p className="text-gray-600">Automatiza completamente el proceso desde la solicitud hasta la entrega del certificado.</p>
+                    <div className="app-path">
+                      <div style={{ fontSize:20, marginBottom:8 }}>📋</div>
+                      <div className="app-path-name">Camino B — Visita con tablet</div>
+                      <div className="app-path-desc">Ficha técnica in situ</div>
+                      <div className="app-path-items">
+                        <div className="app-item-pend">◦ No necesario</div>
+                        <div className="app-item-pend">◦ Datos del propietario OK</div>
+                        <div className="app-item-pend">◦ Tú decides como técnico</div>
+                      </div>
                     </div>
                   </div>
-                  
-                  <div className="flex items-start space-x-4">
-                    <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mt-1">
-                      <DollarSign className="w-4 h-4 text-green-600" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-semibold text-gray-900 mb-2">Multiplica tus ingresos</h3>
-                      <p className="text-gray-600">Gestiona 5 veces más proyectos con el mismo tiempo de trabajo gracias a la automatización.</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start space-x-4">
-                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mt-1">
-                      <CheckCircle className="w-4 h-4 text-blue-600" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-semibold text-gray-900 mb-2">Cero errores administrativos</h3>
-                      <p className="text-gray-600">Formularios precargados y validación automática garantizan la precisión de los datos.</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start space-x-4">
-                    <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mt-1">
-                      <Users className="w-4 h-4 text-purple-600" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-semibold text-gray-900 mb-2">Experiencia cliente premium</h3>
-                      <p className="text-gray-600">Comunicación fluida por WhatsApp y entregas instantáneas que impresionan a tus clientes.</p>
-                    </div>
+                  <hr className="app-divider" />
+                  <div className="app-footer-row">
+                    <div className="app-footer-lbl">Datos exportados para CE3X</div>
+                    <div className="app-status">✓ Listo para CE3X</div>
                   </div>
                 </div>
               </div>
-              
-              <div className="relative">
-                <div className="bg-gradient-to-r from-teal-500 to-blue-600 rounded-2xl p-8 text-white shadow-2xl">
-                  <h3 className="text-2xl font-bold mb-6">Resultados reales de nuestros usuarios</h3>
-                  <div className="space-y-4">
-                    <div className="bg-white/10 rounded-lg p-4">
-                      <div className="text-3xl font-bold text-teal-100">+400%</div>
-                      <div className="text-sm text-teal-100">Incremento promedio en ingresos</div>
-                    </div>
-                    <div className="bg-white/10 rounded-lg p-4">
-                      <div className="text-3xl font-bold text-blue-100">85%</div>
-                      <div className="text-sm text-blue-100">Reducción en tiempo administrativo</div>
-                    </div>
-                    <div className="bg-white/10 rounded-lg p-4">
-                      <div className="text-3xl font-bold text-cyan-100">24h</div>
-                      <div className="text-sm text-cyan-100">Tiempo promedio de entrega</div>
-                    </div>
-                  </div>
+              <div className="hero-float">
+                <div className="hero-float-icon">💰</div>
+                <div>
+                  <div className="hero-float-lbl">1er tramo cobrado</div>
+                  <div className="hero-float-val">Antes de la visita</div>
                 </div>
               </div>
             </div>
@@ -381,126 +389,330 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Final CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-teal-500 to-blue-600">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-5xl font-bold text-white mb-6">
-              ¿Listo para multiplicar tus ingresos?
-            </h2>
-            <p className="text-xl text-teal-100 mb-8 max-w-3xl mx-auto leading-relaxed">
-              Únete a los certificadores energéticos que han transformado su negocio con CERTIFIVE. 
-              Comienza gratis y experimenta la diferencia en solo 5 minutos.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-12">
-              <Button 
-                onClick={() => navigate("/registro")}
-                size="lg" 
-                className="bg-white text-teal-600 hover:bg-gray-50 text-xl px-10 py-5 h-auto shadow-lg hover:shadow-xl transition-all font-semibold"
-              >
-                <UserPlus className="w-6 h-6 mr-3" />
-                Empezar Gratis Ahora
-              </Button>
-              <Button 
-                variant="outline"
-                onClick={async () => {
-                  await loginDemo();
-                  navigate("/");
-                }}
-                size="lg" 
-                className="border-2 border-white text-white hover:bg-white/10 text-xl px-10 py-5 h-auto font-semibold"
-              >
-                <Play className="w-6 h-6 mr-3" />
-                Probar Demo
-              </Button>
-            </div>
+      {/* ══ SOCIAL PROOF ══ */}
+      <div className="sp-bar">
+        <div className="sp-bar-inner">
+          <div className="sp-pill">
+            <span className="sp-dot" />
+            En desarrollo con certificadores reales de Madrid, Barcelona y Valencia.&nbsp;
+            <a onClick={() => navigate("/register")}>Únete a la beta →</a>
+          </div>
+        </div>
+      </div>
 
-            {/* Trust badges */}
-            <div className="flex flex-wrap justify-center items-center gap-8 text-teal-100">
-              <div className="flex items-center">
-                <CheckCircle className="w-5 h-5 mr-2" />
-                <span className="text-sm">Sin permanencia</span>
+      {/* ══ QUÉ HACE CERTIFIVE ══ */}
+      <section className="lp-section" id="funcionalidades">
+        <div className="lp-container">
+          <div className="sec-intro">
+            <div className="sec-label">Qué hace Certifive</div>
+            <h2 className="sec-h2">Certifive no reemplaza CE3X.<br/><em>Hace todo lo que CE3X no hace.</em></h2>
+            <p className="sec-sub">CE3X calcula la calificación energética. Eso no va a cambiar. El problema es todo lo que hay antes y después: la recogida de datos del propietario, el presupuesto, el cobro, las fotos, la documentación, la factura. Certifive lo organiza todo en un solo lugar.</p>
+          </div>
+          <div className="feat-grid">
+            <div className="feat-card star">
+              <div className="feat-tag">⭐ Diferenciador clave</div>
+              <div className="feat-icon">📱</div>
+              <h3 className="feat-h">El propietario hace los deberes. Tú decides con toda la información.</h3>
+              <p className="feat-p">Certifive guía al propietario paso a paso para recoger los datos de su inmueble: fotos de fachadas, ventanas, caldera, dimensiones. Con instrucciones en lenguaje normal y ejemplos visuales. Cuando recibes los datos, decides tú —como técnico— si son suficientes o si necesitas completarlos in situ.</p>
+            </div>
+            <div className="feat-card">
+              <div className="feat-icon">📋</div>
+              <h3 className="feat-h">Para cuando sí hay que ir: sin papel, sin apuntes sueltos</h3>
+              <p className="feat-p">Usas Certifive en tu tablet durante la visita. Secciones guiadas para la envolvente, los huecos y las instalaciones. Al salir, los datos están en la nube listos para CE3X.</p>
+            </div>
+            <div className="feat-card">
+              <div className="feat-icon">📄</div>
+              <h3 className="feat-h">Formulario online para el propietario</h3>
+              <p className="feat-p">El propietario rellena los datos de su inmueble desde el móvil. Tú recibes todo ordenado, sin llamadas ni emails con adjuntos.</p>
+            </div>
+            <div className="feat-card">
+              <div className="feat-icon">💶</div>
+              <h3 className="feat-h">Presupuesto que el cliente acepta con un clic</h3>
+              <p className="feat-p">Genera y envía el presupuesto por WhatsApp o email. El cliente lo acepta y paga online. Sin gestiones manuales ni perseguir pagos. Cobras el primer tramo antes de hacer el trabajo.</p>
+            </div>
+            <div className="feat-card">
+              <div className="feat-icon">📸</div>
+              <h3 className="feat-h">Las fotos en su sitio, con descripción, desde el primer día</h3>
+              <p className="feat-p">Cada foto queda vinculada al expediente con categoría y descripción, tanto si las hace el propietario como si las haces tú en la visita. Sin buscar en el carrete del móvil.</p>
+            </div>
+            <div className="feat-card">
+              <div className="feat-icon">🗂️</div>
+              <h3 className="feat-h">Un expediente para cada certificación</h3>
+              <p className="feat-p">Toda la documentación, los mensajes, los pagos y el estado en un solo lugar. Para ti solo o para un equipo de varios certificadores.</p>
+            </div>
+            <div className="feat-card">
+              <div className="feat-icon">🧾</div>
+              <h3 className="feat-h">La factura se genera sola al confirmar el pago</h3>
+              <p className="feat-p">Formato legal español, con todos los datos fiscales. Lista para descargar o enviar por email. Sin errores, sin olvidarse del IVA.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══ CÓMO FUNCIONA ══ */}
+      <section className="lp-section" id="como-funciona">
+        <div className="lp-container">
+          <div className="how-bg">
+            <div className="sec-label">Cómo funciona</div>
+            <h2 className="sec-h2">Así es una certificación <em>con Certifive</em></h2>
+            <div className="steps">
+              <div className="step">
+                <div className="step-line" />
+                <div><div className="step-num">1</div></div>
+                <div className="step-body">
+                  <h3 className="step-h">Recibes el encargo y creas el expediente</h3>
+                  <p className="step-p">Creas la certificación en Certifive y mandas al propietario un link por WhatsApp o email para que rellene sus datos básicos. Todo en menos de dos minutos.</p>
+                </div>
               </div>
-              <div className="flex items-center">
-                <Shield className="w-5 h-5 mr-2" />
-                <span className="text-sm">Datos seguros</span>
+              <div className="step">
+                <div className="step-line" />
+                <div><div className="step-num">2</div></div>
+                <div className="step-body">
+                  <h3 className="step-h">Presupuesto y primer pago</h3>
+                  <p className="step-p">Con los datos básicos en mano, generas el presupuesto y lo envías. El cliente lo acepta online y paga el primer tramo. Cobras antes de hacer el trabajo.</p>
+                </div>
               </div>
-              <div className="flex items-center">
-                <Clock className="w-5 h-5 mr-2" />
-                <span className="text-sm">Setup inmediato</span>
+              <div className="step">
+                <div className="step-line" />
+                <div><div className="step-num">3</div></div>
+                <div className="step-body">
+                  <h3 className="step-h">Los datos técnicos llegan de dos maneras</h3>
+                  <p className="step-p" style={{ marginBottom:16 }}>Aquí es donde Certifive cambia las reglas: tú eliges cómo se recogen los datos, según el encargo y tu criterio profesional.</p>
+                  <div className="bifurcacion">
+                    <div className="bif-path ca">
+                      <div className="bif-label">Camino A — El propietario desde casa</div>
+                      <h4 className="bif-h">Mandas el formulario guiado al propietario</h4>
+                      <p className="bif-p">Él sigue las instrucciones paso a paso: qué fotos hacer, cómo hacerlas, qué datos recoger. Todo en su móvil, sin tecnicismos, con ejemplos visuales.</p>
+                      <div className="bif-note">Decides tú —como técnico responsable— si son suficientes para certificar o si necesitas completarlos con una visita. Certifive no toma esa decisión. Tú sí.</div>
+                    </div>
+                    <div className="bif-path cb">
+                      <div className="bif-label">Camino B — Tú con la tablet en la visita</div>
+                      <h4 className="bif-h">Cuando la visita sí hace falta, nada se pierde</h4>
+                      <p className="bif-p">Abres Certifive en tu tablet. La app te guía por cada sección: fachadas, ventanas, instalaciones, fotos. Todo queda guardado en la nube al instante.</p>
+                      <div className="bif-note">Sin papeles ni fotos sueltas en el móvil. Al llegar a la oficina, los datos ya están esperándote.</div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center">
-                <Users className="w-5 h-5 mr-2" />
-                <span className="text-sm">Soporte 24/7</span>
+              <div className="step">
+                <div className="step-line" />
+                <div><div className="step-num">4</div></div>
+                <div className="step-body">
+                  <h3 className="step-h">Exportas los datos para CE3X</h3>
+                  <p className="step-p">Certifive te da los datos ordenados y etiquetados con la nomenclatura de CE3X. Copias los valores, calculas la calificación y generas el certificado oficial. Sin buscar nada en papeles ni notas dispersas.</p>
+                </div>
+              </div>
+              <div className="step">
+                <div><div className="step-num">5</div></div>
+                <div className="step-body">
+                  <h3 className="step-h">Cobras el segundo tramo y la factura se genera sola</h3>
+                  <p className="step-p">El cliente paga el segundo tramo. La factura legal española se genera automáticamente. El expediente queda cerrado y archivado con toda la documentación.</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-12 bg-gray-900 text-white">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-              <div className="md:col-span-2">
-                <div className="flex items-center space-x-3 mb-4">
-                  <img 
-                    src={certifiveLogo} 
-                    alt="CERTIFIVE Logo" 
-                    className="w-10 h-10 rounded-lg object-cover"
-                  />
-                  <h4 className="text-2xl font-bold bg-gradient-to-r from-teal-400 to-blue-400 bg-clip-text text-transparent">CERTIFIVE</h4>
+      {/* ══ LO QUE NO SOMOS ══ */}
+      <section className="lp-section nosomos-bg">
+        <div className="lp-container">
+          <div className="sec-label">Transparencia</div>
+          <h2 className="sec-h2">Lo que Certifive no hace<br/><em>(y por qué es importante que lo sepas)</em></h2>
+          <p className="sec-sub">Si buscas un software que prometa hacer todo automáticamente, no somos lo tuyo. Si buscas uno que te ahorre horas reales en cada certificación sin mentirte, sigue leyendo.</p>
+          <div className="nosomos-grid">
+            <div>
+              <div className="nosomos-col-h no">❌ Lo que no hacemos</div>
+              {[
+                { t:"No generamos el certificado de eficiencia energética oficial.", s:"El certificado oficial lo genera CE3X u otro programa reconocido. Eso no va a cambiar porque así lo exige la normativa española." },
+                { t:"No rellenamos CE3X automáticamente (todavía).", s:"CE3X no tiene API pública. Exportamos los datos en un formato que hace el volcado manual mucho más rápido." },
+                { t:"No decidimos si un inmueble necesita visita o no.", s:"Esa es una decisión técnica y profesional del certificador habilitado. Lo que hacemos es darte mejores datos antes de decidir." },
+              ].map((item, i) => (
+                <div className="nosomos-item" key={i}>
+                  <span className="nosomos-icon">❌</span>
+                  <div><span className="nosomos-strong">{item.t}</span><span className="nosomos-small">{item.s}</span></div>
                 </div>
-                <p className="text-gray-400 leading-relaxed mb-4 max-w-md">
-                  La plataforma de automatización completa para certificadores energéticos en España. 
-                  Transforma tu negocio y multiplica tus ingresos con nuestra tecnología.
-                </p>
-                <div className="flex space-x-4">
-                  <div className="w-8 h-8 bg-teal-600 rounded-lg flex items-center justify-center">
-                    <MessageSquare className="w-4 h-4 text-white" />
-                  </div>
-                  <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                    <FileText className="w-4 h-4 text-white" />
-                  </div>
-                  <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
-                    <Shield className="w-4 h-4 text-white" />
-                  </div>
-                </div>
-              </div>
-              
-              <div>
-                <h5 className="text-lg font-semibold mb-4 text-teal-400">Plataforma</h5>
-                <ul className="space-y-2 text-gray-400">
-                  <li><a href="#" className="hover:text-teal-400 transition-colors">WhatsApp Business</a></li>
-                  <li><a href="#" className="hover:text-teal-400 transition-colors">Gestión Financiera</a></li>
-                  <li><a href="#" className="hover:text-teal-400 transition-colors">Informes Técnicos</a></li>
-                  <li><a href="#" className="hover:text-teal-400 transition-colors">Automatización</a></li>
-                </ul>
-              </div>
-              
-              <div>
-                <h5 className="text-lg font-semibold mb-4 text-blue-400">Empresa</h5>
-                <ul className="space-y-2 text-gray-400">
-                  <li><a href="#" className="hover:text-blue-400 transition-colors">Sobre Nosotros</a></li>
-                  <li><a href="#" className="hover:text-blue-400 transition-colors">Contacto</a></li>
-                  <li><a href="#" className="hover:text-blue-400 transition-colors">Soporte</a></li>
-                  <li><a href="#" className="hover:text-blue-400 transition-colors">Términos y Condiciones</a></li>
-                </ul>
-              </div>
+              ))}
             </div>
-            
-            <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center">
-              <p className="text-gray-400 text-sm">
-                © 2025 CERTIFIVE. Todos los derechos reservados. | Plataforma oficial para certificación energética en España.
-              </p>
-              <div className="flex items-center space-x-2 mt-4 md:mt-0">
-                <span className="text-gray-400 text-sm">Cumplimiento CEE</span>
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              </div>
+            <div>
+              <div className="nosomos-col-h si">✅ Lo que sí hacemos</div>
+              {[
+                { t:"Organizamos todo el proceso alrededor de CE3X.", s:"Para que el momento de abrir CE3X sea la parte fácil del trabajo, no la más pesada." },
+                { t:"Guiamos al propietario para que los datos lleguen antes que tú.", s:"Con instrucciones en lenguaje normal, ejemplos visuales y un formulario desde cualquier móvil." },
+                { t:"Gestionamos presupuestos, cobros en tramos y facturas legales.", s:"Para que te concentres en el trabajo técnico y no en el administrativo." },
+                { t:"Centralizamos expedientes, fotos y documentos.", s:"Todo en un solo lugar. Para ti o para un equipo de varios certificadores." },
+              ].map((item, i) => (
+                <div className="nosomos-item" key={i}>
+                  <span className="nosomos-icon">✅</span>
+                  <div><span className="nosomos-strong">{item.t}</span><span className="nosomos-small">{item.s}</span></div>
+                </div>
+              ))}
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* ══ PRECIOS ══ */}
+      <section className="lp-section" id="precios">
+        <div className="lp-container">
+          <div className="sec-intro pricing-header">
+            <div className="sec-label">Precios</div>
+            <h2 className="sec-h2">Elige el plan que se adapta a tu volumen</h2>
+            <p className="sec-sub" style={{ margin:"0 auto" }}>Sin permanencia. Sin letra pequeña. Cancela cuando quieras.</p>
+          </div>
+
+          {/* Toggle */}
+          <div className="toggle-wrap">
+            <span className={`toggle-lbl${!isAnnual ? " on" : ""}`}>Mensual</span>
+            <label className="toggle-switch">
+              <input type="checkbox" checked={isAnnual} onChange={e => setIsAnnual(e.target.checked)} />
+              <div className="toggle-track" />
+              <div className="toggle-thumb" style={{ transform: isAnnual ? "translateX(20px)" : "translateX(0)" }} />
+            </label>
+            <span className={`toggle-lbl${isAnnual ? " on" : ""}`}>Anual</span>
+            <span className="toggle-badge">2 meses gratis</span>
+          </div>
+
+          {/* Cards */}
+          <div className="pricing-grid">
+            {/* BÁSICO */}
+            <div className="pricing-card">
+              <div className="plan-name">Básico</div>
+              <div className="plan-price">
+                <span className="plan-amount">{P("basic")}</span>
+                <span className="plan-unit">€/mes</span>
+              </div>
+              <div className="plan-annual">{Ann("basic")}</div>
+              <div className="plan-desc">Para técnicos que empiezan o con poco volumen de certificaciones.</div>
+              <div className="plan-feats">
+                {["Hasta 10 certificaciones/mes","Expedientes y clientes","Formulario guiado para propietarios","Presupuestos digitales","Facturas automáticas","Exportación de datos para CE3X"].map((f,i) => (
+                  <div className="plan-feat" key={i}><span className="feat-check">✓</span>{f}</div>
+                ))}
+              </div>
+              <button className="btn-plan btn-plan-teal" onClick={() => navigate("/register?plan=basic")}>Empezar gratis 14 días</button>
+            </div>
+
+            {/* PROFESIONAL */}
+            <div className="pricing-card featured">
+              <div className="feat-badge">★ Más popular</div>
+              <div className="plan-name">Profesional</div>
+              <div className="plan-price">
+                <span className="plan-amount">{P("pro")}</span>
+                <span className="plan-unit">€/mes</span>
+              </div>
+              <div className="plan-annual">{Ann("pro")}</div>
+              <div className="plan-desc">Para técnicos activos con flujo continuo de encargos.</div>
+              <div className="plan-feats">
+                {["Hasta 50 certificaciones/mes","Todo lo del plan Básico","WhatsApp integrado","Cobros en tramos + firma digital","Recordatorios automáticos","Estadísticas e informes de actividad"].map((f,i) => (
+                  <div className="plan-feat" key={i}><span className="feat-check">✓</span>{f}</div>
+                ))}
+              </div>
+              <button className="btn-plan btn-plan-white" onClick={() => navigate("/register?plan=pro")}>Empezar gratis 14 días</button>
+            </div>
+
+            {/* EMPRESA */}
+            <div className="pricing-card">
+              <div className="plan-name">Empresa</div>
+              <div className="plan-price">
+                <span className="plan-amount">{P("empresa")}</span>
+                <span className="plan-unit">€/mes</span>
+              </div>
+              <div className="plan-annual">{Ann("empresa")}</div>
+              <div className="plan-desc">Para estudios técnicos con equipo y alto volumen de trabajo.</div>
+              <div className="plan-feats">
+                {["Certificaciones ilimitadas","Hasta 5 técnicos en el mismo panel","Todo lo del plan Profesional","Acceso API para integraciones","Funciones de IA (próximamente)","Soporte prioritario"].map((f,i) => (
+                  <div className="plan-feat" key={i}><span className="feat-check">✓</span>{f}</div>
+                ))}
+              </div>
+              <button className="btn-plan btn-plan-outline" onClick={() => navigate("/contact?plan=empresa")}>Hablar con nosotros</button>
+            </div>
+          </div>
+
+          {/* PAY-PER-USE */}
+          <div className="ppu-card">
+            <div>
+              <div className="ppu-lbl">¿Certificas de forma esporádica?</div>
+              <div className="ppu-price">3€ por certificación</div>
+              <div className="ppu-desc">Pay-per-use · Sin suscripción · Pagas solo cuando trabajas</div>
+            </div>
+            <div className="ppu-feats">
+              <div className="ppu-feat"><span className="ppu-chk">✓</span>Sin cuota mensual</div>
+              <div className="ppu-feat"><span className="ppu-chk">✓</span>Acceso completo por certificación</div>
+              <div className="ppu-feat"><span className="ppu-chk">✓</span>Paga solo cuando certifiques</div>
+            </div>
+            <button className="btn-ppu" onClick={() => navigate("/register?plan=ppu")}>
+              Ver cómo funciona
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6H9.5M6.5 3L9.5 6L6.5 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+            </button>
+          </div>
+
+          <p className="pricing-note">
+            💬 ¿Eres inmobiliaria, promotora o gran empresa?&nbsp;
+            <a onClick={() => navigate("/contact")}>Cuéntanos tu caso y diseñamos una propuesta a medida →</a>
+          </p>
+        </div>
+      </section>
+
+      {/* ══ CTA FINAL ══ */}
+      <section className="lp-section-sm">
+        <div className="lp-container">
+          <div className="cta-wrap">
+            <div className="sec-label">Empieza hoy</div>
+            <h2 className="cta-h2">Pruébalo 14 días gratis.<br/>Sin tarjeta. Sin compromisos.</h2>
+            <p className="cta-sub">Si después de 14 días no te ha ahorrado tiempo real en tu trabajo, te devolvemos el tiempo que perdiste configurándolo. Palabra.</p>
+            <div className="cta-actions">
+              <button className="btn-cta" onClick={() => navigate("/register")}>
+                Crear mi cuenta gratis
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3.5 8H12.5M8.5 4L13 8L8.5 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              </button>
+            </div>
+            <p className="cta-fine">Técnico certificador habilitado · Sin permanencia · Cancela cuando quieras</p>
+          </div>
+        </div>
+      </section>
+
+      {/* ══ FOOTER ══ */}
+      <footer className="lp-footer">
+        <div className="lp-footer-inner">
+          <div>
+            <div className="footer-logo-row">
+              <div className="footer-logo-mark">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <path d="M3 13L8 3L13 13" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M5.2 9.5H10.8" stroke="white" strokeWidth="1.6" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <span className="footer-logo-text">CERTIFIVE</span>
+            </div>
+            <p className="footer-tagline">La plataforma de gestión para técnicos certificadores energéticos.</p>
+            <a href="mailto:hola@certifive.es" className="footer-email">hola@certifive.es</a>
+          </div>
+          <div>
+            <div className="footer-col-h">Producto</div>
+            <ul className="footer-links">
+              <li><a onClick={scrollTo("funcionalidades")}>Funcionalidades</a></li>
+              <li><a onClick={scrollTo("como-funciona")}>Cómo funciona</a></li>
+              <li><a onClick={scrollTo("precios")}>Precios</a></li>
+            </ul>
+          </div>
+          <div>
+            <div className="footer-col-h">Legal</div>
+            <ul className="footer-links">
+              <li><a onClick={() => navigate("/aviso-legal")}>Aviso legal</a></li>
+              <li><a onClick={() => navigate("/privacidad")}>Política de privacidad</a></li>
+              <li><a onClick={() => navigate("/cookies")}>Cookies</a></li>
+            </ul>
+          </div>
+          <div>
+            <div className="footer-col-h">Empresa</div>
+            <ul className="footer-links">
+              <li><a onClick={() => navigate("/contact")}>Contacto</a></li>
+            </ul>
+          </div>
+        </div>
+        <div className="footer-bottom">
+          <p className="footer-copy">© 2026 Certifive. Todos los derechos reservados.</p>
+          <p className="footer-disclaimer">Certifive es una herramienta de gestión. El certificado de eficiencia energética oficial debe generarse con un Documento Reconocido por el Ministerio (CE3X, HULC, CYPETHERM u otro) y registrarse en el organismo competente de la Comunidad Autónoma correspondiente.</p>
         </div>
       </footer>
     </div>

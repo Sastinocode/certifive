@@ -2,7 +2,7 @@ import express from "express";
 import session from "express-session";
 import path from "path";
 import { fileURLToPath } from "url";
-import { registerRoutes } from "./routes";
+import { registerRoutes } from "./routes/index";
 import { initEmail } from "./email";
 import { startReminderCron } from "./notifications";
 import { startDigestCron } from "./digest";
