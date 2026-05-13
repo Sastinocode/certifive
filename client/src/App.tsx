@@ -31,6 +31,7 @@ import PublicSolicitud from "@/pages/PublicSolicitud";
 import PublicCEEForm from "@/pages/PublicCEEForm";
 import PublicPayment from "@/pages/PublicPayment";
 import PublicTariffGenerator from "@/pages/public-tariff-generator";
+import FormularioTecnicoPublico from "@/pages/FormularioTecnicoPublico";
 import NotFound from "@/pages/not-found";
 
 function PresupuestoWrapper() {
@@ -46,6 +47,11 @@ function SolicitudWrapper() {
 function CEEFormWrapper() {
   const { token } = useParams<{ token: string }>();
   return <PublicCEEForm token={token || ""} />;
+}
+
+function FormularioTecnicoWrapper() {
+  const { token } = useParams<{ token: string }>();
+  return <FormularioTecnicoPublico token={token || ""} />;
 }
 
 function PaymentWrapper() {
@@ -76,6 +82,7 @@ function Router() {
         <Route path="/cotizacion/:uniqueLink" component={PublicQuote} />
         <Route path="/solicitud/:token" component={SolicitudWrapper} />
         <Route path="/formulario-cee/:token" component={CEEFormWrapper} />
+        <Route path="/formulario-tecnico/:token" component={FormularioTecnicoWrapper} />
         <Route path="/pay/:token" component={PaymentWrapper} />
         <Route path="/certificacion-cliente/:uniqueLink" component={CertificationForm} />
         <Route path="/generador-tarifas" component={PublicTariffGenerator} />

@@ -244,6 +244,20 @@ export const certifications = pgTable("certifications", {
   ceeFormOpenedAt: timestamp("cee_form_opened_at"),
   ceeFormCompletedAt: timestamp("cee_form_completed_at"),
 
+  // ── FORMULARIO TÉCNICO GUIADO (Modo B — propietario recoge datos técnicos) ──
+  // Ruta pública: /formulario-tecnico/:tecnicoToken
+  tecnicoToken: text("tecnico_token").unique(),
+  tecnicoFormStatus: text("tecnico_form_status"),  // "enviado"|"abierto"|"guardado"|"completado"
+  tecnicoFormSentAt: timestamp("tecnico_form_sent_at"),
+  tecnicoFormOpenedAt: timestamp("tecnico_form_opened_at"),
+  tecnicoFormCompletedAt: timestamp("tecnico_form_completed_at"),
+  tecnicoFormData: jsonb("tecnico_form_data"),       // datos recogidos por el propietario
+  // Resultado de la revisión del certificador
+  // "pendiente_revision"|"validado"|"visita_complementaria"|"visita_completa"
+  tecnicoFormReviewStatus: text("tecnico_form_review_status"),
+  tecnicoFormReviewedAt: timestamp("tecnico_form_reviewed_at"),
+  tecnicoFormReviewNotes: text("tecnico_form_review_notes"),
+
   // ── Overall pipeline status ──────────────────────────────────────────────────
   workflowStatus: text("workflow_status").default("nuevo"),
 
@@ -266,6 +280,7 @@ export const certifications = pgTable("certifications", {
   uniqueIndex("certifications_presupuesto_token_idx").on(t.presupuestoToken),
   uniqueIndex("certifications_payment_token_idx").on(t.paymentToken),
   uniqueIndex("certifications_cee_token_idx").on(t.ceeToken),
+  uniqueIndex("certifications_tecnico_token_idx").on(t.tecnicoToken),
 ]);
 
 // ─────────────────────────────────────────────────────────────────────────────
