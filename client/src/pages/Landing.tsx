@@ -1,19 +1,18 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 
 export default function Landing() {
   const [, navigate] = useLocation();
-  const [scrolled, setScrolled]   = useState(false);
-  const [isAnnual, setIsAnnual]   = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [isAnnual, setIsAnnual] = useState(false);
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
 
-  // Navbar scroll shadow
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
+    const onScroll = () => setScrolled(window.scrollY > 8);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Smooth scroll helper for anchor links
   const scrollTo = (id: string) => (e: React.MouseEvent) => {
     e.preventDefault();
     const el = document.getElementById(id);
@@ -23,696 +22,940 @@ export default function Landing() {
     }
   };
 
-  // Pricing display
   const prices = {
     basic:   { m: "19", a: "15", annual: "190€/año — 2 meses gratis" },
     pro:     { m: "49", a: "40", annual: "490€/año — 2 meses gratis" },
     empresa: { m: "99", a: "82", annual: "990€/año — 2 meses gratis" },
   };
-  const P = (key: keyof typeof prices) =>
-    isAnnual ? prices[key].a : prices[key].m;
-  const Ann = (key: keyof typeof prices) =>
-    isAnnual ? prices[key].annual : "";
+  const P = (k: keyof typeof prices) => isAnnual ? prices[k].a : prices[k].m;
+  const Ann = (k: keyof typeof prices) => isAnnual ? prices[k].annual : "";
+
+  const steps = [
+    { n: "01", t: "Alta del expediente", d: "Crea el proyecto en segundos. La plataforma genera formularios y documentación para el propietario automáticamente." },
+    { n: "02", t: "Cálculo y simulación", d: "Importa tu cálculo de CE3X o HULC. Certifive extrae los datos, valida y detecta incidencias antes de presentar." },
+    { n: "03", t: "Generación del certificado", d: "Certificado CEE con todos los campos exigidos por la normativa vigente, listo para firma digital cualificada." },
+    { n: "04", t: "Registro autonómico", d: "Presentación automática ante el registro de tu comunidad. Confirmación y número de inscripción en tu panel." },
+    { n: "05", t: "Entrega y facturación", d: "Envía el certificado al cliente por WhatsApp o email. Genera la factura legal y cobra desde la misma plataforma." },
+  ];
+
+  const faqs = [
+    { q: "¿Sustituye Certifive a CE3X o HULC?", a: "No. CE3X y HULC siguen siendo tuyas para el cálculo energético. Certifive se integra con ellas e importa los resultados, automatizando todo lo demás: expediente, certificado, registro, facturación y comunicación con el cliente." },
+    { q: "¿Funciona con todas las comunidades autónomas?", a: "Sí. Certifive presenta automáticamente ante los registros autonómicos de Madrid, Cataluña, Andalucía, País Vasco, Comunidad Valenciana, Galicia y el resto del territorio español." },
+    { q: "¿Cuánto tiempo tardo en empezar?", a: "Menos de 15 minutos. Te damos acceso, importas tus clientes desde Excel o tu CRM, y puedes presentar tu primer expediente el mismo día. Soporte gratuito durante todo el onboarding." },
+    { q: "¿Hay permanencia o coste de implantación?", a: "Cero. 14 días de prueba gratuita sin tarjeta, planes mensuales sin permanencia, y cancelación con un solo clic. Si necesitas formación para tu equipo está incluida en cualquier plan." },
+    { q: "¿Puedo usar Certifive si solo hago certificados puntualmente?", a: "Sí. El plan Pay-per-use a 3€/certificado es perfecto para técnicos que certifican de forma esporádica. Sin cuota mensual, sin compromisos, pagas solo lo que usas." },
+  ];
+
+  const LogoSVG = ({ dark = false }: { dark?: boolean }) => (
+    <svg width="140" height="36" viewBox="0 0 140 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M6 17L6 28L22 28L22 17L14 9Z" fill="none" stroke="#1FA94B" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round"/>
+      <rect x="9" y="22" width="2.5" height="6" rx="0.5" fill="#1FA94B"/>
+      <rect x="13" y="19" width="2.5" height="9" rx="0.5" fill="#84CC16"/>
+      <rect x="17" y="16" width="2.5" height="12" rx="0.5" fill="#F59E0B"/>
+      <text x="30" y="26" fontFamily="Inter, system-ui, sans-serif" fontWeight="800" fontSize="19" fill={dark ? "#ffffff" : "#0F172A"}>certifive</text>
+    </svg>
+  );
+
+  const CheckIcon = ({ cls = "plan-check" }: { cls?: string }) => (
+    <svg className={cls} width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <path d="M3 8l3.5 3.5L13 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+
+  const TrustIcon = () => (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+      <path d="M2 7l3.5 3.5L12 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
 
   return (
-    <div style={{ fontFamily:"'Inter',system-ui,sans-serif", color:"#0F172A", background:"#fff", overflowX:"hidden" }}>
+    <div style={{ fontFamily: "'Inter',system-ui,sans-serif", color: "#0F172A", background: "#fff", overflowX: "hidden" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
         html{scroll-behavior:smooth}
+        a{color:inherit;text-decoration:none}
+        img{display:block;max-width:100%}
+
         :root{
-          --teal:#0D7C66;--teal-dk:#0a6454;--teal-lt:#e6f4f1;--teal-50:#f0faf8;
-          --s900:#0F172A;--s800:#1E293B;--s700:#334155;--s600:#475569;
-          --s500:#64748B;--s400:#94A3B8;--s300:#CBD5E1;--s200:#E2E8F0;
-          --s100:#F1F5F9;--s50:#F8FAFC;
-          --r:8px;--rl:14px;--rxl:20px;--mw:1180px;
+          --green:#1FA94B;
+          --green-dk:#178A3C;
+          --green-lt:#e8f6ec;
+          --green-50:#f3faf5;
+          --lime:#84CC16;
+          --orange:#F59E0B;
+          --ink:#0F172A;
+          --ink700:#1E293B;
+          --s600:#475569;
+          --s500:#64748B;
+          --s400:#94A3B8;
+          --s300:#CBD5E1;
+          --s200:#E5E7EB;
+          --s100:#F1F5F9;
+          --s50:#F8FAFC;
+          --r:8px;--rl:14px;--rxl:20px;
+          --mw:1240px;
+          --shadow-card:0 1px 2px rgba(15,23,42,.04),0 12px 32px rgba(15,23,42,.06);
         }
-        @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.75)}}
+
+        .container{max-width:var(--mw);margin:0 auto;padding:0 32px}
 
         /* ── NAV ── */
-        .lp-nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(255,255,255,.94);backdrop-filter:blur(14px);border-bottom:1px solid var(--s200);transition:box-shadow .25s}
-        .lp-nav.sc{box-shadow:0 1px 18px rgba(15,23,42,.07)}
-        .lp-nav-inner{max-width:var(--mw);margin:0 auto;padding:0 28px;height:64px;display:flex;align-items:center;justify-content:space-between;gap:32px}
-        .lp-logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;flex-shrink:0;cursor:pointer}
-        .lp-logo-mark{width:30px;height:30px;background:var(--teal);border-radius:7px;display:flex;align-items:center;justify-content:center}
-        .lp-logo-text{font-size:15px;font-weight:700;letter-spacing:-.02em}
-        .lp-nav-links{display:flex;align-items:center;gap:28px;list-style:none;flex:1;justify-content:center}
-        .lp-nav-links a{font-size:14px;font-weight:500;color:var(--s500);text-decoration:none;transition:color .15s;cursor:pointer}
-        .lp-nav-links a:hover{color:var(--s900)}
-        .lp-nav-actions{display:flex;align-items:center;gap:10px;flex-shrink:0}
-        .btn-ghost-sm{font-size:14px;font-weight:500;color:var(--s600);text-decoration:none;padding:7px 16px;border:1px solid var(--s200);border-radius:var(--r);transition:border-color .15s,color .15s;cursor:pointer;background:none}
-        .btn-ghost-sm:hover{border-color:var(--s300);color:var(--s900)}
-        .btn-teal-sm{display:inline-flex;align-items:center;gap:5px;padding:8px 18px;background:var(--teal);color:#fff;border:none;border-radius:var(--r);font-size:14px;font-weight:600;cursor:pointer;text-decoration:none;transition:background .15s;white-space:nowrap}
-        .btn-teal-sm:hover{background:var(--teal-dk)}
+        .nav{
+          position:fixed;top:0;left:0;right:0;z-index:100;
+          background:rgba(255,255,255,.92);
+          backdrop-filter:blur(14px);
+          border-bottom:1px solid transparent;
+          transition:border-color .25s,box-shadow .25s;
+        }
+        .nav.scrolled{border-bottom-color:var(--s200);box-shadow:0 1px 14px rgba(15,23,42,.04)}
+        .nav-inner{
+          max-width:var(--mw);margin:0 auto;padding:0 32px;
+          height:72px;display:flex;align-items:center;justify-content:space-between;gap:32px;
+        }
+        .nav-logo{display:flex;align-items:center;flex-shrink:0;cursor:pointer}
+        .nav-links{display:flex;align-items:center;gap:36px;list-style:none;flex:1;justify-content:center}
+        .nav-links a{font-size:15px;font-weight:500;color:var(--ink700);transition:color .15s;cursor:pointer}
+        .nav-links a:hover{color:var(--green)}
+        .nav-actions{display:flex;align-items:center;gap:12px}
+        .nav-login{font-size:14px;font-weight:500;color:var(--ink700);cursor:pointer;transition:color .15s}
+        .nav-login:hover{color:var(--green)}
+
+        /* ── BUTTONS ── */
+        .btn{
+          display:inline-flex;align-items:center;justify-content:center;
+          gap:8px;font-weight:600;cursor:pointer;border-radius:var(--r);
+          transition:transform .1s,background .2s,box-shadow .2s,border-color .2s,color .2s;
+          border:none;font-family:inherit;white-space:nowrap;
+        }
+        .btn:active{transform:scale(.98)}
+        .btn-primary{
+          background:var(--green);color:white;padding:12px 24px;font-size:15px;
+          box-shadow:0 1px 2px rgba(31,169,75,.2),0 4px 12px rgba(31,169,75,.18);
+        }
+        .btn-primary:hover{background:var(--green-dk);box-shadow:0 1px 2px rgba(31,169,75,.3),0 6px 18px rgba(31,169,75,.25)}
+        .btn-primary.lg{padding:16px 32px;font-size:16px}
+        .btn-primary.sm{padding:10px 20px;font-size:14px}
+        .btn-ghost{
+          background:white;color:var(--ink);padding:12px 24px;font-size:15px;
+          border:1.5px solid var(--s200);
+        }
+        .btn-ghost:hover{border-color:var(--green);color:var(--green)}
+        .btn-ghost.lg{padding:16px 32px;font-size:16px}
+        .btn-ghost.sm{padding:10px 20px;font-size:14px}
 
         /* ── HERO ── */
-        .lp-hero{padding:140px 28px 96px;background:linear-gradient(175deg,#fff 55%,#f4f9f8 100%)}
-        .lp-hero-inner{max-width:var(--mw);margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center}
-        .hero-badge{display:inline-flex;align-items:center;gap:8px;background:var(--teal-lt);color:var(--teal);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:5px 12px;border-radius:4px;margin-bottom:22px}
-        .hero-badge-dot{width:6px;height:6px;background:var(--teal);border-radius:50%;animation:pulse 2s infinite}
-        .lp-h1{font-size:52px;font-weight:800;line-height:1.07;letter-spacing:-.033em;color:var(--s900);margin-bottom:6px}
-        .lp-h1 em{font-style:normal;color:var(--teal)}
-        .lp-h1-sub{font-size:26px;font-weight:700;line-height:1.3;letter-spacing:-.02em;color:var(--s600);margin-bottom:22px}
-        .lp-hero-p{font-size:17px;line-height:1.75;color:var(--s500);margin-bottom:10px;max-width:510px}
-        .lp-hero-note{font-size:13px;color:var(--s400);margin-bottom:36px;max-width:480px;font-style:italic;line-height:1.6}
-        .lp-hero-ctas{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-        .btn-hero{display:inline-flex;align-items:center;gap:8px;padding:13px 28px;background:var(--teal);color:#fff;border:none;border-radius:var(--r);font-size:15px;font-weight:600;cursor:pointer;text-decoration:none;transition:background .15s}
-        .btn-hero:hover{background:var(--teal-dk)}
-        .btn-hero-ghost{display:inline-flex;align-items:center;gap:8px;padding:12px 22px;background:transparent;color:var(--s700);border:1px solid var(--s200);border-radius:var(--r);font-size:15px;font-weight:500;cursor:pointer;text-decoration:none;transition:border-color .15s,background .15s}
-        .btn-hero-ghost:hover{border-color:var(--s300);background:var(--s50)}
-        .hero-trust{margin-top:30px;display:flex;align-items:center;gap:7px;font-size:12px;color:var(--s400)}
-        .hero-trust svg{color:var(--teal);flex-shrink:0}
+        .hero{position:relative;padding:132px 0 80px;overflow:hidden}
+        .hero-dots{
+          position:absolute;top:120px;right:32px;
+          width:120px;height:120px;
+          background-image:radial-gradient(circle,rgba(31,169,75,.35) 1.8px,transparent 1.8px);
+          background-size:14px 14px;z-index:0;
+        }
+        .hero-wave{position:absolute;bottom:0;left:0;width:100%;height:220px;pointer-events:none;z-index:0;overflow:hidden}
+        .hero-inner{
+          position:relative;z-index:1;
+          display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);
+          gap:56px;align-items:center;
+        }
+        .hero-text{max-width:580px}
+        .hero-badge{
+          display:inline-flex;align-items:center;gap:10px;
+          background:var(--green-lt);color:var(--green-dk);
+          font-size:13px;font-weight:600;padding:7px 14px;border-radius:999px;
+          margin-bottom:28px;border:1px solid rgba(31,169,75,.18);
+        }
+        .hero-badge-dot{
+          width:7px;height:7px;background:var(--green);border-radius:50%;
+          box-shadow:0 0 0 4px rgba(31,169,75,.18);
+          animation:gpulse 2s infinite;
+        }
+        @keyframes gpulse{
+          0%,100%{box-shadow:0 0 0 4px rgba(31,169,75,.18)}
+          50%{box-shadow:0 0 0 8px rgba(31,169,75,.10)}
+        }
+        .hero h1{
+          font-size:60px;font-weight:800;line-height:1.05;
+          letter-spacing:-.035em;color:var(--ink);margin-bottom:24px;text-wrap:balance;
+        }
+        .accent{color:var(--green)}
+        .hero-sub{font-size:19px;line-height:1.65;color:var(--s500);margin-bottom:36px;max-width:520px}
+        .hero-sub strong{color:var(--ink);font-weight:700}
+        .hero-ctas{display:flex;align-items:center;gap:14px;margin-bottom:36px;flex-wrap:wrap}
+        .trust-checks{display:flex;gap:22px;flex-wrap:wrap}
+        .trust-checks span{display:inline-flex;align-items:center;gap:6px;color:var(--s600);font-size:13px;font-weight:500}
+        .trust-checks svg{color:var(--green);flex-shrink:0}
 
-        /* HERO MOCKUP */
-        .hero-visual{position:relative}
-        .app-card{background:var(--s900);border-radius:18px;overflow:hidden;box-shadow:0 32px 80px rgba(15,23,42,.22),0 2px 8px rgba(15,23,42,.1);border:1px solid rgba(255,255,255,.05)}
-        .app-topbar{background:rgba(255,255,255,.04);padding:13px 18px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:7px}
-        .app-dot{width:10px;height:10px;border-radius:50%}
-        .app-url{flex:1;background:rgba(255,255,255,.05);border-radius:5px;height:22px;margin:0 12px;display:flex;align-items:center;padding:0 10px;font-size:11px;color:rgba(255,255,255,.2);font-family:monospace}
-        .app-body{padding:20px}
-        .app-sec-lbl{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:14px}
-        .app-split{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
-        .app-path{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:14px}
-        .app-path.active{border-color:rgba(13,124,102,.35);background:rgba(13,124,102,.08)}
-        .app-path-name{font-size:11px;font-weight:600;color:rgba(255,255,255,.8);margin-bottom:4px}
-        .app-path-desc{font-size:10px;color:rgba(255,255,255,.35);line-height:1.5}
-        .app-path-items{margin-top:10px;display:flex;flex-direction:column;gap:5px}
-        .app-item-done{font-size:10px;color:#34d399}
-        .app-item-pend{font-size:10px;color:rgba(255,255,255,.25)}
-        .app-divider{border:none;border-top:1px solid rgba(255,255,255,.07);margin-bottom:14px}
-        .app-footer-row{display:flex;align-items:center;justify-content:space-between}
-        .app-footer-lbl{font-size:11px;color:rgba(255,255,255,.35)}
-        .app-status{font-size:10px;font-weight:700;background:rgba(13,124,102,.2);color:#34d399;padding:3px 10px;border-radius:20px}
-        .hero-float{position:absolute;top:-18px;right:-14px;background:#fff;border-radius:12px;padding:10px 14px;box-shadow:0 8px 28px rgba(15,23,42,.14);display:flex;align-items:center;gap:9px}
-        .hero-float-icon{width:30px;height:30px;border-radius:8px;background:var(--teal-lt);display:flex;align-items:center;justify-content:center;font-size:15px}
-        .hero-float-lbl{font-size:11px;color:var(--s400);font-weight:400}
-        .hero-float-val{font-size:13px;font-weight:700;color:var(--s900)}
+        /* Hero dashboard mock */
+        .hero-visual{
+          background:white;border-radius:var(--rxl);
+          border:1px solid var(--s200);
+          box-shadow:0 24px 64px rgba(15,23,42,.12);
+          overflow:hidden;padding:24px;
+        }
+        .dash-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+        .dash-title{font-size:15px;font-weight:700;color:var(--ink)}
+        .dash-live{
+          background:var(--green-lt);color:var(--green);
+          font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;
+          display:flex;align-items:center;gap:5px;
+        }
+        .dash-live-dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:gpulse 2s infinite}
+        .dash-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+        .dash-stat{background:var(--s50);border-radius:var(--rl);padding:14px;text-align:center}
+        .dash-stat-n{font-size:22px;font-weight:800;color:var(--green)}
+        .dash-stat-l{font-size:11px;color:var(--s500);font-weight:500;margin-top:2px}
+        .dash-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--s100)}
+        .dash-row:last-child{border-bottom:none}
+        .cal-tag{font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;flex-shrink:0}
+        .cal-a{background:#dcfce7;color:#15803d}
+        .cal-b{background:#d1fae5;color:#059669}
+        .cal-c{background:#fef9c3;color:#a16207}
+        .cal-d{background:#fee2e2;color:#dc2626}
+        .dash-row-main{flex:1;min-width:0}
+        .dash-row-name{font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .dash-row-sub{font-size:11px;color:var(--s400)}
+        .cert-status{font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px;flex-shrink:0}
+        .st-done{background:var(--green-lt);color:var(--green)}
+        .st-pending{background:#fef3c7;color:#d97706}
+        .st-new{background:var(--s100);color:var(--s500)}
 
-        /* ── SP BAR ── */
-        .sp-bar{padding:28px;background:var(--s50);border-top:1px solid var(--s200);border-bottom:1px solid var(--s200)}
-        .sp-bar-inner{max-width:var(--mw);margin:0 auto;display:flex;align-items:center;justify-content:center}
-        .sp-pill{display:inline-flex;align-items:center;gap:10px;background:var(--teal-lt);color:var(--teal);font-size:14px;font-weight:600;padding:10px 20px;border-radius:8px}
-        .sp-dot{width:8px;height:8px;background:var(--teal);border-radius:50%;animation:pulse 2s infinite}
-        .sp-pill a{color:var(--teal);font-weight:700;text-decoration:none;cursor:pointer}
-        .sp-pill a:hover{text-decoration:underline}
+        /* ── STATS STRIP ── */
+        .stats-strip{
+          position:relative;z-index:2;background:white;
+          border-top:1px solid var(--s100);border-bottom:1px solid var(--s100);
+          padding:40px 0;
+        }
+        .stats-inner{display:grid;grid-template-columns:repeat(4,1fr);gap:32px;align-items:center}
+        .stat{text-align:center;border-right:1px solid var(--s200);padding:4px 0}
+        .stat:last-child{border-right:none}
+        .stat-n{font-size:36px;font-weight:800;color:var(--green);letter-spacing:-.03em;line-height:1;margin-bottom:6px}
+        .stat-l{font-size:13px;color:var(--s500);font-weight:500}
 
-        /* ── SECCIÓN ── */
-        .lp-section{padding:96px 0}
-        .lp-section-sm{padding:64px 0}
-        .lp-container{max-width:var(--mw);margin:0 auto;padding:0 28px}
-        .sec-label{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--teal);margin-bottom:14px}
-        .sec-h2{font-size:38px;font-weight:800;letter-spacing:-.025em;line-height:1.12;color:var(--s900);margin-bottom:16px}
-        .sec-h2 em{font-style:normal;color:var(--teal)}
-        .sec-sub{font-size:17px;color:var(--s500);line-height:1.7;max-width:640px}
-        .sec-intro{margin-bottom:56px}
+        /* ── SECTION SHELL ── */
+        .section{padding:110px 0;position:relative;overflow:hidden}
+        .section.alt{background:var(--s50)}
+        .section-head{text-align:center;max-width:720px;margin:0 auto 64px}
+        .section-eyebrow{
+          display:inline-block;font-size:13px;font-weight:600;
+          letter-spacing:.08em;text-transform:uppercase;color:var(--green);
+          margin-bottom:16px;padding:4px 14px;background:var(--green-lt);border-radius:999px;
+        }
+        .section-title{
+          font-size:44px;font-weight:800;letter-spacing:-.03em;
+          color:var(--ink);margin-bottom:18px;text-wrap:balance;line-height:1.1;
+        }
+        .section-sub{font-size:18px;color:var(--s500);line-height:1.65;max-width:580px;margin:0 auto}
 
-        /* ── FEATURES ── */
-        .feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-        .feat-card{background:var(--s50);border:1px solid var(--s200);border-radius:var(--rl);padding:28px;transition:border-color .2s,box-shadow .2s}
-        .feat-card:hover{border-color:var(--s300);box-shadow:0 4px 20px rgba(15,23,42,.06)}
-        .feat-card.star{background:var(--teal-50);border-color:rgba(13,124,102,.18)}
-        .feat-card.star:hover{border-color:rgba(13,124,102,.32)}
-        .feat-icon{width:42px;height:42px;border-radius:10px;background:#fff;border:1px solid var(--s200);display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:16px;box-shadow:0 1px 4px rgba(15,23,42,.06)}
-        .feat-card.star .feat-icon{background:var(--teal-lt);border-color:transparent}
-        .feat-tag{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--teal);background:var(--teal-lt);padding:2px 8px;border-radius:3px;margin-bottom:8px}
-        .feat-h{font-size:15px;font-weight:700;color:var(--s900);margin-bottom:8px;line-height:1.35}
-        .feat-p{font-size:14px;color:var(--s500);line-height:1.65}
+        /* ── SHOWCASE MOCK ── */
+        .showcase-mock{
+          background:white;border:1px solid var(--s200);
+          border-radius:var(--rxl);box-shadow:var(--shadow-card);overflow:hidden;
+        }
+        .showcase-tabs{display:flex;border-bottom:1px solid var(--s200);padding:0 24px}
+        .showcase-tab{
+          font-size:13px;font-weight:600;padding:14px 18px;color:var(--s500);
+          cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;
+        }
+        .showcase-tab.active{color:var(--green);border-bottom-color:var(--green)}
+        .showcase-body{padding:24px}
+        .showcase-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+        .showcase-card{background:var(--s50);border-radius:var(--rl);padding:16px;text-align:center}
+        .showcase-card-n{font-size:24px;font-weight:800;color:var(--green);margin-bottom:4px}
+        .showcase-card-l{font-size:11px;color:var(--s500);font-weight:500}
+        .showcase-list{display:flex;flex-direction:column}
+        .showcase-row{
+          display:flex;align-items:center;gap:16px;
+          padding:12px 0;border-bottom:1px solid var(--s100);
+        }
+        .showcase-row:last-child{border-bottom:none}
+        .cert-id{font-size:12px;font-weight:700;color:var(--s400);font-family:monospace;flex-shrink:0}
+        .cert-name{font-size:13px;font-weight:600;color:var(--ink);flex:1}
 
-        /* ── CÓMO FUNCIONA ── */
-        .how-bg{background:var(--s900);border-radius:24px;padding:64px;position:relative;overflow:hidden}
-        .how-bg::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(13,124,102,.5),transparent)}
-        .how-bg::after{content:'';position:absolute;top:-80px;right:-80px;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(13,124,102,.12) 0%,transparent 70%);pointer-events:none}
-        .how-bg .sec-label{color:rgba(13,124,102,.8)}
-        .how-bg .sec-h2{color:#fff}
-        .how-bg .sec-h2 em{color:#34d399}
-        .steps{display:flex;flex-direction:column;margin-top:48px}
-        .step{display:grid;grid-template-columns:48px 1fr;gap:0 24px;position:relative}
-        .step-line{position:absolute;left:23px;top:50px;bottom:0;width:2px;background:rgba(255,255,255,.06)}
-        .step-num{width:38px;height:38px;border-radius:50%;background:rgba(13,124,102,.15);border:1px solid rgba(13,124,102,.3);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#34d399;flex-shrink:0;margin-top:4px}
-        .step-body{padding-bottom:40px}
-        .step-h{font-size:18px;font-weight:700;color:#fff;margin-bottom:8px}
-        .step-p{font-size:14px;color:rgba(255,255,255,.5);line-height:1.7}
-        .bifurcacion{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
-        .bif-path{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:20px}
-        .bif-path.ca{border-color:rgba(13,124,102,.28);background:rgba(13,124,102,.07)}
-        .bif-label{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px}
-        .ca .bif-label{color:#34d399}
-        .cb .bif-label{color:rgba(255,255,255,.35)}
-        .bif-h{font-size:13px;font-weight:600;color:#fff;margin-bottom:8px}
-        .bif-p{font-size:12px;color:rgba(255,255,255,.4);line-height:1.65}
-        .bif-note{margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.07);font-size:11px;color:rgba(255,255,255,.3);font-style:italic;line-height:1.55}
+        /* ── MULTIPLICA MOCK ── */
+        .mult-mock{
+          background:white;border:1px solid var(--s200);
+          border-radius:var(--rxl);padding:32px;box-shadow:var(--shadow-card);
+        }
+        .mult-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}
+        .mult-title{font-size:17px;font-weight:700;color:var(--ink)}
+        .mult-badge{
+          font-size:13px;font-weight:700;color:var(--green);
+          background:var(--green-lt);padding:5px 12px;border-radius:999px;
+        }
+        .chart-bars{
+          display:flex;align-items:flex-end;gap:8px;height:130px;
+          border-bottom:1px solid var(--s200);padding-bottom:12px;margin-bottom:12px;
+        }
+        .chart-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+        .chart-bar{width:100%;border-radius:6px 6px 0 0}
+        .chart-label{font-size:11px;color:var(--s400);font-weight:500}
+        .chart-val{font-size:11px;font-weight:700}
+        .mult-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:20px}
+        .mult-kpi{text-align:center}
+        .mult-kpi-n{font-size:28px;font-weight:800;color:var(--green);letter-spacing:-.02em}
+        .mult-kpi-l{font-size:12px;color:var(--s500);font-weight:500;margin-top:2px}
 
-        /* ── LO QUE NO SOMOS ── */
-        .nosomos-bg{background:var(--s50)}
-        .nosomos-grid{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:48px}
-        .nosomos-col-h{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-bottom:20px}
-        .nosomos-col-h.no{color:var(--s400)}
-        .nosomos-col-h.si{color:var(--teal)}
-        .nosomos-item{display:flex;align-items:flex-start;gap:12px;padding:16px 0;border-bottom:1px solid var(--s200)}
-        .nosomos-item:last-child{border-bottom:none}
-        .nosomos-icon{font-size:16px;flex-shrink:0;margin-top:1px}
-        .nosomos-strong{display:block;color:var(--s900);font-weight:600;margin-bottom:3px;font-size:14px}
-        .nosomos-small{font-size:12px;color:var(--s400);line-height:1.6}
+        /* ── PROCESS ── */
+        .process-grid{
+          display:grid;grid-template-columns:repeat(5,1fr);
+          gap:16px;position:relative;
+        }
+        .process-grid::before{
+          content:'';position:absolute;top:28px;left:8%;right:8%;
+          height:1px;border-top:1.5px dashed var(--s300);z-index:0;
+        }
+        .step{
+          background:white;border:1px solid var(--s200);
+          border-radius:var(--rl);padding:28px 18px 24px;
+          text-align:center;position:relative;z-index:1;
+          transition:transform .2s,box-shadow .2s,border-color .2s;
+        }
+        .step:hover{transform:translateY(-4px);box-shadow:var(--shadow-card);border-color:rgba(31,169,75,.4)}
+        .step-num{
+          width:56px;height:56px;border-radius:50%;
+          background:linear-gradient(135deg,#1FA94B 0%,#178A3C 100%);
+          color:white;display:flex;align-items:center;justify-content:center;
+          font-weight:800;font-size:18px;margin:0 auto 18px;
+          box-shadow:0 6px 16px rgba(31,169,75,.3);
+        }
+        .step-t{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:8px;letter-spacing:-.01em}
+        .step-d{font-size:13px;color:var(--s500);line-height:1.6}
 
-        /* ── PRECIOS ── */
-        .pricing-header{text-align:center}
-        .toggle-wrap{display:flex;align-items:center;justify-content:center;gap:12px;margin:36px 0 52px}
-        .toggle-lbl{font-size:14px;font-weight:500;color:var(--s400);transition:color .2s}
-        .toggle-lbl.on{color:var(--s900);font-weight:600}
-        .toggle-switch{position:relative;width:46px;height:26px;cursor:pointer;display:inline-block}
-        .toggle-switch input{opacity:0;width:0;height:0;position:absolute}
-        .toggle-track{position:absolute;inset:0;background:var(--teal);border-radius:13px;transition:background .2s}
-        .toggle-thumb{position:absolute;width:20px;height:20px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 1px 4px rgba(0,0,0,.15)}
-        .toggle-badge{font-size:11px;font-weight:700;letter-spacing:.02em;color:var(--teal);background:var(--teal-lt);padding:3px 10px;border-radius:5px}
-        .pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:stretch}
-        .pricing-card{background:#fff;border:1px solid var(--s200);border-radius:var(--rxl);padding:32px;display:flex;flex-direction:column;transition:border-color .2s,box-shadow .2s;position:relative}
-        .pricing-card:hover{border-color:var(--s300);box-shadow:0 8px 32px rgba(15,23,42,.07)}
-        .pricing-card.featured{background:var(--s900);border-color:var(--s900);box-shadow:0 20px 56px rgba(15,23,42,.2);transform:scale(1.025);z-index:1}
-        .pricing-card.featured:hover{box-shadow:0 24px 64px rgba(15,23,42,.26)}
-        .feat-badge{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:var(--teal);color:#fff;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:4px 14px;border-radius:20px;white-space:nowrap}
-        .plan-name{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--s400);margin-bottom:16px}
+        /* ── TESTIMONIALS ── */
+        .testi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+        .testi{
+          background:white;border:1px solid var(--s200);
+          border-radius:var(--rl);padding:32px;
+          transition:box-shadow .2s,transform .2s;
+        }
+        .testi:hover{box-shadow:var(--shadow-card);transform:translateY(-2px)}
+        .testi-stars{display:flex;gap:2px;margin-bottom:18px;color:var(--green)}
+        .testi-text{font-size:15px;line-height:1.7;color:var(--ink700);margin-bottom:24px}
+        .testi-text::before{content:'"';color:var(--green);font-weight:700}
+        .testi-text::after{content:'"';color:var(--green);font-weight:700}
+        .testi-author{display:flex;align-items:center;gap:12px;padding-top:18px;border-top:1px solid var(--s100)}
+        .testi-avatar{
+          width:44px;height:44px;border-radius:50%;
+          background:linear-gradient(135deg,var(--green) 0%,var(--green-dk) 100%);
+          color:white;display:flex;align-items:center;justify-content:center;
+          font-size:15px;font-weight:700;flex-shrink:0;
+        }
+        .testi-name{font-size:14px;font-weight:700;color:var(--ink)}
+        .testi-role{font-size:13px;color:var(--s500)}
+
+        /* ── PRICING ── */
+        .pricing-toggle{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:48px}
+        .toggle-label{font-size:15px;font-weight:600;color:var(--ink)}
+        .toggle-label.off{color:var(--s400)}
+        .toggle-switch{
+          width:52px;height:28px;background:var(--green);
+          border-radius:999px;position:relative;cursor:pointer;
+          border:none;padding:0;transition:background .2s;
+        }
+        .toggle-switch.off{background:var(--s300)}
+        .toggle-knob{
+          position:absolute;top:3px;left:3px;width:22px;height:22px;
+          background:white;border-radius:50%;
+          transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.15);
+        }
+        .toggle-knob.on{transform:translateX(24px)}
+        .annual-badge{
+          background:var(--green-lt);color:var(--green);
+          font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;
+        }
+        .pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-bottom:24px}
+        .plan-card{
+          background:white;border:1.5px solid var(--s200);
+          border-radius:var(--rxl);padding:32px;
+          transition:border-color .2s,box-shadow .2s,transform .2s;position:relative;
+        }
+        .plan-card:hover{border-color:rgba(31,169,75,.4);box-shadow:var(--shadow-card);transform:translateY(-4px)}
+        .plan-card.featured{
+          background:var(--ink);border-color:var(--ink);
+          box-shadow:0 20px 56px rgba(15,23,42,.2);
+          transform:scale(1.025);z-index:1;
+        }
+        .plan-card.featured:hover{box-shadow:0 24px 64px rgba(15,23,42,.26)}
+        .plan-badge{
+          position:absolute;top:-12px;left:50%;transform:translateX(-50%);
+          background:var(--green);color:white;
+          font-size:11px;font-weight:700;padding:4px 14px;border-radius:999px;white-space:nowrap;
+        }
+        .plan-name{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--s500);margin-bottom:8px}
         .featured .plan-name{color:rgba(255,255,255,.45)}
-        .plan-price{display:flex;align-items:baseline;gap:3px;margin-bottom:4px}
-        .plan-amount{font-size:44px;font-weight:800;letter-spacing:-.03em;color:var(--s900)}
-        .featured .plan-amount{color:#fff}
-        .plan-unit{font-size:16px;color:var(--s400);font-weight:500}
-        .featured .plan-unit{color:rgba(255,255,255,.35)}
-        .plan-annual{font-size:12px;color:var(--s400);margin-bottom:6px;min-height:18px}
-        .featured .plan-annual{color:rgba(255,255,255,.3)}
-        .plan-desc{font-size:13px;color:var(--s500);line-height:1.55;margin-bottom:24px;padding-bottom:24px;border-bottom:1px solid var(--s100)}
-        .featured .plan-desc{color:rgba(255,255,255,.4);border-bottom-color:rgba(255,255,255,.07)}
-        .plan-feats{flex:1;display:flex;flex-direction:column;gap:11px;margin-bottom:28px}
-        .plan-feat{display:flex;align-items:flex-start;gap:9px;font-size:14px;color:var(--s600);line-height:1.4}
-        .featured .plan-feat{color:rgba(255,255,255,.7)}
-        .feat-check{color:var(--teal);flex-shrink:0;font-weight:700}
-        .featured .feat-check{color:#34d399}
-        .btn-plan{display:block;text-align:center;padding:12px 20px;border-radius:var(--r);font-size:14px;font-weight:600;text-decoration:none;cursor:pointer;border:none;transition:all .15s}
-        .btn-plan-teal{background:var(--teal);color:#fff}
-        .btn-plan-teal:hover{background:var(--teal-dk)}
-        .btn-plan-outline{background:transparent;color:var(--s700);border:1px solid var(--s200)}
-        .btn-plan-outline:hover{border-color:var(--s300);background:var(--s50)}
-        .btn-plan-white{background:#fff;color:var(--s900)}
-        .btn-plan-white:hover{background:var(--s50)}
-        .ppu-card{margin-top:18px;background:var(--s50);border:1px solid var(--s200);border-radius:var(--rl);padding:26px 32px;display:flex;align-items:center;justify-content:space-between;gap:24px}
-        .ppu-lbl{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--s400);margin-bottom:5px}
-        .ppu-price{font-size:22px;font-weight:800;letter-spacing:-.02em;color:var(--s900);margin-bottom:3px}
-        .ppu-desc{font-size:13px;color:var(--s500)}
-        .ppu-feats{display:flex;gap:20px;flex-wrap:wrap}
-        .ppu-feat{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--s600)}
-        .ppu-chk{color:var(--teal);font-weight:700}
-        .btn-ppu{display:inline-flex;align-items:center;gap:6px;padding:10px 22px;border:1px solid var(--s300);border-radius:var(--r);font-size:14px;font-weight:600;color:var(--s700);text-decoration:none;white-space:nowrap;transition:all .15s;flex-shrink:0;background:none;cursor:pointer}
-        .btn-ppu:hover{border-color:var(--s400);background:#fff;color:var(--s900)}
-        .pricing-note{text-align:center;margin-top:28px;font-size:13px;color:var(--s400)}
-        .pricing-note a{color:var(--teal);text-decoration:none;cursor:pointer}
-        .pricing-note a:hover{text-decoration:underline}
+        .plan-price{font-size:44px;font-weight:800;color:var(--ink);letter-spacing:-.04em}
+        .featured .plan-price{color:white}
+        .plan-period{font-size:15px;color:var(--s400);font-weight:500}
+        .featured .plan-period{color:rgba(255,255,255,.45)}
+        .plan-annual{font-size:13px;color:var(--green);font-weight:600;margin-bottom:24px;min-height:22px}
+        .featured .plan-annual{color:var(--lime)}
+        .plan-divider{border:none;border-top:1px solid var(--s200);margin:20px 0}
+        .featured .plan-divider{border-top-color:rgba(255,255,255,.12)}
+        .plan-features{list-style:none;display:flex;flex-direction:column;gap:12px;margin-bottom:32px}
+        .plan-features li{display:flex;align-items:flex-start;gap:10px;font-size:14px;color:var(--ink700);line-height:1.5}
+        .featured .plan-features li{color:rgba(255,255,255,.8)}
+        .plan-check{color:var(--green);flex-shrink:0;margin-top:1px}
+        .featured .plan-check{color:var(--lime)}
+        .plan-cta{width:100%;text-align:center;padding:14px;border-radius:var(--rl);font-size:15px}
+        .ppu-card{
+          background:white;border:1.5px solid var(--s200);
+          border-radius:var(--rl);padding:24px 32px;
+          display:flex;align-items:center;gap:24px;flex-wrap:wrap;
+        }
+        .ppu-icon{
+          width:52px;height:52px;border-radius:var(--rl);
+          background:var(--green-lt);color:var(--green);
+          display:flex;align-items:center;justify-content:center;
+          font-size:22px;flex-shrink:0;
+        }
+        .ppu-text{flex:1;min-width:200px}
+        .ppu-title{font-size:17px;font-weight:700;color:var(--ink);margin-bottom:4px}
+        .ppu-sub{font-size:14px;color:var(--s500);line-height:1.5}
+        .ppu-price{font-size:28px;font-weight:800;color:var(--green);letter-spacing:-.03em;flex-shrink:0}
+        .ppu-price span{font-size:14px;color:var(--s500);font-weight:500;margin-left:4px}
+
+        /* ── FAQ ── */
+        .faq-grid{max-width:800px;margin:0 auto}
+        .faq-item{border-bottom:1px solid var(--s200);padding:24px 0;cursor:pointer}
+        .faq-item:first-child{padding-top:0}
+        .faq-q{display:flex;justify-content:space-between;align-items:center;font-size:17px;font-weight:600;color:var(--ink);gap:16px}
+        .faq-toggle{
+          width:28px;height:28px;border-radius:50%;
+          background:var(--green-lt);color:var(--green);
+          display:flex;align-items:center;justify-content:center;
+          font-size:16px;font-weight:700;flex-shrink:0;
+          transition:transform .25s,background .2s;
+        }
+        .faq-toggle.open{transform:rotate(45deg);background:var(--green);color:white}
+        .faq-a{
+          overflow:hidden;font-size:15px;color:var(--s500);line-height:1.7;
+          max-height:0;transition:max-height .35s ease,padding .25s ease;
+        }
+        .faq-a.open{max-height:240px;padding-top:14px}
 
         /* ── CTA FINAL ── */
-        .cta-wrap{background:var(--s900);border-radius:24px;padding:80px;text-align:center;position:relative;overflow:hidden}
-        .cta-wrap::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 65% 55% at 50% -15%,rgba(13,124,102,.28) 0%,transparent 65%)}
-        .cta-wrap > *{position:relative}
-        .cta-wrap .sec-label{display:flex;justify-content:center;color:rgba(13,124,102,.7)}
-        .cta-h2{font-size:44px;font-weight:800;letter-spacing:-.03em;color:#fff;margin-bottom:18px;line-height:1.1}
-        .cta-sub{font-size:17px;color:rgba(255,255,255,.5);line-height:1.7;margin-bottom:40px;max-width:500px;margin-left:auto;margin-right:auto}
-        .cta-actions{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin-bottom:20px}
-        .btn-cta{display:inline-flex;align-items:center;gap:8px;padding:15px 34px;border-radius:var(--r);background:var(--teal);color:#fff;font-size:16px;font-weight:700;text-decoration:none;transition:background .15s;cursor:pointer}
-        .btn-cta:hover{background:var(--teal-dk)}
-        .cta-fine{font-size:13px;color:rgba(255,255,255,.28)}
+        .cta-final{
+          background:linear-gradient(135deg,var(--green) 0%,var(--green-dk) 100%);
+          padding:100px 0;text-align:center;position:relative;overflow:hidden;
+        }
+        .cta-final::before{
+          content:'';position:absolute;inset:0;
+          background:radial-gradient(ellipse at 50% 0%,rgba(255,255,255,.08) 0%,transparent 65%);
+        }
+        .cta-inner{position:relative;z-index:1}
+        .cta-eyebrow{display:inline-block;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.7);margin-bottom:20px}
+        .cta-final h2{font-size:48px;font-weight:800;color:white;line-height:1.1;letter-spacing:-.03em;margin-bottom:20px;text-wrap:balance}
+        .cta-final p{font-size:18px;color:rgba(255,255,255,.75);margin-bottom:40px;max-width:520px;margin-left:auto;margin-right:auto}
+        .cta-btns{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap}
+        .btn-white{
+          background:white;color:var(--green);
+          padding:16px 32px;font-size:16px;font-weight:700;border-radius:var(--rl);
+          box-shadow:0 4px 20px rgba(0,0,0,.12);border:none;cursor:pointer;
+          transition:box-shadow .2s,transform .1s;font-family:inherit;
+        }
+        .btn-white:hover{box-shadow:0 8px 32px rgba(0,0,0,.18);transform:translateY(-2px)}
+        .btn-white:active{transform:scale(.98)}
+        .btn-outline-white{
+          background:transparent;color:white;
+          padding:16px 32px;font-size:16px;font-weight:600;
+          border:2px solid rgba(255,255,255,.35);border-radius:var(--rl);
+          cursor:pointer;font-family:inherit;
+          transition:border-color .2s,background .2s;
+        }
+        .btn-outline-white:hover{border-color:white;background:rgba(255,255,255,.08)}
+        .cta-trust{
+          margin-top:28px;font-size:14px;color:rgba(255,255,255,.6);
+          display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap;
+        }
+        .cta-trust span{display:flex;align-items:center;gap:6px}
 
         /* ── FOOTER ── */
-        .lp-footer{padding:56px 28px 36px;border-top:1px solid var(--s100)}
-        .lp-footer-inner{max-width:var(--mw);margin:0 auto;display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:48px}
-        .footer-logo-row{display:flex;align-items:center;gap:9px;margin-bottom:14px}
-        .footer-logo-mark{width:28px;height:28px;border-radius:6px;background:var(--teal);display:flex;align-items:center;justify-content:center}
-        .footer-logo-text{font-size:14px;font-weight:700;letter-spacing:-.02em;color:var(--s900)}
-        .footer-tagline{font-size:13px;color:var(--s400);line-height:1.6;margin-bottom:16px;max-width:210px}
-        .footer-email{font-size:13px;font-weight:500;color:var(--teal);text-decoration:none}
-        .footer-email:hover{text-decoration:underline}
-        .footer-col-h{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--s400);margin-bottom:16px}
-        .footer-links{list-style:none;display:flex;flex-direction:column;gap:10px}
-        .footer-links a{font-size:13px;color:var(--s500);text-decoration:none;transition:color .15s;cursor:pointer}
-        .footer-links a:hover{color:var(--s900)}
-        .footer-bottom{max-width:var(--mw);margin:36px auto 0;padding-top:22px;border-top:1px solid var(--s100);display:flex;align-items:flex-start;justify-content:space-between;gap:24px;flex-wrap:wrap}
-        .footer-copy{font-size:12px;color:var(--s400)}
-        .footer-disclaimer{font-size:11px;color:var(--s400);line-height:1.65;max-width:560px;text-align:right}
+        footer{background:var(--ink);color:rgba(255,255,255,.65);padding:72px 0 32px;position:relative;overflow:hidden}
+        footer::before{
+          content:'';position:absolute;top:0;left:0;right:0;height:4px;
+          background:linear-gradient(90deg,var(--green) 0%,var(--lime) 50%,var(--orange) 100%);
+        }
+        .footer-top{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr 1fr;gap:48px;margin-bottom:56px}
+        .footer-tagline{font-size:14px;line-height:1.65;color:rgba(255,255,255,.55);max-width:280px;margin:12px 0 20px}
+        .footer-social{display:flex;gap:10px}
+        .footer-social a{
+          width:36px;height:36px;background:rgba(255,255,255,.08);
+          border-radius:8px;display:inline-flex;align-items:center;justify-content:center;
+          color:rgba(255,255,255,.75);text-decoration:none;
+          transition:background .2s,color .2s;font-size:12px;font-weight:700;
+        }
+        .footer-social a:hover{background:var(--green);color:white}
+        .footer-col-t{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:white;margin-bottom:18px}
+        .footer-links{list-style:none;display:flex;flex-direction:column;gap:12px}
+        .footer-links a{font-size:14px;color:rgba(255,255,255,.6);text-decoration:none;transition:color .15s}
+        .footer-links a:hover{color:white}
+        .footer-bottom{
+          border-top:1px solid rgba(255,255,255,.08);padding-top:28px;
+          display:flex;justify-content:space-between;align-items:center;
+          font-size:13px;color:rgba(255,255,255,.4);flex-wrap:wrap;gap:16px;
+        }
+        .footer-legal{display:flex;gap:24px}
+        .footer-legal a{color:rgba(255,255,255,.4);text-decoration:none;transition:color .15s}
+        .footer-legal a:hover{color:rgba(255,255,255,.7)}
+        .footer-disclaimer{
+          font-size:11px;color:rgba(255,255,255,.28);max-width:760px;
+          line-height:1.6;margin-top:20px;
+          border-top:1px solid rgba(255,255,255,.06);padding-top:20px;
+        }
 
         /* ── RESPONSIVE ── */
         @media(max-width:1024px){
-          .lp-hero-inner{grid-template-columns:1fr}
-          .hero-visual{display:none}
-          .feat-grid{grid-template-columns:repeat(2,1fr)}
-          .pricing-grid{grid-template-columns:1fr}
-          .pricing-card.featured{transform:scale(1)}
-          .lp-footer-inner{grid-template-columns:1fr 1fr;gap:32px}
-          .how-bg{padding:40px 28px}
-          .nosomos-grid{grid-template-columns:1fr}
-          .ppu-card{flex-direction:column;align-items:flex-start}
-          .cta-wrap{padding:56px 32px}
+          .hero h1{font-size:48px}
+          .process-grid{grid-template-columns:repeat(3,1fr)}
+          .process-grid::before{display:none}
+          .footer-top{grid-template-columns:1fr 1fr 1fr}
         }
         @media(max-width:768px){
-          .lp-hero{padding:120px 20px 64px}
-          .lp-h1{font-size:36px}
-          .lp-h1-sub{font-size:20px}
-          .sec-h2{font-size:28px}
-          .cta-h2{font-size:28px}
-          .cta-wrap{padding:44px 20px}
-          .bifurcacion{grid-template-columns:1fr}
-          .feat-grid{grid-template-columns:1fr}
-          .lp-footer-inner{grid-template-columns:1fr;gap:28px}
-          .lp-nav-links{display:none}
-          .footer-disclaimer{text-align:left}
+          .hero{padding:100px 0 60px}
+          .hero-inner{grid-template-columns:1fr}
+          .hero h1{font-size:38px}
+          .hero-sub{font-size:17px}
+          .hero-visual{display:none}
+          .stats-inner{grid-template-columns:repeat(2,1fr)}
+          .stat{border-right:none;border-bottom:1px solid var(--s200);padding-bottom:16px}
+          .stat:nth-child(odd){border-right:1px solid var(--s200)}
+          .stat:last-child{border-bottom:none}
+          .section{padding:72px 0}
+          .section-title{font-size:32px}
+          .showcase-grid{grid-template-columns:repeat(2,1fr)}
+          .process-grid{grid-template-columns:1fr 1fr}
+          .testi-grid{grid-template-columns:1fr}
+          .pricing-grid{grid-template-columns:1fr}
+          .plan-card.featured{transform:none}
+          .footer-top{grid-template-columns:1fr 1fr;gap:32px}
+          .cta-final h2{font-size:34px}
+          .container{padding:0 20px}
+          .nav-links{display:none}
         }
       `}</style>
 
-      {/* ══ NAVBAR ══ */}
-      <nav className={`lp-nav${scrolled ? " sc" : ""}`}>
-        <div className="lp-nav-inner">
-          <div className="lp-logo" onClick={() => navigate("/")}>
-            <div className="lp-logo-mark">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M3 13L8 3L13 13" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M5.2 9.5H10.8" stroke="white" strokeWidth="1.6" strokeLinecap="round"/>
-              </svg>
-            </div>
-            <span className="lp-logo-text">CERTIFIVE</span>
+      {/* ── NAVBAR ── */}
+      <nav className={`nav${scrolled ? " scrolled" : ""}`}>
+        <div className="nav-inner">
+          <div className="nav-logo" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
+            <LogoSVG />
           </div>
-          <ul className="lp-nav-links">
-            <li><a onClick={scrollTo("funcionalidades")}>Funcionalidades</a></li>
-            <li><a onClick={scrollTo("como-funciona")}>Cómo funciona</a></li>
+          <ul className="nav-links">
+            <li><a onClick={scrollTo("flujo")}>Producto</a></li>
+            <li><a onClick={scrollTo("proceso")}>Cómo funciona</a></li>
             <li><a onClick={scrollTo("precios")}>Precios</a></li>
+            <li><a onClick={scrollTo("faq")}>FAQ</a></li>
           </ul>
-          <div className="lp-nav-actions">
-            <button className="btn-ghost-sm" onClick={() => navigate("/login")}>Iniciar sesión</button>
-            <button className="btn-teal-sm" onClick={() => navigate("/register")}>
-              Empezar gratis
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6H9.5M6.5 3L9.5 6L6.5 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            </button>
+          <div className="nav-actions">
+            <span className="nav-login" onClick={() => navigate("/login")}>Iniciar sesión</span>
+            <button className="btn btn-primary sm" onClick={() => navigate("/register")}>Prueba gratis</button>
           </div>
         </div>
       </nav>
 
-      {/* ══ HERO ══ */}
-      <section className="lp-hero">
-        <div className="lp-hero-inner">
-          <div>
+      {/* ── HERO ── */}
+      <section className="hero">
+        <div className="hero-dots" />
+        <div className="hero-wave">
+          <svg viewBox="0 0 1440 200" preserveAspectRatio="none" style={{ position: "absolute", bottom: -40, left: 0, width: "100%", height: "100%" }}>
+            <path d="M0,120 C320,200 560,40 760,120 C960,200 1200,80 1440,140 L1440,200 L0,200 Z" fill="rgba(31,169,75,0.08)"/>
+            <path d="M0,140 C300,80 600,200 900,130 C1140,80 1320,180 1440,120 L1440,200 L0,200 Z" fill="rgba(31,169,75,0.12)"/>
+          </svg>
+        </div>
+        <div className="container hero-inner">
+          <div className="hero-text">
             <div className="hero-badge">
               <span className="hero-badge-dot" />
-              Beta abierta para técnicos certificadores
+              Software para certificadores energéticos · España
             </div>
-            <h1 className="lp-h1">Dos maneras de hacer<br/>el <em>trabajo de campo.</em></h1>
-            <p className="lp-h1-sub">El propietario desde su móvil.<br/>Tú desde tu tablet en la visita.</p>
-            <p className="lp-hero-p">Certifive guía al propietario paso a paso para recoger los datos de su propio inmueble: fotos, medidas, instalaciones. Con esos datos sobre la mesa, tú decides si necesitas ir o no — eso es tu criterio profesional, no el nuestro. Si vas, usas la app en tablet y sales con todo hecho.</p>
-            <p className="lp-hero-note">El certificado oficial lo sigues generando tú en CE3X. De eso no nos encargamos nosotros.</p>
-            <div className="lp-hero-ctas">
-              <button className="btn-hero" onClick={() => navigate("/register")}>Probar gratis 14 días — sin tarjeta</button>
-              <a className="btn-hero-ghost" onClick={scrollTo("como-funciona")}>
+            <h1>
+              Automatiza tu negocio<br />
+              de <span className="accent">certificación energética.</span>
+            </h1>
+            <p className="hero-sub">
+              <strong>Multiplica <span style={{ color: "var(--green)", fontWeight: 900 }}>×5</span> tu productividad e ingresos.</strong>{" "}
+              Gestiona expedientes, clientes, certificados y cobros desde una sola plataforma.
+            </p>
+            <div className="hero-ctas">
+              <button className="btn btn-primary lg" onClick={() => navigate("/register")}>
+                Solicita una demo
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <path d="M3 9h12M10 4l5 5-5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+              <button className="btn btn-ghost lg" onClick={scrollTo("proceso")}>
                 Ver cómo funciona
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7H11M7.5 4L11 7L7.5 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              </a>
-            </div>
-            <div className="hero-trust">
-              <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><path d="M6.5 1L7.8 4.8H12L8.8 7.1L10 11L6.5 8.6L3 11L4.2 7.1L1 4.8H5.2L6.5 1Z"/></svg>
-              Sin permanencia · Sin tarjeta de crédito · Cancela cuando quieras
-            </div>
-          </div>
-
-          {/* VISUAL MOCKUP */}
-          <div className="hero-visual">
-            <div style={{ position:"relative" }}>
-              <div className="app-card">
-                <div className="app-topbar">
-                  <div className="app-dot" style={{ background:"#ff5f57" }} />
-                  <div className="app-dot" style={{ background:"#febc2e" }} />
-                  <div className="app-dot" style={{ background:"#28c840" }} />
-                  <div className="app-url">app.certifive.es/expediente/2847</div>
-                </div>
-                <div className="app-body">
-                  <div className="app-sec-lbl">Expediente #2847 · Calle Mayor 12, 3ºB · Madrid</div>
-                  <div className="app-split">
-                    <div className="app-path active">
-                      <div style={{ fontSize:20, marginBottom:8 }}>📱</div>
-                      <div className="app-path-name">Camino A — Propietario recoge datos</div>
-                      <div className="app-path-desc">Formulario guiado enviado por WhatsApp</div>
-                      <div className="app-path-items">
-                        <div className="app-item-done">✓ Fachadas y orientación</div>
-                        <div className="app-item-done">✓ Ventanas y huecos</div>
-                        <div className="app-item-done">✓ Caldera e instalaciones</div>
-                        <div className="app-item-pend">◦ Fotos pendientes (2)</div>
-                      </div>
-                    </div>
-                    <div className="app-path">
-                      <div style={{ fontSize:20, marginBottom:8 }}>📋</div>
-                      <div className="app-path-name">Camino B — Visita con tablet</div>
-                      <div className="app-path-desc">Ficha técnica in situ</div>
-                      <div className="app-path-items">
-                        <div className="app-item-pend">◦ No necesario</div>
-                        <div className="app-item-pend">◦ Datos del propietario OK</div>
-                        <div className="app-item-pend">◦ Tú decides como técnico</div>
-                      </div>
-                    </div>
-                  </div>
-                  <hr className="app-divider" />
-                  <div className="app-footer-row">
-                    <div className="app-footer-lbl">Datos exportados para CE3X</div>
-                    <div className="app-status">✓ Listo para CE3X</div>
-                  </div>
-                </div>
-              </div>
-              <div className="hero-float">
-                <div className="hero-float-icon">💰</div>
-                <div>
-                  <div className="hero-float-lbl">1er tramo cobrado</div>
-                  <div className="hero-float-val">Antes de la visita</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ══ SOCIAL PROOF ══ */}
-      <div className="sp-bar">
-        <div className="sp-bar-inner">
-          <div className="sp-pill">
-            <span className="sp-dot" />
-            En desarrollo con certificadores reales de Madrid, Barcelona y Valencia.&nbsp;
-            <a onClick={() => navigate("/register")}>Únete a la beta →</a>
-          </div>
-        </div>
-      </div>
-
-      {/* ══ QUÉ HACE CERTIFIVE ══ */}
-      <section className="lp-section" id="funcionalidades">
-        <div className="lp-container">
-          <div className="sec-intro">
-            <div className="sec-label">Qué hace Certifive</div>
-            <h2 className="sec-h2">Certifive no reemplaza CE3X.<br/><em>Hace todo lo que CE3X no hace.</em></h2>
-            <p className="sec-sub">CE3X calcula la calificación energética. Eso no va a cambiar. El problema es todo lo que hay antes y después: la recogida de datos del propietario, el presupuesto, el cobro, las fotos, la documentación, la factura. Certifive lo organiza todo en un solo lugar.</p>
-          </div>
-          <div className="feat-grid">
-            <div className="feat-card star">
-              <div className="feat-tag">⭐ Diferenciador clave</div>
-              <div className="feat-icon">📱</div>
-              <h3 className="feat-h">El propietario hace los deberes. Tú decides con toda la información.</h3>
-              <p className="feat-p">Certifive guía al propietario paso a paso para recoger los datos de su inmueble: fotos de fachadas, ventanas, caldera, dimensiones. Con instrucciones en lenguaje normal y ejemplos visuales. Cuando recibes los datos, decides tú —como técnico— si son suficientes o si necesitas completarlos in situ.</p>
-            </div>
-            <div className="feat-card">
-              <div className="feat-icon">📋</div>
-              <h3 className="feat-h">Para cuando sí hay que ir: sin papel, sin apuntes sueltos</h3>
-              <p className="feat-p">Usas Certifive en tu tablet durante la visita. Secciones guiadas para la envolvente, los huecos y las instalaciones. Al salir, los datos están en la nube listos para CE3X.</p>
-            </div>
-            <div className="feat-card">
-              <div className="feat-icon">📄</div>
-              <h3 className="feat-h">Formulario online para el propietario</h3>
-              <p className="feat-p">El propietario rellena los datos de su inmueble desde el móvil. Tú recibes todo ordenado, sin llamadas ni emails con adjuntos.</p>
-            </div>
-            <div className="feat-card">
-              <div className="feat-icon">💶</div>
-              <h3 className="feat-h">Presupuesto que el cliente acepta con un clic</h3>
-              <p className="feat-p">Genera y envía el presupuesto por WhatsApp o email. El cliente lo acepta y paga online. Sin gestiones manuales ni perseguir pagos. Cobras el primer tramo antes de hacer el trabajo.</p>
-            </div>
-            <div className="feat-card">
-              <div className="feat-icon">📸</div>
-              <h3 className="feat-h">Las fotos en su sitio, con descripción, desde el primer día</h3>
-              <p className="feat-p">Cada foto queda vinculada al expediente con categoría y descripción, tanto si las hace el propietario como si las haces tú en la visita. Sin buscar en el carrete del móvil.</p>
-            </div>
-            <div className="feat-card">
-              <div className="feat-icon">🗂️</div>
-              <h3 className="feat-h">Un expediente para cada certificación</h3>
-              <p className="feat-p">Toda la documentación, los mensajes, los pagos y el estado en un solo lugar. Para ti solo o para un equipo de varios certificadores.</p>
-            </div>
-            <div className="feat-card">
-              <div className="feat-icon">🧾</div>
-              <h3 className="feat-h">La factura se genera sola al confirmar el pago</h3>
-              <p className="feat-p">Formato legal español, con todos los datos fiscales. Lista para descargar o enviar por email. Sin errores, sin olvidarse del IVA.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ══ CÓMO FUNCIONA ══ */}
-      <section className="lp-section" id="como-funciona">
-        <div className="lp-container">
-          <div className="how-bg">
-            <div className="sec-label">Cómo funciona</div>
-            <h2 className="sec-h2">Así es una certificación <em>con Certifive</em></h2>
-            <div className="steps">
-              <div className="step">
-                <div className="step-line" />
-                <div><div className="step-num">1</div></div>
-                <div className="step-body">
-                  <h3 className="step-h">Recibes el encargo y creas el expediente</h3>
-                  <p className="step-p">Creas la certificación en Certifive y mandas al propietario un link por WhatsApp o email para que rellene sus datos básicos. Todo en menos de dos minutos.</p>
-                </div>
-              </div>
-              <div className="step">
-                <div className="step-line" />
-                <div><div className="step-num">2</div></div>
-                <div className="step-body">
-                  <h3 className="step-h">Presupuesto y primer pago</h3>
-                  <p className="step-p">Con los datos básicos en mano, generas el presupuesto y lo envías. El cliente lo acepta online y paga el primer tramo. Cobras antes de hacer el trabajo.</p>
-                </div>
-              </div>
-              <div className="step">
-                <div className="step-line" />
-                <div><div className="step-num">3</div></div>
-                <div className="step-body">
-                  <h3 className="step-h">Los datos técnicos llegan de dos maneras</h3>
-                  <p className="step-p" style={{ marginBottom:16 }}>Aquí es donde Certifive cambia las reglas: tú eliges cómo se recogen los datos, según el encargo y tu criterio profesional.</p>
-                  <div className="bifurcacion">
-                    <div className="bif-path ca">
-                      <div className="bif-label">Camino A — El propietario desde casa</div>
-                      <h4 className="bif-h">Mandas el formulario guiado al propietario</h4>
-                      <p className="bif-p">Él sigue las instrucciones paso a paso: qué fotos hacer, cómo hacerlas, qué datos recoger. Todo en su móvil, sin tecnicismos, con ejemplos visuales.</p>
-                      <div className="bif-note">Decides tú —como técnico responsable— si son suficientes para certificar o si necesitas completarlos con una visita. Certifive no toma esa decisión. Tú sí.</div>
-                    </div>
-                    <div className="bif-path cb">
-                      <div className="bif-label">Camino B — Tú con la tablet en la visita</div>
-                      <h4 className="bif-h">Cuando la visita sí hace falta, nada se pierde</h4>
-                      <p className="bif-p">Abres Certifive en tu tablet. La app te guía por cada sección: fachadas, ventanas, instalaciones, fotos. Todo queda guardado en la nube al instante.</p>
-                      <div className="bif-note">Sin papeles ni fotos sueltas en el móvil. Al llegar a la oficina, los datos ya están esperándote.</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="step">
-                <div className="step-line" />
-                <div><div className="step-num">4</div></div>
-                <div className="step-body">
-                  <h3 className="step-h">Exportas los datos para CE3X</h3>
-                  <p className="step-p">Certifive te da los datos ordenados y etiquetados con la nomenclatura de CE3X. Copias los valores, calculas la calificación y generas el certificado oficial. Sin buscar nada en papeles ni notas dispersas.</p>
-                </div>
-              </div>
-              <div className="step">
-                <div><div className="step-num">5</div></div>
-                <div className="step-body">
-                  <h3 className="step-h">Cobras el segundo tramo y la factura se genera sola</h3>
-                  <p className="step-p">El cliente paga el segundo tramo. La factura legal española se genera automáticamente. El expediente queda cerrado y archivado con toda la documentación.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ══ LO QUE NO SOMOS ══ */}
-      <section className="lp-section nosomos-bg">
-        <div className="lp-container">
-          <div className="sec-label">Transparencia</div>
-          <h2 className="sec-h2">Lo que Certifive no hace<br/><em>(y por qué es importante que lo sepas)</em></h2>
-          <p className="sec-sub">Si buscas un software que prometa hacer todo automáticamente, no somos lo tuyo. Si buscas uno que te ahorre horas reales en cada certificación sin mentirte, sigue leyendo.</p>
-          <div className="nosomos-grid">
-            <div>
-              <div className="nosomos-col-h no">❌ Lo que no hacemos</div>
-              {[
-                { t:"No generamos el certificado de eficiencia energética oficial.", s:"El certificado oficial lo genera CE3X u otro programa reconocido. Eso no va a cambiar porque así lo exige la normativa española." },
-                { t:"No rellenamos CE3X automáticamente (todavía).", s:"CE3X no tiene API pública. Exportamos los datos en un formato que hace el volcado manual mucho más rápido." },
-                { t:"No decidimos si un inmueble necesita visita o no.", s:"Esa es una decisión técnica y profesional del certificador habilitado. Lo que hacemos es darte mejores datos antes de decidir." },
-              ].map((item, i) => (
-                <div className="nosomos-item" key={i}>
-                  <span className="nosomos-icon">❌</span>
-                  <div><span className="nosomos-strong">{item.t}</span><span className="nosomos-small">{item.s}</span></div>
-                </div>
-              ))}
-            </div>
-            <div>
-              <div className="nosomos-col-h si">✅ Lo que sí hacemos</div>
-              {[
-                { t:"Organizamos todo el proceso alrededor de CE3X.", s:"Para que el momento de abrir CE3X sea la parte fácil del trabajo, no la más pesada." },
-                { t:"Guiamos al propietario para que los datos lleguen antes que tú.", s:"Con instrucciones en lenguaje normal, ejemplos visuales y un formulario desde cualquier móvil." },
-                { t:"Gestionamos presupuestos, cobros en tramos y facturas legales.", s:"Para que te concentres en el trabajo técnico y no en el administrativo." },
-                { t:"Centralizamos expedientes, fotos y documentos.", s:"Todo en un solo lugar. Para ti o para un equipo de varios certificadores." },
-              ].map((item, i) => (
-                <div className="nosomos-item" key={i}>
-                  <span className="nosomos-icon">✅</span>
-                  <div><span className="nosomos-strong">{item.t}</span><span className="nosomos-small">{item.s}</span></div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ══ PRECIOS ══ */}
-      <section className="lp-section" id="precios">
-        <div className="lp-container">
-          <div className="sec-intro pricing-header">
-            <div className="sec-label">Precios</div>
-            <h2 className="sec-h2">Elige el plan que se adapta a tu volumen</h2>
-            <p className="sec-sub" style={{ margin:"0 auto" }}>Sin permanencia. Sin letra pequeña. Cancela cuando quieras.</p>
-          </div>
-
-          {/* Toggle */}
-          <div className="toggle-wrap">
-            <span className={`toggle-lbl${!isAnnual ? " on" : ""}`}>Mensual</span>
-            <label className="toggle-switch">
-              <input type="checkbox" checked={isAnnual} onChange={e => setIsAnnual(e.target.checked)} />
-              <div className="toggle-track" />
-              <div className="toggle-thumb" style={{ transform: isAnnual ? "translateX(20px)" : "translateX(0)" }} />
-            </label>
-            <span className={`toggle-lbl${isAnnual ? " on" : ""}`}>Anual</span>
-            <span className="toggle-badge">2 meses gratis</span>
-          </div>
-
-          {/* Cards */}
-          <div className="pricing-grid">
-            {/* BÁSICO */}
-            <div className="pricing-card">
-              <div className="plan-name">Básico</div>
-              <div className="plan-price">
-                <span className="plan-amount">{P("basic")}</span>
-                <span className="plan-unit">€/mes</span>
-              </div>
-              <div className="plan-annual">{Ann("basic")}</div>
-              <div className="plan-desc">Para técnicos que empiezan o con poco volumen de certificaciones.</div>
-              <div className="plan-feats">
-                {["Hasta 10 certificaciones/mes","Expedientes y clientes","Formulario guiado para propietarios","Presupuestos digitales","Facturas automáticas","Exportación de datos para CE3X"].map((f,i) => (
-                  <div className="plan-feat" key={i}><span className="feat-check">✓</span>{f}</div>
-                ))}
-              </div>
-              <button className="btn-plan btn-plan-teal" onClick={() => navigate("/register?plan=basic")}>Empezar gratis 14 días</button>
-            </div>
-
-            {/* PROFESIONAL */}
-            <div className="pricing-card featured">
-              <div className="feat-badge">★ Más popular</div>
-              <div className="plan-name">Profesional</div>
-              <div className="plan-price">
-                <span className="plan-amount">{P("pro")}</span>
-                <span className="plan-unit">€/mes</span>
-              </div>
-              <div className="plan-annual">{Ann("pro")}</div>
-              <div className="plan-desc">Para técnicos activos con flujo continuo de encargos.</div>
-              <div className="plan-feats">
-                {["Hasta 50 certificaciones/mes","Todo lo del plan Básico","WhatsApp integrado","Cobros en tramos + firma digital","Recordatorios automáticos","Estadísticas e informes de actividad"].map((f,i) => (
-                  <div className="plan-feat" key={i}><span className="feat-check">✓</span>{f}</div>
-                ))}
-              </div>
-              <button className="btn-plan btn-plan-white" onClick={() => navigate("/register?plan=pro")}>Empezar gratis 14 días</button>
-            </div>
-
-            {/* EMPRESA */}
-            <div className="pricing-card">
-              <div className="plan-name">Empresa</div>
-              <div className="plan-price">
-                <span className="plan-amount">{P("empresa")}</span>
-                <span className="plan-unit">€/mes</span>
-              </div>
-              <div className="plan-annual">{Ann("empresa")}</div>
-              <div className="plan-desc">Para estudios técnicos con equipo y alto volumen de trabajo.</div>
-              <div className="plan-feats">
-                {["Certificaciones ilimitadas","Hasta 5 técnicos en el mismo panel","Todo lo del plan Profesional","Acceso API para integraciones","Funciones de IA (próximamente)","Soporte prioritario"].map((f,i) => (
-                  <div className="plan-feat" key={i}><span className="feat-check">✓</span>{f}</div>
-                ))}
-              </div>
-              <button className="btn-plan btn-plan-outline" onClick={() => navigate("/contact?plan=empresa")}>Hablar con nosotros</button>
-            </div>
-          </div>
-
-          {/* PAY-PER-USE */}
-          <div className="ppu-card">
-            <div>
-              <div className="ppu-lbl">¿Certificas de forma esporádica?</div>
-              <div className="ppu-price">3€ por certificación</div>
-              <div className="ppu-desc">Pay-per-use · Sin suscripción · Pagas solo cuando trabajas</div>
-            </div>
-            <div className="ppu-feats">
-              <div className="ppu-feat"><span className="ppu-chk">✓</span>Sin cuota mensual</div>
-              <div className="ppu-feat"><span className="ppu-chk">✓</span>Acceso completo por certificación</div>
-              <div className="ppu-feat"><span className="ppu-chk">✓</span>Paga solo cuando certifiques</div>
-            </div>
-            <button className="btn-ppu" onClick={() => navigate("/register?plan=ppu")}>
-              Ver cómo funciona
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6H9.5M6.5 3L9.5 6L6.5 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-            </button>
-          </div>
-
-          <p className="pricing-note">
-            💬 ¿Eres inmobiliaria, promotora o gran empresa?&nbsp;
-            <a onClick={() => navigate("/contact")}>Cuéntanos tu caso y diseñamos una propuesta a medida →</a>
-          </p>
-        </div>
-      </section>
-
-      {/* ══ CTA FINAL ══ */}
-      <section className="lp-section-sm">
-        <div className="lp-container">
-          <div className="cta-wrap">
-            <div className="sec-label">Empieza hoy</div>
-            <h2 className="cta-h2">Pruébalo 14 días gratis.<br/>Sin tarjeta. Sin compromisos.</h2>
-            <p className="cta-sub">Si después de 14 días no te ha ahorrado tiempo real en tu trabajo, te devolvemos el tiempo que perdiste configurándolo. Palabra.</p>
-            <div className="cta-actions">
-              <button className="btn-cta" onClick={() => navigate("/register")}>
-                Crear mi cuenta gratis
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3.5 8H12.5M8.5 4L13 8L8.5 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
               </button>
             </div>
-            <p className="cta-fine">Técnico certificador habilitado · Sin permanencia · Cancela cuando quieras</p>
+            <div className="trust-checks">
+              <span><TrustIcon /> 14 días gratis</span>
+              <span><TrustIcon /> Sin permanencia</span>
+              <span><TrustIcon /> Soporte en español</span>
+            </div>
+          </div>
+
+          {/* Dashboard mock */}
+          <div className="hero-visual">
+            <div className="dash-header">
+              <div className="dash-title">Panel de control</div>
+              <div className="dash-live">
+                <span className="dash-live-dot" />
+                En vivo
+              </div>
+            </div>
+            <div className="dash-stats">
+              <div className="dash-stat">
+                <div className="dash-stat-n">47</div>
+                <div className="dash-stat-l">Expedientes activos</div>
+              </div>
+              <div className="dash-stat">
+                <div className="dash-stat-n">3.840€</div>
+                <div className="dash-stat-l">Facturado este mes</div>
+              </div>
+              <div className="dash-stat">
+                <div className="dash-stat-n">94%</div>
+                <div className="dash-stat-l">Aprobados 1.ª vez</div>
+              </div>
+            </div>
+            {[
+              { id: "CEE-2408", name: "C/ Almería 14, Madrid", cal: "B", calCls: "cal-b", status: "Registrado", stCls: "st-done" },
+              { id: "CEE-2407", name: "Av. Diagonal 88, BCN", cal: "A", calCls: "cal-a", status: "Pendiente", stCls: "st-pending" },
+              { id: "CEE-2406", name: "C/ Gran Vía 12, Madrid", cal: "C", calCls: "cal-c", status: "Registrado", stCls: "st-done" },
+              { id: "CEE-2405", name: "C/ Colón 5, Valencia", cal: "B", calCls: "cal-b", status: "Nuevo", stCls: "st-new" },
+            ].map((row) => (
+              <div className="dash-row" key={row.id}>
+                <span className={`cal-tag ${row.calCls}`}>{row.cal}</span>
+                <div className="dash-row-main">
+                  <div className="dash-row-name">{row.name}</div>
+                  <div className="dash-row-sub">{row.id}</div>
+                </div>
+                <span className={`cert-status ${row.stCls}`}>{row.status}</span>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* ══ FOOTER ══ */}
-      <footer className="lp-footer">
-        <div className="lp-footer-inner">
-          <div>
-            <div className="footer-logo-row">
-              <div className="footer-logo-mark">
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                  <path d="M3 13L8 3L13 13" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M5.2 9.5H10.8" stroke="white" strokeWidth="1.6" strokeLinecap="round"/>
-                </svg>
-              </div>
-              <span className="footer-logo-text">CERTIFIVE</span>
-            </div>
-            <p className="footer-tagline">La plataforma de gestión para técnicos certificadores energéticos.</p>
-            <a href="mailto:hola@certifive.es" className="footer-email">hola@certifive.es</a>
-          </div>
-          <div>
-            <div className="footer-col-h">Producto</div>
-            <ul className="footer-links">
-              <li><a onClick={scrollTo("funcionalidades")}>Funcionalidades</a></li>
-              <li><a onClick={scrollTo("como-funciona")}>Cómo funciona</a></li>
-              <li><a onClick={scrollTo("precios")}>Precios</a></li>
-            </ul>
-          </div>
-          <div>
-            <div className="footer-col-h">Legal</div>
-            <ul className="footer-links">
-              <li><a onClick={() => navigate("/aviso-legal")}>Aviso legal</a></li>
-              <li><a onClick={() => navigate("/privacidad")}>Política de privacidad</a></li>
-              <li><a onClick={() => navigate("/cookies")}>Cookies</a></li>
-            </ul>
-          </div>
-          <div>
-            <div className="footer-col-h">Empresa</div>
-            <ul className="footer-links">
-              <li><a onClick={() => navigate("/contact")}>Contacto</a></li>
-            </ul>
+      {/* ── STATS STRIP ── */}
+      <section className="stats-strip">
+        <div className="container">
+          <div className="stats-inner">
+            <div className="stat"><div className="stat-n">×5</div><div className="stat-l">más productividad por técnico</div></div>
+            <div className="stat"><div className="stat-n">+2.400</div><div className="stat-l">certificadores en España</div></div>
+            <div className="stat"><div className="stat-n">4,2 h</div><div className="stat-l">ahorradas por expediente</div></div>
+            <div className="stat"><div className="stat-n">98,7%</div><div className="stat-l">expedientes aprobados a la 1.ª</div></div>
           </div>
         </div>
-        <div className="footer-bottom">
-          <p className="footer-copy">© 2026 Certifive. Todos los derechos reservados.</p>
-          <p className="footer-disclaimer">Certifive es una herramienta de gestión. El certificado de eficiencia energética oficial debe generarse con un Documento Reconocido por el Ministerio (CE3X, HULC, CYPETHERM u otro) y registrarse en el organismo competente de la Comunidad Autónoma correspondiente.</p>
+      </section>
+
+      {/* ── FLUJO SHOWCASE ── */}
+      <section className="section" id="flujo">
+        <div className="container">
+          <div className="section-head">
+            <span className="section-eyebrow">Plataforma todo-en-uno</span>
+            <h2 className="section-title">Todo tu flujo de certificación, <span className="accent">en un solo lugar.</span></h2>
+            <p className="section-sub">Centraliza cada etapa del proceso y toma decisiones más inteligentes con Certifive.</p>
+          </div>
+          <div className="showcase-mock">
+            <div className="showcase-tabs">
+              {["Expedientes", "Clientes", "Certificados", "Informes"].map((t, i) => (
+                <div key={t} className={`showcase-tab${i === 0 ? " active" : ""}`}>{t}</div>
+              ))}
+            </div>
+            <div className="showcase-body">
+              <div className="showcase-grid">
+                {[
+                  { n: "47", l: "Expedientes activos" },
+                  { n: "12", l: "Pendientes registro" },
+                  { n: "35", l: "Completados" },
+                  { n: "3.840€", l: "Facturado este mes" },
+                ].map((s) => (
+                  <div className="showcase-card" key={s.l}>
+                    <div className="showcase-card-n">{s.n}</div>
+                    <div className="showcase-card-l">{s.l}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="showcase-list">
+                {[
+                  { id: "CEE-2408", name: "C/ Almería 14, 3.º D — Madrid", cal: "B", calCls: "cal-b", status: "Registrado", stCls: "st-done" },
+                  { id: "CEE-2407", name: "Av. Diagonal 88, 1.º — Barcelona", cal: "A", calCls: "cal-a", status: "En proceso", stCls: "st-pending" },
+                  { id: "CEE-2406", name: "C/ Gran Vía 12, 5.º — Madrid", cal: "C", calCls: "cal-c", status: "Registrado", stCls: "st-done" },
+                  { id: "CEE-2405", name: "C/ Colón 5, 4.º A — Valencia", cal: "B", calCls: "cal-b", status: "Nuevo", stCls: "st-new" },
+                ].map((row) => (
+                  <div className="showcase-row" key={row.id}>
+                    <span className="cert-id">{row.id}</span>
+                    <span className="cert-name">{row.name}</span>
+                    <span className={`cal-tag ${row.calCls}`}>{row.cal}</span>
+                    <span className={`cert-status ${row.stCls}`}>{row.status}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── MULTIPLICA ×5 ── */}
+      <section className="section alt" id="multiplica">
+        <div className="container">
+          <div className="section-head">
+            <span className="section-eyebrow">Resultados</span>
+            <h2 className="section-title">Multiplica <span className="accent">×5</span> tus ventas y tu eficiencia.</h2>
+            <p className="section-sub">Automatiza procesos, mejora tu gestión y ahorra tiempo en cada expediente. Los datos son de nuestra propia plataforma.</p>
+          </div>
+          <div className="mult-mock">
+            <div className="mult-header">
+              <div className="mult-title">Evolución de certificados — últimos 6 meses</div>
+              <div className="mult-badge">↑ ×5 vs. antes de Certifive</div>
+            </div>
+            <div className="chart-bars">
+              {[
+                { label: "Ene", val: "8",  h: 20,  bg: "var(--s100)",  vc: "var(--s400)" },
+                { label: "Feb", val: "12", h: 35,  bg: "var(--s100)",  vc: "var(--s400)" },
+                { label: "Mar", val: "19", h: 52,  bg: "var(--green-lt)", vc: "var(--s500)" },
+                { label: "Abr", val: "28", h: 72,  bg: "var(--green)", vc: "white" },
+                { label: "May", val: "35", h: 92,  bg: "var(--green)", vc: "white" },
+                { label: "Jun", val: "47", h: 118, bg: "var(--green)", vc: "white" },
+              ].map((b) => (
+                <div className="chart-bar-wrap" key={b.label}>
+                  <div className="chart-val" style={{ color: b.vc === "white" ? "var(--ink)" : b.vc }}>{b.val}</div>
+                  <div className="chart-bar" style={{ height: b.h, background: b.bg, border: b.bg === "var(--s100)" ? "1px solid var(--s200)" : "none" }} />
+                  <div className="chart-label">{b.label}</div>
+                </div>
+              ))}
+            </div>
+            <div className="mult-kpis">
+              <div className="mult-kpi"><div className="mult-kpi-n">×5</div><div className="mult-kpi-l">más certificados por mes</div></div>
+              <div className="mult-kpi"><div className="mult-kpi-n">4,2 h</div><div className="mult-kpi-l">ahorradas por expediente</div></div>
+              <div className="mult-kpi"><div className="mult-kpi-n">98,7%</div><div className="mult-kpi-l">aprobados a la primera</div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── PROCESO — 5 PASOS ── */}
+      <section className="section" id="proceso">
+        <div className="container">
+          <div className="section-head">
+            <span className="section-eyebrow">Cómo funciona</span>
+            <h2 className="section-title">De la visita al <span className="accent">certificado registrado</span> en cinco pasos.</h2>
+            <p className="section-sub">Un flujo pensado para que dejes de perder horas en tareas administrativas.</p>
+          </div>
+          <div className="process-grid">
+            {steps.map((s) => (
+              <div className="step" key={s.n}>
+                <div className="step-num">{s.n}</div>
+                <div className="step-t">{s.t}</div>
+                <p className="step-d">{s.d}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── TESTIMONIOS ── */}
+      <section className="section alt" id="testimonios">
+        <div className="container">
+          <div className="section-head">
+            <span className="section-eyebrow">Testimonios</span>
+            <h2 className="section-title">Lo que dicen los <span className="accent">técnicos</span> que ya usan Certifive.</h2>
+            <p className="section-sub">Profesionales reales. Resultados medibles. Más expedientes, menos errores.</p>
+          </div>
+          <div className="testi-grid">
+            {[
+              { ini: "MA", name: "Miguel Ángel Torres", role: "Ingeniero Industrial · Madrid", text: "Antes tardaba un día en cerrar un expediente. Con Certifive lo tengo listo en dos horas y al registro autonómico le entra a la primera. La diferencia es brutal." },
+              { ini: "LG", name: "Laura García Fonts", role: "Arquitecta Técnica · Barcelona", text: "La integración con CE3X es un antes y un después. Nada de copiar datos a mano. El sistema importa, valida y deja el certificado listo en minutos." },
+              { ini: "RV", name: "Roberto Vega Morales", role: "Ingeniero de Edificación · Sevilla", text: "Gestiono más de 60 expedientes al mes yo solo. Sin Certifive sería imposible. El portal del cliente me ha diferenciado mucho frente a otros técnicos." },
+            ].map((t) => (
+              <div className="testi" key={t.ini}>
+                <div className="testi-stars">{"★★★★★".split("").map((s, i) => <span key={i}>{s}</span>)}</div>
+                <p className="testi-text">{t.text}</p>
+                <div className="testi-author">
+                  <div className="testi-avatar">{t.ini}</div>
+                  <div>
+                    <div className="testi-name">{t.name}</div>
+                    <div className="testi-role">{t.role}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── PRICING ── */}
+      <section className="section" id="precios">
+        <div className="container">
+          <div className="section-head">
+            <span className="section-eyebrow">Precios</span>
+            <h2 className="section-title">Planes para cada tipo de <span className="accent">profesional.</span></h2>
+            <p className="section-sub">Sin letra pequeña. Sin costes ocultos. Cancela cuando quieras.</p>
+          </div>
+
+          <div className="pricing-toggle">
+            <span className={`toggle-label${isAnnual ? " off" : ""}`}>Mensual</span>
+            <button className={`toggle-switch${isAnnual ? "" : " off"}`} onClick={() => setIsAnnual(!isAnnual)}>
+              <div className={`toggle-knob${isAnnual ? " on" : ""}`} />
+            </button>
+            <span className={`toggle-label${isAnnual ? "" : " off"}`}>Anual</span>
+            {isAnnual && <span className="annual-badge">2 meses gratis</span>}
+          </div>
+
+          <div className="pricing-grid">
+            {/* Básico */}
+            <div className="plan-card">
+              <div className="plan-name">Básico</div>
+              <div>
+                <span className="plan-price">{P("basic")}€</span>
+                <span className="plan-period">/mes</span>
+              </div>
+              <div className="plan-annual">{Ann("basic")}</div>
+              <hr className="plan-divider" />
+              <ul className="plan-features">
+                {["Hasta 10 certificados/mes", "Expedientes ilimitados", "Integración CE3X / HULC", "Generación PDF del certificado", "Soporte por email"].map((f) => (
+                  <li key={f}><CheckIcon /> {f}</li>
+                ))}
+              </ul>
+              <button className="btn btn-ghost plan-cta" onClick={() => navigate("/register")}>Empezar gratis</button>
+            </div>
+
+            {/* Profesional */}
+            <div className="plan-card featured">
+              <div className="plan-badge">★ Más popular</div>
+              <div className="plan-name">Profesional</div>
+              <div>
+                <span className="plan-price">{P("pro")}€</span>
+                <span className="plan-period">/mes</span>
+              </div>
+              <div className="plan-annual">{Ann("pro")}</div>
+              <hr className="plan-divider" />
+              <ul className="plan-features">
+                {["Hasta 50 certificados/mes", "Todo lo del plan Básico", "Envío por WhatsApp y email", "Cobros por tramos y Stripe", "Facturación legal española", "Soporte prioritario"].map((f) => (
+                  <li key={f}><CheckIcon /> {f}</li>
+                ))}
+              </ul>
+              <button className="btn btn-primary plan-cta" onClick={() => navigate("/register")}>Prueba 14 días gratis</button>
+            </div>
+
+            {/* Empresa */}
+            <div className="plan-card">
+              <div className="plan-name">Empresa</div>
+              <div>
+                <span className="plan-price">{P("empresa")}€</span>
+                <span className="plan-period">/mes</span>
+              </div>
+              <div className="plan-annual">{Ann("empresa")}</div>
+              <hr className="plan-divider" />
+              <ul className="plan-features">
+                {["Certificados ilimitados", "Hasta 5 técnicos", "Todo lo del plan Profesional", "API e integraciones avanzadas", "IA para clasificación automática", "Onboarding dedicado"].map((f) => (
+                  <li key={f}><CheckIcon /> {f}</li>
+                ))}
+              </ul>
+              <button className="btn btn-ghost plan-cta" onClick={() => navigate("/register")}>Hablar con ventas</button>
+            </div>
+          </div>
+
+          {/* PPU */}
+          <div className="ppu-card">
+            <div className="ppu-icon">⚡</div>
+            <div className="ppu-text">
+              <div className="ppu-title">Pay-per-use</div>
+              <div className="ppu-sub">Sin cuota mensual. Paga solo lo que usas. Perfecto si certificas de forma puntual o quieres probar la plataforma sin compromiso.</div>
+            </div>
+            <div className="ppu-price">3€ <span>/certificado</span></div>
+            <button className="btn btn-ghost" onClick={() => navigate("/register")}>Empezar sin suscripción</button>
+          </div>
+        </div>
+      </section>
+
+      {/* ── FAQ ── */}
+      <section className="section alt" id="faq">
+        <div className="container">
+          <div className="section-head">
+            <span className="section-eyebrow">Preguntas frecuentes</span>
+            <h2 className="section-title">Todo lo que querías saber antes de empezar.</h2>
+          </div>
+          <div className="faq-grid">
+            {faqs.map((faq, i) => (
+              <div className="faq-item" key={i} onClick={() => setOpenFaq(openFaq === i ? null : i)}>
+                <div className="faq-q">
+                  {faq.q}
+                  <div className={`faq-toggle${openFaq === i ? " open" : ""}`}>+</div>
+                </div>
+                <div className={`faq-a${openFaq === i ? " open" : ""}`}>{faq.a}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── CTA FINAL ── */}
+      <section className="cta-final" id="cta">
+        <div className="container cta-inner">
+          <div className="cta-eyebrow">Empieza hoy</div>
+          <h2>Multiplica ×5 tus resultados<br />desde el primer expediente.</h2>
+          <p>14 días gratis. Sin tarjeta. Sin permanencia. Soporte en español incluido.</p>
+          <div className="cta-btns">
+            <button className="btn-white" onClick={() => navigate("/register")}>Solicitar demo gratuita</button>
+            <button className="btn-outline-white" onClick={scrollTo("precios")}>Ver planes y precios</button>
+          </div>
+          <div className="cta-trust">
+            <span>✓ Integración CE3X / HULC</span>
+            <span>✓ Registro autonómico automático</span>
+            <span>✓ Cancela cuando quieras</span>
+          </div>
+        </div>
+      </section>
+
+      {/* ── FOOTER ── */}
+      <footer>
+        <div className="container">
+          <div className="footer-top">
+            <div>
+              <LogoSVG dark />
+              <p className="footer-tagline">Software de gestión para profesionales de la certificación energética en España.</p>
+              <div className="footer-social">
+                <a href="#" aria-label="LinkedIn">in</a>
+                <a href="#" aria-label="Twitter">𝕏</a>
+                <a href="#" aria-label="YouTube">▶</a>
+              </div>
+            </div>
+            <div>
+              <div className="footer-col-t">Producto</div>
+              <ul className="footer-links">
+                {["Certificados", "Clientes", "Operaciones", "Informes", "Integraciones"].map((l) => <li key={l}><a href="#">{l}</a></li>)}
+              </ul>
+            </div>
+            <div>
+              <div className="footer-col-t">Soluciones</div>
+              <ul className="footer-links">
+                {["Técnicos autónomos", "Despachos", "Inmobiliarias", "Administradores"].map((l) => <li key={l}><a href="#">{l}</a></li>)}
+              </ul>
+            </div>
+            <div>
+              <div className="footer-col-t">Recursos</div>
+              <ul className="footer-links">
+                {["Documentación", "Centro de ayuda", "Webinars", "Blog", "API"].map((l) => <li key={l}><a href="#">{l}</a></li>)}
+              </ul>
+            </div>
+            <div>
+              <div className="footer-col-t">Empresa</div>
+              <ul className="footer-links">
+                {["Sobre nosotros", "Trabaja con nosotros", "Contacto", "Prensa"].map((l) => <li key={l}><a href="#">{l}</a></li>)}
+              </ul>
+            </div>
+          </div>
+          <div className="footer-bottom">
+            <span>© 2026 Certifive · Todos los derechos reservados.</span>
+            <div className="footer-legal">
+              {["Privacidad", "Términos", "Cookies", "RGPD"].map((l) => <a key={l} href="#">{l}</a>)}
+            </div>
+          </div>
+          <p className="footer-disclaimer">
+            Certifive es una herramienta de gestión. El certificado de eficiencia energética oficial debe generarse con un Documento Reconocido por el Ministerio (CE3X, HULC, CYPETHERM u otro) y registrarse en el organismo competente de la Comunidad Autónoma correspondiente.
+          </p>
         </div>
       </footer>
     </div>
