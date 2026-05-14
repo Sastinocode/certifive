@@ -1118,7 +1118,7 @@ export default function Landing() {
             const H_SIN    = 4;
             const H_CON    = 0.75;
             const MULT     = 1.8;
-            const PLAN_PRICE = 49; // Profesional — referencia fija
+            const PLAN_PRICE = calcCerts <= 10 ? 19 : calcCerts <= 20 ? 49 : 99;
 
             const certsSin = calcCerts;
             const certsCon = Math.round(calcCerts * MULT);
