@@ -7,8 +7,6 @@ export default function Landing() {
   const [isAnnual, setIsAnnual] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [calcCerts, setCalcCerts] = useState(10);
-  const [calcPrice, setCalcPrice] = useState(150);
-  const [calcHours, setCalcHours] = useState(4);
   const [heroTab, setHeroTab] = useState("Expedientes");
 
   useEffect(() => {
@@ -910,95 +908,113 @@ export default function Landing() {
           <div className="section-head">
             <span className="section-eyebrow">Calcula tu potencial</span>
             <h2 className="section-title">Multiplica <span className="accent">×5</span> tus ventas y tu eficiencia.</h2>
-            <p className="section-sub">Mueve los sliders y descubre cuánto puedes ganar con Certifive según tu volumen real de trabajo.</p>
+            <p className="section-sub">Mueve el slider y comprueba el impacto real de Certifive en tu negocio.</p>
           </div>
 
           {(() => {
+            const PRECIO   = 150;
+            const H_SIN    = 4;
+            const H_CON    = 0.75;
+            const MULT     = 1.8;
+
+            const certsSin = calcCerts;
+            const certsCon = Math.round(calcCerts * MULT);
+            const horasSin = certsSin * H_SIN;
+            const horasCon = Math.round(certsCon * H_CON);
+            const ingSin   = certsSin * PRECIO;
+            const ingCon   = certsCon * PRECIO;
+
             const plan = calcCerts <= 10
-              ? { name: "Básico", price: 19 }
-              : calcCerts <= 25
+              ? { name: "Básico",      price: 19 }
+              : calcCerts <= 20
               ? { name: "Profesional", price: 49 }
-              : { name: "Empresa", price: 99 };
-            const ingresosActuales   = calcCerts * calcPrice;
-            const ingresosCertifive  = calcCerts * 5 * calcPrice;
-            const beneficioNeto      = ingresosCertifive - ingresosActuales - plan.price;
-            const horasLiberadas     = Math.round(calcCerts * calcHours * 0.8);
-            const roi                = Math.round(beneficioNeto / plan.price);
-            const fmtEur = (n: number) => n.toLocaleString("es-ES") + "€";
+              : { name: "Empresa",     price: 99 };
+
+            const horasRec = horasSin - horasCon;
+            const ganancia = ingCon - ingSin - plan.price;
+            const fmtEur   = (n: number) => n.toLocaleString("es-ES") + "€";
+
+            const rows = [
+              { label: "Certificados / mes",     sin: `${certsSin}`,   con: `${certsCon}`   },
+              { label: "Tiempo por certificado", sin: "4 h",           con: "45 min"        },
+              { label: "Ingresos al mes",        sin: fmtEur(ingSin),  con: fmtEur(ingCon)  },
+              { label: "Horas trabajadas",       sin: `${horasSin} h`, con: `${horasCon} h` },
+            ];
 
             return (
               <div style={{
                 background: "white", borderRadius: 20, border: "1px solid var(--s200)",
                 boxShadow: "var(--shadow-card)", overflow: "hidden",
               }}>
-                {/* Sliders */}
-                <div style={{ padding: "40px 40px 32px", borderBottom: "1px solid var(--s100)" }}>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 40 }}>
-                    {[
-                      { label: "Certificados al mes", value: calcCerts,  min: 1,  max: 50,  step: 1,   unit: "",   fmt: (v: number) => `${v} cert.`, setter: setCalcCerts  },
-                      { label: "Precio medio",         value: calcPrice,  min: 50, max: 300, step: 10,  unit: "€",  fmt: (v: number) => `${v}€`,      setter: setCalcPrice  },
-                      { label: "Horas por certificado",value: calcHours,  min: 1,  max: 8,   step: 0.5, unit: "h",  fmt: (v: number) => `${v} h`,     setter: setCalcHours  },
-                    ].map(({ label, value, min, max, step, fmt, setter }) => (
-                      <div key={label}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--s600)" }}>{label}</span>
-                          <span style={{ fontSize: 22, fontWeight: 800, color: "var(--green)", letterSpacing: "-.02em" }}>{fmt(value)}</span>
-                        </div>
-                        <input
-                          type="range"
-                          min={min} max={max} step={step}
-                          value={value}
-                          onChange={(e) => setter(Number(e.target.value))}
-                          style={{ width: "100%", accentColor: "var(--green)", cursor: "pointer", height: 4 }}
-                        />
-                        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
-                          <span style={{ fontSize: 11, color: "var(--s400)" }}>{min}{typeof min === "number" && label.includes("Precio") ? "€" : label.includes("Horas") ? " h" : ""}</span>
-                          <span style={{ fontSize: 11, color: "var(--s400)" }}>{max}{label.includes("Precio") ? "€" : label.includes("Horas") ? " h" : ""}</span>
-                        </div>
+                {/* Single slider */}
+                <div style={{ padding: "36px 40px 28px", borderBottom: "1px solid var(--s100)" }}>
+                  <div style={{ maxWidth: 500, margin: "0 auto" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
+                      <span style={{ fontSize: 15, fontWeight: 600, color: "var(--s600)" }}>Certificados al mes</span>
+                      <span style={{ fontSize: 28, fontWeight: 800, color: "var(--green)", letterSpacing: "-.02em" }}>{calcCerts} cert.</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={1} max={30} step={1}
+                      value={calcCerts}
+                      onChange={(e) => setCalcCerts(Number(e.target.value))}
+                      style={{ width: "100%", accentColor: "var(--green)", cursor: "pointer", height: 4 }}
+                    />
+                    <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
+                      <span style={{ fontSize: 11, color: "var(--s400)" }}>1</span>
+                      <span style={{ fontSize: 11, color: "var(--s400)" }}>30</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Two-column comparison */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
+                  {/* Sin Certifive */}
+                  <div style={{
+                    background: "var(--s50)", padding: "28px 32px",
+                    borderRight: "1px solid var(--s200)",
+                  }}>
+                    <div style={{
+                      fontSize: 12, fontWeight: 700, color: "var(--s400)",
+                      textTransform: "uppercase", letterSpacing: ".07em", marginBottom: 22,
+                    }}>Sin Certifive</div>
+                    {rows.map(r => (
+                      <div key={r.label} style={{ marginBottom: 18 }}>
+                        <div style={{ fontSize: 11, color: "var(--s400)", fontWeight: 500, marginBottom: 3 }}>{r.label}</div>
+                        <div style={{ fontSize: 22, fontWeight: 700, color: "var(--ink)", letterSpacing: "-.02em" }}>{r.sin}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Con Certifive */}
+                  <div style={{ background: "#e8f6ec", padding: "28px 32px" }}>
+                    <div style={{
+                      fontSize: 12, fontWeight: 700, color: "var(--green)",
+                      textTransform: "uppercase", letterSpacing: ".07em", marginBottom: 22,
+                    }}>Con Certifive ✓</div>
+                    {rows.map(r => (
+                      <div key={r.label} style={{ marginBottom: 18 }}>
+                        <div style={{ fontSize: 11, color: "var(--green)", fontWeight: 500, marginBottom: 3, opacity: .75 }}>{r.label}</div>
+                        <div style={{ fontSize: 22, fontWeight: 800, color: "var(--green)", letterSpacing: "-.02em" }}>{r.con}</div>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                {/* Resultados */}
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)" }}>
-                  {[
-                    {
-                      label: "Ingresos extra al mes",
-                      value: `+${fmtEur(beneficioNeto)}`,
-                      sub: `vs. ${fmtEur(ingresosActuales)} actuales`,
-                      highlight: true,
-                    },
-                    {
-                      label: "Horas liberadas",
-                      value: `${horasLiberadas} h/mes`,
-                      sub: `${calcHours} h → ${(calcHours * 0.2).toFixed(1)} h por cert.`,
-                      highlight: false,
-                    },
-                    {
-                      label: "Plan recomendado",
-                      value: plan.name,
-                      sub: `${plan.price}€/mes`,
-                      highlight: false,
-                    },
-                    {
-                      label: "Retorno de inversión",
-                      value: `×${roi > 0 ? roi : "∞"}`,
-                      sub: "sobre el coste del plan",
-                      highlight: false,
-                    },
-                  ].map(({ label, value, sub, highlight }, i) => (
-                    <div key={label} style={{
-                      padding: "32px 28px",
-                      borderRight: i < 3 ? "1px solid var(--s100)" : "none",
-                      background: highlight ? "var(--green-50)" : "white",
-                      textAlign: "center",
-                    }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: highlight ? "var(--green)" : "var(--s500)", marginBottom: 10 }}>{label}</div>
-                      <div style={{ fontSize: 32, fontWeight: 800, color: highlight ? "var(--green)" : "var(--ink)", letterSpacing: "-.03em", lineHeight: 1.1, marginBottom: 6 }}>{value}</div>
-                      <div style={{ fontSize: 12, color: "var(--s400)", fontWeight: 500 }}>{sub}</div>
-                    </div>
-                  ))}
+                {/* Dynamic phrase */}
+                <div style={{
+                  padding: "24px 40px",
+                  background: "linear-gradient(135deg,var(--green) 0%,var(--green-dk) 100%)",
+                  textAlign: "center",
+                }}>
+                  <p style={{ fontSize: 18, fontWeight: 700, color: "white", lineHeight: 1.6, margin: 0 }}>
+                    Recuperas{" "}
+                    <strong style={{ fontSize: 26, fontWeight: 800 }}>{horasRec}h</strong>{" "}
+                    al mes. Ganas{" "}
+                    <strong style={{ fontSize: 26, fontWeight: 800 }}>+{fmtEur(ganancia)}</strong>{" "}
+                    más. Por solo{" "}
+                    <strong style={{ fontSize: 26, fontWeight: 800 }}>{plan.price}€/mes.</strong>
+                  </p>
                 </div>
               </div>
             );
