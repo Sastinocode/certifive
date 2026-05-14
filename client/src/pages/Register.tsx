@@ -4,6 +4,14 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { Eye, EyeOff } from "lucide-react";
 
+const pwdRules = [
+  { label: "Mínimo 8 caracteres",              test: (p: string) => p.length >= 8 },
+  { label: "Al menos una mayúscula",            test: (p: string) => /[A-Z]/.test(p) },
+  { label: "Al menos una minúscula",            test: (p: string) => /[a-z]/.test(p) },
+  { label: "Al menos un número",               test: (p: string) => /[0-9]/.test(p) },
+  { label: "Al menos un carácter especial (!@#$%^&)", test: (p: string) => /[!@#$%^&*]/.test(p) },
+];
+
 export default function Register() {
   const [, navigate] = useLocation();
   const { register } = useAuth();
@@ -21,6 +29,8 @@ export default function Register() {
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((prev) => ({ ...prev, [k]: e.target.value }));
 
+  const pwdValid = pwdRules.every(({ test }) => test(form.password));
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -28,8 +38,8 @@ export default function Register() {
       toast({ title: "Campos requeridos", description: "Completa nombre, email y contraseña.", variant: "destructive" });
       return;
     }
-    if (form.password.length < 8) {
-      toast({ title: "Contraseña muy corta", description: "Mínimo 8 caracteres.", variant: "destructive" });
+    if (!pwdValid) {
+      toast({ title: "Contraseña insegura", description: "Cumple todos los requisitos de seguridad.", variant: "destructive" });
       return;
     }
     if (form.password !== form.confirmPassword) {
@@ -160,6 +170,21 @@ export default function Register() {
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
+              {form.password.length > 0 && (
+                <div style={{ marginTop: 8, padding: "10px 12px", background: "#F8FAFC", borderRadius: 8, border: "1px solid #E5E7EB" }}>
+                  {pwdRules.map(({ label, test }) => {
+                    const ok = test(form.password);
+                    return (
+                      <div key={label} style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 3, fontSize: 12 }}>
+                        <span style={{ color: ok ? "#1FA94B" : "#EF4444", fontWeight: 700, fontSize: 13, lineHeight: 1 }}>
+                          {ok ? "✓" : "✗"}
+                        </span>
+                        <span style={{ color: ok ? "#374151" : "#9CA3AF" }}>{label}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             <div style={{ marginBottom: 28 }}>
@@ -176,16 +201,16 @@ export default function Register() {
 
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || !pwdValid}
               style={{
                 width: "100%", padding: "15px", borderRadius: 10, border: "none",
-                background: isLoading ? "#a7d7b8" : "#1FA94B", color: "white",
-                fontSize: 16, fontWeight: 700, cursor: isLoading ? "not-allowed" : "pointer",
+                background: (isLoading || !pwdValid) ? "#a7d7b8" : "#1FA94B", color: "white",
+                fontSize: 16, fontWeight: 700, cursor: (isLoading || !pwdValid) ? "not-allowed" : "pointer",
                 display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
                 transition: "background .2s",
               }}
-              onMouseOver={e => { if (!isLoading) e.currentTarget.style.background = "#178A3C"; }}
-              onMouseOut={e => { if (!isLoading) e.currentTarget.style.background = "#1FA94B"; }}
+              onMouseOver={e => { if (!isLoading && pwdValid) e.currentTarget.style.background = "#178A3C"; }}
+              onMouseOut={e => { if (!isLoading && pwdValid) e.currentTarget.style.background = "#1FA94B"; }}
             >
               {isLoading ? (
                 <>
