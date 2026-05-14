@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import CatastroSearch, { CatastroData } from "@/components/CatastroSearch";
 
 interface GeneralDataFormProps {
   data: any;
@@ -58,6 +59,22 @@ export default function GeneralDataForm({ data, onDataChange }: GeneralDataFormP
                 value={data.cadastralRef || ""}
                 onChange={(e) => handleInputChange("cadastralRef", e.target.value)}
                 required
+              />
+              <CatastroSearch
+                rc={data.cadastralRef}
+                className="mt-2"
+                onData={(catData: CatastroData) => {
+                  const patch: Record<string, string> = {};
+                  if (catData.address)          patch.address    = catData.address;
+                  if (catData.city)             patch.city       = catData.city;
+                  if (catData.postalCode)       patch.postalCode = catData.postalCode;
+                  if (catData.province)         patch.province   = catData.province;
+                  if (catData.constructionYear) patch.buildYear  = catData.constructionYear;
+                  if (catData.totalArea)        patch.totalArea  = catData.totalArea;
+                  if (Object.keys(patch).length > 0) {
+                    onDataChange({ ...data, ...patch });
+                  }
+                }}
               />
             </div>
             
