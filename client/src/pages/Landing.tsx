@@ -6,6 +6,9 @@ export default function Landing() {
   const [scrolled, setScrolled] = useState(false);
   const [isAnnual, setIsAnnual] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [calcCerts, setCalcCerts] = useState(10);
+  const [calcPrice, setCalcPrice] = useState(150);
+  const [calcHours, setCalcHours] = useState(4);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -697,41 +700,105 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── MULTIPLICA ×5 ── */}
+      {/* ── CALCULADORA DE PRODUCTIVIDAD ── */}
       <section className="section alt" id="multiplica">
         <div className="container">
           <div className="section-head">
-            <span className="section-eyebrow">Resultados</span>
+            <span className="section-eyebrow">Calcula tu potencial</span>
             <h2 className="section-title">Multiplica <span className="accent">×5</span> tus ventas y tu eficiencia.</h2>
-            <p className="section-sub">Automatiza procesos, mejora tu gestión y ahorra tiempo en cada expediente. Los datos son de nuestra propia plataforma.</p>
+            <p className="section-sub">Mueve los sliders y descubre cuánto puedes ganar con Certifive según tu volumen real de trabajo.</p>
           </div>
-          <div className="mult-mock">
-            <div className="mult-header">
-              <div className="mult-title">Evolución de certificados — últimos 6 meses</div>
-              <div className="mult-badge">↑ ×5 vs. antes de Certifive</div>
-            </div>
-            <div className="chart-bars">
-              {[
-                { label: "Ene", val: "8",  h: 20,  bg: "var(--s100)",  vc: "var(--s400)" },
-                { label: "Feb", val: "12", h: 35,  bg: "var(--s100)",  vc: "var(--s400)" },
-                { label: "Mar", val: "19", h: 52,  bg: "var(--green-lt)", vc: "var(--s500)" },
-                { label: "Abr", val: "28", h: 72,  bg: "var(--green)", vc: "white" },
-                { label: "May", val: "35", h: 92,  bg: "var(--green)", vc: "white" },
-                { label: "Jun", val: "47", h: 118, bg: "var(--green)", vc: "white" },
-              ].map((b) => (
-                <div className="chart-bar-wrap" key={b.label}>
-                  <div className="chart-val" style={{ color: b.vc === "white" ? "var(--ink)" : b.vc }}>{b.val}</div>
-                  <div className="chart-bar" style={{ height: b.h, background: b.bg, border: b.bg === "var(--s100)" ? "1px solid var(--s200)" : "none" }} />
-                  <div className="chart-label">{b.label}</div>
+
+          {(() => {
+            const plan = calcCerts <= 10
+              ? { name: "Básico", price: 19 }
+              : calcCerts <= 25
+              ? { name: "Profesional", price: 49 }
+              : { name: "Empresa", price: 99 };
+            const ingresosActuales   = calcCerts * calcPrice;
+            const ingresosCertifive  = calcCerts * 5 * calcPrice;
+            const beneficioNeto      = ingresosCertifive - ingresosActuales - plan.price;
+            const horasLiberadas     = Math.round(calcCerts * calcHours * 0.8);
+            const roi                = Math.round(beneficioNeto / plan.price);
+            const fmtEur = (n: number) => n.toLocaleString("es-ES") + "€";
+
+            return (
+              <div style={{
+                background: "white", borderRadius: 20, border: "1px solid var(--s200)",
+                boxShadow: "var(--shadow-card)", overflow: "hidden",
+              }}>
+                {/* Sliders */}
+                <div style={{ padding: "40px 40px 32px", borderBottom: "1px solid var(--s100)" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 40 }}>
+                    {[
+                      { label: "Certificados al mes", value: calcCerts,  min: 1,  max: 50,  step: 1,   unit: "",   fmt: (v: number) => `${v} cert.`, setter: setCalcCerts  },
+                      { label: "Precio medio",         value: calcPrice,  min: 50, max: 300, step: 10,  unit: "€",  fmt: (v: number) => `${v}€`,      setter: setCalcPrice  },
+                      { label: "Horas por certificado",value: calcHours,  min: 1,  max: 8,   step: 0.5, unit: "h",  fmt: (v: number) => `${v} h`,     setter: setCalcHours  },
+                    ].map(({ label, value, min, max, step, fmt, setter }) => (
+                      <div key={label}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--s600)" }}>{label}</span>
+                          <span style={{ fontSize: 22, fontWeight: 800, color: "var(--green)", letterSpacing: "-.02em" }}>{fmt(value)}</span>
+                        </div>
+                        <input
+                          type="range"
+                          min={min} max={max} step={step}
+                          value={value}
+                          onChange={(e) => setter(Number(e.target.value))}
+                          style={{ width: "100%", accentColor: "var(--green)", cursor: "pointer", height: 4 }}
+                        />
+                        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
+                          <span style={{ fontSize: 11, color: "var(--s400)" }}>{min}{typeof min === "number" && label.includes("Precio") ? "€" : label.includes("Horas") ? " h" : ""}</span>
+                          <span style={{ fontSize: 11, color: "var(--s400)" }}>{max}{label.includes("Precio") ? "€" : label.includes("Horas") ? " h" : ""}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              ))}
-            </div>
-            <div className="mult-kpis">
-              <div className="mult-kpi"><div className="mult-kpi-n">×5</div><div className="mult-kpi-l">más certificados por mes</div></div>
-              <div className="mult-kpi"><div className="mult-kpi-n">4,2 h</div><div className="mult-kpi-l">ahorradas por expediente</div></div>
-              <div className="mult-kpi"><div className="mult-kpi-n">98,7%</div><div className="mult-kpi-l">aprobados a la primera</div></div>
-            </div>
-          </div>
+
+                {/* Resultados */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)" }}>
+                  {[
+                    {
+                      label: "Ingresos extra al mes",
+                      value: `+${fmtEur(beneficioNeto)}`,
+                      sub: `vs. ${fmtEur(ingresosActuales)} actuales`,
+                      highlight: true,
+                    },
+                    {
+                      label: "Horas liberadas",
+                      value: `${horasLiberadas} h/mes`,
+                      sub: `${calcHours} h → ${(calcHours * 0.2).toFixed(1)} h por cert.`,
+                      highlight: false,
+                    },
+                    {
+                      label: "Plan recomendado",
+                      value: plan.name,
+                      sub: `${plan.price}€/mes`,
+                      highlight: false,
+                    },
+                    {
+                      label: "Retorno de inversión",
+                      value: `×${roi > 0 ? roi : "∞"}`,
+                      sub: "sobre el coste del plan",
+                      highlight: false,
+                    },
+                  ].map(({ label, value, sub, highlight }, i) => (
+                    <div key={label} style={{
+                      padding: "32px 28px",
+                      borderRight: i < 3 ? "1px solid var(--s100)" : "none",
+                      background: highlight ? "var(--green-50)" : "white",
+                      textAlign: "center",
+                    }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: highlight ? "var(--green)" : "var(--s500)", marginBottom: 10 }}>{label}</div>
+                      <div style={{ fontSize: 32, fontWeight: 800, color: highlight ? "var(--green)" : "var(--ink)", letterSpacing: "-.03em", lineHeight: 1.1, marginBottom: 6 }}>{value}</div>
+                      <div style={{ fontSize: 12, color: "var(--s400)", fontWeight: 500 }}>{sub}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
         </div>
       </section>
 
