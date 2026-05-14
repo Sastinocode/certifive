@@ -135,23 +135,30 @@ export default function Dashboard() {
   };
 
   const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "completed":
-        return <Badge className="bg-green-100 text-green-800">Completado</Badge>;
-      case "in_progress":
-        return <Badge className="bg-yellow-100 text-yellow-800">En Proceso</Badge>;
-      case "draft":
-        return <Badge className="bg-gray-100 text-gray-800">Borrador</Badge>;
-      default:
-        return <Badge className="bg-gray-100 text-gray-800">{status}</Badge>;
-    }
+    const styles: Record<string, { bg: string; color: string; label: string }> = {
+      completed:  { bg: "#dcfce7", color: "#166534", label: "Completado" },
+      in_progress:{ bg: "#fef9c3", color: "#854d0e", label: "En Proceso" },
+      draft:      { bg: "#dbeafe", color: "#1e40af", label: "Borrador"   },
+      pending:    { bg: "#fee2e2", color: "#991b1b", label: "Pendiente"  },
+      Nuevo:      { bg: "#dbeafe", color: "#1e40af", label: "Nuevo"      },
+      "En Proceso":{ bg: "#fef9c3", color: "#854d0e", label: "En Proceso"},
+      Finalizado: { bg: "#dcfce7", color: "#166534", label: "Finalizado" },
+    };
+    const s = styles[status];
+    if (s) return <span style={{ display: "inline-flex", alignItems: "center", padding: "2px 8px", borderRadius: 6, fontSize: 12, fontWeight: 500, background: s.bg, color: s.color }}>{s.label}</span>;
+    return <span style={{ display: "inline-flex", alignItems: "center", padding: "2px 8px", borderRadius: 6, fontSize: 12, fontWeight: 500, background: "#F1F5F9", color: "#475569" }}>{status}</span>;
   };
 
   const getEnergyRatingBadge = (rating: string | null) => {
-    if (!rating) return <Badge className="bg-gray-100 text-gray-800">Sin calificar</Badge>;
-    
-    const ratingClass = `energy-rating energy-rating-${rating.toLowerCase()}`;
-    return <Badge className={ratingClass}>{rating}</Badge>;
+    if (!rating) return <span style={{ display: "inline-flex", alignItems: "center", padding: "2px 8px", borderRadius: 6, fontSize: 12, fontWeight: 600, background: "#F1F5F9", color: "#64748B" }}>—</span>;
+    const colors: Record<string, { bg: string; color: string }> = {
+      A: { bg: "#166534", color: "#fff" }, B: { bg: "#15803d", color: "#fff" },
+      C: { bg: "#65a30d", color: "#fff" }, D: { bg: "#ca8a04", color: "#fff" },
+      E: { bg: "#ea580c", color: "#fff" }, F: { bg: "#dc2626", color: "#fff" },
+      G: { bg: "#7f1d1d", color: "#fff" },
+    };
+    const c = colors[rating.toUpperCase()] ?? { bg: "#E2E8F0", color: "#334155" };
+    return <span style={{ display: "inline-flex", alignItems: "center", padding: "2px 8px", borderRadius: 6, fontSize: 12, fontWeight: 700, background: c.bg, color: c.color }}>{rating.toUpperCase()}</span>;
   };
 
   return (
@@ -182,29 +189,27 @@ export default function Dashboard() {
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             {[
-              { label: "Certificados Activos", value: statsLoading ? "..." : String(stats.activeCertificates || 0), icon: IdCard, iconBg: "#0D7C66" },
-              { label: "En Proceso", value: statsLoading ? "..." : String(stats.inProgress || 0), icon: Clock, iconBg: "#0891B2" },
-              { label: "Próximos a Vencer", value: statsLoading ? "..." : String(stats.expiringSoon || 0), icon: AlertTriangle, iconBg: "#D97706" },
-              { label: "Ingresos Mensuales", value: statsLoading ? "..." : `€${(stats.monthlyIncome || 0).toLocaleString()}`, icon: Euro, iconBg: "#0D7C66" },
-            ].map(({ label, value, icon: Icon, iconBg }) => (
-              <div key={label} style={{ background: "#fff", border: "1px solid #E2E8F0", borderRadius: 8, padding: "20px 20px", display: "flex", alignItems: "center", gap: 16 }}>
-                <div style={{ width: 44, height: 44, borderRadius: 8, background: iconBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <Icon size={20} color="#fff" />
+              { label: "Certificados Activos", value: statsLoading ? "..." : String(stats.activeCertificates || 0), icon: IdCard, iconColor: "#1FA94B", accent: true },
+              { label: "En Proceso",           value: statsLoading ? "..." : String(stats.inProgress || 0),          icon: Clock,        iconColor: "#0891B2" },
+              { label: "Próximos a Vencer",    value: statsLoading ? "..." : String(stats.expiringSoon || 0),         icon: AlertTriangle, iconColor: "#D97706" },
+              { label: "Ingresos del Mes",     value: statsLoading ? "..." : `€${(stats.monthlyIncome || 0).toLocaleString()}`, icon: Euro, iconColor: "#1FA94B" },
+            ].map(({ label, value, icon: Icon, iconColor, accent }) => (
+              <div key={label} style={{ background: "#fff", border: "1px solid #E2E8F0", borderLeft: accent ? "3px solid #1FA94B" : "1px solid #E2E8F0", borderRadius: 12, padding: "20px", position: "relative", boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}>
+                <div style={{ position: "absolute", top: 16, right: 16, width: 36, height: 36, borderRadius: 8, background: `${iconColor}18`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Icon size={18} color={iconColor} />
                 </div>
-                <div>
-                  <p style={{ fontSize: 12, fontWeight: 500, color: "#64748B", marginBottom: 2 }}>{label}</p>
-                  <p style={{ fontSize: 24, fontWeight: 700, color: "#0F172A", letterSpacing: "-.02em" }}>{value}</p>
-                </div>
+                <p style={{ fontSize: 12, fontWeight: 500, color: "#6B7280", marginBottom: 8, textTransform: "uppercase", letterSpacing: ".05em" }}>{label}</p>
+                <p style={{ fontSize: 28, fontWeight: 700, color: "#0F1923", letterSpacing: "-.02em", lineHeight: 1 }}>{value}</p>
               </div>
             ))}
           </div>
 
           {/* Quick Actions */}
-          <div style={{ background: "#fff", border: "1px solid #E2E8F0", borderRadius: 8, padding: "24px", marginBottom: 20 }}>
+          <div style={{ background: "#fff", border: "1px solid #E2E8F0", borderRadius: 12, padding: "24px", marginBottom: 20, boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}>
             <h3 style={{ fontSize: 15, fontWeight: 600, color: "#0F172A", marginBottom: 16 }}>Acciones Rápidas</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
               {[
-                { href: "/certificacion", label: "Nueva Certificación", sub: "Crear certificado", iconBg: "#0D7C66", Icon: Plus },
+                { href: "/certificacion", label: "Nueva Certificación", sub: "Crear certificado", iconBg: "#1FA94B", Icon: Plus },
                 { href: "/whatsapp", label: "Gestión WhatsApp", sub: "Clientes y conversaciones", iconBg: "#16A34A", Icon: MessageCircle },
                 { href: "/demo-flujo", label: "Demo Automatizado", sub: "Ver flujo completo", iconBg: "#0891B2", Icon: Zap },
                 { href: "/tarifas", label: "Gestionar Tarifas", sub: "Configurar precios", iconBg: "#D97706", Icon: Settings },
@@ -227,83 +232,76 @@ export default function Dashboard() {
           </div>
 
           {/* Recent Certificates */}
-          <div style={{ background: "#fff", border: "1px solid #E2E8F0", borderRadius: 8, padding: "24px" }}>
+          <div style={{ background: "#fff", border: "1px solid #E2E8F0", borderRadius: 12, padding: "24px", boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}>
             <div className="flex items-center justify-between mb-4">
-              <h3 style={{ fontSize: 15, fontWeight: 600, color: "#0F172A" }}>Certificados Recientes</h3>
+              <h3 style={{ fontSize: 16, fontWeight: 600, color: "#0F1923" }}>Certificados Recientes</h3>
               <Link href="/certificados">
-                <button style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 500, color: "#0D7C66", background: "none", border: "1px solid #E2E8F0", borderRadius: 6, padding: "6px 14px", cursor: "pointer" }}>
+                <button style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 500, color: "#1FA94B", background: "none", border: "1px solid #E2E8F0", borderRadius: 8, padding: "7px 14px", cursor: "pointer", transition: "background .15s" }}
+                  onMouseOver={e => ((e.currentTarget as HTMLElement).style.background = "#F8FAFC")}
+                  onMouseOut={e => ((e.currentTarget as HTMLElement).style.background = "none")}>
                   Ver todos
                   <ExternalLink size={13} />
                 </button>
               </Link>
             </div>
             {certificationsLoading ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                  <p className="text-gray-600">Cargando certificaciones...</p>
+                <div style={{ textAlign: "center", padding: "32px 0" }}>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto mb-4" style={{ borderColor: "#1FA94B" }}></div>
+                  <p style={{ color: "#6B7280", fontSize: 14 }}>Cargando certificaciones...</p>
                 </div>
               ) : recentCertifications.length === 0 ? (
-                <div className="text-center py-8">
-                  <IdCard className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600 mb-4">No hay certificaciones aún</p>
+                <div style={{ textAlign: "center", padding: "32px 0" }}>
+                  <IdCard className="w-12 h-12 mx-auto mb-4" style={{ color: "#CBD5E1" }} />
+                  <p style={{ color: "#6B7280", fontSize: 14, marginBottom: 16 }}>No hay certificaciones aún</p>
                   <Link href="/certificacion">
-                    <Button>
-                      <Plus className="w-4 h-4 mr-2" />
+                    <button style={{ background: "#1FA94B", color: "#fff", border: "none", borderRadius: 8, padding: "10px 20px", fontSize: 14, fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6 }}>
+                      <Plus size={15} />
                       Crear primera certificación
-                    </Button>
+                    </button>
                   </Link>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Propiedad
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Calificación
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Estado
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Fecha
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Acciones
-                        </th>
+                <div style={{ overflowX: "auto" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                    <thead>
+                      <tr style={{ background: "#F8FAFC" }}>
+                        {["Propiedad", "Calificación", "Estado", "Fecha", "Acciones"].map(h => (
+                          <th key={h} style={{ padding: "10px 16px", textAlign: "left", fontSize: 11, fontWeight: 500, color: "#6B7280", textTransform: "uppercase", letterSpacing: ".05em", borderBottom: "1px solid #E2E8F0", whiteSpace: "nowrap" }}>{h}</th>
+                        ))}
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody>
                       {recentCertifications.map((cert: RecentCertification) => (
-                        <tr key={cert.id}>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">{cert.fullName}</div>
-                            <div className="text-sm text-gray-500">Ref: {cert.cadastralRef}</div>
+                        <tr key={cert.id}
+                          style={{ background: "#fff", borderBottom: "1px solid #e5e7eb", transition: "background .1s" }}
+                          onMouseOver={e => ((e.currentTarget as HTMLElement).style.background = "#F8FAFC")}
+                          onMouseOut={e => ((e.currentTarget as HTMLElement).style.background = "#fff")}>
+                          <td style={{ padding: "14px 16px", whiteSpace: "nowrap" }}>
+                            <div style={{ fontSize: 14, fontWeight: 500, color: "#0F172A" }}>{cert.fullName}</div>
+                            <div style={{ fontSize: 12, color: "#6B7280", marginTop: 1 }}>Ref: {cert.cadastralRef}</div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td style={{ padding: "14px 16px", whiteSpace: "nowrap" }}>
                             {getEnergyRatingBadge(cert.energyRating)}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td style={{ padding: "14px 16px", whiteSpace: "nowrap" }}>
                             {getStatusBadge(cert.status)}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <td style={{ padding: "14px 16px", whiteSpace: "nowrap", fontSize: 14, color: "#6B7280" }}>
                             {new Date(cert.createdAt).toLocaleDateString('es-ES')}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                            <Button variant="ghost" size="sm">
-                              <Eye className="w-4 h-4 mr-1" />
-                              Ver
-                            </Button>
-                            {cert.status !== 'completed' && (
-                              <Link href={`/certificacion/${cert.id}`}>
-                                <Button variant="ghost" size="sm">
-                                  <Edit className="w-4 h-4 mr-1" />
-                                  Continuar
-                                </Button>
-                              </Link>
-                            )}
+                          <td style={{ padding: "14px 16px", whiteSpace: "nowrap" }}>
+                            <div style={{ display: "flex", gap: 8 }}>
+                              <button style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 13, fontWeight: 500, color: "#475569", background: "none", border: "1px solid #E2E8F0", borderRadius: 6, padding: "5px 10px", cursor: "pointer" }}>
+                                <Eye size={13} /> Ver
+                              </button>
+                              {cert.status !== 'completed' && (
+                                <Link href={`/certificacion/${cert.id}`}>
+                                  <button style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 13, fontWeight: 500, color: "#1FA94B", background: "none", border: "1px solid #E2E8F0", borderRadius: 6, padding: "5px 10px", cursor: "pointer" }}>
+                                    <Edit size={13} /> Continuar
+                                  </button>
+                                </Link>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       ))}

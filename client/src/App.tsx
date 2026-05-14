@@ -1,6 +1,6 @@
-import { Switch, Route, useParams } from "wouter";
+import { Switch, Route, useParams, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
@@ -35,6 +35,9 @@ import FormularioTecnicoPublico from "@/pages/FormularioTecnicoPublico";
 import TecnicoFormReview from "@/pages/TecnicoFormReview";
 import VisitForm from "@/pages/VisitForm";
 import NotFound from "@/pages/not-found";
+import PaymentSuccess from "@/pages/PaymentSuccess";
+import PaymentCancel from "@/pages/PaymentCancel";
+import RenovarSuscripcion from "@/pages/RenovarSuscripcion";
 
 function PresupuestoWrapper() {
   const { token } = useParams<{ token: string }>();
@@ -61,8 +64,23 @@ function PaymentWrapper() {
   return <PublicPayment token={token || ""} />;
 }
 
+// Pages that are always accessible regardless of subscription status
+const SUBSCRIPTION_FREE_PATHS = [
+  "/renovar-suscripcion", "/login", "/register", "/success", "/cancel",
+  "/solicitar-demo",
+];
+
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
+  const [location] = useLocation();
+
+  // Fetch subscription status when logged in (soft fail — never blocks render)
+  const { data: subData } = useQuery<{ status?: string }>({
+    queryKey: ["/api/subscription"],
+    enabled: isAuthenticated,
+    retry: false,
+    staleTime: 60_000,
+  });
 
   if (isLoading) {
     return (
@@ -73,6 +91,18 @@ function Router() {
         </div>
       </div>
     );
+  }
+
+  // Redirect authenticated users with a blocked subscription to the renewal page
+  const subStatus = subData?.status;
+  const isBlocked =
+    isAuthenticated &&
+    subStatus != null &&
+    ["canceled", "past_due"].includes(subStatus) &&
+    !SUBSCRIPTION_FREE_PATHS.some(p => location.startsWith(p));
+
+  if (isBlocked) {
+    return <RenovarSuscripcion />;
   }
 
   return (
@@ -114,6 +144,11 @@ function Router() {
         <Route path="/settings" component={isAuthenticated ? Settings : Login} />
         <Route path="/revision-tecnica/:id" component={isAuthenticated ? TecnicoFormReview : Login} />
         <Route path="/visita/:id" component={isAuthenticated ? VisitForm : Login} />
+
+        {/* Stripe payment result pages */}
+        <Route path="/success" component={PaymentSuccess} />
+        <Route path="/cancel" component={PaymentCancel} />
+        <Route path="/renovar-suscripcion" component={RenovarSuscripcion} />
 
         <Route component={NotFound} />
       </Switch>
