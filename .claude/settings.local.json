@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(npm run *)",
+      "Bash(python3 -c ' *)",
+      "Bash(node *)",
+      "Bash(git checkout *)",
+      "Bash(printenv DATABASE_URL)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(npm install *)",
+      "Bash(npx tsc *)",
+      "Bash(npx drizzle-kit *)",
+      "Bash(git reset *)",
+      "Bash(DATABASE_URL=\"postgresql://postgres:XqgLVHUsuKzAHhtinivyXjUlDSzKSikB@yamabiko.proxy.rlwy.net:36942/railway\" npm run *)",
+      "PowerShell(cd \"D:\\\\Users\\\\Helpia\\\\Documents\\\\Claude\\\\Projects\\\\CERTIFIVE\\\\certifive\"; $env:DATABASE_URL=\"postgresql://postgres:XqgLVHUsuKzAHhtinivyXjUlDSzKSikB@yamabiko.proxy.rlwy.net:36942/railway\"; npx drizzle-kit push 2>&1)",
+      "PowerShell(cd \"D:\\\\Users\\\\Helpia\\\\Documents\\\\Claude\\\\Projects\\\\CERTIFIVE\\\\certifive\"; $env:DATABASE_URL=\"postgresql://postgres:XqgLVHUsuKzAHhtinivyXjUlDSzKSikB@yamabiko.proxy.rlwy.net:36942/railway\"; node create_tables.js)",
+      "PowerShell(cd \"D:\\\\Users\\\\Helpia\\\\Documents\\\\Claude\\\\Projects\\\\CERTIFIVE\\\\certifive\"; $env:DATABASE_URL=\"postgresql://postgres:XqgLVHUsuKzAHhtinivyXjUlDSzKSikB@yamabiko.proxy.rlwy.net:36942/railway\"; node create_tables.cjs)"
+    ]
+  }
+}

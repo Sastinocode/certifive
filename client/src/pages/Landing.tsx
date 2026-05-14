@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
+import { useAuth } from "@/contexts/AuthContext";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function Landing() {
   const [, navigate] = useLocation();
+  const { isAuthenticated } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [isAnnual, setIsAnnual] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -22,6 +25,17 @@ export default function Landing() {
     if (el) {
       const top = el.getBoundingClientRect().top + window.scrollY - 72;
       window.scrollTo({ top, behavior: "smooth" });
+    }
+  };
+
+  // Plan checkout: redirect to Stripe if authenticated, otherwise to /register
+  const startPlan = async (plan: string) => {
+    if (!isAuthenticated) { navigate("/register"); return; }
+    try {
+      const data = await apiRequest("POST", "/api/stripe/create-checkout-session", { plan });
+      if (data.url) window.location.href = data.url;
+    } catch {
+      navigate("/register");
     }
   };
 
@@ -1297,7 +1311,7 @@ export default function Landing() {
                   <li key={f}><CheckIcon /> {f}</li>
                 ))}
               </ul>
-              <button className="btn btn-ghost plan-cta" onClick={() => navigate("/register")}>Empezar gratis</button>
+              <button className="btn btn-ghost plan-cta" onClick={() => startPlan("basico")}>Empezar gratis</button>
             </div>
 
             {/* Profesional */}
@@ -1315,7 +1329,7 @@ export default function Landing() {
                   <li key={f}><CheckIcon /> {f}</li>
                 ))}
               </ul>
-              <button className="btn btn-primary plan-cta" onClick={() => navigate("/register")}>Prueba 7 días gratis</button>
+              <button className="btn btn-primary plan-cta" onClick={() => startPlan("profesional")}>Prueba 7 días gratis</button>
             </div>
 
             {/* Empresa */}
@@ -1332,7 +1346,7 @@ export default function Landing() {
                   <li key={f}><CheckIcon /> {f}</li>
                 ))}
               </ul>
-              <button className="btn btn-ghost plan-cta" onClick={() => navigate("/register")}>Hablar con ventas</button>
+              <button className="btn btn-ghost plan-cta" onClick={() => startPlan("empresa")}>Hablar con ventas</button>
             </div>
           </div>
 
@@ -1344,7 +1358,7 @@ export default function Landing() {
               <div className="ppu-sub">Sin cuota mensual. Paga solo lo que usas. Perfecto si certificas de forma puntual o quieres probar la plataforma sin compromiso.</div>
             </div>
             <div className="ppu-price">3€ <span>/certificado</span></div>
-            <button className="btn btn-ghost" onClick={() => navigate("/register")}>Empezar sin suscripción</button>
+            <button className="btn btn-ghost" onClick={() => startPlan("pay_per_use")}>Empezar sin suscripción</button>
           </div>
         </div>
       </section>
