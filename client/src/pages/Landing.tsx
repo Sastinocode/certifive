@@ -31,11 +31,11 @@ export default function Landing() {
   const Ann = (k: keyof typeof prices) => isAnnual ? prices[k].annual : "";
 
   const steps = [
-    { n: "01", t: "Alta del expediente", d: "Crea el proyecto en segundos. La plataforma genera formularios y documentación para el propietario automáticamente." },
-    { n: "02", t: "Cálculo y simulación", d: "Importa tu cálculo de CE3X o HULC. Certifive extrae los datos, valida y detecta incidencias antes de presentar." },
-    { n: "03", t: "Generación del certificado", d: "Certificado CEE con todos los campos exigidos por la normativa vigente, listo para firma digital cualificada." },
-    { n: "04", t: "Registro autonómico", d: "Presentación automática ante el registro de tu comunidad. Confirmación y número de inscripción en tu panel." },
-    { n: "05", t: "Entrega y facturación", d: "Envía el certificado al cliente por WhatsApp o email. Genera la factura legal y cobra desde la misma plataforma." },
+    { n: "01", t: "Envía el enlace al cliente", d: "Con un clic mandas por WhatsApp un formulario personalizado. El cliente rellena sus datos desde el móvil. Sin llamadas, sin papeleos, sin ir al inmueble antes de tiempo." },
+    { n: "02", t: "El cliente rellena en 2 minutos", d: "Datos del inmueble, fotos, acceso. Todo desde su móvil. Tú no tocas nada hasta que esté completo. Cero correos de ida y vuelta." },
+    { n: "03", t: "Certifive cruza con el Catastro", d: "La API del Catastro rellena automáticamente superficie, año de construcción y referencia catastral. Sin errores manuales. Sin buscar PDFs." },
+    { n: "04", t: "Tú decides cómo cobras", d: "Fija tu tarifa, añade extras, aplica descuentos. La factura se genera sola y el cobro queda registrado en tu panel." },
+    { n: "05", t: "Envía el certificado y factura ×5", d: "El certificado llega al cliente por WhatsApp o email con un clic. Expediente cerrado. Tú ya estás con el siguiente." },
   ];
 
   const faqs = [
