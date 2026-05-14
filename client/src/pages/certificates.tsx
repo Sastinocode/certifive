@@ -693,6 +693,20 @@ export default function Certificates() {
                             </td>
                             <td className="py-4 px-4">
                               <div className="flex items-center justify-end gap-2">
+                                {/* Revisar datos técnicos — aparece cuando el formulario técnico está completado */}
+                                {typedCert.tecnicoFormStatus === "completado" && (
+                                  <Link to={`/revision-tecnica/${typedCert.id}`}>
+                                    <Button
+                                      size="sm"
+                                      className="bg-emerald-700 hover:bg-emerald-600 text-white gap-1.5"
+                                      data-testid={`btn-revision-tecnica-${typedCert.id}`}
+                                    >
+                                      <ClipboardList className="w-3.5 h-3.5" />
+                                      Revisar datos
+                                    </Button>
+                                  </Link>
+                                )}
+
                                 {/* Enviar a cliente — primary CTA */}
                                 <Button
                                   size="sm"
