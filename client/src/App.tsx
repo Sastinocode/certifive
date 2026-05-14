@@ -22,7 +22,7 @@ import Automations from "@/pages/automations";
 import Settings from "@/pages/settings";
 import StripeIntegration from "@/pages/stripe-integration";
 import Landing from "@/pages/Landing";
-import Login from "@/pages/login";
+import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import DemoRequest from "@/pages/demo-request";
 import PublicQuote from "@/pages/public-quote";
