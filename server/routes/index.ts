@@ -13,6 +13,7 @@ import { registerSubscriptionRoutes } from "./subscription";
 import { registerMiscRoutes } from "./misc";
 import { registerFormularioTecnicoRoutes } from "./formulario-tecnico";
 import { registerVisitFormRoutes } from "./visit-form";
+import { registerExportCE3XRoutes } from "./export-ce3x";
 
 export function registerRoutes(app: Express) {
   app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
@@ -31,4 +32,5 @@ export function registerRoutes(app: Express) {
   registerMiscRoutes(app);
   registerFormularioTecnicoRoutes(app);
   registerVisitFormRoutes(app);
+  registerExportCE3XRoutes(app);
 }

@@ -4,6 +4,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { exportCE3XPdf, exportCE3XExcel } from "@/lib/exportCE3X";
 import Sidebar from "@/components/layout/sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,7 @@ import { Separator } from "@/components/ui/separator";
 import {
   ArrowLeft, CheckCircle2, AlertTriangle, XCircle,
   Home, Layers, AppWindow, Thermometer, Camera,
-  MessageSquare, ClipboardCheck, Clock, Eye, X
+  MessageSquare, ClipboardCheck, Clock, Eye, X, FileText, BarChart2,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -237,6 +238,8 @@ export default function TecnicoFormReview() {
 
   const [reviewNotes, setReviewNotes] = useState("");
   const [selectedDecision, setSelectedDecision] = useState<string | null>(null);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   // ── Fetch cert basic info ────────────────────────────────────────────────
   const { data: cert } = useQuery<any>({
@@ -268,6 +271,21 @@ export default function TecnicoFormReview() {
   function handleSubmitReview() {
     if (!selectedDecision) return;
     reviewMutation.mutate({ reviewStatus: selectedDecision, reviewNotes });
+  }
+
+  async function handleExport(format: "pdf" | "excel") {
+    setExporting(true);
+    setExportOpen(false);
+    try {
+      const exportData = await fetch(`/api/certifications/${certId}/export-data`, { credentials: "include" })
+        .then(r => { if (!r.ok) throw new Error(); return r.json(); });
+      if (format === "pdf") exportCE3XPdf(exportData);
+      else exportCE3XExcel(exportData);
+    } catch {
+      toast({ title: "Error al generar el archivo", variant: "destructive" });
+    } finally {
+      setExporting(false);
+    }
   }
 
   // ── Loading / Error states ───────────────────────────────────────────────
@@ -358,6 +376,38 @@ export default function TecnicoFormReview() {
                     day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"
                   })}
                 </span>
+              )}
+              {data.tecnicoFormReviewStatus === "validado" && (
+                <div className="relative">
+                  <Button
+                    size="sm"
+                    onClick={() => setExportOpen(p => !p)}
+                    disabled={exporting}
+                    className="bg-orange-600 hover:bg-orange-500 text-white gap-1.5"
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    {exporting ? "Generando..." : "Exportar CE3X"}
+                  </Button>
+                  {exportOpen && (
+                    <div className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden w-44 z-50">
+                      <button
+                        onClick={() => handleExport("pdf")}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                      >
+                        <FileText className="w-4 h-4 text-orange-600" />
+                        Exportar PDF
+                      </button>
+                      <div className="border-t border-slate-100" />
+                      <button
+                        onClick={() => handleExport("excel")}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                      >
+                        <BarChart2 className="w-4 h-4 text-green-600" />
+                        Exportar Excel
+                      </button>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </div>
