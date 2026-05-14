@@ -617,7 +617,7 @@ export default function Landing() {
 
             {/* Tab navigation */}
             <div className="hero-tabs">
-              {["Expedientes","Clientes","Certificados","Informes","Cuestionarios","WhatsApp"].map(tab => (
+              {["Expedientes","Clientes","Informes","Cuestionarios","WhatsApp"].map(tab => (
                 <div
                   key={tab}
                   className={`hero-tab${heroTab === tab ? " active" : ""}`}
@@ -694,26 +694,6 @@ export default function Landing() {
             )}
 
             {/* ── Tab: Certificados ── */}
-            {heroTab === "Certificados" && (
-              <>
-                {[
-                  { ref: "4528301LM2847", addr: "C/ Almería 14, Madrid",  cal: "A", calCls: "cal-a", est: "Registrado", stCls: "st-done"    },
-                  { ref: "7812934CS9034", addr: "Av. Diagonal 88, BCN",   cal: "C", calCls: "cal-c", est: "En proceso", stCls: "st-pending" },
-                  { ref: "3309182KL5619", addr: "C/ Gran Vía 12, Madrid", cal: "B", calCls: "cal-b", est: "Registrado", stCls: "st-done"    },
-                  { ref: "9021765AB1258", addr: "C/ Colón 5, Valencia",   cal: "A", calCls: "cal-a", est: "Registrado", stCls: "st-done"    },
-                ].map(c => (
-                  <div className="dash-row" key={c.ref}>
-                    <span className={`cal-tag ${c.calCls}`}>{c.cal}</span>
-                    <div className="dash-row-main">
-                      <div className="dash-row-name">{c.addr}</div>
-                      <div className="dash-row-sub" style={{ fontFamily: "monospace" }}>{c.ref}</div>
-                    </div>
-                    <span className={`cert-status ${c.stCls}`}>{c.est}</span>
-                  </div>
-                ))}
-              </>
-            )}
-
             {/* ── Tab: Informes ── */}
             {heroTab === "Informes" && (
               <>
