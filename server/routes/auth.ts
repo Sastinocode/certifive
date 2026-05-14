@@ -94,7 +94,6 @@ app.post("/api/auth/register", async (req: Request, res: Response) => {
 
     const hashed = await hashPassword(password);
     const verificationToken = nanoid(32);
-    const trialEndsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
     const [user] = await db.insert(users).values({
       username,
@@ -109,7 +108,7 @@ app.post("/api/auth/register", async (req: Request, res: Response) => {
       role: "user",
       emailVerificationToken: verificationToken,
       subscriptionStatus: "trialing",
-      trialEndsAt,
+      subscriptionCurrentPeriodEnd: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     }).returning();
 
     const authUser = { id: user.id, username: user.username, email: user.email, role: user.role, name: user.name, firstName: user.firstName, lastName: user.lastName };
@@ -122,8 +121,9 @@ app.post("/api/auth/register", async (req: Request, res: Response) => {
       sendEmailVerification({ to: user.email, name: user.name ?? user.username, verificationToken });
     }
 
-    res.json({ token, refreshToken, user: { id: user.id, username: user.username, email: user.email, role: user.role, name: user.name, subscriptionStatus: user.subscriptionStatus, trialEndsAt: user.trialEndsAt } });
-  } catch {
+    res.json({ token, refreshToken, user: { id: user.id, username: user.username, email: user.email, role: user.role, name: user.name, subscriptionStatus: user.subscriptionStatus, trialEndsAt: user.subscriptionCurrentPeriodEnd } });
+  } catch (error) {
+    console.error("[register]", error);
     res.status(500).json({ message: "Error en el registro" });
   }
 });
