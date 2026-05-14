@@ -23,7 +23,6 @@ import Settings from "@/pages/settings";
 import StripeIntegration from "@/pages/stripe-integration";
 import Landing from "@/pages/landing";
 import Login from "@/pages/login";
-import Register from "@/pages/register";
 import DemoRequest from "@/pages/demo-request";
 import PublicQuote from "@/pages/public-quote";
 import PublicPresupuesto from "@/pages/PublicPresupuesto";
@@ -87,7 +86,6 @@ function Router() {
         <Route path="/certificacion-cliente/:uniqueLink" component={CertificationForm} />
         <Route path="/generador-tarifas" component={PublicTariffGenerator} />
         <Route path="/login" component={Login} />
-        <Route path="/registro" component={Register} />
         <Route path="/solicitar-demo" component={DemoRequest} />
 
         {/* Home: dashboard if authenticated, landing if not */}

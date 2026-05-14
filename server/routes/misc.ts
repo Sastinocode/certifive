@@ -224,4 +224,3 @@ app.post("/api/beta-leads", async (req, res) => {
   }
 });
 }
-}
