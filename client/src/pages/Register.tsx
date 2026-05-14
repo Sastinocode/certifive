@@ -66,7 +66,7 @@ export default function Register() {
   );
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f3faf5", display: "flex", flexDirection: "column", fontFamily: "'Inter',system-ui,sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: "#F8FAFC", display: "flex", flexDirection: "column", fontFamily: "'Inter',system-ui,sans-serif" }}>
       {/* Nav */}
       <div style={{ padding: "20px 32px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ cursor: "pointer" }} onClick={() => navigate("/")}>
@@ -184,6 +184,8 @@ export default function Register() {
                 display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
                 transition: "background .2s",
               }}
+              onMouseOver={e => { if (!isLoading) e.currentTarget.style.background = "#178A3C"; }}
+              onMouseOut={e => { if (!isLoading) e.currentTarget.style.background = "#1FA94B"; }}
             >
               {isLoading ? (
                 <>
