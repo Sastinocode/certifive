@@ -45,7 +45,7 @@ export default function Landing() {
     { q: "¿Sustituye Certifive a CE3X o HULC?", a: "No. CE3X y HULC siguen siendo tuyas para el cálculo energético. Certifive se integra con ellas e importa los resultados, automatizando todo lo demás: expediente, certificado, registro, facturación y comunicación con el cliente." },
     { q: "¿Funciona con todas las comunidades autónomas?", a: "Sí. Certifive presenta automáticamente ante los registros autonómicos de Madrid, Cataluña, Andalucía, País Vasco, Comunidad Valenciana, Galicia y el resto del territorio español." },
     { q: "¿Cuánto tiempo tardo en empezar?", a: "Menos de 15 minutos. Te damos acceso, importas tus clientes desde Excel o tu CRM, y puedes presentar tu primer expediente el mismo día. Soporte gratuito durante todo el onboarding." },
-    { q: "¿Hay permanencia o coste de implantación?", a: "Cero. 14 días de prueba gratuita sin tarjeta, planes mensuales sin permanencia, y cancelación con un solo clic. Si necesitas formación para tu equipo está incluida en cualquier plan." },
+    { q: "¿Hay permanencia o coste de implantación?", a: "Cero. 7 días de prueba gratuita sin tarjeta, planes mensuales sin permanencia, y cancelación con un solo clic. Si necesitas formación para tu equipo está incluida en cualquier plan." },
     { q: "¿Puedo usar Certifive si solo hago certificados puntualmente?", a: "Sí. El plan Pay-per-use a 3€/certificado es perfecto para técnicos que certifican de forma esporádica. Sin cuota mensual, sin compromisos, pagas solo lo que usas." },
   ];
 
@@ -599,7 +599,7 @@ export default function Landing() {
               </button>
             </div>
             <div className="trust-checks">
-              <span><TrustIcon /> 14 días gratis</span>
+              <span><TrustIcon /> 7 días gratis</span>
               <span><TrustIcon /> Sin permanencia</span>
               <span><TrustIcon /> Soporte en español</span>
             </div>
@@ -1315,7 +1315,7 @@ export default function Landing() {
                   <li key={f}><CheckIcon /> {f}</li>
                 ))}
               </ul>
-              <button className="btn btn-primary plan-cta" onClick={() => navigate("/register")}>Prueba 14 días gratis</button>
+              <button className="btn btn-primary plan-cta" onClick={() => navigate("/register")}>Prueba 7 días gratis</button>
             </div>
 
             {/* Empresa */}
