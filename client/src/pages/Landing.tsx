@@ -1138,6 +1138,7 @@ export default function Landing() {
             const H_SIN    = 4;
             const H_CON    = 0.75;
             const MULT     = 1.8;
+            const PLAN_PRICE = 49; // Profesional — referencia fija
 
             const certsSin = calcCerts;
             const certsCon = Math.round(calcCerts * MULT);
@@ -1145,15 +1146,8 @@ export default function Landing() {
             const horasCon = Math.round(certsCon * H_CON);
             const ingSin   = certsSin * PRECIO;
             const ingCon   = certsCon * PRECIO;
-
-            const plan = calcCerts <= 10
-              ? { name: "Básico",      price: 19 }
-              : calcCerts <= 20
-              ? { name: "Profesional", price: 49 }
-              : { name: "Empresa",     price: 99 };
-
             const horasRec = horasSin - horasCon;
-            const ganancia = ingCon - ingSin - plan.price;
+            const ganancia = ingCon - ingSin - PLAN_PRICE;
             const fmtEur   = (n: number) => n.toLocaleString("es-ES") + "€";
 
             const rows = [
@@ -1165,59 +1159,55 @@ export default function Landing() {
 
             return (
               <div style={{
-                background: "white", borderRadius: 20, border: "1px solid var(--s200)",
+                background: "white", borderRadius: 16, border: "1px solid var(--s200)",
                 boxShadow: "var(--shadow-card)", overflow: "hidden",
+                maxWidth: 680, margin: "0 auto",
               }}>
                 {/* Single slider */}
-                <div style={{ padding: "36px 40px 28px", borderBottom: "1px solid var(--s100)" }}>
-                  <div style={{ maxWidth: 500, margin: "0 auto" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
-                      <span style={{ fontSize: 15, fontWeight: 600, color: "var(--s600)" }}>Certificados al mes</span>
-                      <span style={{ fontSize: 28, fontWeight: 800, color: "var(--green)", letterSpacing: "-.02em" }}>{calcCerts} cert.</span>
-                    </div>
-                    <input
-                      type="range"
-                      min={1} max={30} step={1}
-                      value={calcCerts}
-                      onChange={(e) => setCalcCerts(Number(e.target.value))}
-                      style={{ width: "100%", accentColor: "var(--green)", cursor: "pointer", height: 4 }}
-                    />
-                    <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
-                      <span style={{ fontSize: 11, color: "var(--s400)" }}>1</span>
-                      <span style={{ fontSize: 11, color: "var(--s400)" }}>30</span>
-                    </div>
+                <div style={{ padding: "20px 28px 16px", borderBottom: "1px solid var(--s100)" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 8 }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: "var(--s600)" }}>Certificados al mes</span>
+                    <span style={{ fontSize: 22, fontWeight: 800, color: "var(--green)", letterSpacing: "-.02em" }}>{calcCerts} cert.</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={1} max={30} step={1}
+                    value={calcCerts}
+                    onChange={(e) => setCalcCerts(Number(e.target.value))}
+                    style={{ width: "100%", accentColor: "var(--green)", cursor: "pointer", height: 4 }}
+                  />
+                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: 3 }}>
+                    <span style={{ fontSize: 10, color: "var(--s400)" }}>1</span>
+                    <span style={{ fontSize: 10, color: "var(--s400)" }}>30</span>
                   </div>
                 </div>
 
                 {/* Two-column comparison */}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
                   {/* Sin Certifive */}
-                  <div style={{
-                    background: "var(--s50)", padding: "28px 32px",
-                    borderRight: "1px solid var(--s200)",
-                  }}>
+                  <div style={{ background: "var(--s50)", padding: "16px 20px", borderRight: "1px solid var(--s200)" }}>
                     <div style={{
-                      fontSize: 12, fontWeight: 700, color: "var(--s400)",
-                      textTransform: "uppercase", letterSpacing: ".07em", marginBottom: 22,
+                      fontSize: 10, fontWeight: 700, color: "var(--s400)",
+                      textTransform: "uppercase", letterSpacing: ".07em", marginBottom: 12,
                     }}>Sin Certifive</div>
                     {rows.map(r => (
-                      <div key={r.label} style={{ marginBottom: 18 }}>
-                        <div style={{ fontSize: 11, color: "var(--s400)", fontWeight: 500, marginBottom: 3 }}>{r.label}</div>
-                        <div style={{ fontSize: 22, fontWeight: 700, color: "var(--ink)", letterSpacing: "-.02em" }}>{r.sin}</div>
+                      <div key={r.label} style={{ marginBottom: 10 }}>
+                        <div style={{ fontSize: 10, color: "var(--s400)", fontWeight: 500, marginBottom: 1 }}>{r.label}</div>
+                        <div style={{ fontSize: 17, fontWeight: 700, color: "var(--ink)", letterSpacing: "-.02em" }}>{r.sin}</div>
                       </div>
                     ))}
                   </div>
 
                   {/* Con Certifive */}
-                  <div style={{ background: "#e8f6ec", padding: "28px 32px" }}>
+                  <div style={{ background: "#e8f6ec", padding: "16px 20px" }}>
                     <div style={{
-                      fontSize: 12, fontWeight: 700, color: "var(--green)",
-                      textTransform: "uppercase", letterSpacing: ".07em", marginBottom: 22,
+                      fontSize: 10, fontWeight: 700, color: "var(--green)",
+                      textTransform: "uppercase", letterSpacing: ".07em", marginBottom: 12,
                     }}>Con Certifive ✓</div>
                     {rows.map(r => (
-                      <div key={r.label} style={{ marginBottom: 18 }}>
-                        <div style={{ fontSize: 11, color: "var(--green)", fontWeight: 500, marginBottom: 3, opacity: .75 }}>{r.label}</div>
-                        <div style={{ fontSize: 22, fontWeight: 800, color: "var(--green)", letterSpacing: "-.02em" }}>{r.con}</div>
+                      <div key={r.label} style={{ marginBottom: 10 }}>
+                        <div style={{ fontSize: 10, color: "var(--green)", fontWeight: 500, marginBottom: 1, opacity: .75 }}>{r.label}</div>
+                        <div style={{ fontSize: 17, fontWeight: 800, color: "var(--green)", letterSpacing: "-.02em" }}>{r.con}</div>
                       </div>
                     ))}
                   </div>
@@ -1225,17 +1215,17 @@ export default function Landing() {
 
                 {/* Dynamic phrase */}
                 <div style={{
-                  padding: "24px 40px",
+                  padding: "14px 24px",
                   background: "linear-gradient(135deg,var(--green) 0%,var(--green-dk) 100%)",
                   textAlign: "center",
                 }}>
-                  <p style={{ fontSize: 18, fontWeight: 700, color: "white", lineHeight: 1.6, margin: 0 }}>
+                  <p style={{ fontSize: 14, fontWeight: 600, color: "white", lineHeight: 1.5, margin: 0 }}>
                     Recuperas{" "}
-                    <strong style={{ fontSize: 26, fontWeight: 800 }}>{horasRec}h</strong>{" "}
+                    <strong style={{ fontSize: 20, fontWeight: 800 }}>{horasRec}h</strong>{" "}
                     al mes. Ganas{" "}
-                    <strong style={{ fontSize: 26, fontWeight: 800 }}>+{fmtEur(ganancia)}</strong>{" "}
+                    <strong style={{ fontSize: 20, fontWeight: 800 }}>+{fmtEur(ganancia)}</strong>{" "}
                     más. Por solo{" "}
-                    <strong style={{ fontSize: 26, fontWeight: 800 }}>{plan.price}€/mes.</strong>
+                    <strong style={{ fontSize: 20, fontWeight: 800 }}>{PLAN_PRICE}€/mes.</strong>
                   </p>
                 </div>
               </div>
