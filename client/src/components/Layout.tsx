@@ -4,13 +4,13 @@ import { useIsMobile } from "../hooks/useIsMobile";
 import BottomNav from "./BottomNav";
 import NotificationBell from "./NotificationBell";
 import OnboardingFlow from "./OnboardingFlow";
-import Dashboard from "../pages/Dashboard";
+import Dashboard from "../pages/dashboard";
 import Certifications from "../pages/Certifications";
-import Properties from "../pages/Properties";
+import Properties from "../pages/properties";
 import WhatsApp from "../pages/WhatsApp";
 import Invoices from "../pages/Invoices";
-import Marketing from "../pages/Marketing";
-import Settings from "../pages/Settings";
+import Marketing from "../pages/marketing";
+import Settings from "../pages/settings";
 
 type Page = "dashboard" | "certifications" | "properties" | "whatsapp" | "invoices" | "marketing" | "settings";
 
