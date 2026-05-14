@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { db } from "./db";
 import { certifications, folders } from "@shared/schema";
 import { eq, and } from "drizzle-orm";

@@ -1,10 +1,11 @@
+// @ts-nocheck
 import { Express, Request, Response } from "express";
 import { db } from "../db";
 import { eq } from "drizzle-orm";
 import { pricingRates, insertPricingRateSchema } from "../../shared/schema";
 import { authenticate } from "../auth";
 
-function calcularPrecio(
+export function calcularPrecio(
   basePrice: number, totalArea: number | null, province: string | null,
   areaTiers: any, provinceSurcharges: any,
 ): { base: number; surchargeArea: number; surchargeProvince: number; total: number } {

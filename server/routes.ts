@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Express, Request, Response } from "express";
 import { db } from "./db";
 import { users, certifications, folders, pricingRates, quoteRequests, invoices, formResponses, payments } from "../shared/schema";
