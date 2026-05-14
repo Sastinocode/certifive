@@ -223,9 +223,9 @@ export default function Register() {
 
           <p style={{ fontSize: 12, color: "#94A3B8", textAlign: "center", marginTop: 20, lineHeight: 1.6 }}>
             Al crear una cuenta aceptas nuestros{" "}
-            <a href="#" style={{ color: "#1FA94B", textDecoration: "none" }}>Términos de Servicio</a>{" "}
+            <a href="/terms" style={{ color: "#1FA94B", textDecoration: "none" }}>Términos de Servicio</a>{" "}
             y{" "}
-            <a href="#" style={{ color: "#1FA94B", textDecoration: "none" }}>Política de Privacidad</a>.
+            <a href="/privacy" style={{ color: "#1FA94B", textDecoration: "none" }}>Política de Privacidad</a>.
           </p>
         </div>
       </div>
