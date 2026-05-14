@@ -1,0 +1,1438 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CERTIFIVE — Automatiza tu certificación energética</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <script type="text/babel" src="tweaks-panel.jsx"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --teal: #0D7C66;
+      --teal-dark: #0a6454;
+      --teal-light: #e6f4f1;
+      --slate-900: #0F172A;
+      --slate-700: #334155;
+      --slate-500: #64748B;
+      --slate-400: #94A3B8;
+      --slate-300: #CBD5E1;
+      --slate-200: #E2E8F0;
+      --slate-100: #F1F5F9;
+      --slate-50: #F8FAFC;
+      --white: #FFFFFF;
+      --max-w: 1200px;
+      --radius: 6px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--white);
+      color: var(--slate-900);
+      font-size: 16px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* ── NAVBAR ── */
+    .navbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--slate-200);
+      transition: box-shadow 0.2s;
+    }
+    .navbar.scrolled {
+      box-shadow: 0 1px 12px rgba(15,23,42,0.06);
+    }
+    .navbar-inner {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 0 32px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--slate-900);
+    }
+    .nav-logo-mark {
+      width: 28px;
+      height: 28px;
+      background: var(--teal);
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .nav-logo-mark svg { display: block; }
+    .nav-logo-text {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--slate-900);
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      list-style: none;
+    }
+    .nav-links a {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--slate-500);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .nav-links a:hover { color: var(--slate-900); }
+    .nav-cta-group {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .btn-nav-login {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--slate-700);
+      text-decoration: none;
+      padding: 6px 0;
+      transition: color 0.15s;
+    }
+    .btn-nav-login:hover { color: var(--slate-900); }
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 20px;
+      background: var(--teal);
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.15s, transform 0.1s;
+      white-space: nowrap;
+    }
+    .btn-primary:hover { background: var(--teal-dark); }
+    .btn-primary:active { transform: scale(0.98); }
+
+    /* ── HERO ── */
+    .hero {
+      padding: 148px 32px 100px;
+      background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);
+      max-width: 1440px;
+      margin: 0 auto;
+    }
+    .hero-inner {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: center;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--teal-light);
+      color: var(--teal);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 5px 12px;
+      border-radius: 4px;
+      margin-bottom: 28px;
+    }
+    .hero-badge-dot {
+      width: 6px; height: 6px;
+      background: var(--teal);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+    .hero-headline {
+      font-size: 56px;
+      font-weight: 800;
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+      color: var(--slate-900);
+      margin-bottom: 20px;
+      text-wrap: balance;
+    }
+    .hero-headline em {
+      font-style: normal;
+      color: var(--teal);
+    }
+    .hero-sub {
+      font-size: 18px;
+      line-height: 1.7;
+      color: var(--slate-500);
+      margin-bottom: 40px;
+      max-width: 480px;
+      font-weight: 400;
+    }
+    .hero-ctas {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .btn-hero-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 13px 28px;
+      background: var(--teal);
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .btn-hero-primary:hover { background: var(--teal-dark); }
+    .btn-hero-primary:active { transform: scale(0.98); }
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      background: transparent;
+      color: var(--slate-700);
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius);
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+    .btn-ghost:hover {
+      border-color: var(--slate-300);
+      background: var(--slate-50);
+      color: var(--slate-900);
+    }
+    .hero-trust {
+      margin-top: 44px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+      color: var(--slate-400);
+    }
+    .hero-trust-avatars {
+      display: flex;
+    }
+    .hero-trust-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid white;
+      background: var(--slate-200);
+      margin-right: -8px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--slate-500);
+    }
+    .hero-trust-avatar:last-child { margin-right: 0; }
+
+    /* ── HERO MOCKUP ── */
+    .hero-mockup {
+      position: relative;
+    }
+    .mockup-card {
+      background: var(--slate-900);
+      border-radius: 10px;
+      padding: 0;
+      box-shadow: 0 24px 64px rgba(15,23,42,0.18), 0 2px 8px rgba(15,23,42,0.08);
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .mockup-topbar {
+      background: rgba(255,255,255,0.04);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .mockup-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+    }
+    .mockup-title-bar {
+      flex: 1;
+      background: rgba(255,255,255,0.05);
+      height: 22px;
+      border-radius: 4px;
+      margin: 0 16px;
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+    }
+    .mockup-title-text {
+      font-size: 11px;
+      color: rgba(255,255,255,0.25);
+      font-family: 'Inter', monospace;
+    }
+    .mockup-body {
+      padding: 20px;
+    }
+    .mockup-row-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .mockup-h {
+      font-size: 13px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.8);
+    }
+    .mockup-badge {
+      font-size: 10px;
+      background: var(--teal);
+      color: white;
+      padding: 2px 8px;
+      border-radius: 3px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+    .mockup-list { display: flex; flex-direction: column; gap: 6px; }
+    .mockup-item {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 5px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: default;
+      transition: background 0.15s;
+    }
+    .mockup-item:hover { background: rgba(255,255,255,0.07); }
+    .mockup-item-icon {
+      width: 28px; height: 28px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .mockup-item-info { flex: 1; min-width: 0; }
+    .mockup-item-name {
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.75);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .mockup-item-meta {
+      font-size: 10px;
+      color: rgba(255,255,255,0.3);
+      margin-top: 2px;
+    }
+    .mockup-item-status {
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 3px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+    .status-done { background: rgba(13,124,102,0.2); color: #34d399; }
+    .status-pend { background: rgba(100,116,139,0.15); color: rgba(255,255,255,0.4); }
+    .status-rev  { background: rgba(234,179,8,0.15); color: #fbbf24; }
+    .mockup-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .mockup-stat {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 5px;
+      padding: 10px 12px;
+    }
+    .mockup-stat-n {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--teal);
+      letter-spacing: -0.02em;
+    }
+    .mockup-stat-label {
+      font-size: 9px;
+      color: rgba(255,255,255,0.3);
+      margin-top: 2px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .mockup-float {
+      position: absolute;
+      top: -16px;
+      right: -20px;
+      background: white;
+      border: 1px solid var(--slate-200);
+      border-radius: 8px;
+      padding: 12px 16px;
+      box-shadow: 0 8px 24px rgba(15,23,42,0.10);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      white-space: nowrap;
+    }
+    .mockup-float-icon {
+      width: 32px; height: 32px;
+      background: var(--teal-light);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .mockup-float-text { font-size: 12px; }
+    .mockup-float-title { font-weight: 600; color: var(--slate-900); }
+    .mockup-float-sub { color: var(--slate-500); font-size: 11px; }
+    .mockup-float2 {
+      position: absolute;
+      bottom: -16px;
+      left: -24px;
+      background: white;
+      border: 1px solid var(--slate-200);
+      border-radius: 8px;
+      padding: 10px 14px;
+      box-shadow: 0 8px 24px rgba(15,23,42,0.10);
+    }
+    .mockup-float2-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .mockup-float2-n {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--teal);
+      letter-spacing: -0.03em;
+    }
+    .mockup-float2-label { font-size: 11px; color: var(--slate-500); font-weight: 500; }
+    .mockup-float2-sub { font-size: 10px; color: var(--slate-400); margin-top: 2px; }
+
+    /* ── SOCIAL PROOF ── */
+    .social-proof {
+      background: var(--slate-50);
+      border-top: 1px solid var(--slate-200);
+      border-bottom: 1px solid var(--slate-200);
+      padding: 32px 32px;
+    }
+    .social-proof-inner {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 48px;
+    }
+    .sp-label {
+      font-size: 12px;
+      color: var(--slate-400);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .sp-divider {
+      width: 1px;
+      height: 32px;
+      background: var(--slate-200);
+      flex-shrink: 0;
+    }
+    .sp-logos {
+      display: flex;
+      align-items: center;
+      gap: 40px;
+      flex: 1;
+    }
+    .sp-logo {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--slate-300);
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+      transition: color 0.2s;
+    }
+    .sp-logo:hover { color: var(--slate-400); }
+
+    /* ── FEATURES ── */
+    .features {
+      padding: 100px 32px;
+      max-width: 1440px;
+      margin: 0 auto;
+    }
+    .section-label {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--teal);
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-size: 36px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--slate-900);
+      margin-bottom: 16px;
+      text-wrap: balance;
+    }
+    .section-sub {
+      font-size: 17px;
+      color: var(--slate-500);
+      max-width: 540px;
+      line-height: 1.65;
+    }
+    .section-header {
+      max-width: var(--max-w);
+      margin: 0 auto 56px;
+    }
+    .features-grid {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+    .feature-card {
+      background: var(--white);
+      border: 1px solid var(--slate-200);
+      border-radius: 8px;
+      padding: 32px 28px;
+      transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+      cursor: default;
+    }
+    .feature-card:hover {
+      border-color: var(--slate-300);
+      box-shadow: 0 4px 24px rgba(15,23,42,0.07);
+      transform: translateY(-2px);
+    }
+    .feature-icon {
+      width: 40px; height: 40px;
+      color: var(--teal);
+      margin-bottom: 20px;
+    }
+    .feature-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--slate-900);
+      margin-bottom: 8px;
+      letter-spacing: -0.01em;
+    }
+    .feature-desc {
+      font-size: 14px;
+      color: var(--slate-500);
+      line-height: 1.65;
+    }
+
+    /* ── HOW IT WORKS ── */
+    .how {
+      padding: 100px 32px;
+      background: var(--slate-50);
+      border-top: 1px solid var(--slate-200);
+      border-bottom: 1px solid var(--slate-200);
+    }
+    .how-inner {
+      max-width: var(--max-w);
+      margin: 0 auto;
+    }
+    .steps-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+      position: relative;
+      margin-top: 56px;
+    }
+    .steps-row::before {
+      content: '';
+      position: absolute;
+      top: 24px;
+      left: calc(12.5% + 20px);
+      right: calc(12.5% + 20px);
+      height: 1px;
+      background: var(--slate-200);
+    }
+    .step {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 0 24px;
+      position: relative;
+    }
+    .step:first-child { padding-left: 0; }
+    .step:last-child { padding-right: 0; }
+    .step-num {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      background: white;
+      border: 1px solid var(--slate-200);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--teal);
+      margin-bottom: 24px;
+      position: relative;
+      z-index: 1;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .step:hover .step-num {
+      background: var(--teal);
+      color: white;
+      border-color: var(--teal);
+    }
+    .step-icon { color: var(--slate-400); margin-bottom: 14px; }
+    .step-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--slate-900);
+      margin-bottom: 8px;
+      letter-spacing: -0.01em;
+    }
+    .step-desc {
+      font-size: 13px;
+      color: var(--slate-500);
+      line-height: 1.6;
+    }
+
+    /* ── METRICS ── */
+    .metrics {
+      background: var(--slate-900);
+      padding: 100px 32px;
+    }
+    .metrics-inner {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: center;
+    }
+    .metrics-left .section-label { color: var(--teal); }
+    .metrics-left .section-title { color: white; }
+    .metrics-left .section-sub { color: var(--slate-400); }
+    .metrics-numbers {
+      display: flex;
+      flex-direction: column;
+      gap: 40px;
+    }
+    .metric-item {
+      border-top: 1px solid rgba(255,255,255,0.07);
+      padding-top: 28px;
+    }
+    .metric-num {
+      font-size: 52px;
+      font-weight: 800;
+      color: var(--teal);
+      letter-spacing: -0.04em;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .metric-label {
+      font-size: 15px;
+      color: rgba(255,255,255,0.55);
+      font-weight: 400;
+    }
+
+    /* ── TESTIMONIAL ── */
+    .testimonial-section {
+      padding: 100px 32px;
+      background: white;
+    }
+    .testimonials-grid {
+      max-width: var(--max-w);
+      margin: 56px auto 0;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+    .testi-card {
+      border: 1px solid var(--slate-200);
+      border-radius: 8px;
+      padding: 28px 24px;
+      background: white;
+      transition: box-shadow 0.2s;
+    }
+    .testi-card:hover {
+      box-shadow: 0 4px 24px rgba(15,23,42,0.07);
+    }
+    .testi-stars {
+      display: flex;
+      gap: 3px;
+      margin-bottom: 16px;
+    }
+    .testi-star { color: var(--teal); font-size: 14px; }
+    .testi-text {
+      font-size: 14px;
+      color: var(--slate-700);
+      line-height: 1.7;
+      margin-bottom: 20px;
+      font-style: italic;
+    }
+    .testi-author {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .testi-avatar {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: var(--slate-100);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--slate-500);
+    }
+    .testi-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--slate-900);
+    }
+    .testi-role { font-size: 12px; color: var(--slate-400); }
+
+    /* ── FINAL CTA ── */
+    .final-cta {
+      padding: 100px 32px;
+      text-align: center;
+      background: var(--slate-50);
+      border-top: 1px solid var(--slate-200);
+    }
+    .final-cta-inner { max-width: 600px; margin: 0 auto; }
+    .final-cta .section-title { font-size: 40px; margin-bottom: 16px; }
+    .final-cta .section-sub {
+      margin: 0 auto 40px;
+      font-size: 17px;
+    }
+    .final-cta-btns {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+    }
+    .btn-final {
+      padding: 14px 32px;
+      font-size: 15px;
+      font-weight: 600;
+      border-radius: var(--radius);
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.15s;
+    }
+    .btn-final-primary {
+      background: var(--teal);
+      color: white;
+      border: none;
+    }
+    .btn-final-primary:hover { background: var(--teal-dark); }
+    .btn-final-ghost {
+      background: transparent;
+      color: var(--slate-700);
+      border: 1px solid var(--slate-200);
+    }
+    .btn-final-ghost:hover {
+      background: white;
+      border-color: var(--slate-300);
+    }
+    .final-note {
+      margin-top: 20px;
+      font-size: 13px;
+      color: var(--slate-400);
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--slate-900);
+      padding: 60px 32px 40px;
+      color: var(--slate-400);
+    }
+    .footer-inner {
+      max-width: var(--max-w);
+      margin: 0 auto;
+    }
+    .footer-top {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr 1fr 1fr;
+      gap: 48px;
+      margin-bottom: 48px;
+    }
+    .footer-brand { }
+    .footer-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .footer-logo-mark {
+      width: 24px; height: 24px;
+      background: var(--teal);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .footer-logo-text {
+      font-size: 14px;
+      font-weight: 700;
+      color: white;
+      letter-spacing: -0.02em;
+    }
+    .footer-tagline {
+      font-size: 13px;
+      line-height: 1.65;
+      color: var(--slate-500);
+      max-width: 240px;
+    }
+    .footer-col-title {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.45);
+      margin-bottom: 16px;
+    }
+    .footer-links { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .footer-links a {
+      font-size: 13px;
+      color: var(--slate-500);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .footer-links a:hover { color: var(--slate-300); }
+    .footer-bottom {
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding-top: 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .footer-copy { font-size: 12px; color: var(--slate-600); }
+    .footer-legal {
+      display: flex;
+      gap: 24px;
+    }
+    .footer-legal a {
+      font-size: 12px;
+      color: var(--slate-600);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .footer-legal a:hover { color: var(--slate-400); }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .fade-up { opacity: 0; }
+    .fade-up.visible {
+      animation: fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) forwards;
+    }
+    .fade-up-delay-1 { animation-delay: 0.1s; }
+    .fade-up-delay-2 { animation-delay: 0.2s; }
+    .fade-up-delay-3 { animation-delay: 0.3s; }
+
+    /* Tweaks overrides */
+    #tweaks-root { position: fixed; bottom: 24px; right: 24px; z-index: 9999; }
+  </style>
+</head>
+<body>
+
+<!-- ── NAVBAR ── -->
+<nav class="navbar" id="navbar">
+  <div class="navbar-inner">
+    <a href="#" class="nav-logo">
+      <div class="nav-logo-mark">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <rect x="2" y="2" width="5" height="5" rx="1" fill="white" opacity="0.9"/>
+          <rect x="9" y="2" width="5" height="5" rx="1" fill="white" opacity="0.6"/>
+          <rect x="2" y="9" width="5" height="5" rx="1" fill="white" opacity="0.6"/>
+          <rect x="9" y="9" width="5" height="5" rx="1" fill="white" opacity="0.9"/>
+        </svg>
+      </div>
+      <span class="nav-logo-text">CERTIFIVE</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#features">Funcionalidades</a></li>
+      <li><a href="#how">Cómo funciona</a></li>
+      <li><a href="#pricing">Precios</a></li>
+      <li><a href="#testimonials">Clientes</a></li>
+    </ul>
+    <div class="nav-cta-group">
+      <a href="#" class="btn-nav-login">Iniciar Sesión</a>
+      <a href="#" class="btn-primary">Empezar Gratis</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ── HERO ── -->
+<section class="hero" id="hero">
+  <div class="hero-inner">
+    <div class="hero-text">
+      <div class="hero-badge">
+        <div class="hero-badge-dot"></div>
+        Plataforma profesional de certificación
+      </div>
+      <h1 class="hero-headline">Automatiza tu negocio de <em>certificación energética.</em></h1>
+      <p class="hero-sub">Gestiona expedientes, genera certificados CEE y presenta ante el registro autonómico — todo desde una sola plataforma diseñada para técnicos habilitados.</p>
+      <div class="hero-ctas">
+        <a href="#" class="btn-hero-primary">
+          Empezar Gratis
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+        <a href="#how" class="btn-ghost">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M6.5 6.5C6.5 5.67 7.17 5 8 5s1.5.67 1.5 1.5c0 .69-.46 1.27-1.1 1.44L8 8.1V9.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="8" cy="11" r="0.75" fill="currentColor"/>
+          </svg>
+          Ver cómo funciona
+        </a>
+      </div>
+      <div class="hero-trust">
+        <div class="hero-trust-avatars">
+          <div class="hero-trust-avatar">M</div>
+          <div class="hero-trust-avatar">A</div>
+          <div class="hero-trust-avatar">R</div>
+          <div class="hero-trust-avatar">L</div>
+          <div class="hero-trust-avatar">+</div>
+        </div>
+        <span>+2.400 técnicos certificadores en España</span>
+      </div>
+    </div>
+
+    <div class="hero-mockup">
+      <div class="mockup-float">
+        <div class="mockup-float-icon">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M8 2l1.5 3 3.5.5-2.5 2.5.5 3.5L8 10l-3 1.5.5-3.5L3 5.5 6.5 5 8 2z" fill="#0D7C66"/>
+          </svg>
+        </div>
+        <div class="mockup-float-text">
+          <div class="mockup-float-title">Certificado generado</div>
+          <div class="mockup-float-sub">C/ Serrano 44, Madrid · hace 2 min</div>
+        </div>
+      </div>
+
+      <div class="mockup-card">
+        <div class="mockup-topbar">
+          <div class="mockup-dot" style="background:#ff5f57;"></div>
+          <div class="mockup-dot" style="background:#febc2e;"></div>
+          <div class="mockup-dot" style="background:#28c840;"></div>
+          <div class="mockup-title-bar">
+            <span class="mockup-title-text">certifive.app/dashboard</span>
+          </div>
+        </div>
+        <div class="mockup-body">
+          <div class="mockup-row-header">
+            <span class="mockup-h">Expedientes activos</span>
+            <span class="mockup-badge">LIVE</span>
+          </div>
+          <div class="mockup-list">
+            <div class="mockup-item">
+              <div class="mockup-item-icon" style="background:rgba(13,124,102,0.15);">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <rect x="2" y="1" width="10" height="12" rx="1.5" stroke="#0D7C66" stroke-width="1.2"/>
+                  <path d="M4.5 5h5M4.5 7.5h5M4.5 10h3" stroke="#0D7C66" stroke-width="1.2" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <div class="mockup-item-info">
+                <div class="mockup-item-name">Edificio Paseo de Gracia 78</div>
+                <div class="mockup-item-meta">Barcelona · Vivienda unifamiliar</div>
+              </div>
+              <div class="mockup-item-status status-done">Completado</div>
+            </div>
+            <div class="mockup-item">
+              <div class="mockup-item-icon" style="background:rgba(100,116,139,0.12);">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <rect x="2" y="1" width="10" height="12" rx="1.5" stroke="#64748B" stroke-width="1.2"/>
+                  <path d="M4.5 5h5M4.5 7.5h5M4.5 10h3" stroke="#64748B" stroke-width="1.2" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <div class="mockup-item-info">
+                <div class="mockup-item-name">C/ Alcalá 200, Madrid</div>
+                <div class="mockup-item-meta">Madrid · Oficinas</div>
+              </div>
+              <div class="mockup-item-status status-rev">En revisión</div>
+            </div>
+            <div class="mockup-item">
+              <div class="mockup-item-icon" style="background:rgba(100,116,139,0.12);">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <rect x="2" y="1" width="10" height="12" rx="1.5" stroke="#64748B" stroke-width="1.2"/>
+                  <path d="M4.5 5h5M4.5 7.5h5M4.5 10h3" stroke="#64748B" stroke-width="1.2" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <div class="mockup-item-info">
+                <div class="mockup-item-name">Avda. Diagonal 550, Barcelona</div>
+                <div class="mockup-item-meta">Barcelona · Bloque plurifamiliar</div>
+              </div>
+              <div class="mockup-item-status status-pend">Pendiente</div>
+            </div>
+            <div class="mockup-item">
+              <div class="mockup-item-icon" style="background:rgba(13,124,102,0.15);">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <rect x="2" y="1" width="10" height="12" rx="1.5" stroke="#0D7C66" stroke-width="1.2"/>
+                  <path d="M4.5 5h5M4.5 7.5h5M4.5 10h3" stroke="#0D7C66" stroke-width="1.2" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <div class="mockup-item-info">
+                <div class="mockup-item-name">Plaza España 1, Sevilla</div>
+                <div class="mockup-item-meta">Sevilla · Vivienda unifamiliar</div>
+              </div>
+              <div class="mockup-item-status status-done">Completado</div>
+            </div>
+          </div>
+          <div class="mockup-stats">
+            <div class="mockup-stat">
+              <div class="mockup-stat-n">38</div>
+              <div class="mockup-stat-label">Este mes</div>
+            </div>
+            <div class="mockup-stat">
+              <div class="mockup-stat-n">4.2h</div>
+              <div class="mockup-stat-label">Ahorro/cert.</div>
+            </div>
+            <div class="mockup-stat">
+              <div class="mockup-stat-n">99%</div>
+              <div class="mockup-stat-label">Aprobados</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mockup-float2">
+        <div class="mockup-float2-row">
+          <span class="mockup-float2-n">A</span>
+          <div>
+            <div class="mockup-float2-label">Calificación media</div>
+            <div class="mockup-float2-sub">+12% vs. mes anterior</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── SOCIAL PROOF ── -->
+<div class="social-proof">
+  <div class="social-proof-inner">
+    <span class="sp-label">Usado por técnicos en</span>
+    <div class="sp-divider"></div>
+    <div class="sp-logos">
+      <span class="sp-logo">Comunidad de Madrid</span>
+      <span class="sp-logo">Generalitat de Catalunya</span>
+      <span class="sp-logo">Junta de Andalucía</span>
+      <span class="sp-logo">País Vasco</span>
+      <span class="sp-logo">C. Valenciana</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── FEATURES ── -->
+<section class="features" id="features">
+  <div class="section-header">
+    <div class="section-label">Funcionalidades</div>
+    <h2 class="section-title">Todo lo que necesita un técnico habilitado</h2>
+    <p class="section-sub">Construida desde cero para los flujos reales de la certificación energética en España. Sin compromiso.</p>
+  </div>
+  <div class="features-grid">
+
+    <div class="feature-card fade-up">
+      <svg class="feature-icon" viewBox="0 0 40 40" fill="none">
+        <rect x="6" y="4" width="28" height="32" rx="3" stroke="currentColor" stroke-width="1.8"/>
+        <path d="M12 14h16M12 20h16M12 26h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+      <div class="feature-title">Gestión de expedientes</div>
+      <p class="feature-desc">Centraliza todos tus proyectos con seguimiento en tiempo real. Documentación, planos, datos del cliente y estado del registro, todo en un mismo lugar.</p>
+    </div>
+
+    <div class="feature-card fade-up fade-up-delay-1">
+      <svg class="feature-icon" viewBox="0 0 40 40" fill="none">
+        <path d="M8 20c0-6.627 5.373-12 12-12s12 5.373 12 12-5.373 12-12 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M20 12v8l5 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M4 28l4-4 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div class="feature-title">Automatización CE3X / HULC</div>
+      <p class="feature-desc">Importa resultados directamente desde CE3X y HULC. La plataforma genera el certificado CEE listo para presentar al registro autonómico.</p>
+    </div>
+
+    <div class="feature-card fade-up fade-up-delay-2">
+      <svg class="feature-icon" viewBox="0 0 40 40" fill="none">
+        <path d="M20 6l3 8h9l-7 5 3 8-8-6-8 6 3-8-7-5h9z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+      </svg>
+      <div class="feature-title">Registro autonómico directo</div>
+      <p class="feature-desc">Presentación automática ante RUCE y registros autonómicos. Trazabilidad completa de cada trámite con confirmación de recepción integrada.</p>
+    </div>
+
+    <div class="feature-card fade-up">
+      <svg class="feature-icon" viewBox="0 0 40 40" fill="none">
+        <rect x="8" y="8" width="10" height="10" rx="2" stroke="currentColor" stroke-width="1.8"/>
+        <rect x="22" y="8" width="10" height="10" rx="2" stroke="currentColor" stroke-width="1.8"/>
+        <rect x="8" y="22" width="10" height="10" rx="2" stroke="currentColor" stroke-width="1.8"/>
+        <rect x="22" y="22" width="10" height="10" rx="2" stroke="currentColor" stroke-width="1.8"/>
+      </svg>
+      <div class="feature-title">Facturación integrada</div>
+      <p class="feature-desc">Genera facturas automáticamente al completar un expediente. Control de cobros, recordatorios y exportación contable directa sin apps adicionales.</p>
+    </div>
+
+    <div class="feature-card fade-up fade-up-delay-1">
+      <svg class="feature-icon" viewBox="0 0 40 40" fill="none">
+        <circle cx="20" cy="20" r="12" stroke="currentColor" stroke-width="1.8"/>
+        <path d="M14 20h12M20 14v12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+      <div class="feature-title">Portal del cliente</div>
+      <p class="feature-desc">Tus clientes reciben acceso a un portal propio para ver el estado de su certificado, descargar documentos y firmar online. Profesionaliza tu servicio.</p>
+    </div>
+
+    <div class="feature-card fade-up fade-up-delay-2">
+      <svg class="feature-icon" viewBox="0 0 40 40" fill="none">
+        <path d="M8 28V16l12-8 12 8v12" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+        <rect x="14" y="22" width="12" height="10" rx="1" stroke="currentColor" stroke-width="1.8"/>
+        <path d="M20 22v10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+      </svg>
+      <div class="feature-title">Análisis y métricas</div>
+      <p class="feature-desc">Panel de control con ingresos por periodo, rendimiento por tipo de inmueble, tiempo medio por expediente y comparativas mensuales detalladas.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── HOW IT WORKS ── -->
+<section class="how" id="how">
+  <div class="how-inner">
+    <div class="section-label">Proceso</div>
+    <h2 class="section-title">De la visita al certificado en cuatro pasos</h2>
+    <p class="section-sub">Un flujo diseñado para eliminar el trabajo administrativo repetitivo y que puedas centrarte en lo técnico.</p>
+    <div class="steps-row">
+      <div class="step">
+        <div class="step-num">01</div>
+        <svg class="step-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M10 2l2 4h5l-4 3 1.5 5L10 12l-4.5 2L7 9 3 6h5z" stroke="#94A3B8" stroke-width="1.5" stroke-linejoin="round"/>
+        </svg>
+        <div class="step-title">Alta del expediente</div>
+        <p class="step-desc">Crea el proyecto con los datos del inmueble y el propietario. La plataforma genera automáticamente la documentación inicial.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <svg class="step-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <rect x="3" y="3" width="14" height="14" rx="2" stroke="#94A3B8" stroke-width="1.5"/>
+          <path d="M7 10l2 2 4-4" stroke="#94A3B8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div class="step-title">Cálculo y simulación</div>
+        <p class="step-desc">Importa tu archivo de CE3X o HULC. CERTIFIVE extrae los datos, calcula la calificación y detecta posibles incidencias antes de presentar.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <svg class="step-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M4 14l3-3 3 3 6-6" stroke="#94A3B8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="2" y="2" width="16" height="16" rx="2" stroke="#94A3B8" stroke-width="1.5"/>
+        </svg>
+        <div class="step-title">Generación del certificado</div>
+        <p class="step-desc">El sistema genera el certificado CEE con todos los campos requeridos por la normativa vigente, listo para firma digital cualificada.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">04</div>
+        <svg class="step-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M10 2v10M6 8l4 4 4-4" stroke="#94A3B8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M3 14v2a1 1 0 001 1h12a1 1 0 001-1v-2" stroke="#94A3B8" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <div class="step-title">Presentación al registro</div>
+        <p class="step-desc">Presentación automática ante el registro autonómico correspondiente. Recibirás confirmación y el número de inscripción en tu panel.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── METRICS ── -->
+<section class="metrics" id="metrics">
+  <div class="metrics-inner">
+    <div class="metrics-left">
+      <div class="section-label">Resultados</div>
+      <h2 class="section-title">Cifras que hablan por sí solas</h2>
+      <p class="section-sub">Los técnicos que usan CERTIFIVE procesan más expedientes, cometen menos errores y cobran antes. Los datos son de nuestra propia plataforma.</p>
+    </div>
+    <div class="metrics-numbers">
+      <div class="metric-item fade-up">
+        <div class="metric-num">4.2h</div>
+        <div class="metric-label">ahorradas por expediente frente al proceso manual</div>
+      </div>
+      <div class="metric-item fade-up fade-up-delay-1">
+        <div class="metric-num">+2.400</div>
+        <div class="metric-label">técnicos certificadores activos en España</div>
+      </div>
+      <div class="metric-item fade-up fade-up-delay-2">
+        <div class="metric-num">98.7%</div>
+        <div class="metric-label">de expedientes aprobados al primer intento</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── TESTIMONIALS ── -->
+<section class="testimonial-section" id="testimonials">
+  <div class="section-header">
+    <div class="section-label">Testimonios</div>
+    <h2 class="section-title">Lo que dicen los técnicos</h2>
+    <p class="section-sub">Profesionales reales. Resultados reales.</p>
+  </div>
+  <div class="testimonials-grid">
+    <div class="testi-card">
+      <div class="testi-stars">
+        <span class="testi-star">★</span><span class="testi-star">★</span><span class="testi-star">★</span><span class="testi-star">★</span><span class="testi-star">★</span>
+      </div>
+      <p class="testi-text">"Antes tardaba un día entero en completar un expediente. Con CERTIFIVE lo tengo listo en dos horas y el registro autonómico lo acepta a la primera. La diferencia es brutal."</p>
+      <div class="testi-author">
+        <div class="testi-avatar">MA</div>
+        <div>
+          <div class="testi-name">Miguel Ángel Torres</div>
+          <div class="testi-role">Ingeniero Industrial · Madrid</div>
+        </div>
+      </div>
+    </div>
+    <div class="testi-card">
+      <div class="testi-stars">
+        <span class="testi-star">★</span><span class="testi-star">★</span><span class="testi-star">★</span><span class="testi-star">★</span><span class="testi-star">★</span>
+      </div>
+      <p class="testi-text">"La integración con CE3X es un antes y un después. Nada de copiar datos a mano. El sistema los importa, los valida y genera el certificado en minutos. Puro ahorro."</p>
+      <div class="testi-author">
+        <div class="testi-avatar">LG</div>
+        <div>
+          <div class="testi-name">Laura García Fonts</div>
+          <div class="testi-role">Arquitecta Técnica · Barcelona</div>
+        </div>
+      </div>
+    </div>
+    <div class="testi-card">
+      <div class="testi-stars">
+        <span class="testi-star">★</span><span class="testi-star">★</span><span class="testi-star">★</span><span class="testi-star">★</span><span class="testi-star">★</span>
+      </div>
+      <p class="testi-text">"Gestiono más de 60 expedientes al mes yo solo. Sin CERTIFIVE sería imposible. El portal del cliente también me ha diferenciado mucho frente a otros técnicos de la zona."</p>
+      <div class="testi-author">
+        <div class="testi-avatar">RV</div>
+        <div>
+          <div class="testi-name">Roberto Vega Morales</div>
+          <div class="testi-role">Ingeniero de Edificación · Sevilla</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FINAL CTA ── -->
+<section class="final-cta" id="pricing">
+  <div class="final-cta-inner">
+    <div class="section-label" style="text-align:center;">Empieza hoy</div>
+    <h2 class="section-title">Tu despacho merece herramientas profesionales</h2>
+    <p class="section-sub">14 días de prueba gratuita. Sin tarjeta de crédito. Sin permanencia.</p>
+    <div class="final-cta-btns">
+      <a href="#" class="btn-final btn-final-primary">Empezar Gratis — 14 días</a>
+      <a href="#" class="btn-final btn-final-ghost">Hablar con el equipo</a>
+    </div>
+    <p class="final-note">¿Tienes un equipo grande? <a href="#" style="color:var(--teal);text-decoration:none;font-weight:500;">Contacta para precios Enterprise.</a></p>
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <div class="footer-logo">
+          <div class="footer-logo-mark">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+              <rect x="2" y="2" width="5" height="5" rx="1" fill="white" opacity="0.9"/>
+              <rect x="9" y="2" width="5" height="5" rx="1" fill="white" opacity="0.6"/>
+              <rect x="2" y="9" width="5" height="5" rx="1" fill="white" opacity="0.6"/>
+              <rect x="9" y="9" width="5" height="5" rx="1" fill="white" opacity="0.9"/>
+            </svg>
+          </div>
+          <span class="footer-logo-text">CERTIFIVE</span>
+        </div>
+        <p class="footer-tagline">Plataforma de automatización para técnicos de certificación energética en España.</p>
+      </div>
+      <div>
+        <div class="footer-col-title">Producto</div>
+        <ul class="footer-links">
+          <li><a href="#">Funcionalidades</a></li>
+          <li><a href="#">Precios</a></li>
+          <li><a href="#">Novedades</a></li>
+          <li><a href="#">Hoja de ruta</a></li>
+          <li><a href="#">API</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-col-title">Recursos</div>
+        <ul class="footer-links">
+          <li><a href="#">Documentación</a></li>
+          <li><a href="#">Guías de inicio</a></li>
+          <li><a href="#">Webinars</a></li>
+          <li><a href="#">Blog</a></li>
+          <li><a href="#">Soporte</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-col-title">Empresa</div>
+        <ul class="footer-links">
+          <li><a href="#">Sobre nosotros</a></li>
+          <li><a href="#">Contacto</a></li>
+          <li><a href="#">Prensa</a></li>
+          <li><a href="#">Afiliados</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span class="footer-copy">© 2026 CERTIFIVE Technologies S.L. Todos los derechos reservados.</span>
+      <div class="footer-legal">
+        <a href="#">Privacidad</a>
+        <a href="#">Términos</a>
+        <a href="#">Cookies</a>
+        <a href="#">RGPD</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- ── TWEAKS ROOT ── -->
+<div id="tweaks-root"></div>
+
+<script>
+  // Navbar scroll effect
+  const navbar = document.getElementById('navbar');
+  window.addEventListener('scroll', () => {
+    navbar.classList.toggle('scrolled', window.scrollY > 10);
+  });
+
+  // Intersection Observer for fade-up animations
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15 });
+  document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+</script>
+
+<script type="text/babel">
+  const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+    "accentColor": "#0D7C66",
+    "heroSize": 56,
+    "showBadge": true,
+    "cardStyle": "bordered",
+    "footerDark": true
+  }/*EDITMODE-END*/;
+
+  function CertifiveTweaks() {
+    const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
+
+    React.useEffect(() => {
+      document.documentElement.style.setProperty('--teal', tweaks.accentColor);
+      document.documentElement.style.setProperty('--teal-dark', shadeColor(tweaks.accentColor, -10));
+      document.documentElement.style.setProperty('--teal-light', hexToRgba(tweaks.accentColor, 0.08));
+
+      const headline = document.querySelector('.hero-headline');
+      if (headline) headline.style.fontSize = tweaks.heroSize + 'px';
+
+      const badge = document.querySelector('.hero-badge');
+      if (badge) badge.style.display = tweaks.showBadge ? 'inline-flex' : 'none';
+
+      const cards = document.querySelectorAll('.feature-card');
+      cards.forEach(c => {
+        if (tweaks.cardStyle === 'shadow') {
+          c.style.border = 'none';
+          c.style.boxShadow = '0 2px 16px rgba(15,23,42,0.08)';
+        } else {
+          c.style.border = '1px solid var(--slate-200)';
+          c.style.boxShadow = 'none';
+        }
+      });
+
+      const footer = document.querySelector('footer');
+      if (footer) {
+        footer.style.background = tweaks.footerDark ? 'var(--slate-900)' : '#f8fafc';
+        footer.style.borderTop = tweaks.footerDark ? 'none' : '1px solid var(--slate-200)';
+      }
+    }, [tweaks]);
+
+    return (
+      <TweaksPanel title="Tweaks">
+        <TweakSection label="Marca">
+          <TweakColor label="Color principal" value={tweaks.accentColor} onChange={v => setTweak('accentColor', v)} />
+        </TweakSection>
+        <TweakSection label="Hero">
+          <TweakSlider label="Tamaño del título" value={tweaks.heroSize} min={40} max={80} step={2} onChange={v => setTweak('heroSize', v)} />
+          <TweakToggle label="Mostrar badge" value={tweaks.showBadge} onChange={v => setTweak('showBadge', v)} />
+        </TweakSection>
+        <TweakSection label="Tarjetas">
+          <TweakRadio label="Estilo" value={tweaks.cardStyle} options={[{label:'Borde', value:'bordered'},{label:'Sombra', value:'shadow'}]} onChange={v => setTweak('cardStyle', v)} />
+        </TweakSection>
+        <TweakSection label="Footer">
+          <TweakToggle label="Footer oscuro" value={tweaks.footerDark} onChange={v => setTweak('footerDark', v)} />
+        </TweakSection>
+      </TweaksPanel>
+    );
+  }
+
+  function shadeColor(hex, pct) {
+    const num = parseInt(hex.slice(1), 16);
+    const r = Math.min(255, Math.max(0, (num >> 16) + pct * 2));
+    const g = Math.min(255, Math.max(0, ((num >> 8) & 0xff) + pct * 2));
+    const b = Math.min(255, Math.max(0, (num & 0xff) + pct * 2));
+    return '#' + [r,g,b].map(v => v.toString(16).padStart(2,'0')).join('');
+  }
+
+  function hexToRgba(hex, alpha) {
+    const num = parseInt(hex.slice(1), 16);
+    const r = (num >> 16) & 255;
+    const g = (num >> 8) & 255;
+    const b = num & 255;
+    return `rgba(${r},${g},${b},${alpha})`;
+  }
+
+  const tweaksRoot = document.getElementById('tweaks-root');
+  ReactDOM.createRoot(tweaksRoot).render(<CertifiveTweaks />);
+</script>
+
+</body>
+</html>
