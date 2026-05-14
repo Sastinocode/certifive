@@ -1375,15 +1375,15 @@ export default function Landing() {
         <div className="container cta-inner">
           <div className="cta-eyebrow">Empieza hoy</div>
           <h2>Multiplica ×5 tus resultados<br />desde el primer expediente.</h2>
-          <p>14 días gratis. Sin tarjeta. Sin permanencia. Soporte en español incluido.</p>
+          <p>7 días gratis. Sin tarjeta. Sin permanencia. Soporte en español incluido.</p>
           <div className="cta-btns">
             <button className="btn-white" onClick={() => navigate("/register")}>Solicitar demo gratuita</button>
             <button className="btn-outline-white" onClick={scrollTo("precios")}>Ver planes y precios</button>
           </div>
           <div className="cta-trust">
-            <span>✓ Integración CE3X / HULC</span>
-            <span>✓ Registro autonómico automático</span>
-            <span>✓ Cancela cuando quieras</span>
+            <span>✓ Configuración en 5 minutos</span>
+            <span>✓ Sin contrato de permanencia</span>
+            <span>✓ Soporte en español incluido</span>
           </div>
         </div>
       </section>
