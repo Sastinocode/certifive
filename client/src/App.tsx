@@ -21,7 +21,7 @@ import Marketing from "@/pages/marketing";
 import Automations from "@/pages/automations";
 import Settings from "@/pages/settings";
 import StripeIntegration from "@/pages/stripe-integration";
-import Landing from "@/pages/landing";
+import Landing from "@/pages/Landing";
 import Login from "@/pages/login";
 import DemoRequest from "@/pages/demo-request";
 import PublicQuote from "@/pages/public-quote";
