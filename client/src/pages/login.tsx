@@ -47,7 +47,7 @@ export default function Login() {
         {/* Back to Home */}
         <button
           onClick={() => navigate("/")}
-          style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 500, color: "#0D7C66", background: "none", border: "none", cursor: "pointer", marginBottom: 24, padding: "4px 0" }}
+          style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 500, color: "#1FA94B", background: "none", border: "none", cursor: "pointer", marginBottom: 24, padding: "4px 0" }}
         >
           <ArrowLeft size={15} />
           Volver al inicio
@@ -55,14 +55,16 @@ export default function Login() {
 
         <div style={{ background: "#fff", border: "1px solid #E2E8F0", borderRadius: 8, padding: "36px 32px", boxShadow: "0 4px 24px rgba(15,23,42,.06)" }}>
           <div style={{ textAlign: "center", marginBottom: 28 }}>
-            <div style={{ width: 40, height: 40, background: "#0D7C66", borderRadius: 8, display: "inline-flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
-              <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
-                <rect x="2" y="2" width="5" height="5" rx="1" fill="white" opacity="0.9"/>
-                <rect x="9" y="2" width="5" height="5" rx="1" fill="white" opacity="0.6"/>
-                <rect x="2" y="9" width="5" height="5" rx="1" fill="white" opacity="0.6"/>
-                <rect x="9" y="9" width="5" height="5" rx="1" fill="white" opacity="0.9"/>
+            <div style={{ display: "inline-block", marginBottom: 10 }}>
+              <svg width="140" height="36" viewBox="0 0 140 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 17L6 28L22 28L22 17L14 9Z" fill="none" stroke="#1FA94B" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round"/>
+                <rect x="9" y="22" width="2.5" height="6" rx="0.5" fill="#1FA94B"/>
+                <rect x="13" y="19" width="2.5" height="9" rx="0.5" fill="#84CC16"/>
+                <rect x="17" y="16" width="2.5" height="12" rx="0.5" fill="#F59E0B"/>
+                <text x="30" y="26" fontFamily="Inter, system-ui, sans-serif" fontWeight="800" fontSize="19" fill="#0F172A">certifive</text>
               </svg>
             </div>
+            <p style={{ fontSize: 12, color: "#94A3B8", marginBottom: 18 }}>Gestión de certificación energética</p>
             <h1 style={{ fontSize: 20, fontWeight: 700, color: "#0F172A", letterSpacing: "-.02em", marginBottom: 4 }}>Iniciar Sesión</h1>
             <p style={{ fontSize: 13, color: "#64748B" }}>Accede a tu cuenta de CERTIFIVE</p>
           </div>
@@ -77,7 +79,7 @@ export default function Login() {
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 required
                 style={{ width: "100%", height: 40, padding: "0 12px", border: "1px solid #E2E8F0", borderRadius: 6, fontSize: 14, color: "#0F172A", outline: "none", background: "#fff", boxSizing: "border-box" }}
-                onFocus={e => (e.target.style.borderColor = "#0D7C66")}
+                onFocus={e => (e.target.style.borderColor = "#1FA94B")}
                 onBlur={e => (e.target.style.borderColor = "#E2E8F0")}
               />
             </div>
@@ -92,7 +94,7 @@ export default function Login() {
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   required
                   style={{ width: "100%", height: 40, padding: "0 40px 0 12px", border: "1px solid #E2E8F0", borderRadius: 6, fontSize: 14, color: "#0F172A", outline: "none", background: "#fff", boxSizing: "border-box" }}
-                  onFocus={e => (e.target.style.borderColor = "#0D7C66")}
+                  onFocus={e => (e.target.style.borderColor = "#1FA94B")}
                   onBlur={e => (e.target.style.borderColor = "#E2E8F0")}
                 />
                 <button
@@ -108,9 +110,9 @@ export default function Login() {
             <button
               type="submit"
               disabled={isLoading}
-              style={{ width: "100%", height: 40, background: "#0D7C66", color: "#fff", border: "none", borderRadius: 6, fontSize: 14, fontWeight: 600, cursor: isLoading ? "not-allowed" : "pointer", opacity: isLoading ? .7 : 1, transition: "background .15s", marginTop: 4 }}
-              onMouseOver={e => { if (!isLoading) e.currentTarget.style.background = "#0a6454"; }}
-              onMouseOut={e => { e.currentTarget.style.background = "#0D7C66"; }}
+              style={{ width: "100%", height: 40, background: "#1FA94B", color: "#fff", border: "none", borderRadius: 6, fontSize: 14, fontWeight: 600, cursor: isLoading ? "not-allowed" : "pointer", opacity: isLoading ? .7 : 1, transition: "background .15s", marginTop: 4 }}
+              onMouseOver={e => { if (!isLoading) e.currentTarget.style.background = "#178A3C"; }}
+              onMouseOut={e => { e.currentTarget.style.background = "#1FA94B"; }}
             >
               {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
             </button>
@@ -119,7 +121,7 @@ export default function Login() {
           <div style={{ marginTop: 20 }}>
             <p style={{ fontSize: 13, color: "#64748B", textAlign: "center", marginBottom: 16 }}>
               ¿No tienes cuenta?{" "}
-              <button onClick={() => navigate("/registro")} style={{ color: "#0D7C66", fontWeight: 600, background: "none", border: "none", cursor: "pointer", fontSize: 13 }}>
+              <button onClick={() => navigate("/register")} style={{ color: "#1FA94B", fontWeight: 600, background: "none", border: "none", cursor: "pointer", fontSize: 13 }}>
                 Regístrate aquí
               </button>
             </p>
