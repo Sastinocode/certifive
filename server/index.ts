@@ -1,5 +1,6 @@
 import express from "express";
 import session from "express-session";
+import helmet from "helmet";
 import path from "path";
 import { fileURLToPath } from "url";
 import { registerRoutes } from "./routes/index";
@@ -10,6 +11,32 @@ import catastroRouter from "./routes/catastro";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
+
+// ── Security headers ──────────────────────────────────────────────────────────
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc:  ["'self'"],
+      scriptSrc:   ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://js.stripe.com"],
+      styleSrc:    ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc:     ["'self'", "https://fonts.gstatic.com"],
+      imgSrc:      ["'self'", "data:", "blob:", "https:"],
+      connectSrc:  ["'self'", "https://api.stripe.com", "ws:", "wss:"],
+      frameSrc:    ["https://js.stripe.com"],
+      objectSrc:   ["'none'"],
+    },
+  },
+  frameguard:     { action: "deny" },
+  noSniff:        true,
+  referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+  crossOriginEmbedderPolicy: false,
+}));
+
+app.use((_req, res, next) => {
+  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  next();
+});
+// ─────────────────────────────────────────────────────────────────────────────
 
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));

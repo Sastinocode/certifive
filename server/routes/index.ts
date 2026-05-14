@@ -1,4 +1,5 @@
 import { Express } from "express";
+import rateLimit from "express-rate-limit";
 import { registerNotificationRoutes } from "./notifications";
 import { registerAuthRoutes } from "./auth";
 import { registerCertificationRoutes } from "./certifications";
@@ -15,7 +16,16 @@ import { registerFormularioTecnicoRoutes } from "./formulario-tecnico";
 import { registerVisitFormRoutes } from "./visit-form";
 import { registerExportCE3XRoutes } from "./export-ce3x";
 
+const apiRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Demasiadas peticiones. Intenta de nuevo en 15 minutos." },
+});
+
 export function registerRoutes(app: Express) {
+  app.use("/api", apiRateLimiter);
   app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
 
   registerNotificationRoutes(app);

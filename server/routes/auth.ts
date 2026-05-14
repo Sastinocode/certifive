@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { Express, Request, Response } from "express";
+import rateLimit from "express-rate-limit";
 import { db } from "../db";
 import { eq, and } from "drizzle-orm";
 import { users, certifications, folders, refreshTokens } from "../../shared/schema";
@@ -11,6 +12,7 @@ import {
 import {
   sendWelcomeEmail, sendEmailVerification, sendPasswordResetEmail,
 } from "../email";
+import { securityLog } from "../security-logger";
 import multer from "multer";
 import path from "path";
 import { nanoid } from "nanoid";
@@ -19,16 +21,23 @@ import jwt from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET || "certifive-dev-secret-2024";
 
-// In-memory rate limiter: 5 login attempts per IP per minute
-const loginAttempts = new Map<string, { count: number; resetAt: number }>();
-function checkLoginRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const entry = loginAttempts.get(ip);
-  if (!entry || now > entry.resetAt) { loginAttempts.set(ip, { count: 1, resetAt: now + 60_000 }); return true; }
-  if (entry.count >= 5) return false;
-  entry.count++;
-  return true;
-}
+// ── Rate limiters ─────────────────────────────────────────────────────────────
+const loginRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Demasiados intentos. Espera 15 minutos." },
+});
+
+const registerRateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 3,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Demasiados registros desde esta IP. Espera una hora." },
+});
+// ─────────────────────────────────────────────────────────────────────────────
 
 const avatarUpload = multer({
   storage: multer.memoryStorage(),
@@ -42,29 +51,40 @@ const avatarUpload = multer({
 export function registerAuthRoutes(app: Express) {
 // --- AUTH ---
 
-app.post("/api/auth/login", async (req: Request, res: Response) => {
+app.post("/api/auth/login", loginRateLimiter, async (req: Request, res: Response) => {
+  const ip = req.ip ?? "unknown";
   try {
-    const ip = req.ip ?? "unknown";
-    if (!checkLoginRateLimit(ip)) {
-      return res.status(429).json({ message: "Demasiados intentos. Espera 1 minuto." });
-    }
-
-    const { username, password, rememberMe } = req.body;
-    if (!username || !password) {
+    const { username, password, email, rememberMe } = req.body;
+    const lookup = username || email;
+    if (!lookup || !password) {
       return res.status(400).json({ message: "Usuario y contraseña requeridos" });
     }
 
-    const [user] = await db.select().from(users).where(eq(users.username, username)).limit(1);
+    const [user] = await db.select().from(users)
+      .where(eq(users.username, lookup))
+      .limit(1);
+
     if (!user) {
+      securityLog("LOGIN_FAILED", { reason: "user_not_found", email: lookup, ip });
       return res.status(401).json({ message: "Email o usuario no registrado" });
     }
     if (!user.password) {
+      securityLog("LOGIN_FAILED", { reason: "no_password", email: lookup, ip });
       return res.status(401).json({ message: "Contraseña incorrecta" });
     }
 
     const valid = await comparePasswords(password, user.password);
     if (!valid) {
+      securityLog("LOGIN_FAILED", { reason: "wrong_password", email: lookup, ip });
       return res.status(401).json({ message: "Contraseña incorrecta" });
+    }
+
+    if (!user.emailVerifiedAt) {
+      securityLog("LOGIN_BLOCKED_UNVERIFIED", { email: lookup, ip });
+      return res.status(403).json({
+        message: "Debes verificar tu email antes de acceder. Revisa tu bandeja de entrada.",
+        code: "EMAIL_NOT_VERIFIED",
+      });
     }
 
     const authUser = { id: user.id, username: user.username, email: user.email, role: user.role, name: user.name, firstName: user.firstName, lastName: user.lastName };
@@ -77,7 +97,8 @@ app.post("/api/auth/login", async (req: Request, res: Response) => {
   }
 });
 
-app.post("/api/auth/register", async (req: Request, res: Response) => {
+app.post("/api/auth/register", registerRateLimiter, async (req: Request, res: Response) => {
+  const ip = req.ip ?? "unknown";
   try {
     const { username, password, email, firstName, lastName, phone, company, licenseNumber } = req.body;
     if (!username || !password) {
@@ -121,6 +142,7 @@ app.post("/api/auth/register", async (req: Request, res: Response) => {
       sendEmailVerification({ to: user.email, name: user.name ?? user.username, verificationToken });
     }
 
+    securityLog("REGISTER", { email: user.email ?? username, ip });
     res.json({ token, refreshToken, user: { id: user.id, username: user.username, email: user.email, role: user.role, name: user.name, subscriptionStatus: user.subscriptionStatus, trialEndsAt: user.subscriptionCurrentPeriodEnd } });
   } catch (error) {
     console.error("[register]", error);
@@ -186,6 +208,24 @@ app.post("/api/auth/verify-email", async (req: Request, res: Response) => {
   } catch {
     res.status(500).json({ message: "Error al verificar email" });
   }
+});
+
+app.post("/api/auth/resend-verification", async (req: Request, res: Response) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ message: "Email requerido" });
+  try {
+    const [user] = await db.select().from(users).where(eq(users.username, email.trim().toLowerCase())).limit(1);
+    if (user && !user.emailVerifiedAt && user.email) {
+      const verificationToken = nanoid(32);
+      await db.update(users)
+        .set({ emailVerificationToken: verificationToken, updatedAt: new Date() })
+        .where(eq(users.id, user.id));
+      sendEmailVerification({ to: user.email, name: user.name ?? user.username, verificationToken });
+    }
+  } catch {
+    // Swallow — never reveal account existence
+  }
+  res.json({ message: "Si tu email está registrado y no verificado, recibirás un nuevo enlace de verificación." });
 });
 
 app.post("/api/auth/forgot-password", async (req: Request, res: Response) => {

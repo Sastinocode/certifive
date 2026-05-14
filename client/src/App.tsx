@@ -38,6 +38,8 @@ import NotFound from "@/pages/not-found";
 import PaymentSuccess from "@/pages/PaymentSuccess";
 import PaymentCancel from "@/pages/PaymentCancel";
 import RenovarSuscripcion from "@/pages/RenovarSuscripcion";
+import PrivacyPolicy from "@/pages/PrivacyPolicy";
+import TermsOfService from "@/pages/TermsOfService";
 
 function PresupuestoWrapper() {
   const { token } = useParams<{ token: string }>();
@@ -144,6 +146,10 @@ function Router() {
         <Route path="/settings" component={isAuthenticated ? Settings : Login} />
         <Route path="/revision-tecnica/:id" component={isAuthenticated ? TecnicoFormReview : Login} />
         <Route path="/visita/:id" component={isAuthenticated ? VisitForm : Login} />
+
+        {/* Legal pages */}
+        <Route path="/privacy" component={PrivacyPolicy} />
+        <Route path="/terms" component={TermsOfService} />
 
         {/* Stripe payment result pages */}
         <Route path="/success" component={PaymentSuccess} />

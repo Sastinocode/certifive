@@ -11,21 +11,47 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ email: "", password: "" });
+  const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
+  const [resendLoading, setResendLoading] = useState(false);
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((prev) => ({ ...prev, [k]: e.target.value }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setUnverifiedEmail(null);
     setIsLoading(true);
     try {
       await login(form.email, form.password);
       toast({ title: "¡Bienvenido de vuelta!", description: "Has iniciado sesión correctamente." });
       navigate("/");
     } catch (error: any) {
-      toast({ title: "Error de autenticación", description: error.message, variant: "destructive" });
+      const msg: string = error.message || "";
+      if (msg.startsWith("403:")) {
+        setUnverifiedEmail(form.email);
+      } else {
+        toast({ title: "Error de autenticación", description: msg, variant: "destructive" });
+      }
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!unverifiedEmail) return;
+    setResendLoading(true);
+    try {
+      const res = await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: unverifiedEmail }),
+      });
+      const data = await res.json();
+      toast({ title: "Email enviado", description: data.message });
+    } catch {
+      toast({ title: "Error", description: "No se pudo reenviar. Inténtalo de nuevo.", variant: "destructive" });
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -77,6 +103,30 @@ export default function Login() {
               Accede a tu cuenta de Certifive
             </p>
           </div>
+
+          {unverifiedEmail && (
+            <div style={{
+              background: "#fffbeb", border: "1px solid #fcd34d", borderRadius: 10,
+              padding: "14px 16px", marginBottom: 20,
+            }}>
+              <p style={{ fontSize: 14, color: "#92400e", margin: "0 0 10px", lineHeight: 1.5 }}>
+                <strong>Email no verificado.</strong> Revisa tu bandeja de entrada y haz clic en el enlace de verificación.
+              </p>
+              <button
+                type="button"
+                onClick={handleResendVerification}
+                disabled={resendLoading}
+                style={{
+                  fontSize: 13, fontWeight: 600, color: "#1FA94B",
+                  background: "none", border: "1px solid #1FA94B",
+                  borderRadius: 6, padding: "6px 12px", cursor: resendLoading ? "not-allowed" : "pointer",
+                  opacity: resendLoading ? 0.6 : 1,
+                }}
+              >
+                {resendLoading ? "Enviando..." : "Reenviar email de verificación"}
+              </button>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit}>
             <div style={{ marginBottom: 12 }}>
