@@ -33,6 +33,7 @@ import PublicPayment from "@/pages/PublicPayment";
 import PublicTariffGenerator from "@/pages/public-tariff-generator";
 import FormularioTecnicoPublico from "@/pages/FormularioTecnicoPublico";
 import TecnicoFormReview from "@/pages/TecnicoFormReview";
+import VisitForm from "@/pages/VisitForm";
 import NotFound from "@/pages/not-found";
 
 function PresupuestoWrapper() {
@@ -112,6 +113,7 @@ function Router() {
         <Route path="/configuracion" component={isAuthenticated ? Settings : Login} />
         <Route path="/settings" component={isAuthenticated ? Settings : Login} />
         <Route path="/revision-tecnica/:id" component={isAuthenticated ? TecnicoFormReview : Login} />
+        <Route path="/visita/:id" component={isAuthenticated ? VisitForm : Login} />
 
         <Route component={NotFound} />
       </Switch>
