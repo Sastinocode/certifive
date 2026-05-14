@@ -19,6 +19,41 @@ export default function Landing() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  useEffect(() => {
+    const layers = Array.from(document.querySelectorAll<HTMLElement>(".parallax-layer")).map(el => ({
+      el,
+      speed: parseFloat(el.dataset.speed || "0.2"),
+      rotate: parseFloat(el.dataset.rotate || "0"),
+    }));
+    let scrollY = window.scrollY;
+    let ticking = false;
+    function update() {
+      for (const l of layers) {
+        const y = scrollY * l.speed;
+        const r = scrollY * l.rotate * 0.02;
+        l.el.style.transform = `translate3d(0,${y}px,0)` + (r ? ` rotate(${r}deg)` : "");
+      }
+      ticking = false;
+    }
+    const onParallax = () => {
+      scrollY = window.scrollY;
+      if (!ticking) { requestAnimationFrame(update); ticking = true; }
+    };
+    window.addEventListener("scroll", onParallax, { passive: true });
+    update();
+    return () => window.removeEventListener("scroll", onParallax);
+  }, []);
+
+  useEffect(() => {
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) { e.target.classList.add("visible"); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.12, rootMargin: "0px 0px -40px 0px" });
+    document.querySelectorAll(".reveal").forEach(el => io.observe(el));
+    return () => io.disconnect();
+  }, []);
+
   const scrollTo = (id: string) => (e: React.MouseEvent) => {
     e.preventDefault();
     const el = document.getElementById(id);
@@ -86,7 +121,7 @@ export default function Landing() {
   );
 
   return (
-    <div style={{ fontFamily: "'Inter',system-ui,sans-serif", color: "#0F172A", background: "#fff", overflowX: "hidden" }}>
+    <div style={{ fontFamily: "'Inter',system-ui,sans-serif", color: "#0F172A", background: "#fff", overflowX: "hidden", position: "relative" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -332,7 +367,7 @@ export default function Landing() {
         .step{
           background:white;border:1px solid var(--s200);
           border-radius:var(--rl);padding:28px 18px 24px;
-          text-align:center;position:relative;z-index:1;
+          text-align:center;position:relative;z-index:1;overflow:hidden;
           transition:transform .2s,box-shadow .2s,border-color .2s;
         }
         .step:hover{transform:translateY(-4px);box-shadow:var(--shadow-card);border-color:rgba(31,169,75,.4)}
@@ -351,6 +386,7 @@ export default function Landing() {
         .testi{
           background:white;border:1px solid var(--s200);
           border-radius:var(--rl);padding:32px;
+          position:relative;overflow:hidden;
           transition:box-shadow .2s,transform .2s;
         }
         .testi:hover{box-shadow:var(--shadow-card);transform:translateY(-2px)}
@@ -557,17 +593,100 @@ export default function Landing() {
           .container{padding:0 20px}
           .nav-links{display:none}
         }
+
+        /* ── PARALLAX LAYERS ── */
+        .parallax-layer{position:absolute;pointer-events:none;z-index:0;will-change:transform}
+
+        /* ── REVEAL ON SCROLL ── */
+        .reveal{opacity:0;transform:translateY(24px)}
+        .reveal.visible{
+          transition:opacity .8s cubic-bezier(.16,1,.3,1),transform .8s cubic-bezier(.16,1,.3,1);
+          opacity:1;transform:translateY(0);
+        }
+        .reveal.d1.visible{transition-delay:.08s}
+        .reveal.d2.visible{transition-delay:.16s}
+        .reveal.d3.visible{transition-delay:.24s}
+
+        /* ── STEP WATERMARK + TOP LINE ── */
+        .step::before{
+          content:attr(data-num);
+          position:absolute;bottom:-38px;right:-10px;
+          font-size:160px;font-weight:900;line-height:1;letter-spacing:-.06em;
+          color:transparent;-webkit-text-stroke:1.5px rgba(31,169,75,.08);pointer-events:none;
+        }
+        .step:hover::before{-webkit-text-stroke-color:rgba(31,169,75,.18)}
+        .step::after{
+          content:'';position:absolute;top:0;left:24px;right:24px;
+          height:2px;
+          background:linear-gradient(90deg,transparent,var(--green),transparent);
+          opacity:0;transition:opacity .25s;
+        }
+        .step:hover::after{opacity:1}
+
+        /* ── TESTI DECORATIVE ELEMENTS ── */
+        .testi::before{
+          content:'"';
+          position:absolute;top:-30px;right:14px;
+          font-family:Georgia,serif;font-size:160px;font-weight:700;line-height:1;
+          color:rgba(31,169,75,.07);pointer-events:none;
+        }
+        .testi:hover::before{color:rgba(31,169,75,.14)}
+        .testi::after{
+          content:'';position:absolute;top:0;right:0;
+          width:80px;height:80px;
+          background:radial-gradient(circle at top right,rgba(31,169,75,.06),transparent 70%);
+          pointer-events:none;
+        }
+        .testi-stars,.testi-text,.testi-author{position:relative;z-index:1}
+
+        /* ── STAT HOVER UNDERLINE ── */
+        .stat{position:relative;cursor:default}
+        .stat::before{
+          content:'';position:absolute;bottom:-12px;left:50%;transform:translateX(-50%);
+          width:24px;height:2px;background:var(--green);opacity:0;
+          transition:width .25s,opacity .25s;
+        }
+        .stat:hover::before{width:40px;opacity:1}
+
+        /* ── NAV CARET ── */
+        .nav-item{display:flex;align-items:center;gap:5px}
+        .nav-caret{transition:transform .2s}
+        .nav-item:hover .nav-caret{transform:rotate(180deg)}
+
+        /* ── REDUCED MOTION ── */
+        @media(prefers-reduced-motion:reduce){
+          .parallax-layer{transform:none !important}
+          .reveal{opacity:1;transform:none}
+          .reveal.visible{transition:none}
+        }
       `}</style>
+
+      {/* ── PARALLAX DECOR ── */}
+      <div className="parallax-layer" data-speed="0.15" style={{ top: 80, left: "3%", width: 280, height: 280, borderRadius: "50%", background: "radial-gradient(circle,rgba(31,169,75,.14) 0%,transparent 70%)", filter: "blur(60px)" }} />
+      <div className="parallax-layer" data-speed="-0.2" style={{ top: 200, right: "5%", width: 220, height: 220, borderRadius: "50%", background: "radial-gradient(circle,rgba(132,204,22,.18) 0%,transparent 70%)", filter: "blur(60px)" }} />
+      <div className="parallax-layer" data-speed="0.3" style={{ top: 600, left: "8%", width: 160, height: 160, borderRadius: "50%", border: "1.2px dashed rgba(31,169,75,.25)" }} />
+      <div className="parallax-layer" data-speed="-0.15" style={{ top: 400, right: "10%", width: 120, height: 100, backgroundImage: "radial-gradient(circle,rgba(31,169,75,.32) 1.4px,transparent 1.4px)", backgroundSize: "16px 16px" }} />
+      <div className="parallax-layer" data-speed="0.25" data-rotate="0.3" style={{ top: 900, left: "5%", width: 18, height: 18, background: "linear-gradient(135deg,#1FA94B,#84CC16)", opacity: 0.14, transform: "rotate(20deg)", borderRadius: 2 }} />
+      <div className="parallax-layer" data-speed="-0.35" style={{ top: 1200, right: "3%", width: 360, height: 360, borderRadius: "50%", background: "radial-gradient(circle,rgba(245,158,11,.14) 0%,transparent 70%)", filter: "blur(60px)" }} />
+      <div className="parallax-layer" data-speed="0.2" style={{ top: 1500, left: "12%", width: 200, height: 200, borderRadius: "50%", border: "1.2px solid rgba(31,169,75,.12)" }} />
+      <div className="parallax-layer" data-speed="-0.1" style={{ top: 1800, right: "8%", width: 160, height: 160, backgroundImage: "radial-gradient(circle,rgba(31,169,75,.32) 1.4px,transparent 1.4px)", backgroundSize: "16px 16px" }} />
+      <div className="parallax-layer" data-speed="0.4" data-rotate="0.2" style={{ top: 2000, right: "15%", width: 14, height: 14, background: "linear-gradient(135deg,#1FA94B,#84CC16)", opacity: 0.18, transform: "rotate(20deg)", borderRadius: 2 }} />
+      <div className="parallax-layer" data-speed="-0.25" style={{ top: 2400, left: "2%", width: 420, height: 420, borderRadius: "50%", background: "radial-gradient(circle,rgba(31,169,75,.12) 0%,transparent 70%)", filter: "blur(60px)" }} />
+      <div className="parallax-layer" data-speed="0.1" style={{ top: 2700, right: "6%", width: 140, height: 140, borderRadius: "50%", border: "1.2px dashed rgba(31,169,75,.25)" }} />
+      <div className="parallax-layer" data-speed="-0.3" style={{ top: 3000, left: "15%", width: 120, height: 100, backgroundImage: "radial-gradient(circle,rgba(31,169,75,.32) 1.4px,transparent 1.4px)", backgroundSize: "16px 16px" }} />
+      <div className="parallax-layer" data-speed="0.35" data-rotate="-0.2" style={{ top: 3200, left: "7%", width: 26, height: 26, background: "linear-gradient(135deg,#1FA94B,#84CC16)", opacity: 0.12, transform: "rotate(20deg)", borderRadius: 2 }} />
+      <div className="parallax-layer" data-speed="-0.2" style={{ top: 3500, right: "4%", width: 200, height: 200, borderRadius: "50%", background: "radial-gradient(circle,rgba(132,204,22,.14) 0%,transparent 70%)", filter: "blur(60px)" }} />
+      <div className="parallax-layer" data-speed="0.6" style={{ top: 3800, right: "20%", width: 160, height: 160, backgroundImage: "radial-gradient(circle,rgba(31,169,75,.32) 1.4px,transparent 1.4px)", backgroundSize: "16px 16px" }} />
 
       {/* ── NAVBAR ── */}
       <nav className={`nav${scrolled ? " scrolled" : ""}`}>
         <div className="nav-inner">
           <div className="nav-logo" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
-            <LogoSVG />
+            <img src="/assets/logo-horizontal.png" height={36} alt="Certifive" />
           </div>
           <ul className="nav-links">
-            <li><a onClick={scrollTo("flujo")}>Producto</a></li>
-            <li><a onClick={scrollTo("proceso")}>Cómo funciona</a></li>
+            <li><a className="nav-item" onClick={scrollTo("flujo")}>Producto<svg className="nav-caret" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></a></li>
+            <li><a className="nav-item" onClick={scrollTo("proceso")}>Cómo funciona<svg className="nav-caret" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></a></li>
             <li><a onClick={scrollTo("precios")}>Precios</a></li>
             <li><a onClick={scrollTo("faq")}>FAQ</a></li>
           </ul>
@@ -588,7 +707,7 @@ export default function Landing() {
           </svg>
         </div>
         <div className="container hero-inner">
-          <div className="hero-text">
+          <div className="hero-text reveal">
             <div className="hero-badge">
               <span className="hero-badge-dot" />
               Software para certificadores energéticos · España
@@ -620,7 +739,7 @@ export default function Landing() {
           </div>
 
           {/* Dashboard mock — Interactive Demo */}
-          <div className="hero-visual">
+          <div className="hero-visual reveal d1">
             <div className="dash-header">
               <div className="dash-title">Panel de control</div>
               <div className="dash-live">
@@ -841,10 +960,10 @@ export default function Landing() {
       <section className="stats-strip">
         <div className="container">
           <div className="stats-inner">
-            <div className="stat"><div className="stat-n">×5</div><div className="stat-l">más productividad por técnico</div></div>
-            <div className="stat"><div className="stat-n">+2.400</div><div className="stat-l">certificadores en España</div></div>
-            <div className="stat"><div className="stat-n">4,2 h</div><div className="stat-l">ahorradas por expediente</div></div>
-            <div className="stat"><div className="stat-n">98,7%</div><div className="stat-l">expedientes aprobados a la 1.ª</div></div>
+            <div className="stat reveal"><div className="stat-n">×5</div><div className="stat-l">más productividad por técnico</div></div>
+            <div className="stat reveal d1"><div className="stat-n">+2.400</div><div className="stat-l">certificadores en España</div></div>
+            <div className="stat reveal d2"><div className="stat-n">4,2 h</div><div className="stat-l">ahorradas por expediente</div></div>
+            <div className="stat reveal d3"><div className="stat-n">98,7%</div><div className="stat-l">expedientes aprobados a la 1.ª</div></div>
           </div>
         </div>
       </section>
@@ -852,12 +971,12 @@ export default function Landing() {
       {/* ── FLUJO SHOWCASE ── */}
       <section className="section" id="flujo">
         <div className="container">
-          <div className="section-head">
+          <div className="section-head reveal">
             <span className="section-eyebrow">Plataforma todo-en-uno</span>
             <h2 className="section-title">Todo tu flujo de certificación, <span className="accent">en un solo lugar.</span></h2>
             <p className="section-sub">Centraliza cada etapa del proceso y toma decisiones más inteligentes con Certifive.</p>
           </div>
-          <div className="showcase-mock">
+          <div className="showcase-mock reveal d1">
             <div className="showcase-tabs">
               {["Expedientes","Clientes","Certificados","Informes","Cuestionarios","WhatsApp"].map(t => (
                 <div
@@ -1121,7 +1240,7 @@ export default function Landing() {
       {/* ── CALCULADORA DE PRODUCTIVIDAD ── */}
       <section className="section alt" id="multiplica">
         <div className="container">
-          <div className="section-head">
+          <div className="section-head reveal">
             <span className="section-eyebrow">Calcula tu potencial</span>
             <h2 className="section-title">Multiplica <span className="accent">×5</span> tus ventas y tu eficiencia.</h2>
             <p className="section-sub">Mueve el slider y comprueba el impacto real de Certifive en tu negocio.</p>
@@ -1152,7 +1271,7 @@ export default function Landing() {
             ];
 
             return (
-              <div style={{
+              <div className="reveal d1" style={{
                 background: "white", borderRadius: 16, border: "1px solid var(--s200)",
                 boxShadow: "var(--shadow-card)", overflow: "hidden",
                 maxWidth: 680, margin: "0 auto",
@@ -1231,14 +1350,14 @@ export default function Landing() {
       {/* ── PROCESO — 5 PASOS ── */}
       <section className="section" id="proceso">
         <div className="container">
-          <div className="section-head">
+          <div className="section-head reveal">
             <span className="section-eyebrow">Cómo funciona</span>
             <h2 className="section-title">De la visita al <span className="accent">certificado registrado</span> en cinco pasos.</h2>
             <p className="section-sub">Un flujo pensado para que dejes de perder horas en tareas administrativas.</p>
           </div>
           <div className="process-grid">
-            {steps.map((s) => (
-              <div className="step" key={s.n}>
+            {steps.map((s, i) => (
+              <div className={`step reveal${i > 0 ? ` d${Math.min(i, 3)}` : ""}`} key={s.n} data-num={s.n}>
                 <div className="step-num">{s.n}</div>
                 <div className="step-t">{s.t}</div>
                 <p className="step-d">{s.d}</p>
@@ -1251,7 +1370,7 @@ export default function Landing() {
       {/* ── TESTIMONIOS ── */}
       <section className="section alt" id="testimonios">
         <div className="container">
-          <div className="section-head">
+          <div className="section-head reveal">
             <span className="section-eyebrow">Testimonios</span>
             <h2 className="section-title">Lo que dicen los <span className="accent">técnicos</span> que ya usan Certifive.</h2>
             <p className="section-sub">Profesionales reales. Resultados medibles. Más expedientes, menos errores.</p>
@@ -1261,8 +1380,8 @@ export default function Landing() {
               { ini: "MA", name: "Miguel Ángel Torres", role: "Ingeniero Industrial · Madrid", text: "Antes tardaba un día en cerrar un expediente. Con Certifive lo tengo listo en dos horas y al registro autonómico le entra a la primera. La diferencia es brutal." },
               { ini: "LG", name: "Laura García Fonts", role: "Arquitecta Técnica · Barcelona", text: "La integración con CE3X es un antes y un después. Nada de copiar datos a mano. El sistema importa, valida y deja el certificado listo en minutos." },
               { ini: "RV", name: "Roberto Vega Morales", role: "Ingeniero de Edificación · Sevilla", text: "Gestiono más de 60 expedientes al mes yo solo. Sin Certifive sería imposible. El portal del cliente me ha diferenciado mucho frente a otros técnicos." },
-            ].map((t) => (
-              <div className="testi" key={t.ini}>
+            ].map((t, i) => (
+              <div className={`testi reveal${i > 0 ? ` d${i}` : ""}`} key={t.ini}>
                 <div className="testi-stars">{"★★★★★".split("").map((s, i) => <span key={i}>{s}</span>)}</div>
                 <p className="testi-text">{t.text}</p>
                 <div className="testi-author">
@@ -1281,7 +1400,7 @@ export default function Landing() {
       {/* ── PRICING ── */}
       <section className="section" id="precios">
         <div className="container">
-          <div className="section-head">
+          <div className="section-head reveal">
             <span className="section-eyebrow">Precios</span>
             <h2 className="section-title">Planes para cada tipo de <span className="accent">profesional.</span></h2>
             <p className="section-sub">Sin letra pequeña. Sin costes ocultos. Cancela cuando quieras.</p>
@@ -1366,7 +1485,7 @@ export default function Landing() {
       {/* ── FAQ ── */}
       <section className="section alt" id="faq">
         <div className="container">
-          <div className="section-head">
+          <div className="section-head reveal">
             <span className="section-eyebrow">Preguntas frecuentes</span>
             <h2 className="section-title">Todo lo que querías saber antes de empezar.</h2>
           </div>
@@ -1407,7 +1526,7 @@ export default function Landing() {
         <div className="container">
           <div className="footer-top">
             <div>
-              <LogoSVG dark />
+              <img src="/assets/logo-horizontal.png" height={32} alt="Certifive" style={{ filter: "brightness(0) invert(1)", marginBottom: 12 }} />
               <p className="footer-tagline">Software de gestión para profesionales de la certificación energética en España.</p>
               <div className="footer-social">
                 <a href="#" aria-label="LinkedIn">in</a>
