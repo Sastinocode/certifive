@@ -12,6 +12,7 @@ import { registerWhatsAppRoutes } from "./whatsapp";
 import { registerSubscriptionRoutes } from "./subscription";
 import { registerMiscRoutes } from "./misc";
 import { registerFormularioTecnicoRoutes } from "./formulario-tecnico";
+import { registerVisitFormRoutes } from "./visit-form";
 
 export function registerRoutes(app: Express) {
   app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
@@ -29,4 +30,5 @@ export function registerRoutes(app: Express) {
   registerSubscriptionRoutes(app);
   registerMiscRoutes(app);
   registerFormularioTecnicoRoutes(app);
+  registerVisitFormRoutes(app);
 }

@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Download, Phone, Mail, MapPin, Home, Zap, Droplets, Wind, Eye, FileImage } from "lucide-react";
+import { ArrowLeft, Download, Phone, Mail, MapPin, Home, Zap, Droplets, Wind, Eye, FileImage, ClipboardList } from "lucide-react";
 import { Link } from "wouter";
 
 interface CertificationRequest {
@@ -134,6 +134,12 @@ export default function ViewCertificationRequest() {
           </div>
           <div className="flex items-center gap-3">
             {getStatusBadge(cert.status)}
+            <Link to={`/visita/${cert.id}`}>
+              <Button className="bg-emerald-700 hover:bg-emerald-600 text-white gap-2">
+                <ClipboardList className="w-4 h-4" />
+                Ficha de visita (Modo A)
+              </Button>
+            </Link>
           </div>
         </div>
 

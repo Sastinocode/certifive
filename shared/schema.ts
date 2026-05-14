@@ -613,6 +613,73 @@ export const waitlist = pgTable("waitlist", {
 export type Waitlist = typeof waitlist.$inferSelect;
 
 // ─────────────────────────────────────────────────────────────────────────────
+// FICHA DE VISITA — Modo A (certificador en el inmueble)
+// ─────────────────────────────────────────────────────────────────────────────
+export const envelopeElements = pgTable("envelope_elements", {
+  id: serial("id").primaryKey(),
+  certificationId: integer("certification_id").references(() => certifications.id, { onDelete: "cascade" }),
+  tipo: text("tipo").notNull(), // "fachada"|"cubierta"|"suelo"|"medianeria"
+  nombre: text("nombre").notNull(),
+  orientacion: text("orientacion"), // "N"|"NE"|"E"|"SE"|"S"|"SO"|"O"|"NO"|"horizontal"
+  superficieM2: decimal("superficie_m2"),
+  transmitanciaU: decimal("transmitancia_u"),
+  metodo: text("metodo").default("por_defecto"), // "conocido"|"estimado"|"por_defecto"
+  descripcion: text("descripcion"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const openings = pgTable("openings", {
+  id: serial("id").primaryKey(),
+  certificationId: integer("certification_id").references(() => certifications.id, { onDelete: "cascade" }),
+  envelopeElementId: integer("envelope_element_id").references(() => envelopeElements.id, { onDelete: "set null" }),
+  tipo: text("tipo").notNull(), // "ventana"|"puerta"|"lucernario"
+  orientacion: text("orientacion"),
+  superficieM2: decimal("superficie_m2"),
+  transmitanciaUMarco: decimal("transmitancia_u_marco"),
+  transmitanciaUVidrio: decimal("transmitancia_u_vidrio"),
+  factorSolar: decimal("factor_solar"),
+  metodo: text("metodo").default("por_defecto"),
+  descripcion: text("descripcion"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const installations = pgTable("installations", {
+  id: serial("id").primaryKey(),
+  certificationId: integer("certification_id").references(() => certifications.id, { onDelete: "cascade" }),
+  sistema: text("sistema").notNull(), // "calefaccion"|"refrigeracion"|"acs"|"iluminacion"
+  tipo: text("tipo").notNull(),
+  vectorEnergetico: text("vector_energetico"),
+  rendimiento: decimal("rendimiento"),
+  potenciaKw: decimal("potencia_kw"),
+  anyoInstalacion: integer("anyo_instalacion"),
+  metodo: text("metodo").default("por_defecto"),
+  notas: text("notas"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const improvementMeasures = pgTable("improvement_measures", {
+  id: serial("id").primaryKey(),
+  certificationId: integer("certification_id").references(() => certifications.id, { onDelete: "cascade" }),
+  tipo: text("tipo").notNull(), // "envolvente"|"instalaciones"|"iluminacion"
+  descripcion: text("descripcion").notNull(),
+  elementoAfectado: text("elemento_afectado"),
+  costeEstimadoEur: decimal("coste_estimado_eur"),
+  ahorroEnergiaPct: decimal("ahorro_energia_pct"),
+  mejoraCalificacionEsperada: text("mejora_calificacion_esperada"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const visitPhotos = pgTable("visit_photos", {
+  id: serial("id").primaryKey(),
+  certificationId: integer("certification_id").references(() => certifications.id, { onDelete: "cascade" }),
+  url: text("url").notNull(),
+  publicId: text("public_id"),
+  categoria: text("categoria"), // "fachada"|"cubierta"|"instalaciones"|"interior"|"detalle"|"otro"
+  descripcion: text("descripcion"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // INSERT SCHEMAS (Zod validation for API endpoints)
 // ─────────────────────────────────────────────────────────────────────────────
 export const insertUserSchema = createInsertSchema(users).omit({
