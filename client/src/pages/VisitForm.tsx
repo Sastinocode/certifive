@@ -4,11 +4,12 @@ import { useRoute, Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { exportCE3XPdf, exportCE3XExcel } from "@/lib/exportCE3X";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeft, ChevronDown, ChevronUp, Trash2, Plus, Upload, FileText,
-  Home, Square, Wrench, Camera, Lightbulb, CheckCircle2,
+  Home, Square, Wrench, Camera, Lightbulb, CheckCircle2, BarChart2,
 } from "lucide-react";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
@@ -117,6 +118,8 @@ export default function VisitForm() {
 
   const [open, setOpen] = useState({ envelope: true, openings: false, installations: false, photos: false, measures: false });
   const toggle = (k: string) => setOpen(p => ({ ...p, [k]: !p[k] }));
+  const [exportOpen, setExportOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   const invalidate = () => qc.invalidateQueries({ queryKey });
   const ok = (msg: string) => toast({ title: msg });
@@ -234,6 +237,22 @@ export default function VisitForm() {
     },
     onError: () => err("Error al añadir medida"),
   });
+
+  // ── CE3X export ──────────────────────────────────────────────────────────
+  async function handleExport(format: "pdf" | "excel") {
+    setExporting(true);
+    setExportOpen(false);
+    try {
+      const exportData = await fetch(`/api/certifications/${certId}/export-data`, { credentials: "include" })
+        .then(r => { if (!r.ok) throw new Error(); return r.json(); });
+      if (format === "pdf") exportCE3XPdf(exportData);
+      else exportCE3XExcel(exportData);
+    } catch {
+      err("Error al generar el archivo. Inténtalo de nuevo.");
+    } finally {
+      setExporting(false);
+    }
+  }
 
   // ── Render ───────────────────────────────────────────────────────────────
   if (isLoading) {
@@ -564,13 +583,35 @@ export default function VisitForm() {
       </main>
 
       {/* ── FAB: Exportar CE3X ── */}
-      <div className="fixed bottom-6 right-4">
+      <div className="fixed bottom-6 right-4 flex flex-col items-end gap-2">
+        {exportOpen && (
+          <div className="bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden w-48">
+            <button
+              onClick={() => handleExport("pdf")}
+              disabled={exporting}
+              className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+            >
+              <FileText className="w-4 h-4 text-orange-600" />
+              Exportar PDF
+            </button>
+            <div className="border-t border-slate-100" />
+            <button
+              onClick={() => handleExport("excel")}
+              disabled={exporting}
+              className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+            >
+              <BarChart2 className="w-4 h-4 text-green-600" />
+              Exportar Excel
+            </button>
+          </div>
+        )}
         <Button
-          onClick={() => toast({ title: "Exportar para CE3X — Próximamente" })}
+          onClick={() => setExportOpen(p => !p)}
+          disabled={exporting}
           className="bg-orange-600 hover:bg-orange-500 text-white shadow-lg gap-2 rounded-full px-5"
         >
           <FileText className="w-4 h-4" />
-          Exportar CE3X
+          {exporting ? "Generando..." : "Exportar CE3X"}
         </Button>
       </div>
     </div>
