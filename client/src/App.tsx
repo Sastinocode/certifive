@@ -32,6 +32,7 @@ import PublicCEEForm from "@/pages/PublicCEEForm";
 import PublicPayment from "@/pages/PublicPayment";
 import PublicTariffGenerator from "@/pages/public-tariff-generator";
 import FormularioTecnicoPublico from "@/pages/FormularioTecnicoPublico";
+import TecnicoFormReview from "@/pages/TecnicoFormReview";
 import NotFound from "@/pages/not-found";
 
 function PresupuestoWrapper() {
@@ -110,6 +111,7 @@ function Router() {
         <Route path="/stripe" component={isAuthenticated ? StripeIntegration : Login} />
         <Route path="/configuracion" component={isAuthenticated ? Settings : Login} />
         <Route path="/settings" component={isAuthenticated ? Settings : Login} />
+        <Route path="/revision-tecnica/:id" component={isAuthenticated ? TecnicoFormReview : Login} />
 
         <Route component={NotFound} />
       </Switch>

@@ -1,7 +1,8 @@
 import { Express, Request, Response } from "express";
 import { db } from "../db";
 import { eq, and, desc } from "drizzle-orm";
-import { certifications, formResponses, insertFormResponseSchema } from "../../shared/schema";
+import { certifications, formResponses, insertFormResponseSchema, users, documentos, pricingRates } from "../../shared/schema";
+import { calcularPrecio } from "./pricing";
 import { authenticate } from "../auth";
 import { nanoid } from "nanoid";
 import multer from "multer";

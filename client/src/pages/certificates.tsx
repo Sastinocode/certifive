@@ -15,10 +15,10 @@ import Sidebar from "@/components/layout/sidebar";
 import { downloadPDF, downloadWord, downloadExcel } from "@/lib/certDownload";
 import ClientFlowWizard from "@/components/ClientFlowWizard";
 import { 
-  IdCard, 
-  Plus, 
+  IdCard,
+  Plus,
   Search,
-  Download, 
+  Download,
   Eye,
   MoreVertical,
   FileText,
@@ -35,7 +35,8 @@ import {
   Clock,
   AlertCircle,
   Wallet,
-  Send
+  Send,
+  ClipboardList
 } from "lucide-react";
 
 interface Certification {
@@ -75,6 +76,9 @@ interface Certification {
   tramo1PaidAt: string | null;
   ceeFormStatus: string | null;
   ceeFormSentAt: string | null;
+  tecnicoFormStatus: string | null;
+  tecnicoFormToken: string | null;
+  tecnicoFormReviewStatus: string | null;
 }
 
 interface PreviewLink {

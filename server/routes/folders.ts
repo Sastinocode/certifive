@@ -1,6 +1,6 @@
 import { Express, Request, Response } from "express";
 import { db } from "../db";
-import { eq } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import { folders, insertFolderSchema } from "../../shared/schema";
 import { authenticate } from "../auth";
 
