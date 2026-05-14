@@ -334,10 +334,10 @@ export function registerFormularioTecnicoRoutes(app: Express) {
 
         const newWorkflowStatus =
           reviewStatus === "validado"
-            ? "datos_tecnicos_validados"
+            ? "revision_completada"
             : reviewStatus === "visita_complementaria"
-            ? "requiere_visita_complementaria"
-            : "requiere_visita_completa";
+            ? "visita_complementaria_necesaria"
+            : "visita_completa_necesaria";
 
         await db
           .update(certifications)
