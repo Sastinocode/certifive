@@ -53,12 +53,12 @@ export default function VerifyEmail() {
         </h1>
         <p className="text-gray-500 text-sm mt-2">{message}</p>
         {status === "error" && (
-          
-            href="/login"
-            className="mt-6 inline-block bg-emerald-700 text-white px-6 py-2 rounded-lg text-sm font-semibold hover:bg-emerald-800"
+          <button
+            onClick={() => navigate("/login")}
+            className="mt-6 bg-emerald-700 text-white px-6 py-2 rounded-lg text-sm font-semibold hover:bg-emerald-800"
           >
             Ir al login
-          </a>
+          </button>
         )}
       </div>
     </div>
