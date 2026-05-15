@@ -35,6 +35,7 @@ import FormularioTecnicoPublico from "@/pages/FormularioTecnicoPublico";
 import TecnicoFormReview from "@/pages/TecnicoFormReview";
 import VisitForm from "@/pages/VisitForm";
 import NotFound from "@/pages/not-found";
+import VerifyEmail from "@/pages/VerifyEmail";
 import PaymentSuccess from "@/pages/PaymentSuccess";
 import PaymentCancel from "@/pages/PaymentCancel";
 import RenovarSuscripcion from "@/pages/RenovarSuscripcion";
@@ -123,6 +124,7 @@ function Router() {
         <Route path="/login" component={Login} />
         <Route path="/register" component={Register} />
         <Route path="/solicitar-demo" component={DemoRequest} />
+        <Route path="/verify-email" component={VerifyEmail} />
 
         {/* Home: dashboard if authenticated, landing if not */}
         <Route path="/" component={isAuthenticated ? Dashboard : Landing} />
