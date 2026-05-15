@@ -1,181 +1,212 @@
 import { useState } from "react";
-import { useAuth } from "../hooks/useAuth";
+import { useLocation } from "wouter";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { Eye, EyeOff } from "lucide-react";
 
-interface LoginProps {
-  onBack: () => void;
-  onShowRegister: () => void;
-}
+export default function Login() {
+  const [, navigate] = useLocation();
+  const { login } = useAuth();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [form, setForm] = useState({ email: "", password: "" });
+  const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
+  const [resendLoading, setResendLoading] = useState(false);
 
-export default function Login({ onBack, onShowRegister }: LoginProps) {
-  const { login, loginDemo } = useAuth();
-  const [form, setForm] = useState({ username: "", password: "" });
-  const [rememberMe, setRememberMe] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [demoLoading, setDemoLoading] = useState(false);
-  const [error, setError] = useState("");
+  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setForm((prev) => ({ ...prev, [k]: e.target.value }));
 
-  const isDemoMode = new URLSearchParams(window.location.search).get("demo") === "true";
-
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError("");
+    setUnverifiedEmail(null);
+    setIsLoading(true);
     try {
-      await login(form.username, form.password, rememberMe);
-    } catch (err: any) {
-      const msg = err.message ?? "";
-      if (msg.includes("no registrado")) setError("Email o usuario no registrado");
-      else if (msg.includes("incorrecta")) setError("Contraseña incorrecta");
-      else if (msg.includes("429") || msg.includes("Demasiados")) setError("Demasiados intentos. Espera 1 minuto.");
-      else setError("Usuario o contraseña incorrectos");
+      await login(form.email, form.password);
+      toast({ title: "¡Bienvenido de vuelta!", description: "Has iniciado sesión correctamente." });
+      navigate("/");
+    } catch (error: any) {
+      const msg: string = error.message || "";
+      if (msg.startsWith("403:")) {
+        setUnverifiedEmail(form.email);
+      } else {
+        toast({ title: "Error de autenticación", description: msg, variant: "destructive" });
+      }
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  const handleDemo = async () => {
-    setDemoLoading(true);
+  const handleResendVerification = async () => {
+    if (!unverifiedEmail) return;
+    setResendLoading(true);
     try {
-      await loginDemo();
+      const res = await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: unverifiedEmail }),
+      });
+      const data = await res.json();
+      toast({ title: "Email enviado", description: data.message });
     } catch {
-      setDemoLoading(false);
+      toast({ title: "Error", description: "No se pudo reenviar. Inténtalo de nuevo.", variant: "destructive" });
+    } finally {
+      setResendLoading(false);
     }
   };
+
+  const LogoSVG = () => (
+    <svg width="140" height="36" viewBox="0 0 140 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M6 17L6 28L22 28L22 17L14 9Z" fill="none" stroke="#1FA94B" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round"/>
+      <rect x="9" y="22" width="2.5" height="6" rx="0.5" fill="#1FA94B"/>
+      <rect x="13" y="19" width="2.5" height="9" rx="0.5" fill="#84CC16"/>
+      <rect x="17" y="16" width="2.5" height="12" rx="0.5" fill="#F59E0B"/>
+      <text x="30" y="26" fontFamily="Inter, system-ui, sans-serif" fontWeight="800" fontSize="19" fill="#0F172A">certifive</text>
+    </svg>
+  );
 
   return (
-    <div className="min-h-screen bg-emerald-50 flex">
-      <div className="hidden lg:flex lg:w-1/2 bg-emerald-800 flex-col justify-between p-12">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
-            <span className="material-symbols-outlined text-white text-[20px]">energy_savings_leaf</span>
-          </div>
-          <span className="text-white font-bold text-xl">CERTIFIVE</span>
+    <div style={{ minHeight: "100vh", background: "#f3faf5", display: "flex", flexDirection: "column", fontFamily: "'Inter',system-ui,sans-serif" }}>
+      {/* Nav */}
+      <div style={{ padding: "20px 32px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ cursor: "pointer" }} onClick={() => navigate("/")}>
+          <LogoSVG />
         </div>
-        <div>
-          <h2 className="text-4xl font-black text-white mb-4 leading-tight tracking-tight">
-            La plataforma CEE<br />para profesionales.
-          </h2>
-          <p className="text-emerald-200 text-lg leading-relaxed mb-10">
-            Gestiona tus certificaciones energéticas con precisión y eficiencia desde un solo lugar.
-          </p>
-          <div className="grid grid-cols-3 gap-4">
-            {[
-              { num: "+400%", label: "Más ingresos" },
-              { num: "85%", label: "Menos tiempo" },
-              { num: "24h", label: "Entrega" },
-            ].map(s => (
-              <div key={s.label} className="bg-white/10 rounded-xl p-4">
-                <p className="text-2xl font-black text-white mb-1">{s.num}</p>
-                <p className="text-emerald-300 text-xs font-medium">{s.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-        <p className="text-emerald-500 text-xs">© 2024 CERTIFIVE. Certificación CEE Española.</p>
+        <button
+          onClick={() => navigate("/register")}
+          style={{ fontSize: 14, fontWeight: 500, color: "#475569", background: "none", border: "none", cursor: "pointer" }}
+        >
+          ¿No tienes cuenta? <span style={{ color: "#1FA94B", fontWeight: 600 }}>Regístrate gratis</span>
+        </button>
       </div>
 
-      <div className="flex-1 flex items-center justify-center p-8">
-        <div className="w-full max-w-md">
-          <div className="lg:hidden flex items-center gap-3 mb-8">
-            <div className="w-9 h-9 bg-emerald-800 rounded-xl flex items-center justify-center">
-              <span className="material-symbols-outlined text-white text-[18px]">energy_savings_leaf</span>
+      {/* Card */}
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px 16px" }}>
+        <div style={{
+          background: "white", borderRadius: 20, border: "1px solid #E5E7EB",
+          boxShadow: "0 4px 32px rgba(15,23,42,.08)", padding: "48px 40px", width: "100%", maxWidth: 460,
+        }}>
+          <div style={{ marginBottom: 32, textAlign: "center" }}>
+            <div style={{
+              display: "inline-flex", alignItems: "center", gap: 8,
+              background: "#e8f6ec", color: "#178A3C", fontSize: 13, fontWeight: 600,
+              padding: "6px 14px", borderRadius: 999, marginBottom: 20,
+              border: "1px solid rgba(31,169,75,.18)",
+            }}>
+              <span style={{ width: 7, height: 7, background: "#1FA94B", borderRadius: "50%", display: "inline-block" }} />
+              Bienvenido de vuelta
             </div>
-            <span className="font-bold text-emerald-900 text-lg">CERTIFIVE</span>
+            <h1 style={{ fontSize: 28, fontWeight: 800, color: "#0F172A", margin: 0, letterSpacing: "-.03em" }}>
+              Iniciar sesión
+            </h1>
+            <p style={{ fontSize: 15, color: "#64748B", margin: "10px 0 0" }}>
+              Accede a tu cuenta de Certifive
+            </p>
           </div>
 
-          <h1 className="text-2xl font-bold text-emerald-900 tracking-tight mb-1">Bienvenido de nuevo</h1>
-          <p className="text-sm text-emerald-700/60 mb-8">Inicia sesión en tu cuenta de certificador</p>
+          {unverifiedEmail && (
+            <div style={{
+              background: "#fffbeb", border: "1px solid #fcd34d", borderRadius: 10,
+              padding: "14px 16px", marginBottom: 20,
+            }}>
+              <p style={{ fontSize: 14, color: "#92400e", margin: "0 0 10px", lineHeight: 1.5 }}>
+                <strong>Email no verificado.</strong> Revisa tu bandeja de entrada y haz clic en el enlace de verificación.
+              </p>
+              <button
+                type="button"
+                onClick={handleResendVerification}
+                disabled={resendLoading}
+                style={{
+                  fontSize: 13, fontWeight: 600, color: "#1FA94B",
+                  background: "none", border: "1px solid #1FA94B",
+                  borderRadius: 6, padding: "6px 12px", cursor: resendLoading ? "not-allowed" : "pointer",
+                  opacity: resendLoading ? 0.6 : 1,
+                }}
+              >
+                {resendLoading ? "Enviando..." : "Reenviar email de verificación"}
+              </button>
+            </div>
+          )}
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            {error && (
-              <div className="bg-red-50 border border-red-100 rounded-xl px-4 py-3 flex items-center gap-2 text-sm text-red-700">
-                <span className="material-symbols-outlined text-[16px]">error</span>
-                {error}
-              </div>
-            )}
-            <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest text-emerald-700/60 block mb-1.5">Usuario</label>
+          <form onSubmit={handleSubmit}>
+            <div style={{ marginBottom: 12 }}>
+              <label style={labelStyle}>Email *</label>
               <input
-                data-testid="input-username"
-                type="text"
-                value={form.username}
-                onChange={e => setForm(f => ({ ...f, username: e.target.value }))}
-                placeholder="tu_usuario"
+                type="email"
+                placeholder="tu@email.com"
+                value={form.email}
+                onChange={set("email")}
+                style={inputStyle}
                 required
-                className="w-full bg-white border border-emerald-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300"
               />
             </div>
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-emerald-700/60">Contraseña</label>
+
+            <div style={{ marginBottom: 28 }}>
+              <label style={labelStyle}>Contraseña *</label>
+              <div style={{ position: "relative" }}>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Tu contraseña"
+                  value={form.password}
+                  onChange={set("password")}
+                  style={{ ...inputStyle, paddingRight: 44 }}
+                  required
+                />
                 <button
                   type="button"
-                  onClick={() => alert("Próximamente: se enviará un enlace de recuperación a tu email registrado.")}
-                  className="text-[11px] text-emerald-700/60 hover:text-emerald-800 transition-colors"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#94A3B8", display: "flex" }}
                 >
-                  ¿Olvidaste tu contraseña?
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
-              <input
-                data-testid="input-password"
-                type="password"
-                value={form.password}
-                onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-                placeholder="••••••••"
-                required
-                className="w-full bg-white border border-emerald-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300"
-              />
             </div>
-            <label className="flex items-center gap-2.5 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={rememberMe}
-                onChange={e => setRememberMe(e.target.checked)}
-                className="w-4 h-4 rounded border-emerald-300 text-emerald-700 focus:ring-emerald-300"
-              />
-              <span className="text-sm text-emerald-700/70">Recordarme durante 30 días</span>
-            </label>
+
             <button
-              data-testid="btn-login"
               type="submit"
-              disabled={loading}
-              className="w-full py-3 bg-emerald-800 text-white rounded-xl font-semibold hover:bg-emerald-700 disabled:opacity-60 transition-colors shadow-sm"
+              disabled={isLoading}
+              style={{
+                width: "100%", padding: "15px", borderRadius: 10, border: "none",
+                background: isLoading ? "#a7d7b8" : "#1FA94B", color: "white",
+                fontSize: 16, fontWeight: 700, cursor: isLoading ? "not-allowed" : "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                transition: "background .2s",
+              }}
+              onMouseOver={e => { if (!isLoading) e.currentTarget.style.background = "#178A3C"; }}
+              onMouseOut={e => { if (!isLoading) e.currentTarget.style.background = "#1FA94B"; }}
             >
-              {loading ? "Iniciando sesión..." : "Iniciar sesión"}
+              {isLoading ? (
+                <>
+                  <span style={{ width: 16, height: 16, border: "2px solid rgba(255,255,255,.4)", borderTopColor: "white", borderRadius: "50%", display: "inline-block", animation: "spin .7s linear infinite" }} />
+                  Iniciando sesión...
+                </>
+              ) : "Iniciar sesión"}
             </button>
           </form>
 
-          {isDemoMode && (
-            <>
-              <div className="flex items-center gap-4 my-5">
-                <div className="flex-1 h-px bg-emerald-200" />
-                <span className="text-xs text-emerald-700/50 font-medium">o continúa con</span>
-                <div className="flex-1 h-px bg-emerald-200" />
-              </div>
-              <button
-                data-testid="btn-demo"
-                onClick={handleDemo}
-                disabled={demoLoading}
-                className="w-full py-3 border-2 border-orange-200 text-orange-700 bg-orange-50 rounded-xl font-semibold hover:bg-orange-100 disabled:opacity-60 transition-colors text-sm"
-              >
-                {demoLoading ? "Cargando demo..." : "▶ Acceder a la demo"}
-              </button>
-            </>
-          )}
-
-          <p className="text-center text-sm text-emerald-700/60 mt-6">
+          <p style={{ fontSize: 13, color: "#64748B", textAlign: "center", marginTop: 24 }}>
             ¿No tienes cuenta?{" "}
-            <button onClick={onShowRegister} className="text-emerald-800 font-semibold hover:underline">
-              Regístrate gratis
-            </button>
-          </p>
-          <p className="text-center mt-3">
-            <button onClick={onBack} className="text-xs text-emerald-700/50 hover:text-emerald-700 transition-colors">
-              ← Volver al inicio
+            <button
+              onClick={() => navigate("/register")}
+              style={{ color: "#1FA94B", fontWeight: 600, background: "none", border: "none", cursor: "pointer", fontSize: 13 }}
+            >
+              Crea una gratis
             </button>
           </p>
         </div>
       </div>
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
     </div>
   );
 }
+
+const labelStyle: React.CSSProperties = {
+  display: "block", fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 6,
+};
+
+const inputStyle: React.CSSProperties = {
+  width: "100%", padding: "12px 14px", borderRadius: 8, border: "1.5px solid #E5E7EB",
+  fontSize: 14, color: "#0F172A", outline: "none", boxSizing: "border-box",
+  fontFamily: "inherit", background: "#FAFAFA", transition: "border-color .15s",
+};

@@ -90,6 +90,10 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
       (req as any).user = user;
       return next();
     }
+    // Token present but invalid — log it
+    const { securityLog } = await import("./security-logger.js");
+    const ip = (req as any).ip ?? req.socket?.remoteAddress ?? "unknown";
+    securityLog("INVALID_TOKEN", { path: req.path, ip });
   }
 
   return res.status(401).json({ message: "Unauthorized" });

@@ -1,12 +1,42 @@
 import express from "express";
 import session from "express-session";
+import helmet from "helmet";
 import path from "path";
 import { fileURLToPath } from "url";
-import { registerRoutes } from "./routes";
+import { registerRoutes } from "./routes/index";
 import { initEmail } from "./email";
+import { startReminderCron } from "./notifications";
+import { startDigestCron } from "./digest";
+import catastroRouter from "./routes/catastro";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
+
+// ── Security headers ──────────────────────────────────────────────────────────
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc:  ["'self'"],
+      scriptSrc:   ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://js.stripe.com"],
+      styleSrc:    ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc:     ["'self'", "https://fonts.gstatic.com"],
+      imgSrc:      ["'self'", "data:", "blob:", "https:"],
+      connectSrc:  ["'self'", "https://api.stripe.com", "ws:", "wss:"],
+      frameSrc:    ["https://js.stripe.com"],
+      objectSrc:   ["'none'"],
+    },
+  },
+  frameguard:     { action: "deny" },
+  noSniff:        true,
+  referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+  crossOriginEmbedderPolicy: false,
+}));
+
+app.use((_req, res, next) => {
+  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  next();
+});
+// ─────────────────────────────────────────────────────────────────────────────
 
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
@@ -24,6 +54,15 @@ app.use(session({
 
 // Initialize email service (no-op if SENDGRID_API_KEY is not set)
 initEmail();
+
+// Start hourly reminder cron jobs (48h solicitud, 72h CEE form)
+startReminderCron();
+
+// Start daily digest cron (08:00 Europe/Madrid)
+startDigestCron();
+
+// Catastro proxy (avoids CORS — browser can't call ovc.catastro.meh.es directly)
+app.use("/api/catastro", catastroRouter);
 
 registerRoutes(app);
 
