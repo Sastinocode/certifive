@@ -46,7 +46,12 @@ async function send(msg: sgMail.MailDataRequired): Promise<void> {
     return;
   }
   try {
-    await sgMail.send(msg);
+    const message: any = { ...msg };
+    if (message.html) {
+      message.content = [{ type: "text/html; charset=utf-8", value: message.html }];
+      delete message.html;
+    }
+    await sgMail.send(message);
     console.log("[email] sent:", msg.subject, "â†’", msg.to);
   } catch (err: any) {
     // Log but never throw â€” emails must not break the main request flow
