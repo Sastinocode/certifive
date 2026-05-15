@@ -92,7 +92,8 @@ app.post("/api/auth/login", loginRateLimiter, async (req: Request, res: Response
     const refreshToken = await generateRefreshToken(user.id, !!rememberMe);
 
     res.json({ token, refreshToken, user: { id: user.id, username: user.username, email: user.email, role: user.role, name: user.name } });
-  } catch {
+  } catch (err) {
+    console.error("[login] error:", err);
     res.status(500).json({ message: "Error al iniciar sesión" });
   }
 });
