@@ -166,6 +166,8 @@ export default function Landing() {
           height:72px;display:flex;align-items:center;justify-content:space-between;gap:32px;
         }
         .nav-logo{display:flex;align-items:center;flex-shrink:0;cursor:pointer}
+        .nav-logo img{height:36px;width:auto}
+        .footer-top > div:first-child img{height:32px;width:auto}
         .nav-links{display:flex;align-items:center;gap:36px;list-style:none;flex:1;justify-content:center}
         .nav-links a{font-size:15px;font-weight:500;color:var(--ink700);transition:color .15s;cursor:pointer}
         .nav-links a:hover{color:var(--green)}
