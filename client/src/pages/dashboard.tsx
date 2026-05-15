@@ -14,6 +14,7 @@ import Sidebar from "@/components/layout/sidebar";
 import { DashboardSkeletons, TableSkeleton } from "@/components/ui/loading-states";
 import { NotificationModal } from "@/components/notifications/NotificationModal";
 import { ProfileMenu } from "@/components/layout/ProfileMenu";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 import { 
   IdCard, 
@@ -162,7 +163,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="flex h-screen" style={{ background: "#F8FAFC" }}>
+    <div className="flex h-screen" className="bg-background" style={{}}>
       <Sidebar selectedTab={selectedTab} onTabChange={setSelectedTab} />
       
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -181,6 +182,7 @@ export default function Dashboard() {
               <p style={{ fontSize: 14, color: "#64748B" }}>Gestiona tus certificaciones energéticas</p>
             </div>
             <div className="flex items-center space-x-4">
+              <ThemeToggle />
               <NotificationModal />
               <ProfileMenu />
             </div>
@@ -264,7 +266,7 @@ export default function Dashboard() {
                 <div style={{ overflowX: "auto" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse" }}>
                     <thead>
-                      <tr style={{ background: "#F8FAFC" }}>
+                      <tr className="bg-background" style={{}}>
                         {["Propiedad", "Calificación", "Estado", "Fecha", "Acciones"].map(h => (
                           <th key={h} style={{ padding: "10px 16px", textAlign: "left", fontSize: 11, fontWeight: 500, color: "#6B7280", textTransform: "uppercase", letterSpacing: ".05em", borderBottom: "1px solid #E2E8F0", whiteSpace: "nowrap" }}>{h}</th>
                         ))}

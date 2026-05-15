@@ -80,3 +80,24 @@
   vertical-align: middle;
   display: inline-block;
 }
+
+/* -- Popover / Dropdown fix (transparencia) ------------------- */
+[data-radix-popper-content-wrapper] > * {
+  background-color: hsl(var(--popover)) !important;
+  border-color: hsl(var(--border)) !important;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.12) !important;
+}
+
+/* -- Cards con mejor sombra y radio --------------------------- */
+.card-elevated {
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06), 0 4px 20px rgba(0,0,0,0.05);
+  border-radius: 14px;
+}
+
+/* -- Dashboard background adapta al tema ---------------------- */
+.dashboard-bg {
+  background-color: hsl(var(--muted));
+}
+
+/* -- Tipografía más pulida ------------------------------------- */
+h1, h2, h3 { letter-spacing: -0.02em; }

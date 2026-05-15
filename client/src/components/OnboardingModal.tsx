@@ -24,7 +24,7 @@ const steps = [
   {
     id: "welcome",
     icon: Sparkles,
-    iconBg: "bg-emerald-800",
+    iconBg: "bg-gradient-to-br from-emerald-800 to-emerald-600",
     label: "Bienvenido",
     title: "Bienvenido a CERTIFIVE",
     subtitle: "Tu plataforma profesional de certificación energética",
@@ -39,7 +39,7 @@ const steps = [
   {
     id: "dashboard",
     icon: LayoutDashboard,
-    iconBg: "bg-emerald-800",
+    iconBg: "bg-gradient-to-br from-emerald-800 to-emerald-600",
     label: "Dashboard",
     title: "Tu centro de operaciones",
     subtitle: "Sección: Dashboard",
@@ -114,7 +114,7 @@ const steps = [
   {
     id: "settings",
     icon: Settings,
-    iconBg: "bg-emerald-800",
+    iconBg: "bg-gradient-to-br from-emerald-800 to-emerald-600",
     label: "Configuración",
     title: "Personaliza tu cuenta",
     subtitle: "Sección: Configuración",
