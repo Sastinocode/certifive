@@ -163,25 +163,25 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="flex h-screen" className="bg-background" style={{}}>
+    <div className="flex h-screen bg-background">
       <Sidebar selectedTab={selectedTab} onTabChange={setSelectedTab} />
       
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile header */}
-        <div className="lg:hidden px-4 py-3" style={{ background: "#fff", borderBottom: "1px solid #E2E8F0" }}>
-          <h1 className="text-lg font-semibold" style={{ color: "#0F172A" }}>CERTIFIVE</h1>
+        <div className="lg:hidden px-4 py-3 bg-card border-b border-border">
+          <h1 className="text-lg font-semibold text-foreground">CERTIFIVE</h1>
         </div>
 
         {/* Main content */}
         <div className="flex-1 overflow-auto p-6">
           <div className="mb-8 flex justify-between items-start">
             <div>
-              <h2 className="text-2xl font-bold mb-1" style={{ color: "#0F172A", letterSpacing: "-.02em" }}>
+              <h2 className="text-foreground text-2xl font-bold mb-1" style={{ letterSpacing: "-.02em" }}>
                 Dashboard
               </h2>
-              <p style={{ fontSize: 14, color: "#64748B" }}>Gestiona tus certificaciones energéticas</p>
+              <p className="text-muted-foreground" style={{ fontSize: 14 }}>Gestiona tus certificaciones energéticas</p>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
               <ThemeToggle />
               <NotificationModal />
               <ProfileMenu />
@@ -196,19 +196,19 @@ export default function Dashboard() {
               { label: "Próximos a Vencer",    value: statsLoading ? "..." : String(stats.expiringSoon || 0),         icon: AlertTriangle, iconColor: "#D97706" },
               { label: "Ingresos del Mes",     value: statsLoading ? "..." : `€${(stats.monthlyIncome || 0).toLocaleString()}`, icon: Euro, iconColor: "#1FA94B" },
             ].map(({ label, value, icon: Icon, iconColor, accent }) => (
-              <div key={label} style={{ background: "#fff", border: "1px solid #E2E8F0", borderLeft: accent ? "3px solid #1FA94B" : "1px solid #E2E8F0", borderRadius: 12, padding: "20px", position: "relative", boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}>
+              <div key={label} className="bg-card border border-border relative rounded-xl p-5" style={{ borderLeft: accent ? "3px solid #1FA94B" : undefined, boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}>
                 <div style={{ position: "absolute", top: 16, right: 16, width: 36, height: 36, borderRadius: 8, background: `${iconColor}18`, display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <Icon size={18} color={iconColor} />
                 </div>
-                <p style={{ fontSize: 12, fontWeight: 500, color: "#6B7280", marginBottom: 8, textTransform: "uppercase", letterSpacing: ".05em" }}>{label}</p>
-                <p style={{ fontSize: 28, fontWeight: 700, color: "#0F1923", letterSpacing: "-.02em", lineHeight: 1 }}>{value}</p>
+                <p className="text-muted-foreground" style={{ fontSize: 12, fontWeight: 500, marginBottom: 8, textTransform: "uppercase", letterSpacing: ".05em" }}>{label}</p>
+                <p className="text-foreground" style={{ fontSize: 28, fontWeight: 700, letterSpacing: "-.02em", lineHeight: 1 }}>{value}</p>
               </div>
             ))}
           </div>
 
           {/* Quick Actions */}
-          <div style={{ background: "#fff", border: "1px solid #E2E8F0", borderRadius: 12, padding: "24px", marginBottom: 20, boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}>
-            <h3 style={{ fontSize: 15, fontWeight: 600, color: "#0F172A", marginBottom: 16 }}>Acciones Rápidas</h3>
+          <div className="bg-card border border-border rounded-xl mb-5" style={{ padding: "24px", boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}>
+            <h3 className="text-foreground" style={{ fontSize: 15, fontWeight: 600, marginBottom: 16 }}>Acciones Rápidas</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
               {[
                 { href: "/certificacion", label: "Nueva Certificación", sub: "Crear certificado", iconBg: "#1FA94B", Icon: Plus },
@@ -217,15 +217,13 @@ export default function Dashboard() {
                 { href: "/tarifas", label: "Gestionar Tarifas", sub: "Configurar precios", iconBg: "#D97706", Icon: Settings },
               ].map(({ href, label, sub, iconBg, Icon }) => (
                 <Link key={href} href={href}>
-                  <div style={{ border: "1px solid #E2E8F0", borderRadius: 6, padding: "16px", cursor: "pointer", display: "flex", alignItems: "center", gap: 12, transition: "border-color .15s, background .15s" }}
-                    onMouseOver={e => { (e.currentTarget as HTMLElement).style.background = "#F8FAFC"; (e.currentTarget as HTMLElement).style.borderColor = "#CBD5E1"; }}
-                    onMouseOut={e => { (e.currentTarget as HTMLElement).style.background = "#fff"; (e.currentTarget as HTMLElement).style.borderColor = "#E2E8F0"; }}>
+                  <div className="border border-border rounded-md p-4 cursor-pointer flex items-center gap-3 hover:bg-muted transition-colors">
                     <div style={{ width: 40, height: 40, borderRadius: 8, background: iconBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                       <Icon size={18} color="#fff" />
                     </div>
                     <div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: "#0F172A" }}>{label}</div>
-                      <div style={{ fontSize: 12, color: "#64748B", marginTop: 1 }}>{sub}</div>
+                      <div className="text-foreground" style={{ fontSize: 13, fontWeight: 600 }}>{label}</div>
+                      <div className="text-muted-foreground" style={{ fontSize: 12, marginTop: 1 }}>{sub}</div>
                     </div>
                   </div>
                 </Link>
@@ -234,9 +232,9 @@ export default function Dashboard() {
           </div>
 
           {/* Recent Certificates */}
-          <div style={{ background: "#fff", border: "1px solid #E2E8F0", borderRadius: 12, padding: "24px", boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}>
+          <div className="bg-card border border-border rounded-xl" style={{ padding: "24px", boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}>
             <div className="flex items-center justify-between mb-4">
-              <h3 style={{ fontSize: 16, fontWeight: 600, color: "#0F1923" }}>Certificados Recientes</h3>
+              <h3 className="text-foreground" style={{ fontSize: 16, fontWeight: 600 }}>Certificados Recientes</h3>
               <Link href="/certificados">
                 <button style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 500, color: "#1FA94B", background: "none", border: "1px solid #E2E8F0", borderRadius: 8, padding: "7px 14px", cursor: "pointer", transition: "background .15s" }}
                   onMouseOver={e => ((e.currentTarget as HTMLElement).style.background = "#F8FAFC")}
@@ -266,7 +264,7 @@ export default function Dashboard() {
                 <div style={{ overflowX: "auto" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse" }}>
                     <thead>
-                      <tr className="bg-background" style={{}}>
+                      <tr style={{ background: "#F8FAFC" }}>
                         {["Propiedad", "Calificación", "Estado", "Fecha", "Acciones"].map(h => (
                           <th key={h} style={{ padding: "10px 16px", textAlign: "left", fontSize: 11, fontWeight: 500, color: "#6B7280", textTransform: "uppercase", letterSpacing: ".05em", borderBottom: "1px solid #E2E8F0", whiteSpace: "nowrap" }}>{h}</th>
                         ))}

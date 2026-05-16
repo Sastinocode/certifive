@@ -24,7 +24,7 @@ const steps = [
   {
     id: "welcome",
     icon: Sparkles,
-    iconBg: "bg-gradient-to-br from-emerald-800 to-emerald-600",
+    iconBg: "bg-emerald-800",
     label: "Bienvenido",
     title: "Bienvenido a CERTIFIVE",
     subtitle: "Tu plataforma profesional de certificación energética",
@@ -39,7 +39,7 @@ const steps = [
   {
     id: "dashboard",
     icon: LayoutDashboard,
-    iconBg: "bg-gradient-to-br from-emerald-800 to-emerald-600",
+    iconBg: "bg-emerald-800",
     label: "Dashboard",
     title: "Tu centro de operaciones",
     subtitle: "Sección: Dashboard",
@@ -114,7 +114,7 @@ const steps = [
   {
     id: "settings",
     icon: Settings,
-    iconBg: "bg-gradient-to-br from-emerald-800 to-emerald-600",
+    iconBg: "bg-emerald-800",
     label: "Configuración",
     title: "Personaliza tu cuenta",
     subtitle: "Sección: Configuración",
@@ -220,7 +220,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
       />
 
       <div
-        className={`relative bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden transition-all duration-300 ${
+        className={`relative bg-card text-card-foreground rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden transition-all duration-300 border border-border ${
           isAnimating ? "opacity-0 scale-95" : "opacity-100 scale-100"
         }`}
       >
@@ -281,7 +281,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
           </div>
         </div>
 
-        <div className="h-px bg-emerald-50 mx-6 mt-3" />
+        <div className="h-px mx-6 mt-3" style={{ backgroundColor: "hsl(var(--border))" }} />
 
         {/* Content */}
         <div className="px-6 pt-6 pb-4">
@@ -297,13 +297,13 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
                   {step.subtitle}
                 </p>
               )}
-              <h2 className="text-xl font-black text-emerald-900 leading-tight">
+              <h2 className="text-xl font-black leading-tight" style={{ color: "hsl(var(--foreground))" }}>
                 {step.title}
               </h2>
             </div>
           </div>
 
-          <p className="text-sm text-emerald-700/70 leading-relaxed mb-5">
+          <p className="text-sm leading-relaxed mb-5" style={{ color: "hsl(var(--muted-foreground))" }}>
             {step.description}
           </p>
 
@@ -313,12 +313,14 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
               return (
                 <div
                   key={i}
-                  className="flex items-center gap-3 bg-emerald-50 rounded-xl px-4 py-3"
+                  className="flex items-center gap-3 rounded-xl px-4 py-3"
+                  style={{ backgroundColor: "hsl(var(--accent))" }}
                 >
-                  <div className="w-7 h-7 bg-white rounded-lg flex items-center justify-center border border-emerald-100 shrink-0">
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center border border-border shrink-0"
+                    style={{ backgroundColor: "hsl(var(--card))" }}>
                     <TipIcon className="w-3.5 h-3.5 text-emerald-700" />
                   </div>
-                  <span className="text-xs font-semibold text-emerald-900">
+                  <span className="text-xs font-semibold" style={{ color: "hsl(var(--foreground))" }}>
                     {tip.text}
                   </span>
                 </div>
@@ -329,7 +331,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
 
         {/* Footer */}
         <div className="px-6 pb-6">
-          <div className="h-px bg-emerald-50 mb-4" />
+          <div className="h-px mb-4" style={{ backgroundColor: "hsl(var(--border))" }} />
           <div className="flex items-center justify-between gap-3">
             <button
               onClick={handlePrev}
