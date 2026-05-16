@@ -1,6 +1,6 @@
 // @ts-nocheck
 /**
- * CERTIFIVE â€” Email service
+ * CERTIFIVE — Email service
  *
  * Uses SendGrid. If SENDGRID_API_KEY is missing, all sends are no-ops
  * (logged as warnings) so the app never crashes because of a missing key.
@@ -8,20 +8,20 @@
  * FROM address: no-reply@certifive.es
  *
  * Emails implemented
- * â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
- * 1. sendWelcomeEmail          â†’ certifier registers
- * 2. sendEmailVerification     â†’ certifier verifies email
- * 3. sendPasswordResetEmail    â†’ certifier forgot password
- * 4. sendFormLinkEmail         â†’ owner receives link to fill the form
- * 5. sendOwnerConfirmationEmailâ†’ owner receives receipt after submitting
- * 6. sendCertifierNotification â†’ certifier notified when owner submits
+ * ──────────────────
+ * 1. sendWelcomeEmail          → certifier registers
+ * 2. sendEmailVerification     → certifier verifies email
+ * 3. sendPasswordResetEmail    → certifier forgot password
+ * 4. sendFormLinkEmail         → owner receives link to fill the form
+ * 5. sendOwnerConfirmationEmail→ owner receives receipt after submitting
+ * 6. sendCertifierNotification → certifier notified when owner submits
  */
 
 import sgMail from "@sendgrid/mail";
 
-// â”€â”€â”€ Config â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Config ──────────────────────────────────────────────────────────────────
 
-const FROM_EMAIL = process.env.FROM_EMAIL ?? "no-reply@certifive.es";
+const FROM_EMAIL = "no-reply@certifive.es";
 const FROM_NAME  = "CERTIFIVE";
 const APP_URL    = (process.env.APP_URL ?? "https://certifive.es").replace(/\/$/, "");
 
@@ -30,15 +30,15 @@ let ready = false;
 export function initEmail(): void {
   const key = process.env.SENDGRID_API_KEY;
   if (!key) {
-    console.warn("[email] âš ï¸  SENDGRID_API_KEY not set â€” all emails disabled");
+    console.warn("[email] ⚠️  SENDGRID_API_KEY not set — all emails disabled");
     return;
   }
   sgMail.setApiKey(key);
   ready = true;
-  console.log("[email] âœ… SendGrid ready (from: " + FROM_EMAIL + ")");
+  console.log("[email] ✅ SendGrid ready (from: " + FROM_EMAIL + ")");
 }
 
-// â”€â”€â”€ Core sender â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Core sender ─────────────────────────────────────────────────────────────
 
 async function send(msg: sgMail.MailDataRequired): Promise<void> {
   if (!ready) {
@@ -46,21 +46,24 @@ async function send(msg: sgMail.MailDataRequired): Promise<void> {
     return;
   }
   try {
-    const message: any = { ...msg };
-    if (message.html) {
-      message.content = [{ type: "text/html; charset=utf-8", value: message.html }];
-      delete message.html;
-    }
-    await sgMail.send(message);
-    console.log("[email] sent:", msg.subject, "â†’", msg.to);
+    // Pasamos 'content' explícitamente para evitar el bug de @sendgrid/mail v8
+    // que añade "; charset=utf-8" al content-type y rompe la validación de la API.
+    const payload: any = {
+      to:      msg.to,
+      from:    msg.from,
+      subject: msg.subject,
+      content: [{ type: "text/html", value: (msg as any).html as string }],
+    };
+    await sgMail.send(payload);
+    console.log("[email] sent:", msg.subject, "→", msg.to);
   } catch (err: any) {
-    // Log but never throw â€” emails must not break the main request flow
+    // Log pero nunca throw — los emails nunca deben romper el flujo principal
     const detail = err?.response?.body?.errors ?? err?.message ?? err;
     console.error("[email] failed:", msg.subject, detail);
   }
 }
 
-// â”€â”€â”€ Shared HTML helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Shared HTML helpers ──────────────────────────────────────────────────────
 
 function htmlWrap(body: string, preheader = ""): string {
   return `<!DOCTYPE html>
@@ -72,7 +75,7 @@ function htmlWrap(body: string, preheader = ""): string {
   <!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
 </head>
 <body style="margin:0;padding:0;background:#f0fdf4;font-family:Arial,Helvetica,sans-serif;-webkit-text-size-adjust:100%">
-  ${preheader ? `<div style="display:none;max-height:0;overflow:hidden;font-size:1px;color:#f0fdf4">${preheader}&nbsp;â€Œ&nbsp;â€Œ&nbsp;â€Œ&nbsp;â€Œ&nbsp;â€Œ&nbsp;â€Œ&nbsp;â€Œ</div>` : ""}
+  ${preheader ? `<div style="display:none;max-height:0;overflow:hidden;font-size:1px;color:#f0fdf4">${preheader}&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌&nbsp;‌</div>` : ""}
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f0fdf4">
     <tr><td align="center" style="padding:40px 16px">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px">
@@ -83,7 +86,7 @@ function htmlWrap(body: string, preheader = ""): string {
             <tr>
               <td>
                 <span style="display:inline-block;background:rgba(255,255,255,.12);border-radius:10px;padding:8px 12px;font-size:13px;font-weight:bold;color:#fff;letter-spacing:.5px">
-                  ðŸŒ¿ CERTIFIVE
+                  🌿 CERTIFIVE
                 </span>
               </td>
             </tr>
@@ -98,10 +101,10 @@ function htmlWrap(body: string, preheader = ""): string {
         <!-- FOOTER -->
         <tr><td style="background:#f0fdf4;border-radius:0 0 16px 16px;padding:24px 40px;border-top:1px solid #d1fae5">
           <p style="margin:0;font-size:12px;color:#6b7280;line-height:1.6">
-            Este email fue enviado automÃ¡ticamente por <strong>CERTIFIVE</strong>.<br>
-            Si no esperabas este mensaje, ignÃ³ralo.<br>
+            Este email fue enviado automáticamente por <strong>CERTIFIVE</strong>.<br>
+            Si no esperabas este mensaje, ignóralo.<br>
             <a href="${APP_URL}" style="color:#059669;text-decoration:none">certifive.es</a>
-            &nbsp;Â·&nbsp;
+            &nbsp;·&nbsp;
             <a href="mailto:soporte@certifive.es" style="color:#059669;text-decoration:none">soporte@certifive.es</a>
           </p>
         </td></tr>
@@ -149,9 +152,9 @@ function infoBlock(rows: Array<{ label: string; value: string }>): string {
   </table>`;
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
 // 1. BIENVENIDA (certifier registers)
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
 export async function sendWelcomeEmail(params: {
   to: string;
   name: string;
@@ -161,28 +164,28 @@ export async function sendWelcomeEmail(params: {
   const { to, name, username } = params;
 
   const body = `
-    ${h1("Â¡Bienvenido a CERTIFIVE, " + (name || username) + "!")}
-    ${p("Tu cuenta de certificador energÃ©tico ya estÃ¡ activa. Desde ahora puedes gestionar todos tus certificados CEE desde un solo lugar.")}
+    ${h1("¡Bienvenido a CERTIFIVE, " + (name || username) + "!")}
+    ${p("Tu cuenta de certificador energético ya está activa. Desde ahora puedes gestionar todos tus certificados CEE desde un solo lugar.")}
     ${infoBlock([
       { label: "Usuario",   value: username },
       { label: "Acceso",    value: APP_URL },
     ])}
-    ${btn("Ir a mi panel â†’", APP_URL)}
+    ${btn("Ir a mi panel →", APP_URL)}
     ${divider()}
-    ${p("Â¿Tienes alguna duda? EscrÃ­benos a <a href='mailto:soporte@certifive.es' style='color:#059669'>soporte@certifive.es</a>", { color: "#6b7280", size: "13px" })}
+    ${p("¿Tienes alguna duda? Escríbenos a <a href='mailto:soporte@certifive.es' style='color:#059669'>soporte@certifive.es</a>", { color: "#6b7280", size: "13px" })}
   `;
 
   await send({
     to,
     from: { email: FROM_EMAIL, name: FROM_NAME },
-    subject: "Bienvenido a CERTIFIVE â€” Tu cuenta estÃ¡ activa",
-    html: htmlWrap(body, "Tu cuenta de certificador ya estÃ¡ lista."),
+    subject: "Bienvenido a CERTIFIVE — Tu cuenta está activa",
+    html: htmlWrap(body, "Tu cuenta de certificador ya está lista."),
   });
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// 2. VERIFICACIÃ“N DE EMAIL
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
+// 2. VERIFICACIÓN DE EMAIL
+// ─────────────────────────────────────────────────────────────────────────────
 export async function sendEmailVerification(params: {
   to: string;
   name: string;
@@ -193,9 +196,9 @@ export async function sendEmailVerification(params: {
   const verifyUrl = `${APP_URL}/verify-email?token=${verificationToken}`;
 
   const body = `
-    ${h1("Confirma tu direcciÃ³n de email")}
-    ${p("Hola " + (name || "certificador") + ", haz clic en el botÃ³n para verificar tu email y activar todas las funciones de tu cuenta.")}
-    ${btn("Verificar email â†’", verifyUrl)}
+    ${h1("Confirma tu dirección de email")}
+    ${p("Hola " + (name || "certificador") + ", haz clic en el botón para verificar tu email y activar todas las funciones de tu cuenta.")}
+    ${btn("Verificar email →", verifyUrl)}
     ${divider()}
     ${p("Este enlace caduca en <strong>24 horas</strong>. Si no creaste una cuenta en CERTIFIVE, ignora este email.", { color: "#6b7280", size: "13px" })}
     ${p("O copia este enlace en tu navegador:<br><span style='font-size:12px;color:#059669;word-break:break-all'>${verifyUrl}</span>", { color: "#6b7280", size: "13px" })}
@@ -204,14 +207,14 @@ export async function sendEmailVerification(params: {
   await send({
     to,
     from: { email: FROM_EMAIL, name: FROM_NAME },
-    subject: "CERTIFIVE â€” Confirma tu email",
-    html: htmlWrap(body, "Confirma tu direcciÃ³n de email para activar tu cuenta."),
+    subject: "CERTIFIVE — Confirma tu email",
+    html: htmlWrap(body, "Confirma tu dirección de email para activar tu cuenta."),
   });
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// 3. RECUPERACIÃ“N DE CONTRASEÃ‘A
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
+// 3. RECUPERACIÓN DE CONTRASEÑA
+// ─────────────────────────────────────────────────────────────────────────────
 export async function sendPasswordResetEmail(params: {
   to: string;
   name: string;
@@ -222,25 +225,25 @@ export async function sendPasswordResetEmail(params: {
   const resetUrl = `${APP_URL}/reset-password?token=${resetToken}`;
 
   const body = `
-    ${h1("Restablecer contraseÃ±a")}
-    ${p("Hola " + (name || "") + ", recibimos una solicitud para restablecer la contraseÃ±a de tu cuenta CERTIFIVE.")}
-    ${p("Haz clic en el botÃ³n para elegir una nueva contraseÃ±a:")}
-    ${btn("Restablecer contraseÃ±a â†’", resetUrl, "#ea580c")}
+    ${h1("Restablecer contraseña")}
+    ${p("Hola " + (name || "") + ", recibimos una solicitud para restablecer la contraseña de tu cuenta CERTIFIVE.")}
+    ${p("Haz clic en el botón para elegir una nueva contraseña:")}
+    ${btn("Restablecer contraseña →", resetUrl, "#ea580c")}
     ${divider()}
-    ${p("Este enlace <strong>caduca en 1 hora</strong>. Si no solicitaste el cambio, ignora este email â€” tu contraseÃ±a actual sigue siendo la misma.", { color: "#6b7280", size: "13px" })}
+    ${p("Este enlace <strong>caduca en 1 hora</strong>. Si no solicitaste el cambio, ignora este email — tu contraseña actual sigue siendo la misma.", { color: "#6b7280", size: "13px" })}
   `;
 
   await send({
     to,
     from: { email: FROM_EMAIL, name: FROM_NAME },
-    subject: "CERTIFIVE â€” Restablece tu contraseÃ±a",
-    html: htmlWrap(body, "Solicitud de cambio de contraseÃ±a."),
+    subject: "CERTIFIVE — Restablece tu contraseña",
+    html: htmlWrap(body, "Solicitud de cambio de contraseña."),
   });
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// 4. LINK DEL FORMULARIO â†’ PROPIETARIO
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
+// 4. LINK DEL FORMULARIO → PROPIETARIO
+// ─────────────────────────────────────────────────────────────────────────────
 export async function sendFormLinkEmail(params: {
   to: string;
   ownerName: string;
@@ -257,16 +260,16 @@ export async function sendFormLinkEmail(params: {
     { label: "Certificador", value: certifierName },
   ];
   if (certifierCompany) infoRows.push({ label: "Empresa",     value: certifierCompany });
-  if (certifierPhone)   infoRows.push({ label: "TelÃ©fono",    value: certifierPhone });
+  if (certifierPhone)   infoRows.push({ label: "Teléfono",    value: certifierPhone });
   if (propertyAddress)  infoRows.push({ label: "Inmueble",    value: propertyAddress });
 
   const body = `
-    ${h1("Necesitamos tus datos para el certificado energÃ©tico")}
+    ${h1("Necesitamos tus datos para el certificado energético")}
     ${p("Hola <strong>" + (ownerName || "") + "</strong>,")}
-    ${p("<strong>" + certifierName + "</strong>" + (certifierCompany ? " de " + certifierCompany : "") + " necesita que rellenes un formulario con los datos de tu vivienda para poder tramitar el <strong>certificado de eficiencia energÃ©tica (CEE)</strong>.")}
-    ${p("Solo te llevarÃ¡ <strong>3â€“5 minutos</strong> y puedes hacerlo desde el mÃ³vil, sin crear ninguna cuenta.")}
+    ${p("<strong>" + certifierName + "</strong>" + (certifierCompany ? " de " + certifierCompany : "") + " necesita que rellenes un formulario con los datos de tu vivienda para poder tramitar el <strong>certificado de eficiencia energética (CEE)</strong>.")}
+    ${p("Solo te llevará <strong>3–5 minutos</strong> y puedes hacerlo desde el móvil, sin crear ninguna cuenta.")}
     ${infoBlock(infoRows)}
-    ${btn("Rellenar formulario â†’", formUrl, "#065f46")}
+    ${btn("Rellenar formulario →", formUrl, "#065f46")}
     ${divider()}
     ${p("El enlace es personal para ti. Si tienes alguna duda, contacta directamente con tu certificador.", { color: "#6b7280", size: "13px" })}
   `;
@@ -274,14 +277,14 @@ export async function sendFormLinkEmail(params: {
   await send({
     to,
     from: { email: FROM_EMAIL, name: FROM_NAME },
-    subject: certifierName + " te pide datos para tu certificado energÃ©tico",
-    html: htmlWrap(body, "Rellena el formulario para tu certificado energÃ©tico â€” solo 3 minutos."),
+    subject: certifierName + " te pide datos para tu certificado energético",
+    html: htmlWrap(body, "Rellena el formulario para tu certificado energético — solo 3 minutos."),
   });
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// 5. CONFIRMACIÃ“N AL PROPIETARIO (despuÃ©s de enviar el formulario)
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
+// 5. CONFIRMACIÓN AL PROPIETARIO (después de enviar el formulario)
+// ─────────────────────────────────────────────────────────────────────────────
 export async function sendOwnerConfirmationEmail(params: {
   to: string;
   ownerName: string;
@@ -297,29 +300,29 @@ export async function sendOwnerConfirmationEmail(params: {
     { label: "Certificador", value: certifierName },
   ];
   if (certifierEmail) contactRows.push({ label: "Email",    value: certifierEmail });
-  if (certifierPhone) contactRows.push({ label: "TelÃ©fono", value: certifierPhone });
+  if (certifierPhone) contactRows.push({ label: "Teléfono", value: certifierPhone });
   if (propertyAddress) contactRows.push({ label: "Inmueble", value: propertyAddress });
 
   const body = `
-    ${h1("Â¡Datos recibidos! Gracias, " + (ownerName || "") + ".")}
-    ${p("Hemos recibido correctamente los datos de tu vivienda. Tu certificador los revisarÃ¡ y se pondrÃ¡ en contacto contigo en breve.")}
-    ${p("Puedes guardar este email como justificante de que enviaste tu informaciÃ³n.")}
+    ${h1("¡Datos recibidos! Gracias, " + (ownerName || "") + ".")}
+    ${p("Hemos recibido correctamente los datos de tu vivienda. Tu certificador los revisará y se pondrá en contacto contigo en breve.")}
+    ${p("Puedes guardar este email como justificante de que enviaste tu información.")}
     ${infoBlock(contactRows)}
     ${divider()}
-    ${p("Â¿Algo no estÃ¡ bien o quieres aÃ±adir informaciÃ³n? Contacta directamente con tu certificador usando los datos de arriba.", { color: "#6b7280", size: "13px" })}
+    ${p("¿Algo no está bien o quieres añadir información? Contacta directamente con tu certificador usando los datos de arriba.", { color: "#6b7280", size: "13px" })}
   `;
 
   await send({
     to,
     from: { email: FROM_EMAIL, name: FROM_NAME },
-    subject: "Hemos recibido tus datos â€” CERTIFIVE",
-    html: htmlWrap(body, "ConfirmaciÃ³n de recepciÃ³n de datos para tu certificado energÃ©tico."),
+    subject: "Hemos recibido tus datos — CERTIFIVE",
+    html: htmlWrap(body, "Confirmación de recepción de datos para tu certificado energético."),
   });
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// 6. NOTIFICACIÃ“N AL CERTIFICADOR (propietario completÃ³ el formulario)
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
+// 6. NOTIFICACIÓN AL CERTIFICADOR (propietario completó el formulario)
+// ─────────────────────────────────────────────────────────────────────────────
 export async function sendCertifierNotification(params: {
   to: string;
   certifierName: string;
@@ -338,30 +341,30 @@ export async function sendCertifierNotification(params: {
     { label: "Propietario",  value: ownerName },
   ];
   if (ownerEmail)         infoRows.push({ label: "Email",    value: ownerEmail });
-  if (ownerPhone)         infoRows.push({ label: "TelÃ©fono", value: ownerPhone });
+  if (ownerPhone)         infoRows.push({ label: "Teléfono", value: ownerPhone });
   if (propertyAddress)    infoRows.push({ label: "Inmueble", value: propertyAddress });
 
   const body = `
-    ${h1("âœ… " + ownerName + " ha enviado sus datos")}
+    ${h1("✅ " + ownerName + " ha enviado sus datos")}
     ${p("Hola <strong>" + (certifierName || "") + "</strong>,")}
-    ${p("El propietario ha completado el formulario con los datos de su vivienda. Ya tienes toda la informaciÃ³n necesaria para continuar con la certificaciÃ³n.")}
+    ${p("El propietario ha completado el formulario con los datos de su vivienda. Ya tienes toda la información necesaria para continuar con la certificación.")}
     ${infoBlock(infoRows)}
-    ${btn("Ver certificaciÃ³n â†’", certUrl)}
+    ${btn("Ver certificación →", certUrl)}
     ${divider()}
-    ${p("Recuerda actualizar el estado de la certificaciÃ³n una vez que la hayas tramitado.", { color: "#6b7280", size: "13px" })}
+    ${p("Recuerda actualizar el estado de la certificación una vez que la hayas tramitado.", { color: "#6b7280", size: "13px" })}
   `;
 
   await send({
     to,
     from: { email: FROM_EMAIL, name: FROM_NAME },
-    subject: "âœ… " + ownerName + " ha enviado los datos del formulario",
-    html: htmlWrap(body, ownerName + " completÃ³ el formulario. Ya tienes sus datos."),
+    subject: "✅ " + ownerName + " ha enviado los datos del formulario",
+    html: htmlWrap(body, ownerName + " completó el formulario. Ya tienes sus datos."),
   });
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// 7. SOLICITUD DE TASACIÃ“N â†’ PROPIETARIO  (/solicitud/[token])
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
+// 7. SOLICITUD DE TASACIÓN → PROPIETARIO  (/solicitud/[token])
+// ─────────────────────────────────────────────────────────────────────────────
 export async function sendSolicitudLinkEmail(params: {
   to: string;
   ownerName: string;
@@ -378,31 +381,31 @@ export async function sendSolicitudLinkEmail(params: {
     { label: "Certificador", value: certifierName },
   ];
   if (certifierCompany) rows.push({ label: "Empresa", value: certifierCompany });
-  if (certifierPhone) rows.push({ label: "TelÃ©fono", value: certifierPhone });
+  if (certifierPhone) rows.push({ label: "Teléfono", value: certifierPhone });
   if (propertyAddress) rows.push({ label: "Inmueble", value: propertyAddress });
 
   const body = `
     ${h1("Te enviamos el formulario de solicitud")}
     ${p("Hola <strong>" + (ownerName || "") + "</strong>,")}
-    ${p("<strong>" + certifierName + "</strong> necesita que rellenes unos datos bÃ¡sicos sobre tu inmueble para preparar el <strong>presupuesto de tu certificado energÃ©tico (CEE)</strong>.")}
-    ${p("Solo te llevarÃ¡ <strong>2 minutos</strong>. Sin crear cuenta, desde el mÃ³vil.")}
+    ${p("<strong>" + certifierName + "</strong> necesita que rellenes unos datos básicos sobre tu inmueble para preparar el <strong>presupuesto de tu certificado energético (CEE)</strong>.")}
+    ${p("Solo te llevará <strong>2 minutos</strong>. Sin crear cuenta, desde el móvil.")}
     ${infoBlock(rows)}
-    ${btn("Rellenar solicitud â†’", solicitudUrl, "#065f46")}
+    ${btn("Rellenar solicitud →", solicitudUrl, "#065f46")}
     ${divider()}
-    ${p("El enlace es personal para ti. Caduca en 30 dÃ­as.", { color: "#6b7280", size: "13px" })}
+    ${p("El enlace es personal para ti. Caduca en 30 días.", { color: "#6b7280", size: "13px" })}
   `;
 
   await send({
     to,
     from: { email: FROM_EMAIL, name: FROM_NAME },
-    subject: certifierName + " â€” Solicitud de tasaciÃ³n para tu certificado energÃ©tico",
-    html: htmlWrap(body, "Rellena el formulario de tasaciÃ³n para recibir tu presupuesto."),
+    subject: certifierName + " — Solicitud de tasación para tu certificado energético",
+    html: htmlWrap(body, "Rellena el formulario de tasación para recibir tu presupuesto."),
   });
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// 8. NUEVA SOLICITUD ENTRANTE â†’ CERTIFICADOR  (VÃ­a B â€” landing pÃºblica)
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
+// 8. NUEVA SOLICITUD ENTRANTE → CERTIFICADOR  (Vía B — landing pública)
+// ─────────────────────────────────────────────────────────────────────────────
 export async function sendNuevaSolicitudEmail(params: {
   to: string;
   certifierName: string;
@@ -420,15 +423,15 @@ export async function sendNuevaSolicitudEmail(params: {
     { label: "Propietario", value: ownerName },
   ];
   if (ownerEmail) rows.push({ label: "Email", value: ownerEmail });
-  if (ownerPhone) rows.push({ label: "TelÃ©fono", value: ownerPhone });
+  if (ownerPhone) rows.push({ label: "Teléfono", value: ownerPhone });
   if (propertyAddress) rows.push({ label: "Inmueble", value: propertyAddress });
 
   const body = `
-    ${h1("ðŸ“‹ Nueva solicitud de tasaciÃ³n")}
+    ${h1("📋 Nueva solicitud de tasación")}
     ${p("Hola <strong>" + (certifierName || "") + "</strong>,")}
-    ${p("Has recibido una nueva solicitud de tasaciÃ³n a travÃ©s de tu pÃ¡gina pÃºblica. El propietario ha rellenado sus datos y estÃ¡ esperando tu presupuesto.")}
+    ${p("Has recibido una nueva solicitud de tasación a través de tu página pública. El propietario ha rellenado sus datos y está esperando tu presupuesto.")}
     ${infoBlock(rows)}
-    ${btn("Ver en el panel â†’", certUrl)}
+    ${btn("Ver en el panel →", certUrl)}
     ${divider()}
     ${p("Accede al panel para revisar los detalles y enviarle el presupuesto.", { color: "#6b7280", size: "13px" })}
   `;
@@ -436,14 +439,14 @@ export async function sendNuevaSolicitudEmail(params: {
   await send({
     to,
     from: { email: FROM_EMAIL, name: FROM_NAME },
-    subject: "ðŸ“‹ Nueva solicitud de " + ownerName,
-    html: htmlWrap(body, "Nueva solicitud de tasaciÃ³n pendiente de presupuesto."),
+    subject: "📋 Nueva solicitud de " + ownerName,
+    html: htmlWrap(body, "Nueva solicitud de tasación pendiente de presupuesto."),
   });
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// 9. PRESUPUESTO â†’ PROPIETARIO  (/presupuesto/[token])
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
+// 9. PRESUPUESTO → PROPIETARIO  (/presupuesto/[token])
+// ─────────────────────────────────────────────────────────────────────────────
 export async function sendPresupuestoEmail(params: {
   to: string;
   ownerName: string;
@@ -462,31 +465,31 @@ export async function sendPresupuestoEmail(params: {
   ];
   if (certifierCompany) rows.push({ label: "Empresa", value: certifierCompany });
   if (propertyAddress) rows.push({ label: "Inmueble", value: propertyAddress });
-  rows.push({ label: "Importe", value: amount.toFixed(2) + " â‚¬ (IVA incluido)" });
-  if (plazoEntregaDias) rows.push({ label: "Plazo estimado", value: plazoEntregaDias + " dÃ­as laborables" });
+  rows.push({ label: "Importe", value: amount.toFixed(2) + " € (IVA incluido)" });
+  if (plazoEntregaDias) rows.push({ label: "Plazo estimado", value: plazoEntregaDias + " días laborables" });
 
   const body = `
-    ${h1("Tu presupuesto estÃ¡ listo")}
+    ${h1("Tu presupuesto está listo")}
     ${p("Hola <strong>" + (ownerName || "") + "</strong>,")}
-    ${p("<strong>" + certifierName + "</strong>" + (certifierCompany ? " de " + certifierCompany : "") + " ha preparado tu presupuesto para el certificado de eficiencia energÃ©tica.")}
-    ${p("RevÃ­salo y, si todo es correcto, acÃ©ptalo para iniciar el proceso.")}
+    ${p("<strong>" + certifierName + "</strong>" + (certifierCompany ? " de " + certifierCompany : "") + " ha preparado tu presupuesto para el certificado de eficiencia energética.")}
+    ${p("Revísalo y, si todo es correcto, acéptalo para iniciar el proceso.")}
     ${infoBlock(rows)}
-    ${btn("Ver presupuesto â†’", presupuestoUrl, "#065f46")}
+    ${btn("Ver presupuesto →", presupuestoUrl, "#065f46")}
     ${divider()}
-    ${p("El presupuesto es vÃ¡lido durante 30 dÃ­as. Si tienes dudas, contacta directamente con tu certificador.", { color: "#6b7280", size: "13px" })}
+    ${p("El presupuesto es válido durante 30 días. Si tienes dudas, contacta directamente con tu certificador.", { color: "#6b7280", size: "13px" })}
   `;
 
   await send({
     to,
     from: { email: FROM_EMAIL, name: FROM_NAME },
-    subject: certifierName + " â€” Tu presupuesto para el certificado energÃ©tico",
-    html: htmlWrap(body, "Tu presupuesto para el certificado energÃ©tico estÃ¡ listo."),
+    subject: certifierName + " — Tu presupuesto para el certificado energético",
+    html: htmlWrap(body, "Tu presupuesto para el certificado energético está listo."),
   });
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// 10. PRESUPUESTO ACEPTADO â†’ CERTIFICADOR
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
+// 10. PRESUPUESTO ACEPTADO → CERTIFICADOR
+// ─────────────────────────────────────────────────────────────────────────────
 export async function sendPresupuestoAceptadoEmail(params: {
   to: string;
   certifierName: string;
@@ -500,31 +503,31 @@ export async function sendPresupuestoAceptadoEmail(params: {
 
   const rows: Array<{ label: string; value: string }> = [
     { label: "Propietario", value: ownerName },
-    { label: "Importe aceptado", value: amount.toFixed(2) + " â‚¬" },
+    { label: "Importe aceptado", value: amount.toFixed(2) + " €" },
   ];
   if (propertyAddress) rows.push({ label: "Inmueble", value: propertyAddress });
 
   const body = `
-    ${h1("âœ… Presupuesto aceptado")}
+    ${h1("✅ Presupuesto aceptado")}
     ${p("Hola <strong>" + (certifierName || "") + "</strong>,")}
-    ${p("<strong>" + ownerName + "</strong> ha aceptado el presupuesto y estÃ¡ listo para proceder al pago.")}
+    ${p("<strong>" + ownerName + "</strong> ha aceptado el presupuesto y está listo para proceder al pago.")}
     ${infoBlock(rows)}
-    ${btn("Ver en el panel â†’", APP_URL)}
+    ${btn("Ver en el panel →", APP_URL)}
     ${divider()}
-    ${p("Se ha enviado al cliente el enlace de pago automÃ¡ticamente.", { color: "#6b7280", size: "13px" })}
+    ${p("Se ha enviado al cliente el enlace de pago automáticamente.", { color: "#6b7280", size: "13px" })}
   `;
 
   await send({
     to,
     from: { email: FROM_EMAIL, name: FROM_NAME },
-    subject: "âœ… " + ownerName + " ha aceptado el presupuesto",
-    html: htmlWrap(body, ownerName + " aceptÃ³ el presupuesto. El pago estÃ¡ en curso."),
+    subject: "✅ " + ownerName + " ha aceptado el presupuesto",
+    html: htmlWrap(body, ownerName + " aceptó el presupuesto. El pago está en curso."),
   });
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// 11. SOLICITUD DE MODIFICACIÃ“N DEL PRESUPUESTO â†’ CERTIFICADOR
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
+// 11. SOLICITUD DE MODIFICACIÓN DEL PRESUPUESTO → CERTIFICADOR
+// ─────────────────────────────────────────────────────────────────────────────
 export async function sendModificacionPresupuestoEmail(params: {
   to: string;
   certifierName: string;
@@ -536,28 +539,28 @@ export async function sendModificacionPresupuestoEmail(params: {
   const { to, certifierName, ownerName, motivo } = params;
 
   const body = `
-    ${h1("âœï¸ Solicitud de modificaciÃ³n del presupuesto")}
+    ${h1("✏️ Solicitud de modificación del presupuesto")}
     ${p("Hola <strong>" + (certifierName || "") + "</strong>,")}
-    ${p("<strong>" + ownerName + "</strong> ha solicitado una modificaciÃ³n en el presupuesto con el siguiente motivo:")}
+    ${p("<strong>" + ownerName + "</strong> ha solicitado una modificación en el presupuesto con el siguiente motivo:")}
     <div style="background:#fef3c7;border-left:4px solid #f59e0b;padding:16px 20px;margin:20px 0;border-radius:0 8px 8px 0">
       <p style="margin:0;font-size:14px;color:#92400e;line-height:1.6">"${motivo}"</p>
     </div>
-    ${btn("Ver en el panel â†’", APP_URL, "#ea580c")}
+    ${btn("Ver en el panel →", APP_URL, "#ea580c")}
     ${divider()}
-    ${p("Contacta con el cliente para aclarar los detalles y envÃ­ale un presupuesto revisado.", { color: "#6b7280", size: "13px" })}
+    ${p("Contacta con el cliente para aclarar los detalles y envíale un presupuesto revisado.", { color: "#6b7280", size: "13px" })}
   `;
 
   await send({
     to,
     from: { email: FROM_EMAIL, name: FROM_NAME },
-    subject: "âœï¸ " + ownerName + " solicita modificar el presupuesto",
+    subject: "✏️ " + ownerName + " solicita modificar el presupuesto",
     html: htmlWrap(body, ownerName + " quiere modificar el presupuesto."),
   });
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// 12. ENLACE DE PAGO â†’ PROPIETARIO  (/pay/[token])
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
+// 12. ENLACE DE PAGO → PROPIETARIO  (/pay/[token])
+// ─────────────────────────────────────────────────────────────────────────────
 export async function sendPaymentLinkEmail(params: {
   to: string;
   ownerName: string;
@@ -573,7 +576,7 @@ export async function sendPaymentLinkEmail(params: {
   const tramoLabel = tramo === 1 ? "Primer pago (inicio del servicio)" : "Segundo pago (entrega del certificado)";
   const rows: Array<{ label: string; value: string }> = [
     { label: "Concepto", value: tramoLabel },
-    { label: "Importe", value: amount.toFixed(2) + " â‚¬ (IVA incluido)" },
+    { label: "Importe", value: amount.toFixed(2) + " € (IVA incluido)" },
   ];
   if (propertyAddress) rows.push({ label: "Inmueble", value: propertyAddress });
 
@@ -581,26 +584,26 @@ export async function sendPaymentLinkEmail(params: {
     ${h1(tramo === 1 ? "Realiza el primer pago" : "Realiza el pago final")}
     ${p("Hola <strong>" + (ownerName || "") + "</strong>,")}
     ${p(tramo === 1
-      ? "Para dar inicio a tu certificado energÃ©tico, necesitamos que realices el <strong>primer pago</strong>."
-      : "Tu certificado energÃ©tico estÃ¡ listo. Realiza el <strong>pago final</strong> para recibirlo."
+      ? "Para dar inicio a tu certificado energético, necesitamos que realices el <strong>primer pago</strong>."
+      : "Tu certificado energético está listo. Realiza el <strong>pago final</strong> para recibirlo."
     )}
     ${infoBlock(rows)}
-    ${btn("Pagar ahora â†’", paymentUrl, "#065f46")}
+    ${btn("Pagar ahora →", paymentUrl, "#065f46")}
     ${divider()}
-    ${p("Aceptamos tarjeta, Bizum, transferencia bancaria y efectivo. Elige el mÃ©todo que prefieras.", { color: "#6b7280", size: "13px" })}
+    ${p("Aceptamos tarjeta, Bizum, transferencia bancaria y efectivo. Elige el método que prefieras.", { color: "#6b7280", size: "13px" })}
   `;
 
   await send({
     to,
     from: { email: FROM_EMAIL, name: FROM_NAME },
-    subject: certifierName + " â€” " + (tramo === 1 ? "Realiza el primer pago" : "Pago final para recibir tu certificado"),
-    html: htmlWrap(body, "Realiza tu pago para continuar con el certificado energÃ©tico."),
+    subject: certifierName + " — " + (tramo === 1 ? "Realiza el primer pago" : "Pago final para recibir tu certificado"),
+    html: htmlWrap(body, "Realiza tu pago para continuar con el certificado energético."),
   });
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// 13. CONFIRMACIÃ“N DE PAGO â†’ PROPIETARIO
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
+// 13. CONFIRMACIÓN DE PAGO → PROPIETARIO
+// ─────────────────────────────────────────────────────────────────────────────
 export async function sendPagoConfirmadoEmail(params: {
   to: string;
   ownerName: string;
@@ -614,16 +617,16 @@ export async function sendPagoConfirmadoEmail(params: {
 
   const nextStep = tramo === 1
     ? (ceeFormUrl
-        ? `${btn("Rellenar formulario CEE â†’", ceeFormUrl, "#065f46")}<p style="font-size:14px;color:#374151;margin:16px 0 0">El siguiente paso es rellenar el formulario detallado de tu vivienda para que el certificador pueda redactar el certificado.</p>`
-        : `<p style="font-size:14px;color:#374151;margin:16px 0 0">Tu certificador se pondrÃ¡ en contacto contigo para indicarte los prÃ³ximos pasos.</p>`)
-    : `<p style="font-size:14px;color:#374151;margin:16px 0 0">RecibirÃ¡s tu certificado energÃ©tico en breve.</p>`;
+        ? `${btn("Rellenar formulario CEE →", ceeFormUrl, "#065f46")}<p style="font-size:14px;color:#374151;margin:16px 0 0">El siguiente paso es rellenar el formulario detallado de tu vivienda para que el certificador pueda redactar el certificado.</p>`
+        : `<p style="font-size:14px;color:#374151;margin:16px 0 0">Tu certificador se pondrá en contacto contigo para indicarte los próximos pasos.</p>`)
+    : `<p style="font-size:14px;color:#374151;margin:16px 0 0">Recibirás tu certificado energético en breve.</p>`;
 
   const body = `
-    ${h1("âœ… Pago confirmado â€” Gracias, " + (ownerName || "") + ".")}
+    ${h1("✅ Pago confirmado — Gracias, " + (ownerName || "") + ".")}
     ${p("Hemos recibido tu pago correctamente.")}
     ${infoBlock([
       { label: "Concepto", value: tramo === 1 ? "Primer pago (inicio del servicio)" : "Pago final" },
-      { label: "Importe", value: amount.toFixed(2) + " â‚¬" },
+      { label: "Importe", value: amount.toFixed(2) + " €" },
       { label: "Certificador", value: certifierName },
     ])}
     ${nextStep}
@@ -634,14 +637,14 @@ export async function sendPagoConfirmadoEmail(params: {
   await send({
     to,
     from: { email: FROM_EMAIL, name: FROM_NAME },
-    subject: "âœ… Pago confirmado â€” " + amount.toFixed(2) + " â‚¬",
+    subject: "✅ Pago confirmado — " + amount.toFixed(2) + " €",
     html: htmlWrap(body, "Tu pago ha sido confirmado correctamente."),
   });
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// 14. PAGO MANUAL PENDIENTE â†’ CERTIFICADOR
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
+// 14. PAGO MANUAL PENDIENTE → CERTIFICADOR
+// ─────────────────────────────────────────────────────────────────────────────
 export async function sendPagoManualPendienteEmail(params: {
   to: string;
   certifierName: string;
@@ -660,31 +663,31 @@ export async function sendPagoManualPendienteEmail(params: {
   };
 
   const body = `
-    ${h1("ðŸ’³ Pago pendiente de confirmaciÃ³n")}
+    ${h1("💳 Pago pendiente de confirmación")}
     ${p("Hola <strong>" + (certifierName || "") + "</strong>,")}
     ${p("<strong>" + ownerName + "</strong> ha notificado que va a realizar el pago del tramo " + tramo + " por <strong>" + metodosLabel[metodo] ?? metodo + "</strong>.")}
     ${infoBlock([
       { label: "Propietario", value: ownerName },
-      { label: "Importe", value: amount.toFixed(2) + " â‚¬" },
-      { label: "MÃ©todo", value: metodosLabel[metodo] ?? metodo },
+      { label: "Importe", value: amount.toFixed(2) + " €" },
+      { label: "Método", value: metodosLabel[metodo] ?? metodo },
       { label: "Tramo", value: "Pago " + tramo + " de 2" },
     ])}
-    ${btn("Confirmar pago â†’", APP_URL)}
+    ${btn("Confirmar pago →", APP_URL)}
     ${divider()}
-    ${p("Accede al panel y confirma el pago una vez lo hayas recibido. Esto desbloquearÃ¡ el siguiente paso para el cliente.", { color: "#6b7280", size: "13px" })}
+    ${p("Accede al panel y confirma el pago una vez lo hayas recibido. Esto desbloqueará el siguiente paso para el cliente.", { color: "#6b7280", size: "13px" })}
   `;
 
   await send({
     to,
     from: { email: FROM_EMAIL, name: FROM_NAME },
-    subject: "ðŸ’³ " + ownerName + " â€” pago pendiente de confirmar (" + amount.toFixed(2) + " â‚¬)",
-    html: htmlWrap(body, "Pago pendiente de confirmaciÃ³n."),
+    subject: "💳 " + ownerName + " — pago pendiente de confirmar (" + amount.toFixed(2) + " €)",
+    html: htmlWrap(body, "Pago pendiente de confirmación."),
   });
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// 15. ENLACE FORMULARIO CEE â†’ PROPIETARIO  (/formulario-cee/[token])
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
+// 15. ENLACE FORMULARIO CEE → PROPIETARIO  (/formulario-cee/[token])
+// ─────────────────────────────────────────────────────────────────────────────
 export async function sendCEEFormLinkEmail(params: {
   to: string;
   ownerName: string;
@@ -703,25 +706,25 @@ export async function sendCEEFormLinkEmail(params: {
   const body = `
     ${h1("Siguiente paso: Formulario detallado")}
     ${p("Hola <strong>" + (ownerName || "") + "</strong>,")}
-    ${p("Tu pago ha sido confirmado. El siguiente paso es que rellenes el formulario detallado de tu vivienda para que <strong>" + certifierName + "</strong> pueda redactar el certificado energÃ©tico oficial.")}
-    ${p("El formulario tiene 8 pasos y tarda aproximadamente <strong>10â€“15 minutos</strong>. Puedes guardarlo y continuar mÃ¡s tarde.")}
+    ${p("Tu pago ha sido confirmado. El siguiente paso es que rellenes el formulario detallado de tu vivienda para que <strong>" + certifierName + "</strong> pueda redactar el certificado energético oficial.")}
+    ${p("El formulario tiene 8 pasos y tarda aproximadamente <strong>10–15 minutos</strong>. Puedes guardarlo y continuar más tarde.")}
     ${infoBlock(rows)}
-    ${btn("Rellenar formulario CEE â†’", ceeFormUrl, "#065f46")}
+    ${btn("Rellenar formulario CEE →", ceeFormUrl, "#065f46")}
     ${divider()}
-    ${p("NecesitarÃ¡s tener a mano las facturas de luz y gas de los Ãºltimos 12 meses si es posible.", { color: "#6b7280", size: "13px" })}
+    ${p("Necesitarás tener a mano las facturas de luz y gas de los últimos 12 meses si es posible.", { color: "#6b7280", size: "13px" })}
   `;
 
   await send({
     to,
     from: { email: FROM_EMAIL, name: FROM_NAME },
-    subject: certifierName + " â€” Rellena el formulario detallado de tu vivienda",
-    html: htmlWrap(body, "Rellena el formulario detallado para tu certificado energÃ©tico."),
+    subject: certifierName + " — Rellena el formulario detallado de tu vivienda",
+    html: htmlWrap(body, "Rellena el formulario detallado para tu certificado energético."),
   });
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// 16. DOCUMENTOS RECIBIDOS â†’ CERTIFICADOR  (propietario completÃ³ formulario CEE)
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
+// 16. DOCUMENTOS RECIBIDOS → CERTIFICADOR  (propietario completó formulario CEE)
+// ─────────────────────────────────────────────────────────────────────────────
 export async function sendDocumentosRecibidosEmail(params: {
   to: string;
   certifierName: string;
@@ -738,30 +741,30 @@ export async function sendDocumentosRecibidosEmail(params: {
     { label: "Propietario", value: ownerName },
     { label: "Documentos", value: numDocumentos + " archivos adjuntos" },
   ];
-  if (ownerPhone) rows.push({ label: "TelÃ©fono", value: ownerPhone });
+  if (ownerPhone) rows.push({ label: "Teléfono", value: ownerPhone });
   if (propertyAddress) rows.push({ label: "Inmueble", value: propertyAddress });
 
   const body = `
-    ${h1("ðŸ“ Formulario CEE completado")}
+    ${h1("📁 Formulario CEE completado")}
     ${p("Hola <strong>" + (certifierName || "") + "</strong>,")}
-    ${p("<strong>" + ownerName + "</strong> ha completado el formulario detallado de su vivienda y ha adjuntado la documentaciÃ³n necesaria.")}
+    ${p("<strong>" + ownerName + "</strong> ha completado el formulario detallado de su vivienda y ha adjuntado la documentación necesaria.")}
     ${infoBlock(rows)}
-    ${btn("Ver documentos â†’", APP_URL)}
+    ${btn("Ver documentos →", APP_URL)}
     ${divider()}
-    ${p("Revisa la documentaciÃ³n y actualiza el estado de la certificaciÃ³n.", { color: "#6b7280", size: "13px" })}
+    ${p("Revisa la documentación y actualiza el estado de la certificación.", { color: "#6b7280", size: "13px" })}
   `;
 
   await send({
     to,
     from: { email: FROM_EMAIL, name: FROM_NAME },
-    subject: "ðŸ“ " + ownerName + " ha enviado la documentaciÃ³n CEE",
-    html: htmlWrap(body, ownerName + " completÃ³ el formulario CEE y adjuntÃ³ documentos."),
+    subject: "📁 " + ownerName + " ha enviado la documentación CEE",
+    html: htmlWrap(body, ownerName + " completó el formulario CEE y adjuntó documentos."),
   });
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// 17. DOCUMENTO RECHAZADO â†’ PROPIETARIO  (certifier requests re-upload)
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
+// 17. DOCUMENTO RECHAZADO → PROPIETARIO  (certifier requests re-upload)
+// ─────────────────────────────────────────────────────────────────────────────
 export async function sendDocumentoRechazadoEmail(params: {
   to: string;
   ownerName: string;
@@ -774,7 +777,7 @@ export async function sendDocumentoRechazadoEmail(params: {
   const { to, ownerName, certifierName, tipoDoc, motivo, ceeFormUrl } = params;
 
   const body = `
-    ${h1("ðŸ“Ž Necesitamos un documento actualizado")}
+    ${h1("📎 Necesitamos un documento actualizado")}
     ${p("Hola <strong>" + (ownerName || "") + "</strong>,")}
     ${p("<strong>" + certifierName + "</strong> ha revisado los documentos que enviaste y necesita que reemplaces el siguiente documento:")}
     <div style="background:#fef3c7;border-left:4px solid #f59e0b;padding:16px 20px;margin:20px 0;border-radius:0 8px 8px 0">
@@ -783,7 +786,7 @@ export async function sendDocumentoRechazadoEmail(params: {
       <p style="margin:0 0 6px;font-size:12px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.5px">Motivo</p>
       <p style="margin:0;font-size:14px;color:#92400e">"${motivo}"</p>
     </div>
-    ${btn("Subir documento â†’", ceeFormUrl, "#ea580c")}
+    ${btn("Subir documento →", ceeFormUrl, "#ea580c")}
     ${divider()}
     ${p("Si tienes alguna duda, contacta directamente con tu certificador.", { color: "#6b7280", size: "13px" })}
   `;
@@ -791,14 +794,14 @@ export async function sendDocumentoRechazadoEmail(params: {
   await send({
     to,
     from: { email: FROM_EMAIL, name: FROM_NAME },
-    subject: certifierName + " â€” Necesita que reemplaces un documento",
+    subject: certifierName + " — Necesita que reemplaces un documento",
     html: htmlWrap(body, "Un documento necesita ser reemplazado."),
   });
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
 // 18. BETA LEAD CONFIRMATION  (landing page registration)
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
 export async function sendBetaLeadConfirmation(params: {
   to: string;
   nombre: string;
@@ -807,46 +810,46 @@ export async function sendBetaLeadConfirmation(params: {
   const { to, nombre } = params;
 
   const body = `
-    ${h1("Â¡Ya estÃ¡s en la lista beta, " + (nombre || "certificador") + "! ðŸŽ‰")}
+    ${h1("¡Ya estás en la lista beta, " + (nombre || "certificador") + "! 🎉")}
     ${p("Gracias por apuntarte al programa beta de CERTIFIVE. Eres de los primeros en dar el paso.")}
-    ${p("Te avisaremos en cuanto tu acceso estÃ© listo. Mientras tanto, si tienes preguntas puedes escribirnos directamente.")}
+    ${p("Te avisaremos en cuanto tu acceso esté listo. Mientras tanto, si tienes preguntas puedes escribirnos directamente.")}
     ${infoBlock([
       { label: "Email",   value: to },
       { label: "Estado",  value: "En lista de espera beta" },
     ])}
-    ${btn("Conocer mÃ¡s sobre Certifive â†’", APP_URL)}
+    ${btn("Conocer más sobre Certifive →", APP_URL)}
     ${divider()}
-    ${p("Â¿Tienes alguna duda? EscrÃ­benos a <a href='mailto:hola@certifive.es' style='color:#059669'>hola@certifive.es</a>", { color: "#6b7280", size: "13px" })}
+    ${p("¿Tienes alguna duda? Escríbenos a <a href='mailto:hola@certifive.es' style='color:#059669'>hola@certifive.es</a>", { color: "#6b7280", size: "13px" })}
   `;
 
   await send({
     to,
     from: { email: FROM_EMAIL, name: FROM_NAME },
-    subject: "Â¡Bienvenido a la beta de CERTIFIVE! ðŸŒ¿",
-    html: htmlWrap(body, "Tu plaza en la beta de Certifive estÃ¡ reservada."),
+    subject: "¡Bienvenido a la beta de CERTIFIVE! 🌿",
+    html: htmlWrap(body, "Tu plaza en la beta de Certifive está reservada."),
   });
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
 // TEST EMAIL  (only for development / admin use)
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─────────────────────────────────────────────────────────────────────────────
 export async function sendTestEmail(to: string): Promise<void> {
   const body = `
-    ${h1("Email de prueba â€” todo funciona âœ…")}
-    ${p("Si recibes este email, la integraciÃ³n con SendGrid estÃ¡ correctamente configurada en CERTIFIVE.")}
+    ${h1("Email de prueba — todo funciona ✅")}
+    ${p("Si recibes este email, la integración con SendGrid está correctamente configurada en CERTIFIVE.")}
     ${infoBlock([
       { label: "Remitente",  value: FROM_EMAIL },
       { label: "Fecha",      value: new Date().toLocaleString("es-ES") },
       { label: "Entorno",    value: process.env.NODE_ENV ?? "development" },
     ])}
     ${divider()}
-    ${p("Puedes eliminar el endpoint de test antes de ir a producciÃ³n.", { color: "#6b7280", size: "13px" })}
+    ${p("Puedes eliminar el endpoint de test antes de ir a producción.", { color: "#6b7280", size: "13px" })}
   `;
 
   await send({
     to,
     from: { email: FROM_EMAIL, name: FROM_NAME },
-    subject: "CERTIFIVE â€” Test de email funcionando âœ…",
-    html: htmlWrap(body, "VerificaciÃ³n de la integraciÃ³n con SendGrid."),
+    subject: "CERTIFIVE — Test de email funcionando ✅",
+    html: htmlWrap(body, "Verificación de la integración con SendGrid."),
   });
 }
