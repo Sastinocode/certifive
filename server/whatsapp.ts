@@ -14,10 +14,11 @@
  */
 
 import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
+import { config } from "./config";
 
 // ── AES-256-CBC encryption ────────────────────────────────────────────────────
 
-const RAW_KEY = process.env.ENCRYPTION_KEY ?? "certifive-default-key-change-me!!";
+const RAW_KEY = config.ENCRYPTION_KEY;
 const ENC_KEY  = Buffer.from(RAW_KEY.padEnd(32, "0").slice(0, 32));
 
 export function encryptApiKey(plain: string): string {
