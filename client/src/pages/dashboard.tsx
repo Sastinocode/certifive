@@ -15,6 +15,14 @@ import { DashboardSkeletons, TableSkeleton } from "@/components/ui/loading-state
 import { NotificationModal } from "@/components/notifications/NotificationModal";
 import { ProfileMenu } from "@/components/layout/ProfileMenu";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { useAuth } from "@/contexts/AuthContext";
+
+function getGreeting(): string {
+  const h = new Date().getHours();
+  if (h < 14) return "Buenos días";
+  if (h < 20) return "Buenas tardes";
+  return "Buenas noches";
+}
 
 import { 
   IdCard, 
@@ -55,6 +63,9 @@ interface RecentCertification {
 }
 
 export default function Dashboard() {
+  const { user } = useAuth();
+  const displayName = user?.firstName || user?.username?.split("@")[0] || "certificador";
+
   const [selectedTab, setSelectedTab] = useState("dashboard");
   const [showWhatsAppConfig, setShowWhatsAppConfig] = useState(false);
   const [whatsappConfig, setWhatsappConfig] = useState({
@@ -176,10 +187,15 @@ export default function Dashboard() {
         <div className="flex-1 overflow-auto p-6">
           <div className="mb-8 flex justify-between items-start">
             <div>
-              <h2 className="text-foreground text-2xl font-bold mb-1" style={{ letterSpacing: "-.02em" }}>
-                Dashboard
+              <p className="text-muted-foreground" style={{ fontSize: 13, fontWeight: 500, marginBottom: 4 }}>
+                {getGreeting()},
+              </p>
+              <h2 className="text-foreground font-bold mb-1" style={{ fontSize: 26, letterSpacing: "-.02em", lineHeight: 1.15 }}>
+                {displayName} 👋
               </h2>
-              <p className="text-muted-foreground" style={{ fontSize: 14 }}>Gestiona tus certificaciones energéticas</p>
+              <p className="text-muted-foreground" style={{ fontSize: 14, marginTop: 4 }}>
+                Aquí tienes el resumen de tu actividad
+              </p>
             </div>
             <div className="flex items-center space-x-2">
               <ThemeToggle />
@@ -264,21 +280,20 @@ export default function Dashboard() {
                 <div style={{ overflowX: "auto" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse" }}>
                     <thead>
-                      <tr style={{ background: "#F8FAFC" }}>
+                      <tr className="bg-muted/50">
                         {["Propiedad", "Calificación", "Estado", "Fecha", "Acciones"].map(h => (
-                          <th key={h} style={{ padding: "10px 16px", textAlign: "left", fontSize: 11, fontWeight: 500, color: "#6B7280", textTransform: "uppercase", letterSpacing: ".05em", borderBottom: "1px solid #E2E8F0", whiteSpace: "nowrap" }}>{h}</th>
+                          <th key={h} className="text-muted-foreground border-b border-border" style={{ padding: "10px 16px", textAlign: "left", fontSize: 11, fontWeight: 500, textTransform: "uppercase", letterSpacing: ".05em", whiteSpace: "nowrap" }}>{h}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
                       {recentCertifications.map((cert: RecentCertification) => (
                         <tr key={cert.id}
-                          style={{ background: "#fff", borderBottom: "1px solid #e5e7eb", transition: "background .1s" }}
-                          onMouseOver={e => ((e.currentTarget as HTMLElement).style.background = "#F8FAFC")}
-                          onMouseOut={e => ((e.currentTarget as HTMLElement).style.background = "#fff")}>
+                          className="border-b border-border hover:bg-muted/40 transition-colors"
+                          style={{ transition: "background .1s" }}>
                           <td style={{ padding: "14px 16px", whiteSpace: "nowrap" }}>
-                            <div style={{ fontSize: 14, fontWeight: 500, color: "#0F172A" }}>{cert.fullName}</div>
-                            <div style={{ fontSize: 12, color: "#6B7280", marginTop: 1 }}>Ref: {cert.cadastralRef}</div>
+                            <div className="text-foreground" style={{ fontSize: 14, fontWeight: 500 }}>{cert.fullName}</div>
+                            <div className="text-muted-foreground" style={{ fontSize: 12, marginTop: 1 }}>Ref: {cert.cadastralRef}</div>
                           </td>
                           <td style={{ padding: "14px 16px", whiteSpace: "nowrap" }}>
                             {getEnergyRatingBadge(cert.energyRating)}
@@ -286,12 +301,12 @@ export default function Dashboard() {
                           <td style={{ padding: "14px 16px", whiteSpace: "nowrap" }}>
                             {getStatusBadge(cert.status)}
                           </td>
-                          <td style={{ padding: "14px 16px", whiteSpace: "nowrap", fontSize: 14, color: "#6B7280" }}>
+                          <td className="text-muted-foreground" style={{ padding: "14px 16px", whiteSpace: "nowrap", fontSize: 14 }}>
                             {new Date(cert.createdAt).toLocaleDateString('es-ES')}
                           </td>
                           <td style={{ padding: "14px 16px", whiteSpace: "nowrap" }}>
                             <div style={{ display: "flex", gap: 8 }}>
-                              <button style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 13, fontWeight: 500, color: "#475569", background: "none", border: "1px solid #E2E8F0", borderRadius: 6, padding: "5px 10px", cursor: "pointer" }}>
+                              <button className="text-muted-foreground border border-border hover:bg-muted" style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 13, fontWeight: 500, background: "none", borderRadius: 6, padding: "5px 10px", cursor: "pointer" }}>
                                 <Eye size={13} /> Ver
                               </button>
                               {cert.status !== 'completed' && (
