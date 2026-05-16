@@ -35,12 +35,13 @@ import FormularioTecnicoPublico from "@/pages/FormularioTecnicoPublico";
 import TecnicoFormReview from "@/pages/TecnicoFormReview";
 import VisitForm from "@/pages/VisitForm";
 import NotFound from "@/pages/not-found";
-import VerifyEmail from "@/pages/VerifyEmail";
 import PaymentSuccess from "@/pages/PaymentSuccess";
 import PaymentCancel from "@/pages/PaymentCancel";
 import RenovarSuscripcion from "@/pages/RenovarSuscripcion";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import TermsOfService from "@/pages/TermsOfService";
+import VerifyEmail from "@/pages/VerifyEmail";
+import ResetPassword from "@/pages/ResetPassword";
 
 function PresupuestoWrapper() {
   const { token } = useParams<{ token: string }>();
@@ -123,8 +124,9 @@ function Router() {
         <Route path="/generador-tarifas" component={PublicTariffGenerator} />
         <Route path="/login" component={Login} />
         <Route path="/register" component={Register} />
-        <Route path="/solicitar-demo" component={DemoRequest} />
         <Route path="/verify-email" component={VerifyEmail} />
+        <Route path="/reset-password" component={ResetPassword} />
+        <Route path="/solicitar-demo" component={DemoRequest} />
 
         {/* Home: dashboard if authenticated, landing if not */}
         <Route path="/" component={isAuthenticated ? Dashboard : Landing} />
