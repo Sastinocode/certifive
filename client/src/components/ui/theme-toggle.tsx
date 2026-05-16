@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 const THEME_KEY = "certifive-theme";
 
@@ -23,18 +22,49 @@ export function ThemeToggle() {
   }, [isDark]);
 
   return (
-    <Button
-      variant="ghost"
-      size="icon"
+    <button
       onClick={() => setIsDark((prev) => !prev)}
       aria-label={isDark ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
-      className="h-9 w-9 text-muted-foreground hover:text-foreground"
+      title={isDark ? "Modo claro" : "Modo oscuro"}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 6,
+        padding: "5px 10px",
+        borderRadius: 20,
+        border: "1px solid",
+        borderColor: isDark ? "rgba(255,255,255,0.12)" : "hsl(var(--border))",
+        background: isDark ? "rgba(255,255,255,0.06)" : "hsl(var(--muted))",
+        cursor: "pointer",
+        fontSize: 12,
+        fontWeight: 500,
+        color: isDark ? "rgba(255,255,255,0.7)" : "hsl(var(--muted-foreground))",
+        transition: "all 0.2s ease",
+        userSelect: "none",
+        flexShrink: 0,
+      }}
+      onMouseOver={e => {
+        (e.currentTarget as HTMLElement).style.borderColor = isDark
+          ? "rgba(255,255,255,0.22)"
+          : "hsl(var(--ring))";
+      }}
+      onMouseOut={e => {
+        (e.currentTarget as HTMLElement).style.borderColor = isDark
+          ? "rgba(255,255,255,0.12)"
+          : "hsl(var(--border))";
+      }}
     >
       {isDark ? (
-        <Sun className="h-4 w-4" />
+        <>
+          <Sun style={{ width: 13, height: 13, flexShrink: 0 }} />
+          <span className="hidden sm:inline">Claro</span>
+        </>
       ) : (
-        <Moon className="h-4 w-4" />
+        <>
+          <Moon style={{ width: 13, height: 13, flexShrink: 0 }} />
+          <span className="hidden sm:inline">Oscuro</span>
+        </>
       )}
-    </Button>
+    </button>
   );
 }
