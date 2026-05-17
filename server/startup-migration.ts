@@ -1,13 +1,11 @@
 /**
  * startup-migration.ts
- *
- * Se ejecuta una vez al arrancar el servidor para garantizar que la base de
- * datos tiene todas las columnas que el código necesita. Usa ADD COLUMN IF NOT
- * EXISTS, así que es idempotente y seguro de repetir.
+ * Ejecuta al arrancar el servidor para asegurar que la BD tiene
+ * todas las columnas que el código necesita.
+ * Usa pool.query() directamente (más fiable que db.execute con neon-serverless).
  */
 
-import { db } from "./db";
-import { sql } from "drizzle-orm";
+import { pool } from "./db";
 
 const MIGRATIONS = [
   // ── Core auth ──────────────────────────────────────────────────────────────
@@ -69,13 +67,13 @@ const MIGRATIONS = [
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS whatsapp_connected_at timestamp`,
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at timestamp DEFAULT now()`,
 
-  // ── Unique constraints ─────────────────────────────────────────────────────
+  // ── Unique constraint en username ──────────────────────────────────────────
   `DO $$ BEGIN
      IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'users_username_unique')
      THEN ALTER TABLE users ADD CONSTRAINT users_username_unique UNIQUE (username); END IF;
    END $$`,
 
-  // ── refresh_tokens (user_id como text para compatibilidad con varchar o int) ─
+  // ── refresh_tokens ─────────────────────────────────────────────────────────
   `CREATE TABLE IF NOT EXISTS refresh_tokens (
     id serial PRIMARY KEY,
     user_id text NOT NULL,
@@ -85,7 +83,7 @@ const MIGRATIONS = [
   )`,
   `CREATE INDEX IF NOT EXISTS refresh_tokens_user_id_idx ON refresh_tokens(user_id)`,
 
-  // ── session table ──────────────────────────────────────────────────────────
+  // ── session table (connect-pg-simple) ──────────────────────────────────────
   `CREATE TABLE IF NOT EXISTS session (
     sid varchar NOT NULL COLLATE "default",
     sess json NOT NULL,
@@ -96,20 +94,30 @@ const MIGRATIONS = [
 ];
 
 export async function runStartupMigrations(): Promise<void> {
+  const client = await pool.connect();
   let ok = 0, fail = 0;
-  for (const m of MIGRATIONS) {
-    try {
-      await db.execute(sql.raw(m));
-      ok++;
-    } catch (e: any) {
-      const msg = (e.message || "").split("\n")[0];
-      if (msg.includes("already exists") || msg.includes("duplicate")) {
+  try {
+    for (const m of MIGRATIONS) {
+      try {
+        await client.query(m);
         ok++;
-      } else {
-        console.warn(`[migration] WARN: ${msg.slice(0, 120)}`);
-        fail++;
+      } catch (e: any) {
+        const msg = String(e?.message || e?.detail || e?.code || e || "unknown");
+        const isExpected =
+          msg.includes("already exists") ||
+          msg.includes("duplicate") ||
+          msg.includes("42701") || // duplicate_column
+          msg.includes("42P07");   // duplicate_table
+        if (isExpected) {
+          ok++;
+        } else {
+          console.warn(`[migration] WARN: ${msg.slice(0, 200)}`);
+          fail++;
+        }
       }
     }
+  } finally {
+    client.release();
   }
   console.log(`[migration] Startup migration: ${ok} ok, ${fail} warnings`);
 }
