@@ -44,11 +44,13 @@ export function generateToken(user: AuthUser, rememberMe = false): string {
   );
 }
 
-export async function generateRefreshToken(userId: number, rememberMe = false): Promise<string> {
+export async function generateRefreshToken(userId: number | string, rememberMe = false): Promise<string> {
   const token = nanoid(64);
   const days = rememberMe ? 60 : 30;
   const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
-  await db.insert(refreshTokens).values({ userId, token, expiresAt });
+  // userId puede ser number (serial) o string (varchar legacy) — cast a number si es posible
+  const uid = typeof userId === "string" ? (parseInt(userId, 10) || 0) : userId;
+  await db.insert(refreshTokens).values({ userId: uid, token, expiresAt });
   return token;
 }
 

@@ -10,6 +10,7 @@ import { startReminderCron } from "./notifications";
 import { startDigestCron } from "./digest";
 import catastroRouter from "./routes/catastro";
 import { config } from "./config";
+import { runStartupMigrations } from "./startup-migration";
 
 const PgStore = connectPg(session);
 
@@ -64,6 +65,11 @@ app.use(session({
     maxAge: 7 * 24 * 60 * 60 * 1000,
   },
 }));
+
+// ── Startup migration (idempotent — safe to run on every deploy) ─────────────
+runStartupMigrations().catch(err =>
+  console.error("[migration] Startup migration failed:", err)
+);
 
 // Initialize email service (no-op if SENDGRID_API_KEY is not set)
 initEmail();
