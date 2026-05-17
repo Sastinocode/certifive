@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Moon, Sun } from "lucide-react";
 
-const THEME_KEY = "certifive-theme";
+const THEME_KEY = "certifive-theme-v2";
 
 // Aplica el tema INMEDIATAMENTE al cargar el módulo, antes de que React renderice
 // Esto evita el flash de tema incorrecto
