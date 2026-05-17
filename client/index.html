@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="dark">
   <head>
     <meta charset="UTF-8" />
 
@@ -12,8 +12,8 @@
     <meta name="keywords" content="certificado energético, CEE, certificación energética, España, auditor energético" />
     <meta name="author" content="Certifive" />
 
-    <!-- ── Theme color (emerald-600) ── -->
-    <meta name="theme-color" content="#059669" />
+    <!-- ── Theme color ── -->
+    <meta name="theme-color" content="#1FA94B" />
     <meta name="msapplication-navbutton-color" content="#059669" />
     <meta name="msapplication-TileColor" content="#059669" />
 
@@ -48,6 +48,16 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="HandheldFriendly" content="True" />
     <meta name="MobileOptimized" content="320" />
+
+    <!-- ── Dark mode init — previene flash blanco al cargar ── -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('certifive-theme');
+        var dark = saved ? saved === 'dark' : true;
+        if (dark) document.documentElement.classList.add('dark');
+        else document.documentElement.classList.remove('dark');
+      })();
+    </script>
 
     <!-- ── iOS tap highlight ── -->
     <style>

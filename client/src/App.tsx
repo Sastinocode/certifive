@@ -40,6 +40,8 @@ import PaymentCancel from "@/pages/PaymentCancel";
 import RenovarSuscripcion from "@/pages/RenovarSuscripcion";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import TermsOfService from "@/pages/TermsOfService";
+import VerifyEmail from "@/pages/VerifyEmail";
+import ResetPassword from "@/pages/ResetPassword";
 
 function PresupuestoWrapper() {
   const { token } = useParams<{ token: string }>();
@@ -86,10 +88,10 @@ function Router() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-emerald-50">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-800 mx-auto mb-4"></div>
-          <p className="text-emerald-700 font-semibold">Cargando...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground font-semibold">Cargando...</p>
         </div>
       </div>
     );
@@ -122,6 +124,8 @@ function Router() {
         <Route path="/generador-tarifas" component={PublicTariffGenerator} />
         <Route path="/login" component={Login} />
         <Route path="/register" component={Register} />
+        <Route path="/verify-email" component={VerifyEmail} />
+        <Route path="/reset-password" component={ResetPassword} />
         <Route path="/solicitar-demo" component={DemoRequest} />
 
         {/* Home: dashboard if authenticated, landing if not */}

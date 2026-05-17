@@ -220,7 +220,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
       />
 
       <div
-        className={`relative bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden transition-all duration-300 ${
+        className={`relative bg-card text-card-foreground rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden transition-all duration-300 border border-border ${
           isAnimating ? "opacity-0 scale-95" : "opacity-100 scale-100"
         }`}
       >
@@ -267,10 +267,10 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
                   onClick={() => goToStep(i)}
                   className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide whitespace-nowrap transition-colors ${
                     i === currentStep
-                      ? "bg-emerald-50 text-emerald-800"
+                      ? "bg-accent text-accent-foreground"
                       : i < currentStep
-                      ? "text-emerald-500 hover:text-emerald-700"
-                      : "text-emerald-300 hover:text-emerald-500"
+                      ? "text-primary hover:text-primary/80"
+                      : "text-muted-foreground/50 hover:text-muted-foreground"
                   }`}
                 >
                   <Icon className="w-3 h-3" />
@@ -281,7 +281,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
           </div>
         </div>
 
-        <div className="h-px bg-emerald-50 mx-6 mt-3" />
+        <div className="h-px mx-6 mt-3" style={{ backgroundColor: "hsl(var(--border))" }} />
 
         {/* Content */}
         <div className="px-6 pt-6 pb-4">
@@ -297,13 +297,13 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
                   {step.subtitle}
                 </p>
               )}
-              <h2 className="text-xl font-black text-emerald-900 leading-tight">
+              <h2 className="text-xl font-black leading-tight" style={{ color: "hsl(var(--foreground))" }}>
                 {step.title}
               </h2>
             </div>
           </div>
 
-          <p className="text-sm text-emerald-700/70 leading-relaxed mb-5">
+          <p className="text-sm leading-relaxed mb-5" style={{ color: "hsl(var(--muted-foreground))" }}>
             {step.description}
           </p>
 
@@ -313,12 +313,14 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
               return (
                 <div
                   key={i}
-                  className="flex items-center gap-3 bg-emerald-50 rounded-xl px-4 py-3"
+                  className="flex items-center gap-3 rounded-xl px-4 py-3"
+                  style={{ backgroundColor: "hsl(var(--accent))" }}
                 >
-                  <div className="w-7 h-7 bg-white rounded-lg flex items-center justify-center border border-emerald-100 shrink-0">
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center border border-border shrink-0"
+                    style={{ backgroundColor: "hsl(var(--card))" }}>
                     <TipIcon className="w-3.5 h-3.5 text-emerald-700" />
                   </div>
-                  <span className="text-xs font-semibold text-emerald-900">
+                  <span className="text-xs font-semibold" style={{ color: "hsl(var(--foreground))" }}>
                     {tip.text}
                   </span>
                 </div>
@@ -329,7 +331,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
 
         {/* Footer */}
         <div className="px-6 pb-6">
-          <div className="h-px bg-emerald-50 mb-4" />
+          <div className="h-px mb-4" style={{ backgroundColor: "hsl(var(--border))" }} />
           <div className="flex items-center justify-between gap-3">
             <button
               onClick={handlePrev}
@@ -337,7 +339,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
               className={`flex items-center gap-1.5 text-sm font-semibold px-4 py-2.5 rounded-xl border transition-colors ${
                 isFirst
                   ? "border-transparent text-transparent cursor-default"
-                  : "border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                  : "border-border text-foreground hover:bg-accent"
               }`}
             >
               <ArrowLeft className="w-4 h-4" />
@@ -347,7 +349,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
             {!isLast && (
               <button
                 onClick={handleSkip}
-                className="text-xs text-emerald-700/40 hover:text-emerald-700 transition-colors"
+                className="text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors"
               >
                 Omitir tutorial
               </button>
@@ -357,13 +359,13 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
               <div className="flex gap-2">
                 <button
                   onClick={handleComplete}
-                  className="flex items-center gap-1.5 text-sm font-bold px-4 py-2.5 rounded-xl border border-emerald-200 text-emerald-700 hover:bg-emerald-50 transition-colors"
+                  className="flex items-center gap-1.5 text-sm font-bold px-4 py-2.5 rounded-xl border border-border text-foreground hover:bg-accent transition-colors"
                 >
                   Al Dashboard
                 </button>
                 <button
                   onClick={handleFinishToSettings}
-                  className="flex items-center gap-1.5 text-sm font-bold px-5 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white transition-colors"
+                  className="flex items-center gap-1.5 text-sm font-bold px-5 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground transition-colors"
                 >
                   <Settings className="w-4 h-4" />
                   Configurar perfil
@@ -372,7 +374,7 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
             ) : (
               <button
                 onClick={handleNext}
-                className="flex items-center gap-1.5 text-sm font-bold px-5 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white transition-colors"
+                className="flex items-center gap-1.5 text-sm font-bold px-5 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground transition-colors"
               >
                 Siguiente
                 <ArrowRight className="w-4 h-4" />

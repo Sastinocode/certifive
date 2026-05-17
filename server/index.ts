@@ -1,5 +1,6 @@
 import express from "express";
 import session from "express-session";
+import connectPg from "connect-pg-simple";
 import helmet from "helmet";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -8,9 +9,15 @@ import { initEmail } from "./email";
 import { startReminderCron } from "./notifications";
 import { startDigestCron } from "./digest";
 import catastroRouter from "./routes/catastro";
+import { config } from "./config";
+
+const PgStore = connectPg(session);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
+
+// Railway (y cualquier cloud) usa reverse proxies — necesario para rate-limit e IPs reales
+app.set("trust proxy", 1);
 
 // ── Security headers ──────────────────────────────────────────────────────────
 app.use(helmet({
@@ -42,12 +49,18 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 app.use(session({
-  secret: process.env.SESSION_SECRET || "certifive-session-secret-2024",
+  store: new PgStore({
+    conString: process.env.DATABASE_URL,
+    tableName: "session",
+    createTableIfMissing: true,
+  }),
+  secret: config.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
   cookie: {
     secure: process.env.NODE_ENV === "production",
     httpOnly: true,
+    sameSite: "lax",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   },
 }));

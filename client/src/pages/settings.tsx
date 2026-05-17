@@ -477,7 +477,7 @@ export default function Settings() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-background">
       <Sidebar selectedTab="settings" onTabChange={() => {}} />
       
       <div className="flex-1 flex flex-col overflow-hidden">

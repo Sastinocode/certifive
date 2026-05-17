@@ -218,9 +218,9 @@ export default function WhatsAppManagement() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-background">
       <Sidebar selectedTab={selectedTab} onTabChange={setSelectedTab} />
-      <div className="flex-1 flex bg-gray-50">
+      <div className="flex-1 flex bg-background">
         {/* Conversations List */}
         <div className="w-1/3 bg-white border-r border-gray-200 flex flex-col">
         <div className="p-4 border-b border-gray-200">

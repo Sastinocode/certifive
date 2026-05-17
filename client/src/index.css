@@ -1,82 +1,285 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;0,14..32,900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ── Variables de tema ────────────────────────────────────────────────────────── */
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 217 33% 10%;
-    --card: 0 0% 100%;
-    --card-foreground: 217 33% 10%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 217 33% 10%;
-    --primary: 166 80% 26%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 215 25% 26%;
+    /* LIGHT — Tonos fríos con tinte azulado, limpio y profesional */
+    --background:           215 25% 97%;
+    --foreground:           215 30% 12%;
+    --card:                 0 0% 100%;
+    --card-foreground:      215 30% 12%;
+    --popover:              0 0% 100%;
+    --popover-foreground:   215 30% 12%;
+    --primary:              142 69% 36%;
+    --primary-foreground:   0 0% 100%;
+    --secondary:            215 25% 26%;
     --secondary-foreground: 0 0% 100%;
-    --muted: 214 32% 96%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 166 30% 93%;
-    --accent-foreground: 166 80% 26%;
-    --destructive: 0 72% 51%;
+    --muted:                215 25% 94%;
+    --muted-foreground:     215 16% 46%;
+    --accent:               142 40% 93%;
+    --accent-foreground:    142 69% 25%;
+    --destructive:          0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 166 80% 26%;
-    --radius: 0.375rem;
-    --sidebar-background: 210 40% 98%;
-    --sidebar-foreground: 215 25% 26%;
-    --sidebar-primary: 166 80% 26%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 214 32% 93%;
-    --sidebar-accent-foreground: 217 33% 10%;
-    --sidebar-border: 214 32% 89%;
-    --sidebar-ring: 166 80% 26%;
+    --border:               215 20% 88%;
+    --input:                215 20% 88%;
+    --ring:                 142 69% 36%;
+    --radius:               0.5rem;
   }
 
   .dark {
-    --background: 217 33% 8%;
-    --foreground: 210 40% 96%;
-    --card: 217 33% 10%;
-    --card-foreground: 210 40% 96%;
-    --popover: 217 33% 10%;
-    --popover-foreground: 210 40% 96%;
-    --primary: 166 60% 40%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 215 25% 35%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 217 25% 15%;
-    --muted-foreground: 215 16% 57%;
-    --accent: 217 25% 17%;
-    --accent-foreground: 166 60% 40%;
-    --destructive: 0 62% 40%;
+    /* DARK — Mismo palette que el sidebar: navy profundo + verde #1FA94B */
+    --background:           210 38% 8%;
+    --foreground:           0 0% 90%;
+    --card:                 210 35% 11%;
+    --card-foreground:      0 0% 88%;
+    --popover:              210 33% 13%;
+    --popover-foreground:   0 0% 90%;
+    --primary:              142 69% 39%;
+    --primary-foreground:   0 0% 100%;
+    --secondary:            210 25% 22%;
+    --secondary-foreground: 0 0% 90%;
+    --muted:                210 28% 15%;
+    --muted-foreground:     215 15% 52%;
+    --accent:               210 28% 17%;
+    --accent-foreground:    142 55% 52%;
+    --destructive:          0 62% 40%;
     --destructive-foreground: 0 0% 100%;
-    --border: 217 25% 18%;
-    --input: 217 25% 18%;
-    --ring: 166 60% 40%;
+    --border:               210 25% 18%;
+    --input:                210 25% 16%;
+    --ring:                 142 69% 39%;
   }
 }
 
+/* ── Base ─────────────────────────────────────────────────────────────────────── */
 @layer base {
-  * {
-    @apply border-border;
-  }
+  *, *::before, *::after { @apply border-border; }
+
+  html { scroll-behavior: smooth; }
+
   body {
     @apply bg-background text-foreground;
     font-family: "Inter", system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    letter-spacing: -0.005em;
   }
+
+  h1, h2, h3, h4, h5, h6 {
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    font-weight: 700;
+  }
+
+  ::selection {
+    background: hsl(var(--primary) / 0.18);
+    color: hsl(var(--foreground));
+  }
+
+  /* Scrollbars */
+  ::-webkit-scrollbar            { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track      { background: transparent; }
+  ::-webkit-scrollbar-thumb      { background: hsl(var(--border)); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover{ background: hsl(var(--muted-foreground) / 0.4); }
 }
+
+/* ── Popovers, Dropdowns, Tooltips — NUNCA transparentes ───────────────────── */
+[data-radix-popper-content-wrapper] > * {
+  background-color: hsl(var(--popover)) !important;
+  color:            hsl(var(--popover-foreground)) !important;
+  border:           1px solid hsl(var(--border)) !important;
+  border-radius:    calc(var(--radius) + 2px) !important;
+  box-shadow:       0 8px 30px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.08) !important;
+  backdrop-filter:  none !important;
+}
+.dark [data-radix-popper-content-wrapper] > * {
+  box-shadow: 0 12px 40px rgba(0,0,0,0.55), 0 3px 10px rgba(0,0,0,0.45) !important;
+}
+
+[data-radix-popper-content-wrapper] [role="menuitem"],
+[data-radix-popper-content-wrapper] [role="option"] {
+  border-radius: calc(var(--radius) - 2px);
+}
+[data-radix-popper-content-wrapper] [role="menuitem"]:hover,
+[data-radix-popper-content-wrapper] [role="option"][data-highlighted],
+[data-radix-popper-content-wrapper] [data-highlighted] {
+  background-color: hsl(var(--accent)) !important;
+  color: hsl(var(--accent-foreground)) !important;
+}
+[data-radix-select-viewport] {
+  background-color: hsl(var(--popover));
+  border-radius: var(--radius);
+  padding: 4px;
+}
+
+/* ── Tabs — fondo sólido, sin transparencias ─────────────────────────────────── */
+[role="tablist"] {
+  background-color: hsl(var(--muted));
+  border: 1px solid hsl(var(--border));
+  border-radius: calc(var(--radius) + 2px);
+  padding: 3px;
+}
+[role="tab"] {
+  border-radius: var(--radius);
+  font-weight: 500;
+  font-size: 13px;
+  color: hsl(var(--muted-foreground));
+  transition: background-color .15s, color .15s, box-shadow .15s;
+  letter-spacing: -0.01em;
+}
+[role="tab"][data-state="active"] {
+  background-color: hsl(var(--card)) !important;
+  color:            hsl(var(--foreground)) !important;
+  font-weight:      600;
+  box-shadow:       0 1px 4px rgba(0,0,0,0.14), 0 0 0 1px hsl(var(--border));
+}
+[role="tab"]:hover:not([data-state="active"]) {
+  background-color: hsl(var(--card) / 0.5);
+  color: hsl(var(--foreground));
+}
+
+/* ── Cards en dark mode ────────────────────────────────────────────────────────── */
+.dark .bg-card,
+.dark [class*="bg-card"] {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4), 0 0 0 1px hsl(var(--border));
+}
+
+/* ── Transición suave de tema ─────────────────────────────────────────────────── */
+*, *::before, *::after {
+  transition: background-color 0.2s ease, border-color 0.18s ease;
+}
+button, a, [role="button"], input, textarea {
+  transition: background-color 0.12s ease, color 0.1s ease, border-color 0.12s ease,
+              box-shadow 0.12s ease, opacity 0.12s ease, transform 0.1s ease;
+}
+
+/* ── Utilidades ───────────────────────────────────────────────────────────────── */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
 .material-symbols-outlined {
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-  vertical-align: middle;
-  display: inline-block;
+  vertical-align: middle; display: inline-block;
 }
-
 .material-symbols-filled {
   font-family: 'Material Symbols Outlined';
   font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-  vertical-align: middle;
-  display: inline-block;
+  vertical-align: middle; display: inline-block;
 }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   DARK MODE — Overrides globales para páginas con colores hardcodeados
+   Arregla automáticamente todas las páginas sin modificar cada archivo.
+══════════════════════════════════════════════════════════════════════════════ */
+
+/* -- Fondos blancos y claros → fondo de card en dark ── */
+.dark .bg-white        { background-color: hsl(var(--card)) !important; color: hsl(var(--card-foreground)); }
+.dark .bg-stone-50     { background-color: hsl(var(--muted)) !important; }
+.dark .bg-slate-50     { background-color: hsl(var(--muted)) !important; }
+.dark .bg-gray-50      { background-color: hsl(var(--muted)) !important; }
+.dark .bg-emerald-50   { background-color: hsl(var(--accent)) !important; }
+.dark .bg-teal-50      { background-color: hsl(var(--accent)) !important; }
+.dark .bg-blue-50      { background-color: hsl(210 35% 14%) !important; }
+.dark .bg-amber-50     { background-color: hsl(35 30% 14%) !important; }
+.dark .bg-orange-50    { background-color: hsl(25 30% 14%) !important; }
+.dark .bg-indigo-50    { background-color: hsl(240 30% 14%) !important; }
+.dark .bg-violet-50    { background-color: hsl(260 30% 14%) !important; }
+.dark .bg-cyan-50      { background-color: hsl(190 30% 14%) !important; }
+.dark .bg-lime-50      { background-color: hsl(80 25% 13%) !important; }
+.dark .bg-red-50       { background-color: hsl(0 30% 13%) !important; }
+.dark .bg-emerald-100  { background-color: hsl(var(--accent)) !important; }
+.dark .bg-stone-100    { background-color: hsl(var(--muted)) !important; }
+.dark .bg-gray-100     { background-color: hsl(var(--muted)) !important; }
+
+/* -- Textos oscuros → foreground adaptado ── */
+.dark .text-emerald-900 { color: hsl(var(--foreground)) !important; }
+.dark .text-stone-900   { color: hsl(var(--foreground)) !important; }
+.dark .text-gray-900    { color: hsl(var(--foreground)) !important; }
+.dark .text-slate-900   { color: hsl(var(--foreground)) !important; }
+.dark .text-teal-900    { color: hsl(var(--foreground)) !important; }
+.dark .text-stone-800   { color: hsl(var(--foreground) / 0.9) !important; }
+.dark .text-gray-800    { color: hsl(var(--foreground) / 0.9) !important; }
+.dark .text-emerald-800 { color: hsl(var(--accent-foreground)) !important; }
+
+/* -- Textos medios → muted-foreground ── */
+.dark .text-stone-600   { color: hsl(var(--muted-foreground)) !important; }
+.dark .text-stone-500   { color: hsl(var(--muted-foreground)) !important; }
+.dark .text-stone-400   { color: hsl(var(--muted-foreground) / 0.7) !important; }
+.dark .text-gray-600    { color: hsl(var(--muted-foreground)) !important; }
+.dark .text-gray-500    { color: hsl(var(--muted-foreground)) !important; }
+.dark .text-slate-600   { color: hsl(var(--muted-foreground)) !important; }
+.dark .text-slate-500   { color: hsl(var(--muted-foreground)) !important; }
+.dark .text-slate-400   { color: hsl(var(--muted-foreground) / 0.7) !important; }
+
+/* -- Textos accent ── */
+.dark .text-emerald-700 { color: hsl(var(--accent-foreground)) !important; }
+.dark .text-teal-700    { color: hsl(var(--accent-foreground)) !important; }
+.dark .text-teal-200    { color: hsl(var(--muted-foreground)) !important; }
+
+/* -- Bordes claros → border del tema ── */
+.dark .border-emerald-100 { border-color: hsl(var(--border)) !important; }
+.dark .border-stone-200   { border-color: hsl(var(--border)) !important; }
+.dark .border-stone-100   { border-color: hsl(var(--border)) !important; }
+.dark .border-gray-200    { border-color: hsl(var(--border)) !important; }
+.dark .border-slate-200   { border-color: hsl(var(--border)) !important; }
+.dark .border-slate-100   { border-color: hsl(var(--border)) !important; }
+.dark .border-blue-100    { border-color: hsl(var(--border)) !important; }
+.dark .border-amber-100   { border-color: hsl(var(--border)) !important; }
+.dark .border-cyan-100    { border-color: hsl(var(--border)) !important; }
+.dark .border-violet-100  { border-color: hsl(var(--border)) !important; }
+.dark .border-indigo-100  { border-color: hsl(var(--border)) !important; }
+.dark .border-emerald-200 { border-color: hsl(var(--border)) !important; }
+.dark .border-teal-200    { border-color: hsl(var(--border)) !important; }
+
+/* -- Inputs y formularios ── */
+.dark input:not([type="range"]), .dark textarea, .dark select {
+  background-color: hsl(var(--input)) !important;
+  color: hsl(var(--foreground)) !important;
+  border-color: hsl(var(--border)) !important;
+}
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+/* -- Cabeceras tipo bg-emerald-50 dentro de modales ── */
+.dark .bg-teal-700 {
+  background-color: hsl(var(--secondary)) !important;
+}
+
+/* -- Badges de estado — colores semánticos pero adaptados al dark ── */
+.dark .bg-blue-50   { background-color: hsl(210 35% 14%) !important; }
+.dark .bg-amber-50  { background-color: hsl(35 30% 14%) !important; }
+.dark .bg-orange-50 { background-color: hsl(25 30% 14%) !important; }
+.dark .bg-lime-50   { background-color: hsl(80 25% 13%) !important; }
+.dark .bg-violet-50 { background-color: hsl(260 30% 14%) !important; }
+.dark .bg-indigo-50 { background-color: hsl(240 30% 14%) !important; }
+.dark .bg-cyan-50   { background-color: hsl(190 30% 14%) !important; }
+.dark .bg-red-50    { background-color: hsl(0 30% 13%) !important; }
+
+.dark .text-blue-700   { color: hsl(210 80% 70%) !important; }
+.dark .text-amber-700  { color: hsl(38 80% 65%) !important; }
+.dark .text-orange-700 { color: hsl(25 80% 65%) !important; }
+.dark .text-lime-700   { color: hsl(80 70% 60%) !important; }
+.dark .text-violet-700 { color: hsl(260 70% 75%) !important; }
+.dark .text-indigo-700 { color: hsl(240 70% 75%) !important; }
+.dark .text-cyan-700   { color: hsl(190 70% 65%) !important; }
+.dark .text-red-700    { color: hsl(0 70% 65%) !important; }
+.dark .text-red-500    { color: hsl(0 70% 60%) !important; }
+
+/* -- Hover states en dark ── */
+.dark .hover\:bg-stone-200:hover { background-color: hsl(var(--muted)) !important; }
+.dark .hover\:bg-slate-100:hover { background-color: hsl(var(--muted)) !important; }
+
+/* -- Divide (separadores de tabla) ── */
+.dark .divide-stone-100 > * + *   { border-color: hsl(var(--border)) !important; }
+.dark .divide-emerald-100 > * + * { border-color: hsl(var(--border)) !important; }
+.dark .divide-gray-100 > * + *    { border-color: hsl(var(--border)) !important; }
+
+/* -- Overlays ── */
+.dark .bg-black\/40         { background-color: rgba(0,0,0,0.72) !important; }
+.dark .bg-emerald-950\/60   { background-color: rgba(0,0,0,0.78) !important; }

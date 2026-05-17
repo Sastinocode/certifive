@@ -5,8 +5,9 @@ import { db } from "./db";
 import { users, refreshTokens } from "../shared/schema";
 import { eq, and, gt } from "drizzle-orm";
 import { nanoid } from "nanoid";
+import { config } from "./config";
 
-const JWT_SECRET = process.env.JWT_SECRET || "certifive-dev-secret-2024";
+const JWT_SECRET = config.JWT_SECRET;
 
 export interface AuthUser {
   id: number;
@@ -88,6 +89,7 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
     const user = verifyToken(token);
     if (user) {
       (req as any).user = user;
+      (req as any).userId = user.id; // compatibilidad con handlers que usan req.userId
       return next();
     }
     // Token present but invalid — log it

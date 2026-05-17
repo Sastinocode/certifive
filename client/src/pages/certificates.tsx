@@ -423,16 +423,16 @@ export default function Certificates() {
   const previewLinks = previewCert ? buildPreviewLinks(previewCert) : [];
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-background">
       <Sidebar selectedTab="certificates" onTabChange={() => {}} />
-      
+
       <div className="flex-1 overflow-auto p-6">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Solicitudes de Certificación</h1>
-              <p className="text-gray-600 mt-1">
+              <h1 className="text-3xl font-bold text-foreground">Solicitudes de Certificación</h1>
+              <p className="text-muted-foreground mt-1">
                 Información recibida de formularios de clientes - {filteredCertifications.length} solicitud{filteredCertifications.length !== 1 ? 'es' : ''}
               </p>
             </div>

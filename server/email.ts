@@ -46,10 +46,18 @@ async function send(msg: sgMail.MailDataRequired): Promise<void> {
     return;
   }
   try {
-    await sgMail.send(msg);
+    // Pasamos 'content' explícitamente para evitar el bug de @sendgrid/mail v8
+    // que añade "; charset=utf-8" al content-type y rompe la validación de la API.
+    const payload: any = {
+      to:      msg.to,
+      from:    msg.from,
+      subject: msg.subject,
+      content: [{ type: "text/html", value: (msg as any).html as string }],
+    };
+    await sgMail.send(payload);
     console.log("[email] sent:", msg.subject, "→", msg.to);
   } catch (err: any) {
-    // Log but never throw — emails must not break the main request flow
+    // Log pero nunca throw — los emails nunca deben romper el flujo principal
     const detail = err?.response?.body?.errors ?? err?.message ?? err;
     console.error("[email] failed:", msg.subject, detail);
   }

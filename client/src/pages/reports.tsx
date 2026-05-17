@@ -363,9 +363,9 @@ export default function Reports() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-background">
       <Sidebar selectedTab={selectedTab} onTabChange={setSelectedTab} />
-      <div className="flex-1 overflow-auto bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
+      <div className="flex-1 overflow-auto bg-background">
         <div className="container mx-auto p-6">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-2">
