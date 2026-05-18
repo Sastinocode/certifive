@@ -338,5 +338,19 @@ app.post("/api/payments/:id/reject", authenticate, async (req: Request, res: Res
 
     // In-app notification
     if (rejectedPayment?.certificationId) {
-      const [rejCert] = await db.select().from(certifications).where(eq(certifications.id, rejectedPayment.certificationId)).limit(1).catch(() => [null]);
-      createNotificatio
+      createNotification({
+        userId,
+        tipo: "pago_fallido",
+        mensaje: `Pago rechazado: ${parseFloat(rejectedPayment.amount as any).toFixed(2)} €${motivo ? ` — ${motivo}` : ""}${rejCert?.ownerName ? ` · ${rejCert.ownerName}` : ""}`,
+        certificationId: rejectedPayment.certificationId,
+        metadata: { amount: rejectedPayment.amount, motivo },
+      }).catch(console.error);
+    }
+
+    res.json({ ok: true });
+  } catch {
+    res.status(500).json({ message: "Error al rechazar pago" });
+  }
+});
+
+}

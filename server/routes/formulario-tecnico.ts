@@ -353,4 +353,19 @@ export function registerFormularioTecnicoRoutes(app: Express) {
         await db
           .update(certifications)
           .set({
-            tecnic
+            tecnicoFormReviewStatus: reviewStatus,
+            tecnicoFormReviewNotes:  reviewNotes ?? null,
+            tecnicoFormReviewedAt:   new Date(),
+            workflowStatus:          newWorkflowStatus,
+            updatedAt:               new Date(),
+          })
+          .where(eq(certifications.id, certId));
+
+        res.json({ ok: true, workflowStatus: newWorkflowStatus });
+      } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Error al guardar la revisión" });
+      }
+    }
+  );
+}

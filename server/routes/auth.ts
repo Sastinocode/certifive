@@ -443,5 +443,8 @@ app.get("/api/auth/user/export", authenticate, async (req: any, res) => {
     const fldrs  = await db.select().from(folders).where(eq(folders.userId, req.userId));
     const { password: _, whatsappApiKey: __, emailVerificationToken: ___, ...safeUser } = u;
     res.setHeader("Content-Type", "application/json");
-    res.setHeader("Content-Disposition", `attachment; filename="certifive-${new Date().toISOString().slice(0, 10)}.json"`);
-    res.json({ exportedAt: new Date().toISOString(), user: safeUser, certifications: certs, folders
+    res.json({ exportedAt: new Date().toISOString(), user: safeUser, certifications: certs, folders: fldrs });
+  } catch { res.status(500).json({ message: "Error" }); }
+});
+
+}
