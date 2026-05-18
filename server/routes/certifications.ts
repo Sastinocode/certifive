@@ -1,6 +1,6 @@
 import { Express, Request, Response } from "express";
 import { db } from "../db";
-import { eq, and, desc, ilike, or } from "drizzle-orm";
+import { eq, and, desc, ilike, or, sql, count } from "drizzle-orm";
 import { certifications, folders, insertCertificationSchema } from "../../shared/schema";
 import { authenticate } from "../auth";
 import { createNotification } from "../createNotification";
@@ -20,7 +20,13 @@ export function registerCertificationRoutes(app: Express) {
 app.get("/api/certifications", authenticate, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
-    const { search, status, archived } = req.query;
+    const { search, status, archived, page, pageSize } = req.query;
+
+    // ── Paginación (opt-in: sólo activa si el cliente envía ?page=N) ─────────
+    const paginated = page !== undefined;
+    const pageNum  = Math.max(1, parseInt(page as string) || 1);
+    const size     = Math.min(100, Math.max(1, parseInt(pageSize as string) || 20));
+    const offset   = (pageNum - 1) * size;
 
     // Construir condiciones WHERE en SQL (evita cargar toda la tabla en memoria)
     const conditions: ReturnType<typeof eq>[] = [
@@ -43,8 +49,27 @@ app.get("/api/certifications", authenticate, async (req: Request, res: Response)
       );
     }
 
+    const where = and(...conditions);
+
+    if (paginated) {
+      // ── Respuesta paginada: { data, total, page, pageSize } ─────────────────
+      const [{ total }] = await db
+        .select({ total: count() })
+        .from(certifications)
+        .where(where);
+
+      const data = await db.select().from(certifications)
+        .where(where)
+        .orderBy(desc(certifications.createdAt))
+        .limit(size)
+        .offset(offset);
+
+      return res.json({ data, total, page: pageNum, pageSize: size });
+    }
+
+    // ── Respuesta plana (compatibilidad hacia atrás) ─────────────────────────
     const results = await db.select().from(certifications)
-      .where(and(...conditions))
+      .where(where)
       .orderBy(desc(certifications.createdAt));
 
     res.json(results);
@@ -128,30 +153,4 @@ app.put("/api/certifications/:id", authenticate, async (req: Request, res: Respo
   }
 });
 
-app.post("/api/certifications/:id/archive", authenticate, async (req: Request, res: Response) => {
-  try {
-    const userId = (req as any).user.id;
-    const certId = parseInt(req.params.id);
-    const [existing] = await db.select().from(certifications).where(
-      and(eq(certifications.id, certId), eq(certifications.userId, userId))
-    ).limit(1);
-    if (!existing) return res.status(404).json({ message: "Certificación no encontrada" });
-
-    if (existing.ownerName) {
-      const folderName = existing.ownerName;
-      const existingFolder = await db.select().from(folders).where(
-        and(eq(folders.userId, userId), eq(folders.name, folderName))
-      ).limit(1);
-
-      let folderId = existingFolder[0]?.id;
-      if (!folderId) {
-        const [folder] = await db.insert(folders).values({
-          userId,
-          name: folderName,
-          clientName: existing.ownerName,
-          cadastralReference: existing.cadastralReference || "",
-        }).returning();
-        folderId = folder.id;
-      }
-
-      const [updated] = await db.update(certifications)
+app.post("/api/certifica

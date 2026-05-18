@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import { apiRequest } from "@/lib/queryClient";
 import Sidebar from "@/components/layout/sidebar";
 import { downloadPDF, downloadWord, downloadExcel } from "@/lib/certDownload";
 import ClientFlowWizard from "@/components/ClientFlowWizard";
-import { 
+import {
   IdCard,
   Plus,
   Search,
@@ -36,8 +36,12 @@ import {
   AlertCircle,
   Wallet,
   Send,
-  ClipboardList
+  ClipboardList,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
+
+const PAGE_SIZE = 20;
 
 interface Certification {
   id: number;
@@ -206,17 +210,60 @@ const METHOD_LABELS: Record<string, { label: string; icon: string; color: string
 };
 
 export default function Certificates() {
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm]   = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [page, setPage]               = useState(1);
   const [previewCert, setPreviewCert] = useState<Certification | null>(null);
   const [rejectingId, setRejectingId] = useState<number | null>(null);
   const [rejectMotivo, setRejectMotivo] = useState("");
   const [wizardCertId, setWizardCertId] = useState<number | null>(null);
   const { toast } = useToast();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const { data: certifications = [], isLoading } = useQuery({
-    queryKey: ["/api/certifications"],
+  // Debounce: actualiza el param de búsqueda 400 ms después de que el usuario deje de escribir
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setPage(1); // resetear a página 1 cada vez que cambia la búsqueda
+    }, 400);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [searchTerm]);
+
+  // Resetear página al cambiar filtro de estado
+  const handleStatusFilter = (val: string) => {
+    setStatusFilter(val);
+    setPage(1);
+  };
+
+  // Construir URL con parámetros
+  const buildQueryUrl = () => {
+    const params = new URLSearchParams({
+      page: String(page),
+      pageSize: String(PAGE_SIZE),
+    });
+    if (debouncedSearch) params.set("search", debouncedSearch);
+    if (statusFilter !== "all") params.set("status", statusFilter);
+    return `/api/certifications?${params.toString()}`;
+  };
+
+  const { data: pagedResult, isLoading } = useQuery<{ data: Certification[]; total: number; page: number; pageSize: number }>({
+    queryKey: ["/api/certifications", page, PAGE_SIZE, debouncedSearch, statusFilter],
+    queryFn: async () => {
+      const token = localStorage.getItem("token");
+      const res = await fetch(buildQueryUrl(), {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) throw new Error(`${res.status}`);
+      return res.json();
+    },
+    placeholderData: (prev) => prev, // mantiene datos anteriores mientras carga nueva página
   });
+
+  const certList: Certification[] = pagedResult?.data ?? [];
+  const totalCount = pagedResult?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
   const { data: pendingPayments = [], isLoading: pendingLoading } = useQuery({
     queryKey: ["/api/payments/pending"],
@@ -229,7 +276,7 @@ export default function Certificates() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/payments/pending"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/certifications"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/certifications"], exact: false });
       toast({ title: "Pago confirmado", description: "El pago ha sido verificado y el cliente ha sido notificado." });
     },
     onError: () => {
@@ -284,7 +331,7 @@ export default function Certificates() {
       return await apiRequest("POST", `/api/certifications/${certificationId}/archive`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/certifications"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/certifications"], exact: false });
       toast({
         title: "Certificación archivada",
         description: "La certificación se ha movido a la sección Propiedades",
@@ -304,7 +351,7 @@ export default function Certificates() {
       return await apiRequest("DELETE", `/api/certifications/${certificationId}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/certifications"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/certifications"], exact: false });
       toast({
         title: "Certificación eliminada",
         description: "La certificación ha sido eliminada permanentemente",
@@ -324,7 +371,7 @@ export default function Certificates() {
       return await apiRequest("PATCH", `/api/certifications/${certificationId}/status`, { status });
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/certifications"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/certifications"], exact: false });
       
       if (variables.status === "finalizado") {
         archiveCertificationMutation.mutate(variables.certificationId);
@@ -412,14 +459,6 @@ export default function Certificates() {
     return links;
   };
 
-  const filteredCertifications = (certifications as Certification[]).filter((cert: Certification) => {
-    const matchesSearch = (cert.ownerName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (cert.cadastralRef || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || cert.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
-  });
-
   const previewLinks = previewCert ? buildPreviewLinks(previewCert) : [];
 
   return (
@@ -433,7 +472,9 @@ export default function Certificates() {
             <div>
               <h1 className="text-3xl font-bold text-foreground">Solicitudes de Certificación</h1>
               <p className="text-muted-foreground mt-1">
-                Información recibida de formularios de clientes - {filteredCertifications.length} solicitud{filteredCertifications.length !== 1 ? 'es' : ''}
+                {isLoading
+                  ? "Cargando..."
+                  : `${totalCount} solicitud${totalCount !== 1 ? "es" : ""}`}
               </p>
             </div>
             <Link to="/certificados/nuevo">
@@ -575,73 +616,35 @@ export default function Certificates() {
             </div>
             
             <div className="flex gap-2">
-              <Button
-                variant={statusFilter === "all" ? "default" : "outline"}
-                onClick={() => setStatusFilter("all")}
-                size="sm"
-              >
-                Todos
-              </Button>
-              <Button
-                variant={statusFilter === "draft" ? "default" : "outline"}
-                onClick={() => setStatusFilter("draft")}
-                size="sm"
-              >
-                Borradores
-              </Button>
-              <Button
-                variant={statusFilter === "pending" ? "default" : "outline"}
-                onClick={() => setStatusFilter("pending")}
-                size="sm"
-              >
-                Pendientes
-              </Button>
-              <Button
-                variant={statusFilter === "completed" ? "default" : "outline"}
-                onClick={() => setStatusFilter("completed")}
-                size="sm"
-              >
-                Completados
-              </Button>
+              {[
+                { val: "all",       label: "Todos" },
+                { val: "Nuevo",     label: "Nuevos" },
+                { val: "En Proceso",label: "En Proceso" },
+                { val: "Finalizado",label: "Finalizados" },
+              ].map(({ val, label }) => (
+                <Button
+                  key={val}
+                  variant={statusFilter === val ? "default" : "outline"}
+                  onClick={() => handleStatusFilter(val)}
+                  size="sm"
+                >
+                  {label}
+                </Button>
+              ))}
             </div>
           </div>
 
           {/* Certifications List */}
           <Card>
             <CardHeader>
-              <CardTitle>Lista de Certificados ({filteredCertifications.length})</CardTitle>
+              <CardTitle>
+                Lista de Certificados
+                {!isLoading && ` (${totalCount})`}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               {isLoading ? (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                  <p className="text-gray-600">Cargando certificaciones...</p>
-                </div>
-              ) : filteredCertifications.length === 0 ? (
-                <div className="text-center py-12">
-                  <IdCard className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    {searchTerm || statusFilter !== "all" 
-                      ? "No se encontraron certificaciones" 
-                      : "No hay certificados aún"
-                    }
-                  </h3>
-                  <p className="text-gray-600 mb-4">
-                    {searchTerm || statusFilter !== "all"
-                      ? "Intenta ajustar los filtros de búsqueda"
-                      : "Comienza creando tu primera certificación energética"
-                    }
-                  </p>
-                  {!searchTerm && statusFilter === "all" && (
-                    <Link to="/certificados/nuevo">
-                      <Button className="btn-certifive">
-                        <Plus className="w-4 h-4 mr-2" />
-                        Crear primer certificado
-                      </Button>
-                    </Link>
-                  )}
-                </div>
-              ) : (
+                /* ── Skeleton rows ─────────────────────────────────────────── */
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
@@ -655,7 +658,59 @@ export default function Certificates() {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredCertifications.map((cert) => {
+                      {Array.from({ length: 8 }).map((_, i) => (
+                        <tr key={i} className="border-b border-border">
+                          <td className="py-4 px-4"><div className="h-4 bg-muted rounded animate-pulse w-36 mb-1" /><div className="h-3 bg-muted rounded animate-pulse w-24" /></td>
+                          <td className="py-4 px-4"><div className="h-4 bg-muted rounded animate-pulse w-28" /></td>
+                          <td className="py-4 px-4"><div className="h-6 bg-muted rounded-full animate-pulse w-20" /></td>
+                          <td className="py-4 px-4"><div className="h-4 bg-muted rounded animate-pulse w-20" /></td>
+                          <td className="py-4 px-4"><div className="h-8 bg-muted rounded animate-pulse w-24" /></td>
+                          <td className="py-4 px-4"><div className="h-8 bg-muted rounded animate-pulse w-40 ml-auto" /></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : certList.length === 0 ? (
+                <div className="text-center py-12">
+                  <IdCard className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    {debouncedSearch || statusFilter !== "all"
+                      ? "No se encontraron certificaciones"
+                      : "No hay certificados aún"
+                    }
+                  </h3>
+                  <p className="text-gray-600 mb-4">
+                    {debouncedSearch || statusFilter !== "all"
+                      ? "Intenta ajustar los filtros de búsqueda"
+                      : "Comienza creando tu primera certificación energética"
+                    }
+                  </p>
+                  {!debouncedSearch && statusFilter === "all" && (
+                    <Link to="/certificados/nuevo">
+                      <Button className="btn-certifive">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Crear primer certificado
+                      </Button>
+                    </Link>
+                  )}
+                </div>
+              ) : (
+                <>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">Propietario</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">Referencia Catastral</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">Estado</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">Fecha</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">Enlaces cliente</th>
+                        <th className="text-right py-3 px-4 font-medium text-gray-700">Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {certList.map((cert) => {
                         const typedCert = cert as Certification;
                         const hasLinks = typedCert.presupuestoToken || typedCert.ceeToken || typedCert.solicitudToken;
                         return (
@@ -759,73 +814,4 @@ export default function Certificates() {
                                       disabled={downloadingId === typedCert.id}
                                       data-testid={`btn-excel-${typedCert.id}`}
                                     >
-                                      <Sheet className="w-4 h-4 mr-2 text-green-600" />
-                                      Descargar Excel
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                                
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => archiveCertificationMutation.mutate(typedCert.id)}
-                                  disabled={archiveCertificationMutation.isPending}
-                                  data-testid={`btn-archivar-${typedCert.id}`}
-                                >
-                                  <Archive className="w-4 h-4 mr-1" />
-                                  Archivar
-                                </Button>
-
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" size="sm" data-testid={`btn-more-${typedCert.id}`}>
-                                      <MoreVertical className="w-4 h-4" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end">
-                                    <DropdownMenuItem
-                                      onClick={() => {
-                                        if (confirm('¿Estás seguro de que quieres eliminar esta certificación? Esta acción no se puede deshacer.')) {
-                                          deleteCertificationMutation.mutate(typedCert.id);
-                                        }
-                                      }}
-                                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                    >
-                                      <FileText className="w-4 h-4 mr-2" />
-                                      Eliminar
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {/* Client Link Preview Modal */}
-      <ClientLinkPreviewModal
-        open={!!previewCert}
-        onClose={() => setPreviewCert(null)}
-        links={previewLinks}
-        clientName={previewCert?.ownerName || ""}
-      />
-
-      {/* Client Flow Wizard */}
-      {wizardCertId !== null && (
-        <ClientFlowWizard
-          certId={wizardCertId}
-          open={wizardCertId !== null}
-          onClose={() => setWizardCertId(null)}
-        />
-      )}
-    </div>
-  );
-}
+                                      <Sheet className="w-4 h-4 mr-2 text-green-6

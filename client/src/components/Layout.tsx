@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { useState } from "react";
-import { useAuth } from "../hooks/useAuth";
+import { useAuth } from "../contexts/AuthContext";
 import { useIsMobile } from "../hooks/useIsMobile";
 import BottomNav from "./BottomNav";
 import NotificationBell from "./NotificationBell";
@@ -227,5 +227,4 @@ export default function Layout() {
 
       {isMobile && <BottomNav page={page} onNavigate={navigate} />}
     </div>
-  );
-}
+  
