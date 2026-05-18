@@ -447,7 +447,7 @@ export default function Pricing() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-green-900/20 dark:to-blue-900/20">
+      <div className="flex min-h-screen bg-background">
         <Sidebar selectedTab="pricing" onTabChange={() => {}} />
         <div className="flex-1 p-8">
           <div className="flex items-center justify-center h-64">
@@ -459,7 +459,7 @@ export default function Pricing() {
   }
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-green-900/20 dark:to-blue-900/20">
+    <div className="flex min-h-screen bg-background">
       <Sidebar selectedTab="pricing" onTabChange={() => {}} />
       <div className="flex-1 p-8 space-y-8">
         <div className="flex items-center justify-between">
@@ -500,7 +500,7 @@ export default function Pricing() {
 
         <div className="grid gap-6">
           {pricingRates?.map((rate) => (
-            <Card key={rate.id} className="overflow-hidden backdrop-blur-sm bg-white/80 dark:bg-gray-800/80 border border-white/20">
+            <Card key={rate.id} className="overflow-hidden bg-card border border-border">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -554,29 +554,29 @@ export default function Pricing() {
                   <div className="space-y-6">
                     {/* Pricing Overview */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div className="text-center p-3 bg-gradient-to-r from-green-100 to-blue-100 dark:from-green-900/30 dark:to-blue-900/30 rounded-lg">
-                        <div className="text-2xl font-bold text-green-700 dark:text-green-300">
+                      <div className="text-center p-3 bg-muted rounded-lg border border-border">
+                        <div className="text-2xl font-bold text-primary">
                           {parseFloat(rate.basePrice).toLocaleString()}€
                         </div>
-                        <div className="text-sm text-gray-600 dark:text-gray-300">Precio Base</div>
+                        <div className="text-sm text-muted-foreground">Precio Base</div>
                       </div>
-                      <div className="text-center p-3 bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 rounded-lg">
-                        <div className="text-2xl font-bold text-blue-700 dark:text-blue-300">
+                      <div className="text-center p-3 bg-muted rounded-lg border border-border">
+                        <div className="text-2xl font-bold text-foreground">
                           {parseFloat(rate.pricePerM2).toLocaleString()}€
                         </div>
-                        <div className="text-sm text-gray-600 dark:text-gray-300">Por m²</div>
+                        <div className="text-sm text-muted-foreground">Por m²</div>
                       </div>
-                      <div className="text-center p-3 bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 rounded-lg">
-                        <div className="text-2xl font-bold text-purple-700 dark:text-purple-300">
+                      <div className="text-center p-3 bg-muted rounded-lg border border-border">
+                        <div className="text-2xl font-bold text-foreground">
                           {rate.advancePercentage}%
                         </div>
-                        <div className="text-sm text-gray-600 dark:text-gray-300">Anticipo</div>
+                        <div className="text-sm text-muted-foreground">Anticipo</div>
                       </div>
-                      <div className="text-center p-3 bg-gradient-to-r from-orange-100 to-red-100 dark:from-orange-900/30 dark:to-red-900/30 rounded-lg">
-                        <div className="text-2xl font-bold text-orange-700 dark:text-orange-300">
+                      <div className="text-center p-3 bg-muted rounded-lg border border-border">
+                        <div className="text-2xl font-bold text-foreground">
                           {rate.deliveryDays}
                         </div>
-                        <div className="text-sm text-gray-600 dark:text-gray-300">Días</div>
+                        <div className="text-sm text-muted-foreground">Días</div>
                       </div>
                     </div>
 
@@ -584,32 +584,32 @@ export default function Pricing() {
                     <div>
                       <h4 className="font-semibold mb-3">Servicios Opcionales</h4>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className={`p-3 rounded-lg border ${rate.urgentServiceAvailable ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'}`}>
+                        <div className={`p-3 rounded-lg border ${rate.urgentServiceAvailable ? 'bg-accent border-border' : 'bg-muted border-border opacity-60'}`}>
                           <div className="flex items-center gap-2 mb-1">
                             <Clock className="h-4 w-4" />
                             <span className="font-medium">Servicio Urgente</span>
                           </div>
-                          <div className="text-lg font-bold">
+                          <div className="text-lg font-bold text-foreground">
                             {rate.urgentServiceAvailable ? `${parseFloat(rate.urgentServicePrice).toLocaleString()}€` : 'No disponible'}
                           </div>
                         </div>
-                        
-                        <div className={`p-3 rounded-lg border ${rate.photographyServiceAvailable ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'}`}>
+
+                        <div className={`p-3 rounded-lg border ${rate.photographyServiceAvailable ? 'bg-accent border-border' : 'bg-muted border-border opacity-60'}`}>
                           <div className="flex items-center gap-2 mb-1">
                             <Camera className="h-4 w-4" />
                             <span className="font-medium">Diseño Fotográfico</span>
                           </div>
-                          <div className="text-lg font-bold">
+                          <div className="text-lg font-bold text-foreground">
                             {rate.photographyServiceAvailable ? `${parseFloat(rate.photographyServicePrice).toLocaleString()}€` : 'No disponible'}
                           </div>
                         </div>
-                        
-                        <div className={`p-3 rounded-lg border ${rate.additionalMeasurementsAvailable ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'}`}>
+
+                        <div className={`p-3 rounded-lg border ${rate.additionalMeasurementsAvailable ? 'bg-accent border-border' : 'bg-muted border-border opacity-60'}`}>
                           <div className="flex items-center gap-2 mb-1">
                             <Ruler className="h-4 w-4" />
                             <span className="font-medium">Mediciones Adicionales</span>
                           </div>
-                          <div className="text-lg font-bold">
+                          <div className="text-lg font-bold text-foreground">
                             {rate.additionalMeasurementsAvailable ? `${parseFloat(rate.additionalMeasurementsPrice).toLocaleString()}€` : 'No disponible'}
                           </div>
                         </div>

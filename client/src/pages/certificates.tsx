@@ -146,8 +146,8 @@ function ClientLinkPreviewModal({
         </DialogHeader>
 
         {/* URL bar */}
-        <div className="px-6 py-3 bg-gray-50 border-b border-gray-100 flex-shrink-0 flex items-center gap-2">
-          <div className="flex-1 flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-600 font-mono truncate">
+        <div className="px-6 py-3 bg-muted/50 border-b border-border flex-shrink-0 flex items-center gap-2">
+          <div className="flex-1 flex items-center gap-2 bg-background border border-border rounded-lg px-3 py-2 text-sm text-muted-foreground font-mono truncate">
             <span className="truncate">{activeLink?.url}</span>
           </div>
           <Button
@@ -471,7 +471,7 @@ export default function Certificates() {
                     const meta = METHOD_LABELS[pay.metodo] ?? { label: pay.metodo, icon: "💳", color: "bg-gray-100 text-gray-700 border-gray-200" };
                     const isRejectingThis = rejectingId === pay.id;
                     return (
-                      <div key={pay.id} className="bg-white rounded-2xl border border-amber-100 p-4 space-y-3">
+                      <div key={pay.id} className="bg-card rounded-2xl border border-border p-4 space-y-3">
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex items-start gap-3 min-w-0">
                             <span className="text-2xl flex-shrink-0 mt-0.5">{meta.icon}</span>
@@ -531,7 +531,7 @@ export default function Certificates() {
                               onChange={e => setRejectMotivo(e.target.value)}
                               placeholder="Motivo del rechazo (opcional)..."
                               rows={2}
-                              className="w-full text-sm bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-300 resize-none"
+                              className="w-full text-sm bg-muted border border-border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-destructive/30 resize-none text-foreground placeholder:text-muted-foreground"
                             />
                             <div className="flex gap-2">
                               <Button
@@ -659,19 +659,19 @@ export default function Certificates() {
                         const typedCert = cert as Certification;
                         const hasLinks = typedCert.presupuestoToken || typedCert.ceeToken || typedCert.solicitudToken;
                         return (
-                          <tr key={typedCert.id} className="border-b border-gray-100 hover:bg-gray-50">
+                          <tr key={typedCert.id} className="border-b border-border hover:bg-muted/40 transition-colors">
                             <td className="py-4 px-4">
-                              <div className="font-medium text-gray-900">{typedCert.ownerName}</div>
-                              <div className="text-sm text-gray-500">{typedCert.ownerDni}</div>
+                              <div className="font-medium text-foreground">{typedCert.ownerName}</div>
+                              <div className="text-sm text-muted-foreground">{typedCert.ownerDni}</div>
                             </td>
                             <td className="py-4 px-4">
-                              <span className="text-sm text-gray-600">{typedCert.cadastralRef}</span>
+                              <span className="text-sm text-muted-foreground">{typedCert.cadastralRef}</span>
                             </td>
                             <td className="py-4 px-4">
                               {getStatusSelect(typedCert)}
                             </td>
                             <td className="py-4 px-4">
-                              <span className="text-sm text-gray-600">
+                              <span className="text-sm text-muted-foreground">
                                 {typedCert.createdAt ? new Date(typedCert.createdAt).toLocaleDateString('es-ES') : 'N/A'}
                               </span>
                             </td>

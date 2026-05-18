@@ -378,77 +378,77 @@ export default function Reports() {
 
         {/* Financial Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200 dark:border-green-800">
+          <Card className="bg-card border-border">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-green-600 dark:text-green-400 text-sm font-medium">Total Facturado</p>
-                  <p className="text-3xl font-bold text-green-700 dark:text-green-300">
+                  <p className="text-muted-foreground text-sm font-medium">Total Facturado</p>
+                  <p className="text-3xl font-bold text-primary">
                     {summary.totalInvoiced.toLocaleString('es-ES', {
                       style: 'currency',
                       currency: 'EUR'
                     })}
                   </p>
                 </div>
-                <div className="p-3 bg-green-500 rounded-full">
-                  <FileText className="w-6 h-6 text-white" />
+                <div className="p-3 bg-primary/15 rounded-full">
+                  <FileText className="w-6 h-6 text-primary" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200 dark:border-blue-800">
+          <Card className="bg-card border-border">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-blue-600 dark:text-blue-400 text-sm font-medium">Total Cobrado</p>
-                  <p className="text-3xl font-bold text-blue-700 dark:text-blue-300">
+                  <p className="text-muted-foreground text-sm font-medium">Total Cobrado</p>
+                  <p className="text-3xl font-bold text-foreground">
                     {summary.totalPaid.toLocaleString('es-ES', {
                       style: 'currency',
                       currency: 'EUR'
                     })}
                   </p>
                 </div>
-                <div className="p-3 bg-blue-500 rounded-full">
-                  <CheckCircle className="w-6 h-6 text-white" />
+                <div className="p-3 bg-blue-500/15 rounded-full">
+                  <CheckCircle className="w-6 h-6 text-blue-400" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 border-orange-200 dark:border-orange-800">
+          <Card className="bg-card border-border">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-orange-600 dark:text-orange-400 text-sm font-medium">Pendiente</p>
-                  <p className="text-3xl font-bold text-orange-700 dark:text-orange-300">
+                  <p className="text-muted-foreground text-sm font-medium">Pendiente</p>
+                  <p className="text-3xl font-bold text-foreground">
                     {summary.totalPending.toLocaleString('es-ES', {
                       style: 'currency',
                       currency: 'EUR'
                     })}
                   </p>
                 </div>
-                <div className="p-3 bg-orange-500 rounded-full">
-                  <Clock className="w-6 h-6 text-white" />
+                <div className="p-3 bg-orange-500/15 rounded-full">
+                  <Clock className="w-6 h-6 text-orange-400" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 border-purple-200 dark:border-purple-800">
+          <Card className="bg-card border-border">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-purple-600 dark:text-purple-400 text-sm font-medium">Crecimiento</p>
-                  <p className="text-3xl font-bold text-purple-700 dark:text-purple-300">
+                  <p className="text-muted-foreground text-sm font-medium">Crecimiento</p>
+                  <p className="text-3xl font-bold text-foreground">
                     {summary.revenueGrowth > 0 ? '+' : ''}{summary.revenueGrowth.toFixed(1)}%
                   </p>
                 </div>
-                <div className="p-3 bg-purple-500 rounded-full">
+                <div className="p-3 bg-purple-500/15 rounded-full">
                   {summary.revenueGrowth >= 0 ? (
-                    <TrendingUp className="w-6 h-6 text-white" />
+                    <TrendingUp className="w-6 h-6 text-purple-400" />
                   ) : (
-                    <TrendingDown className="w-6 h-6 text-white" />
+                    <TrendingDown className="w-6 h-6 text-purple-400" />
                   )}
                 </div>
               </div>
@@ -579,7 +579,7 @@ export default function Reports() {
                       <TrendingUp className="w-5 h-5 text-green-500" />
                       Cobros
                     </CardTitle>
-                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                    <p className="text-sm text-muted-foreground mt-1">
                       Gestión de cobros e ingresos del negocio
                     </p>
                   </div>
@@ -640,7 +640,7 @@ export default function Reports() {
                       <Building2 className="w-5 h-5 text-purple-500" />
                       Gestor - Pagos, Fiscal y Contable
                     </CardTitle>
-                    <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                    <p className="text-sm text-muted-foreground mt-1">
                       Vista completa de registros financieros con control de facturación
                     </p>
                   </div>
@@ -655,8 +655,8 @@ export default function Reports() {
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Filtros Avanzados */}
-                <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg border">
-                  <h3 className="text-lg font-semibold mb-4 text-slate-900 dark:text-white">Filtros</h3>
+                <div className="bg-muted/50 p-4 rounded-lg border border-border">
+                  <h3 className="text-lg font-semibold mb-4 text-foreground">Filtros</h3>
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     <div>
@@ -1235,7 +1235,7 @@ function ManagerFinancialTable({ data, onCreateInvoice, onDeleteCollection }: {
   return (
     <div className="space-y-4">
       {data.length === 0 ? (
-        <div className="text-center py-12 text-slate-500">
+        <div className="text-center py-12 text-muted-foreground">
           <Receipt className="w-12 h-12 mx-auto mb-4 opacity-50" />
           <p>No hay registros financieros que coincidan con los filtros seleccionados</p>
         </div>
@@ -1243,21 +1243,21 @@ function ManagerFinancialTable({ data, onCreateInvoice, onDeleteCollection }: {
         data.map((record, index) => (
           <div 
             key={`${record.type}-${record.id}`}
-            className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:shadow-md transition-shadow"
+            className="bg-card border border-border rounded-lg p-4 hover:shadow-md transition-shadow"
           >
             <div className="flex items-center justify-between">
               {/* Cliente/Avatar Section */}
               <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center">
-                  <span className="text-lg font-semibold text-slate-600 dark:text-slate-300">
+                <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
+                  <span className="text-lg font-semibold text-muted-foreground">
                     {record.clientName ? record.clientName.charAt(0).toUpperCase() : 'C'}
                   </span>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-slate-900 dark:text-white">
+                  <h3 className="font-semibold text-foreground">
                     {record.clientName || 'Cliente'}
                   </h3>
-                  <div className="flex items-center space-x-2 text-sm text-slate-600 dark:text-slate-400">
+                  <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                     {getPaymentMethodBadge(record.paymentMethod)}
                     <span>•</span>
                     <span>{record.type === 'invoice' ? 'Factura' : 'Cobro'}</span>
@@ -1269,7 +1269,7 @@ function ManagerFinancialTable({ data, onCreateInvoice, onDeleteCollection }: {
               <div className="flex-1 mx-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                   <div>
-                    <p className="text-slate-500 dark:text-slate-400">Pagó:</p>
+                    <p className="text-muted-foreground">Pagó:</p>
                     <p className="font-semibold">
                       {format(new Date(record.paymentDate || record.collectionDate), "dd/MM/yyyy", { locale: es })}
                     </p>
@@ -1279,7 +1279,7 @@ function ManagerFinancialTable({ data, onCreateInvoice, onDeleteCollection }: {
                   </div>
                   
                   <div>
-                    <p className="text-slate-500 dark:text-slate-400">
+                    <p className="text-muted-foreground">
                       {record.type === 'invoice' ? 'Fiscal:' : 'Corresponde:'}
                     </p>
                     <p className="font-semibold">
@@ -1291,7 +1291,7 @@ function ManagerFinancialTable({ data, onCreateInvoice, onDeleteCollection }: {
                   </div>
                   
                   <div>
-                    <p className="text-slate-500 dark:text-slate-400">Importe:</p>
+                    <p className="text-muted-foreground">Importe:</p>
                     <p className="font-bold text-lg">
                       {parseFloat(record.amount || record.total).toLocaleString('es-ES', {
                         style: 'currency',
@@ -1302,7 +1302,7 @@ function ManagerFinancialTable({ data, onCreateInvoice, onDeleteCollection }: {
                 </div>
                 
                 <div className="mt-2">
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                  <p className="text-sm text-muted-foreground">
                     {record.concept || record.description || 'Certificación energética'}
                   </p>
                 </div>

@@ -481,14 +481,14 @@ export default function Settings() {
       <Sidebar selectedTab="settings" onTabChange={() => {}} />
       
       <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-3">
-          <h1 className="text-lg font-semibold text-gray-900">Configuración</h1>
+        <div className="lg:hidden bg-card border-b border-border px-4 py-3">
+          <h1 className="text-lg font-semibold text-foreground">Configuración</h1>
         </div>
 
         <div className="flex-1 overflow-auto p-6">
           <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Configuración</h2>
-            <p className="text-gray-600">Gestiona tu perfil, notificaciones y preferencias de certificación</p>
+            <h2 className="text-2xl font-bold text-foreground mb-2">Configuración</h2>
+            <p className="text-muted-foreground">Gestiona tu perfil, notificaciones y preferencias de certificación</p>
           </div>
 
           <div className="max-w-4xl space-y-8">
@@ -496,31 +496,31 @@ export default function Settings() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <a
                 href="/tarifas"
-                className="group flex items-center gap-4 bg-white rounded-2xl border border-slate-200 px-5 py-4 hover:border-teal-400 hover:shadow-md transition-all"
+                className="group flex items-center gap-4 bg-card rounded-2xl border border-border px-5 py-4 hover:border-primary/50 hover:shadow-md transition-all"
                 data-testid="link-tarifas-settings"
               >
-                <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center flex-shrink-0 group-hover:bg-teal-100 transition-colors">
-                  <span className="text-teal-700 text-lg">€</span>
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
+                  <span className="text-primary text-lg font-bold">€</span>
                 </div>
                 <div className="min-w-0">
-                  <p className="font-semibold text-slate-800 text-sm">Tarifas y precios</p>
-                  <p className="text-xs text-slate-500 mt-0.5">Configura los precios para generar presupuestos automáticos</p>
+                  <p className="font-semibold text-foreground text-sm">Tarifas y precios</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Configura los precios para generar presupuestos automáticos</p>
                 </div>
-                <span className="ml-auto text-slate-300 group-hover:text-teal-500 transition-colors flex-shrink-0">→</span>
+                <span className="ml-auto text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0">→</span>
               </a>
               <a
                 href="/facturas"
-                className="group flex items-center gap-4 bg-white rounded-2xl border border-slate-200 px-5 py-4 hover:border-teal-400 hover:shadow-md transition-all"
+                className="group flex items-center gap-4 bg-card rounded-2xl border border-border px-5 py-4 hover:border-primary/50 hover:shadow-md transition-all"
                 data-testid="link-facturas-settings"
               >
-                <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center flex-shrink-0 group-hover:bg-slate-100 transition-colors">
-                  <FileText className="w-5 h-5 text-slate-600" />
+                <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center flex-shrink-0 group-hover:bg-accent transition-colors">
+                  <FileText className="w-5 h-5 text-muted-foreground" />
                 </div>
                 <div className="min-w-0">
-                  <p className="font-semibold text-slate-800 text-sm">Facturas</p>
-                  <p className="text-xs text-slate-500 mt-0.5">Gestiona y descarga tus facturas emitidas</p>
+                  <p className="font-semibold text-foreground text-sm">Facturas</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Gestiona y descarga tus facturas emitidas</p>
                 </div>
-                <span className="ml-auto text-slate-300 group-hover:text-teal-500 transition-colors flex-shrink-0">→</span>
+                <span className="ml-auto text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0">→</span>
               </a>
             </div>
 
@@ -809,7 +809,7 @@ export default function Settings() {
                   </div>
 
                   {/* Enhanced Backup Status and Controls */}
-                  <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+                  <div className="bg-muted/50 p-4 rounded-lg border border-border space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
                         <Database className="w-4 h-4 text-blue-600 mr-2" />
