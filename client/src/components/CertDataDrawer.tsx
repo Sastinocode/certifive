@@ -5,7 +5,9 @@
  * Usado desde Certifications.tsx para dar al certificador una vista completa
  * de los datos recogidos antes de la visita.
  */
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { queryClient, apiRequest } from "../lib/queryClient";
 
 // ── Label helpers ─────────────────────────────────────────────────────────────
 const MARCO_LABELS: Record<string, string> = {
@@ -88,13 +90,244 @@ function estimarDemandaACS(numOcupantes: number): string {
   return `≈ ${litrosDia} l/día (CTE DB-HE4 a 60°C)`;
 }
 
+// ── Recogida de datos ─────────────────────────────────────────────────────────
+
+interface CheckItem { label: string; ok: boolean; key: string }
+
+function buildChecklist(cert: any): CheckItem[] {
+  const cee = (cert?.formData as any)?.ceeDetallado ?? {};
+  const constructivas = cee.constructivas ?? {};
+  const calefaccion   = cee.calefaccion   ?? {};
+
+  return [
+    { key: "nombre",      label: "Nombre del propietario",          ok: !!cert.ownerName },
+    { key: "email",       label: "Email de contacto",               ok: !!cert.ownerEmail },
+    { key: "direccion",   label: "Dirección del inmueble",          ok: !!cert.address },
+    { key: "catastro",    label: "Referencia catastral",            ok: !!cert.cadastralReference },
+    { key: "tipo",        label: "Tipo de inmueble",                ok: !!cert.propertyType },
+    { key: "provincia",   label: "Datos catastro (provincia, zona)", ok: !!cert.provinciaCatastro && !!cert.zonaClimatica },
+    { key: "superficie",  label: "Superficie total (m²)",           ok: !!cert.superficieTotalCatastro },
+    { key: "posicion",    label: "Posición en el edificio",         ok: cert.esUltimaPlanta != null && cert.tieneLocalDebajo != null },
+    { key: "calefaccion", label: "Sistema de calefacción",          ok: !!cert.calefaccionTipoInstalacion },
+    { key: "acs",         label: "Agua caliente sanitaria (ACS)",   ok: !!cert.acsTipoInstalacion },
+    { key: "ocupantes",   label: "Nº de ocupantes",                 ok: cert.numOcupantes != null },
+    { key: "ventanas",    label: "Tipo de ventanas / marcos",       ok: !!constructivas.tipoVentanas || !!constructivas.tipoMarcos },
+    { key: "anio_cale",   label: "Año instalación calefacción",     ok: !!calefaccion.anioCalefaccion },
+    { key: "anio_acs",    label: "Sistema ACS identificado",        ok: !!cert.acsSistema },
+    { key: "cee_form",    label: "Formulario CEE completado",       ok: cert.ceeFormStatus === "completado" || cert.ceeFormStatus === "revisado" },
+  ];
+}
+
+function RecogidaDatos({
+  cert,
+  certId,
+  onEditRecogida,
+  onVerFormulario,
+}: {
+  cert: any;
+  certId: number;
+  onEditRecogida?: () => void;
+  onVerFormulario?: (url: string) => void;
+}) {
+  const [copied, setCopied]           = useState(false);
+  const [revisando, setRevisando]     = useState(false);
+
+  const checklist = buildChecklist(cert);
+  const completados = checklist.filter(i => i.ok).length;
+  const porcentaje  = Math.round((completados / checklist.length) * 100);
+
+  const pendientes = checklist.filter(i => !i.ok);
+  const recibidos  = checklist.filter(i => i.ok);
+
+  const getStatusMeta = () => {
+    if (cert.ceeFormStatus === "revisado")
+      return { label: "Revisado", pill: "bg-indigo-100 text-indigo-700", bar: "bg-indigo-400" };
+    if (porcentaje === 100)
+      return { label: "Completado", pill: "bg-emerald-100 text-emerald-700", bar: "bg-emerald-500" };
+    if (porcentaje >= 50)
+      return { label: "En progreso", pill: "bg-amber-100 text-amber-700", bar: "bg-amber-400" };
+    return { label: "Pendiente", pill: "bg-stone-100 text-stone-500", bar: "bg-stone-300" };
+  };
+  const sm = getStatusMeta();
+
+  const ceeUrl = cert.ceeToken
+    ? `${window.location.origin}/formulario-cee/${cert.ceeToken}`
+    : null;
+
+  const handleCopy = async () => {
+    if (!ceeUrl) return;
+    try { await navigator.clipboard.writeText(ceeUrl); } catch { /* ignore */ }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2200);
+  };
+
+  const handleMarcarRevisado = async () => {
+    if (revisando) return;
+    setRevisando(true);
+    try {
+      await apiRequest("PUT", `/api/certifications/${certId}`, { ceeFormStatus: "revisado" });
+      queryClient.invalidateQueries({ queryKey: [`/api/certifications/${certId}`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/certifications"] });
+    } catch { /* ignore */ } finally {
+      setRevisando(false);
+    }
+  };
+
+  const yaRevisado = cert.ceeFormStatus === "revisado";
+
+  return (
+    <div className="bg-white rounded-2xl border border-stone-100 shadow-sm overflow-hidden">
+      {/* Header */}
+      <div className="px-5 py-3 bg-stone-50 border-b border-stone-100 flex items-center justify-between">
+        <p className="text-xs font-bold uppercase tracking-widest text-stone-500">📥 Recogida de datos</p>
+        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${sm.pill}`}>{sm.label}</span>
+      </div>
+
+      <div className="px-5 py-4 space-y-4">
+
+        {/* Barra de progreso */}
+        <div>
+          <div className="flex justify-between items-center mb-1.5">
+            <span className="text-xs text-stone-500 font-medium">Datos completados</span>
+            <span className="text-sm font-bold text-stone-800">{porcentaje}%</span>
+          </div>
+          <div className="w-full h-2.5 bg-stone-100 rounded-full overflow-hidden">
+            <div
+              className={`h-2.5 rounded-full transition-all duration-700 ${sm.bar}`}
+              style={{ width: `${porcentaje}%` }}
+            />
+          </div>
+          <p className="text-[10px] text-stone-400 mt-1">
+            {completados} de {checklist.length} campos · {pendientes.length} pendiente{pendientes.length !== 1 ? "s" : ""}
+          </p>
+        </div>
+
+        {/* Datos recibidos */}
+        {recibidos.length > 0 && (
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 mb-1.5">
+              ✅ Datos recibidos ({recibidos.length})
+            </p>
+            <div className="grid grid-cols-1 gap-0.5">
+              {recibidos.map(item => (
+                <div key={item.key} className="flex items-center gap-2 py-0.5">
+                  <span className="w-3.5 h-3.5 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                    <span className="text-[9px] font-bold text-emerald-600">✓</span>
+                  </span>
+                  <span className="text-xs text-stone-600">{item.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Datos pendientes */}
+        {pendientes.length > 0 && (
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-amber-600 mb-1.5">
+              ⏳ Pendiente de recibir ({pendientes.length})
+            </p>
+            <div className="grid grid-cols-1 gap-0.5">
+              {pendientes.map(item => (
+                <div key={item.key} className="flex items-center gap-2 py-0.5">
+                  <span className="w-3.5 h-3.5 rounded-full bg-stone-100 flex items-center justify-center flex-shrink-0">
+                    <span className="text-[9px] text-stone-400">○</span>
+                  </span>
+                  <span className="text-xs text-stone-400">{item.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Acciones */}
+        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-stone-50">
+          {/* Editar recogida */}
+          <button
+            onClick={onEditRecogida}
+            disabled={!onEditRecogida}
+            className="flex items-center justify-center gap-1.5 px-3 py-2.5 bg-stone-50 border border-stone-200 text-stone-700 rounded-xl text-xs font-semibold hover:bg-stone-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            <span className="material-symbols-outlined text-[14px]">edit</span>
+            Editar recogida
+          </button>
+
+          {/* Ver formulario */}
+          {ceeUrl ? (
+            <button
+              onClick={() => onVerFormulario ? onVerFormulario(ceeUrl) : window.open(ceeUrl, "_blank")}
+              className="flex items-center justify-center gap-1.5 px-3 py-2.5 bg-teal-50 border border-teal-100 text-teal-700 rounded-xl text-xs font-semibold hover:bg-teal-100 transition-colors"
+            >
+              <span className="material-symbols-outlined text-[14px]">visibility</span>
+              Ver formulario
+            </button>
+          ) : (
+            <button
+              disabled
+              className="flex items-center justify-center gap-1.5 px-3 py-2.5 bg-stone-50 border border-stone-100 text-stone-300 rounded-xl text-xs font-semibold cursor-not-allowed"
+              title="No hay formulario CEE generado aún"
+            >
+              <span className="material-symbols-outlined text-[14px]">visibility_off</span>
+              Sin formulario
+            </button>
+          )}
+
+          {/* Copiar enlace */}
+          <button
+            onClick={handleCopy}
+            disabled={!ceeUrl}
+            className={`flex items-center justify-center gap-1.5 px-3 py-2.5 border rounded-xl text-xs font-semibold transition-all ${
+              copied
+                ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                : ceeUrl
+                ? "bg-blue-50 border-blue-100 text-blue-700 hover:bg-blue-100"
+                : "bg-stone-50 border-stone-100 text-stone-300 cursor-not-allowed"
+            }`}
+            title={ceeUrl ? "Copiar enlace del formulario CEE" : "No hay enlace disponible aún"}
+          >
+            <span className="material-symbols-outlined text-[14px]">
+              {copied ? "check_circle" : "content_copy"}
+            </span>
+            {copied ? "¡Copiado!" : "Copiar enlace"}
+          </button>
+
+          {/* Marcar como revisado */}
+          <button
+            onClick={handleMarcarRevisado}
+            disabled={yaRevisado || revisando}
+            className={`flex items-center justify-center gap-1.5 px-3 py-2.5 border rounded-xl text-xs font-semibold transition-colors ${
+              yaRevisado
+                ? "bg-indigo-50 border-indigo-100 text-indigo-600 cursor-default"
+                : "bg-white border-stone-200 text-stone-700 hover:bg-emerald-50 hover:border-emerald-200 hover:text-emerald-700"
+            } disabled:opacity-60`}
+          >
+            <span className="material-symbols-outlined text-[14px]">
+              {yaRevisado ? "verified" : revisando ? "hourglass_empty" : "task_alt"}
+            </span>
+            {yaRevisado ? "Revisado ✓" : revisando ? "Guardando…" : "Marcar revisado"}
+          </button>
+        </div>
+
+        {/* Info si no hay token CEE */}
+        {!ceeUrl && (
+          <p className="text-[10px] text-stone-400 text-center italic">
+            Genera el formulario CEE desde el menú del expediente para activar el enlace de recogida.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Main component ─────────────────────────────────────────────────────────────
 interface Props {
   certId: number;
   onClose: () => void;
+  onEditRecogida?: () => void;
+  onVerFormulario?: (url: string) => void;
 }
 
-export default function CertDataDrawer({ certId, onClose }: Props) {
+export default function CertDataDrawer({ certId, onClose, onEditRecogida, onVerFormulario }: Props) {
   const { data: cert, isLoading } = useQuery<any>({
     queryKey: [`/api/certifications/${certId}`],
     enabled: !!certId,
@@ -142,6 +375,11 @@ export default function CertDataDrawer({ certId, onClose }: Props) {
             </h2>
             <p className="text-xs text-stone-400 truncate">{cert?.address ?? ""}</p>
           </div>
+          {cert?.ceeFormStatus === "revisado" && (
+            <span className="text-xs font-bold bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-full flex-shrink-0">
+              ✓ Revisado
+            </span>
+          )}
           {cert?.ceeFormStatus === "completado" && (
             <span className="text-xs font-bold bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-full flex-shrink-0">
               CEE completado
@@ -159,6 +397,14 @@ export default function CertDataDrawer({ certId, onClose }: Props) {
 
           {!isLoading && cert && (
             <>
+              {/* ── Recogida de datos ──────────────────────────────────────── */}
+              <RecogidaDatos
+                cert={cert}
+                certId={certId}
+                onEditRecogida={onEditRecogida}
+                onVerFormulario={onVerFormulario}
+              />
+
               {/* ── Datos Catastro ─────────────────────────────────────────── */}
               {(cert.provinciaCatastro || cert.zonaClimatica || cert.superficieTotalCatastro) && (
                 <Section title="📍 Datos del Catastro">
@@ -360,7 +606,7 @@ export default function CertDataDrawer({ certId, onClose }: Props) {
               </Section>
 
               {/* ── Sin datos ──────────────────────────────────────────────── */}
-              {cert.ceeFormStatus !== "completado" && (
+              {(cert.ceeFormStatus !== "completado" && cert.ceeFormStatus !== "revisado") && (
                 <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-sm text-amber-800 flex items-start gap-3">
                   <span className="text-xl">⏳</span>
                   <div>

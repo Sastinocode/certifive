@@ -1028,7 +1028,23 @@ export default function Certifications() {
       )}
 
       {dataCert && (
-        <CertDataDrawer certId={dataCert.id} onClose={() => setDataCert(null)} />
+        <CertDataDrawer
+          certId={dataCert.id}
+          onClose={() => setDataCert(null)}
+          onEditRecogida={() => {
+            setEditCert(dataCert);
+            setDataCert(null);
+          }}
+          onVerFormulario={(url) => {
+            setPreviewLink({
+              title: "Vista previa: Formulario CEE",
+              subtitle: dataCert.ownerName ? `Para ${dataCert.ownerName}` : "Vista del cliente",
+              url,
+              icon: "📋",
+            });
+            setDataCert(null);
+          }}
+        />
       )}
 
       {previewLink && (

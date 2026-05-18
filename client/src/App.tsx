@@ -42,6 +42,12 @@ import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import TermsOfService from "@/pages/TermsOfService";
 import VerifyEmail from "@/pages/VerifyEmail";
 import ResetPassword from "@/pages/ResetPassword";
+import RecogidaMovil from "@/pages/RecogidaMovil";
+
+function RecogidaMovilWrapper() {
+  const { token } = useParams<{ token: string }>();
+  return <RecogidaMovil token={token || ""} />;
+}
 
 function PresupuestoWrapper() {
   const { token } = useParams<{ token: string }>();
@@ -122,6 +128,7 @@ function Router() {
         <Route path="/pay/:token" component={PaymentWrapper} />
         <Route path="/certificacion-cliente/:uniqueLink" component={CertificationForm} />
         <Route path="/generador-tarifas" component={PublicTariffGenerator} />
+        <Route path="/recogida/:token" component={RecogidaMovilWrapper} />
         <Route path="/login" component={Login} />
         <Route path="/register" component={Register} />
         <Route path="/verify-email" component={VerifyEmail} />
