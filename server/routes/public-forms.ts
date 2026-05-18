@@ -17,8 +17,20 @@ import {
 } from "../email";
 import { createNotification } from "../createNotification";
 import Stripe from "stripe";
+import rateLimit from "express-rate-limit";
 
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
+
+// ── Rate limiter para todos los endpoints públicos de envío ──────────────────
+// 10 intentos por IP cada 15 minutos — protege contra spam y flood
+const publicSubmitLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => req.ip ?? "unknown",
+  message: { message: "Demasiados intentos. Espera 15 minutos antes de volver a intentarlo." },
+});
 
 export function registerPublicFormRoutes(app: Express) {
 // --- PUBLIC FORM (no auth required) ---
@@ -139,7 +151,7 @@ app.post("/api/form/:token/open", async (req: Request, res: Response) => {
 });
 
 // Public: submit form data
-app.post("/api/form/:token/submit", async (req: Request, res: Response) => {
+app.post("/api/form/:token/submit", publicSubmitLimiter, async (req: Request, res: Response) => {
   try {
     const { token } = req.params;
     const [cert] = await db.select().from(certifications)
@@ -302,7 +314,7 @@ app.post("/api/certifications/:id/generate-solicitud", authenticate, async (req:
 });
 
 // Public: Vía B — owner fills solicitud from certifier's public page (no existing cert)
-app.post("/api/solicitud/nueva", async (req: Request, res: Response) => {
+app.post("/api/solicitud/nueva", publicSubmitLimiter, async (req: Request, res: Response) => {
   try {
     const { certifierId, ownerName, ownerEmail, ownerPhone, ownerDni } = req.body;
     if (!certifierId || !ownerName) {
@@ -414,7 +426,7 @@ app.post("/api/solicitud/:token/open", async (req: Request, res: Response) => {
 });
 
 // Public: submit solicitud form (calculates price, updates cert)
-app.post("/api/solicitud/:token/submit", async (req: Request, res: Response) => {
+app.post("/api/solicitud/:token/submit", publicSubmitLimiter, async (req: Request, res: Response) => {
   try {
     const [cert] = await db.select().from(certifications)
       .where(eq(certifications.solicitudToken, req.params.token))
@@ -708,7 +720,7 @@ app.get("/api/presupuesto/:token", async (req: Request, res: Response) => {
 });
 
 // Public: accept presupuesto
-app.post("/api/presupuesto/:token/aceptar", async (req: Request, res: Response) => {
+app.post("/api/presupuesto/:token/aceptar", publicSubmitLimiter, async (req: Request, res: Response) => {
   try {
     const [cert] = await db.select().from(certifications)
       .where(eq(certifications.presupuestoToken, req.params.token))
@@ -772,7 +784,7 @@ app.post("/api/presupuesto/:token/aceptar", async (req: Request, res: Response) 
 });
 
 // Public: request presupuesto modification
-app.post("/api/presupuesto/:token/modificar", async (req: Request, res: Response) => {
+app.post("/api/presupuesto/:token/modificar", publicSubmitLimiter, async (req: Request, res: Response) => {
   try {
     const { motivo } = req.body;
     const [cert] = await db.select().from(certifications)
@@ -930,7 +942,7 @@ app.post("/api/formulario-cee/:token/open", async (req: Request, res: Response) 
 });
 
 // Public: submit CEE form data
-app.post("/api/formulario-cee/:token/submit", async (req: Request, res: Response) => {
+app.post("/api/formulario-cee/:token/submit", publicSubmitLimiter, async (req: Request, res: Response) => {
   try {
     const [cert] = await db.select().from(certifications)
       .where(eq(certifications.ceeToken, req.params.token))
@@ -1066,27 +1078,4 @@ app.post("/api/formulario-cee/:token/upload/:certId", ceeUpload.single("file"), 
     }
 
     // Upload to Cloudinary
-    const { secure_url, public_id } = await uploadToCloudinary(req.file.buffer, {
-      folder: `certifive/certs/${certId}/cee`,
-    });
-
-    const [doc] = await db.insert(documentos).values({
-      certificationId: certId,
-      nombreOriginal:  req.file.originalname,
-      nombreArchivo:   public_id,   // Cloudinary public_id
-      path:            secure_url,  // Cloudinary HTTPS URL
-      mimeType:        req.file.mimetype,
-      tamano:          req.file.size,
-      tipoDoc,
-      subidoPor:       "cliente",
-      estadoRevision:  "pendiente",
-    }).returning();
-
-    res.json(doc);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Error al subir archivo" });
-  }
-});
-
-}
+    const { secure_url, public_id } = await uploadToCloudinary(req.file.buf

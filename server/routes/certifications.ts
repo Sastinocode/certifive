@@ -1,9 +1,18 @@
 import { Express, Request, Response } from "express";
 import { db } from "../db";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, ilike, or } from "drizzle-orm";
 import { certifications, folders, insertCertificationSchema } from "../../shared/schema";
 import { authenticate } from "../auth";
 import { createNotification } from "../createNotification";
+import { z } from "zod";
+
+// ── Whitelist de campos que un usuario puede actualizar via PUT ───────────────
+// NUNCA permitir: userId, id, createdAt, stripeCustomerId, etc.
+const certUpdateSchema = insertCertificationSchema.partial().omit({
+  userId: true,
+  folderId: true,  // se gestiona via /archive
+});
+type CertUpdate = z.infer<typeof certUpdateSchema>;
 
 export function registerCertificationRoutes(app: Express) {
 // --- CERTIFICATIONS ---
@@ -12,25 +21,33 @@ app.get("/api/certifications", authenticate, async (req: Request, res: Response)
   try {
     const userId = (req as any).user.id;
     const { search, status, archived } = req.query;
-    const results = await db.select().from(certifications).where(
-      and(
-        eq(certifications.userId, userId),
-        archived === "true" ? eq(certifications.isArchived, true) : eq(certifications.isArchived, false),
-      )
-    ).orderBy(desc(certifications.createdAt));
 
-    let filtered = results;
+    // Construir condiciones WHERE en SQL (evita cargar toda la tabla en memoria)
+    const conditions: ReturnType<typeof eq>[] = [
+      eq(certifications.userId, userId),
+      archived === "true" ? eq(certifications.isArchived, true) : eq(certifications.isArchived, false),
+    ];
+
+    if (status) {
+      conditions.push(eq(certifications.status, status as string));
+    }
+
     if (search) {
-      const s = (search as string).toLowerCase();
-      filtered = filtered.filter(c =>
-        c.ownerName?.toLowerCase().includes(s) ||
-        c.address?.toLowerCase().includes(s) ||
-        c.cadastralReference?.toLowerCase().includes(s)
+      const s = `%${search}%`;
+      conditions.push(
+        or(
+          ilike(certifications.ownerName, s),
+          ilike(certifications.address, s),
+          ilike(certifications.cadastralReference, s),
+        ) as any,
       );
     }
-    if (status) filtered = filtered.filter(c => c.status === status);
 
-    res.json(filtered);
+    const results = await db.select().from(certifications)
+      .where(and(...conditions))
+      .orderBy(desc(certifications.createdAt));
+
+    res.json(results);
   } catch {
     res.status(500).json({ message: "Error al obtener certificaciones" });
   }
@@ -89,8 +106,19 @@ app.post("/api/certifications", authenticate, async (req: Request, res: Response
 app.put("/api/certifications/:id", authenticate, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
+
+    // ── Seguridad: whitelist estricta de campos actualizables ─────────────────
+    // Rechaza campos desconocidos o protegidos (userId, stripeCustomerId, etc.)
+    const parsed = certUpdateSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        message: "Datos inválidos",
+        errors: parsed.error.flatten().fieldErrors,
+      });
+    }
+
     const [cert] = await db.update(certifications)
-      .set({ ...req.body, updatedAt: new Date() })
+      .set({ ...parsed.data, updatedAt: new Date() })
       .where(and(eq(certifications.id, parseInt(req.params.id)), eq(certifications.userId, userId)))
       .returning();
     if (!cert) return res.status(404).json({ message: "Certificación no encontrada" });
@@ -127,32 +155,3 @@ app.post("/api/certifications/:id/archive", authenticate, async (req: Request, r
       }
 
       const [updated] = await db.update(certifications)
-        .set({ isArchived: true, archivedAt: new Date(), folderId, status: "Finalizado", updatedAt: new Date() })
-        .where(eq(certifications.id, certId))
-        .returning();
-      return res.json(updated);
-    }
-
-    const [updated] = await db.update(certifications)
-      .set({ isArchived: true, archivedAt: new Date(), updatedAt: new Date() })
-      .where(eq(certifications.id, certId))
-      .returning();
-    res.json(updated);
-  } catch {
-    res.status(500).json({ message: "Error al archivar certificación" });
-  }
-});
-
-app.delete("/api/certifications/:id", authenticate, async (req: Request, res: Response) => {
-  try {
-    const userId = (req as any).user.id;
-    await db.delete(certifications).where(
-      and(eq(certifications.id, parseInt(req.params.id)), eq(certifications.userId, userId))
-    );
-    res.json({ message: "Eliminada" });
-  } catch {
-    res.status(500).json({ message: "Error al eliminar certificación" });
-  }
-});
-
-}

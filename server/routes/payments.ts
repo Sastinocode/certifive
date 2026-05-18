@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Express, Request, Response } from "express";
 import { db } from "../db";
 import { eq, and, desc } from "drizzle-orm";
@@ -7,6 +6,17 @@ import { authenticate } from "../auth";
 import { createNotification } from "../createNotification";
 import { sendPagoConfirmadoEmail, sendPagoManualPendienteEmail } from "../email";
 import Stripe from "stripe";
+import rateLimit from "express-rate-limit";
+
+// ── Rate limit: endpoints públicos de pago ────────────────────────────────────
+const paymentSubmitLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => req.ip ?? "unknown",
+  message: { message: "Demasiados intentos. Espera 15 minutos antes de volver a intentarlo." },
+});
 
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
 
@@ -60,7 +70,7 @@ app.get("/api/pay/:token", async (req: Request, res: Response) => {
 });
 
 // Public: create Stripe PaymentIntent
-app.post("/api/pay/:token/stripe-intent", async (req: Request, res: Response) => {
+app.post("/api/pay/:token/stripe-intent", paymentSubmitLimiter, async (req: Request, res: Response) => {
   try {
     if (!stripe) return res.status(503).json({ message: "Stripe no configurado" });
 
@@ -88,7 +98,7 @@ app.post("/api/pay/:token/stripe-intent", async (req: Request, res: Response) =>
 });
 
 // Public: notify manual payment (bizum / transfer / cash)
-app.post("/api/pay/:token/manual", async (req: Request, res: Response) => {
+app.post("/api/pay/:token/manual", paymentSubmitLimiter, async (req: Request, res: Response) => {
   try {
     const { metodo, notas } = req.body;
     if (!metodo) return res.status(400).json({ message: "Método de pago requerido" });
@@ -329,19 +339,4 @@ app.post("/api/payments/:id/reject", authenticate, async (req: Request, res: Res
     // In-app notification
     if (rejectedPayment?.certificationId) {
       const [rejCert] = await db.select().from(certifications).where(eq(certifications.id, rejectedPayment.certificationId)).limit(1).catch(() => [null]);
-      createNotification({
-        userId,
-        tipo: "pago_fallido",
-        mensaje: `Pago rechazado: ${parseFloat(rejectedPayment.amount as any).toFixed(2)} €${motivo ? ` — ${motivo}` : ""}${rejCert?.ownerName ? ` · ${rejCert.ownerName}` : ""}`,
-        certificationId: rejectedPayment.certificationId,
-        metadata: { amount: rejectedPayment.amount, motivo },
-      }).catch(console.error);
-    }
-
-    res.json({ ok: true });
-  } catch {
-    res.status(500).json({ message: "Error al rechazar pago" });
-  }
-});
-
-}
+      createNotificatio

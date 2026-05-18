@@ -1,4 +1,4 @@
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import { useLocation } from "wouter";
 import {
   LayoutDashboard, FileText, Users, Award, ClipboardList,
@@ -155,5 +155,3 @@ export default function Sidebar({ selectedTab, onTabChange }: SidebarProps) {
         </div>
       </div>
     </div>
-  );
-}

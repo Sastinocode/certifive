@@ -1,8 +1,7 @@
-// @ts-nocheck
 import { Express, Request, Response } from "express";
 import rateLimit from "express-rate-limit";
 import { db } from "../db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, or } from "drizzle-orm";
 import { users, certifications, folders, refreshTokens } from "../../shared/schema";
 import {
   authenticate, hashPassword, comparePasswords,
@@ -18,8 +17,9 @@ import path from "path";
 import { nanoid } from "nanoid";
 import { uploadToCloudinary } from "../cloudinary";
 import jwt from "jsonwebtoken";
+import { config } from "../config";
 
-const JWT_SECRET = process.env.JWT_SECRET || "certifive-dev-secret-2024";
+const JWT_SECRET = config.JWT_SECRET;
 
 // ── Rate limiters ─────────────────────────────────────────────────────────────
 const loginRateLimiter = rateLimit({
@@ -60,8 +60,9 @@ app.post("/api/auth/login", loginRateLimiter, async (req: Request, res: Response
       return res.status(400).json({ message: "Usuario y contraseña requeridos" });
     }
 
+    // Buscar por username O por email (acepta ambos formatos)
     const [user] = await db.select().from(users)
-      .where(eq(users.username, lookup))
+      .where(or(eq(users.username, lookup), eq(users.email, lookup)))
       .limit(1);
 
     if (!user) {
@@ -443,8 +444,4 @@ app.get("/api/auth/user/export", authenticate, async (req: any, res) => {
     const { password: _, whatsappApiKey: __, emailVerificationToken: ___, ...safeUser } = u;
     res.setHeader("Content-Type", "application/json");
     res.setHeader("Content-Disposition", `attachment; filename="certifive-${new Date().toISOString().slice(0, 10)}.json"`);
-    res.json({ exportedAt: new Date().toISOString(), user: safeUser, certifications: certs, folders: fldrs });
-  } catch { res.status(500).json({ message: "Error" }); }
-});
-
-}
+    res.json({ exportedAt: new Date().toISOString(), user: safeUser, certifications: certs, folders

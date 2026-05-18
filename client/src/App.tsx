@@ -154,7 +154,6 @@ function Router() {
         <Route path="/automatizaciones" component={isAuthenticated ? Automations : Login} />
         <Route path="/stripe" component={isAuthenticated ? StripeIntegration : Login} />
         <Route path="/configuracion" component={isAuthenticated ? Settings : Login} />
-        <Route path="/settings" component={isAuthenticated ? Settings : Login} />
         <Route path="/revision-tecnica/:id" component={isAuthenticated ? TecnicoFormReview : Login} />
         <Route path="/visita/:id" component={isAuthenticated ? VisitForm : Login} />
 
@@ -187,3 +186,4 @@ function App() {
 }
 
 export default App;
+                                                                                   

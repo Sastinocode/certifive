@@ -8,6 +8,17 @@ import multer from "multer";
 import path from "path";
 import { uploadToCloudinary } from "../cloudinary";
 import { createNotification } from "../createNotification";
+import rateLimit from "express-rate-limit";
+
+// ── Rate limit: endpoints públicos de envío ───────────────────────────────────
+const tecnicoSubmitLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => req.ip ?? "unknown",
+  message: { message: "Demasiados intentos. Espera 15 minutos antes de volver a intentarlo." },
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Multer — memoria únicamente. Cloudinary recibe el buffer directamente.
@@ -144,7 +155,7 @@ export function registerFormularioTecnicoRoutes(app: Express) {
   });
 
   // ── PUBLIC: autoguarda progreso ───────────────────────────────────────────
-  app.post("/api/formulario-tecnico/:token/save", async (req: Request, res: Response) => {
+  app.post("/api/formulario-tecnico/:token/save", tecnicoSubmitLimiter, async (req: Request, res: Response) => {
     try {
       const [cert] = await db
         .select()
@@ -170,7 +181,7 @@ export function registerFormularioTecnicoRoutes(app: Express) {
   });
 
   // ── PUBLIC: envío final ───────────────────────────────────────────────────
-  app.post("/api/formulario-tecnico/:token/submit", async (req: Request, res: Response) => {
+  app.post("/api/formulario-tecnico/:token/submit", tecnicoSubmitLimiter, async (req: Request, res: Response) => {
     try {
       const [cert] = await db
         .select()
@@ -342,19 +353,4 @@ export function registerFormularioTecnicoRoutes(app: Express) {
         await db
           .update(certifications)
           .set({
-            tecnicoFormReviewStatus: reviewStatus,
-            tecnicoFormReviewNotes:  reviewNotes ?? null,
-            tecnicoFormReviewedAt:   new Date(),
-            workflowStatus:          newWorkflowStatus,
-            updatedAt:               new Date(),
-          })
-          .where(eq(certifications.id, certId));
-
-        res.json({ ok: true, workflowStatus: newWorkflowStatus });
-      } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "Error al guardar la revisión" });
-      }
-    }
-  );
-}
+            tecnic
