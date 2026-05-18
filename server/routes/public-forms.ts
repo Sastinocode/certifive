@@ -1078,4 +1078,27 @@ app.post("/api/formulario-cee/:token/upload/:certId", ceeUpload.single("file"), 
     }
 
     // Upload to Cloudinary
-    const { secure_url, public_id } = await uploadToCloudinary(req.file.buf
+    const { secure_url, public_id } = await uploadToCloudinary(req.file.buffer, {
+      folder: `certifive/certs/${certId}/cee`,
+    });
+
+    const [doc] = await db.insert(documentos).values({
+      certificationId: certId,
+      nombreOriginal:  req.file.originalname,
+      nombreArchivo:   public_id,   // Cloudinary public_id
+      path:            secure_url,  // Cloudinary HTTPS URL
+      mimeType:        req.file.mimetype,
+      tamano:          req.file.size,
+      tipoDoc,
+      subidoPor:       "cliente",
+      estadoRevision:  "pendiente",
+    }).returning();
+
+    res.json(doc);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error al subir archivo" });
+  }
+});
+
+}

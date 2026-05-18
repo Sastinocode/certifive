@@ -152,5 +152,59 @@ app.put("/api/certifications/:id", authenticate, async (req: Request, res: Respo
     res.status(500).json({ message: "Error al actualizar certificación" });
   }
 });
+app.post("/api/certifications/:id/archive", authenticate, async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
+    const certId = parseInt(req.params.id);
+    const [existing] = await db.select().from(certifications).where(
+      and(eq(certifications.id, certId), eq(certifications.userId, userId))
+    ).limit(1);
+    if (!existing) return res.status(404).json({ message: "Certificación no encontrada" });
 
-app.post("/api/certifica
+    if (existing.ownerName) {
+      const folderName = existing.ownerName;
+      const existingFolder = await db.select().from(folders).where(
+        and(eq(folders.userId, userId), eq(folders.name, folderName))
+      ).limit(1);
+
+      let folderId = existingFolder[0]?.id;
+      if (!folderId) {
+        const [folder] = await db.insert(folders).values({
+          userId,
+          name: folderName,
+          clientName: existing.ownerName,
+          cadastralReference: existing.cadastralReference || "",
+        }).returning();
+        folderId = folder.id;
+      }
+
+      const [updated] = await db.update(certifications)
+        .set({ isArchived: true, archivedAt: new Date(), folderId, status: "Finalizado", updatedAt: new Date() })
+        .where(eq(certifications.id, certId))
+        .returning();
+      return res.json(updated);
+    }
+
+    const [updated] = await db.update(certifications)
+      .set({ isArchived: true, archivedAt: new Date(), updatedAt: new Date() })
+      .where(eq(certifications.id, certId))
+      .returning();
+    res.json(updated);
+  } catch {
+    res.status(500).json({ message: "Error al archivar certificación" });
+  }
+});
+
+app.delete("/api/certifications/:id", authenticate, async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user.id;
+    await db.delete(certifications).where(
+      and(eq(certifications.id, parseInt(req.params.id)), eq(certifications.userId, userId))
+    );
+    res.json({ message: "Eliminada" });
+  } catch {
+    res.status(500).json({ message: "Error al eliminar certificación" });
+  }
+});
+
+}
