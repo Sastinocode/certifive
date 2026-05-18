@@ -155,3 +155,5 @@ export default function Sidebar({ selectedTab, onTabChange }: SidebarProps) {
         </div>
       </div>
     </div>
+  );
+}

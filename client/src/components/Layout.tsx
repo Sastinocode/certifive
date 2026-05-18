@@ -227,4 +227,5 @@ export default function Layout() {
 
       {isMobile && <BottomNav page={page} onNavigate={navigate} />}
     </div>
-  
+  );
+}
