@@ -680,6 +680,38 @@ export const visitPhotos = pgTable("visit_photos", {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// CERTIFICATION SHARES  (colaboración entre técnicos — solo lectura)
+//
+// status values:
+//   "pending"  — invitación enviada, no aceptada aún
+//   "accepted" — colaborador aceptó, puede ver el expediente
+//   "revoked"  — propietario revocó el acceso
+// ─────────────────────────────────────────────────────────────────────────────
+export const certificationShares = pgTable("certification_shares", {
+  id: serial("id").primaryKey(),
+  certificationId: integer("certification_id")
+    .references(() => certifications.id, { onDelete: "cascade" })
+    .notNull(),
+  ownerUserId: integer("owner_user_id")
+    .references(() => users.id, { onDelete: "cascade" })
+    .notNull(),
+  collaboratorEmail: text("collaborator_email").notNull(),
+  collaboratorUserId: integer("collaborator_user_id")
+    .references(() => users.id, { onDelete: "set null" }),
+  status: text("status").notNull().default("pending"),   // "pending"|"accepted"|"revoked"
+  permission: text("permission").notNull().default("read"), // siempre "read" por ahora
+  invitedAt: timestamp("invited_at").defaultNow().notNull(),
+  acceptedAt: timestamp("accepted_at"),
+  revokedAt: timestamp("revoked_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => [
+  index("cert_shares_cert_id_idx").on(t.certificationId),
+  index("cert_shares_owner_idx").on(t.ownerUserId),
+  index("cert_shares_collab_email_idx").on(t.collaboratorEmail),
+  index("cert_shares_collab_user_idx").on(t.collaboratorUserId),
+]);
+
+// ─────────────────────────────────────────────────────────────────────────────
 // INSERT SCHEMAS (Zod validation for API endpoints)
 // ─────────────────────────────────────────────────────────────────────────────
 export const insertUserSchema = createInsertSchema(users).omit({

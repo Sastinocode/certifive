@@ -38,7 +38,11 @@ import {
   Send,
   ClipboardList,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Users2,
+  Share2,
+  Trash2,
+  UserCheck
 } from "lucide-react";
 
 const PAGE_SIZE = 20;
@@ -83,6 +87,20 @@ interface Certification {
   tecnicoFormStatus: string | null;
   tecnicoFormToken: string | null;
   tecnicoFormReviewStatus: string | null;
+}
+
+interface SharedCert {
+  shareId: number;
+  permission: string;
+  invitedAt: string;
+  certId: number;
+  ownerName: string | null;
+  address: string | null;
+  city: string | null;
+  province: string | null;
+  status: string;
+  energyRating: string | null;
+  createdAt: string;
 }
 
 interface PreviewLink {
@@ -216,6 +234,10 @@ export default function Certificates() {
   const [rejectMotivo, setRejectMotivo] = useState("");
   const [wizardCertId, setWizardCertId] = useState<number | null>(null);
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<"mine" | "shared">("mine");
+  const [sharingCertId, setSharingCertId] = useState<number | null>(null);
+  const [shareEmail, setShareEmail] = useState("");
+  const [shareLoading, setShareLoading] = useState(false);
   const { toast } = useToast();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -258,6 +280,11 @@ export default function Certificates() {
   const { data: pendingPayments = [] } = useQuery({
     queryKey: ["/api/payments/pending"],
     refetchInterval: 30000,
+  });
+
+  const { data: sharedWithMe = [] } = useQuery<SharedCert[]>({
+    queryKey: ["/api/shared-with-me"],
+    enabled: activeTab === "shared",
   });
 
   const confirmPaymentMutation = useMutation({
@@ -389,6 +416,58 @@ export default function Certificates() {
     );
   };
 
+  const { data: existingShares = [], refetch: refetchShares } = useQuery<any[]>({
+    queryKey: ["/api/certifications", sharingCertId, "shares"],
+    queryFn: async () => {
+      if (!sharingCertId) return [];
+      const res = await fetch(`/api/certifications/${sharingCertId}/shares`, { credentials: "include" });
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: sharingCertId !== null,
+  });
+
+  const revokeShareMutation = useMutation({
+    mutationFn: async ({ certId, shareId }: { certId: number; shareId: number }) => {
+      return await apiRequest("DELETE", `/api/certifications/${certId}/share/${shareId}`);
+    },
+    onSuccess: () => {
+      refetchShares();
+      toast({ title: "Acceso revocado", description: "El técnico ya no tiene acceso a este expediente." });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "No se pudo revocar el acceso.", variant: "destructive" });
+    },
+  });
+
+  const handleShare = async () => {
+    if (!sharingCertId || !shareEmail) return;
+    const certIdRef = sharingCertId;
+    setShareLoading(true);
+    try {
+      const res = await fetch(`/api/certifications/${certIdRef}/share`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: shareEmail }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Error");
+      toast({
+        title: "Acceso compartido",
+        description: data.isRegistered
+          ? `${shareEmail} ya tiene acceso al expediente.`
+          : `Invitación enviada a ${shareEmail}. Tendrá acceso cuando inicie sesión.`,
+      });
+      setShareEmail("");
+      refetchShares();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setShareLoading(false);
+    }
+  };
+
   const buildPreviewLinks = (cert: Certification): PreviewLink[] => {
     const links: PreviewLink[] = [];
     const origin = window.location.origin;
@@ -413,11 +492,13 @@ export default function Certificates() {
       <div className="flex-1 overflow-auto p-6">
         <div className="max-w-7xl mx-auto">
 
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex justify-between items-center mb-4">
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Solicitudes de Certificacion</h1>
+              <h1 className="text-3xl font-bold text-foreground">Certificaciones</h1>
               <p className="text-muted-foreground mt-1">
-                {"Informacion recibida de formularios de clientes — "}{totalCount}{" solicitud"}{totalCount !== 1 ? "es" : ""}
+                {activeTab === "mine"
+                  ? `${totalCount} solicitud${totalCount !== 1 ? "es" : ""}`
+                  : `${(sharedWithMe as SharedCert[]).length} expediente${(sharedWithMe as SharedCert[]).length !== 1 ? "s" : ""} compartido${(sharedWithMe as SharedCert[]).length !== 1 ? "s" : ""} contigo`}
               </p>
             </div>
             <Link to="/certificados/nuevo">
@@ -427,6 +508,88 @@ export default function Certificates() {
               </Button>
             </Link>
           </div>
+
+          {/* Tabs */}
+          <div className="flex gap-1 mb-6 border-b border-border">
+            {[
+              { id: "mine",   label: "Mis expedientes", Icon: IdCard   },
+              { id: "shared", label: "Compartido conmigo", Icon: Users2 },
+            ].map(({ id, label, Icon }) => (
+              <button
+                key={id}
+                onClick={() => setActiveTab(id as "mine" | "shared")}
+                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+                  activeTab === id
+                    ? "border-teal-700 text-teal-700"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                {label}
+                {id === "shared" && (sharedWithMe as SharedCert[]).length > 0 && (
+                  <span className="bg-teal-700 text-white text-xs rounded-full px-1.5 py-0.5">
+                    {(sharedWithMe as SharedCert[]).length}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* Sección: Compartido conmigo */}
+          {activeTab === "shared" && (
+            <Card className="mb-6">
+              <CardContent className="p-0">
+                {(sharedWithMe as SharedCert[]).length === 0 ? (
+                  <div className="text-center py-12">
+                    <Users2 className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-base font-medium text-gray-700 mb-1">Sin expedientes compartidos</h3>
+                    <p className="text-sm text-gray-500">Cuando otro técnico comparta un expediente contigo aparecerá aquí.</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-gray-200">
+                          <th className="text-left py-3 px-4 font-medium text-gray-700">Propietario / Dirección</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-700">Calificación</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-700">Estado</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-700">Compartido</th>
+                          <th className="text-left py-3 px-4 font-medium text-gray-700">Acceso</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(sharedWithMe as SharedCert[]).map((s) => (
+                          <tr key={s.shareId} className="border-b border-border hover:bg-muted/40 transition-colors">
+                            <td className="py-4 px-4">
+                              <div className="font-medium text-foreground">{s.ownerName || "—"}</div>
+                              <div className="text-sm text-muted-foreground">{s.address}{s.city ? `, ${s.city}` : ""}</div>
+                            </td>
+                            <td className="py-4 px-4">
+                              {s.energyRating ? (
+                                <Badge className="font-bold">{s.energyRating.toUpperCase()}</Badge>
+                              ) : <span className="text-sm text-gray-400">—</span>}
+                            </td>
+                            <td className="py-4 px-4">
+                              <Badge variant="outline">{s.status}</Badge>
+                            </td>
+                            <td className="py-4 px-4 text-sm text-muted-foreground">
+                              {new Date(s.invitedAt).toLocaleDateString("es-ES")}
+                            </td>
+                            <td className="py-4 px-4">
+                              <Badge className="bg-blue-100 text-blue-700 gap-1">
+                                <UserCheck className="w-3 h-3" />
+                                Solo lectura
+                              </Badge>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           {(pendingPayments as PendingPayment[]).length > 0 && (
             <div className="mb-6">
@@ -731,6 +894,13 @@ export default function Certificates() {
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent align="end">
                                     <DropdownMenuItem
+                                      onClick={() => setSharingCertId(cert.id)}
+                                    >
+                                      <Share2 className="w-4 h-4 mr-2 text-teal-600" />
+                                      Compartir expediente
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
                                       onClick={() => {
                                         if (confirm("Estas seguro de que quieres eliminar esta certificacion? Esta accion no se puede deshacer.")) {
                                           deleteCertificationMutation.mutate(cert.id);
@@ -738,7 +908,7 @@ export default function Certificates() {
                                       }}
                                       className="text-red-600 hover:text-red-700 hover:bg-red-50"
                                     >
-                                      <FileText className="w-4 h-4 mr-2" />
+                                      <Trash2 className="w-4 h-4 mr-2" />
                                       Eliminar
                                     </DropdownMenuItem>
                                   </DropdownMenuContent>
@@ -820,6 +990,85 @@ export default function Certificates() {
           onClose={() => setWizardCertId(null)}
         />
       )}
+
+      {/* ── Share Dialog ─────────────────────────────────────────────────── */}
+      <Dialog open={sharingCertId !== null} onOpenChange={(open) => { if (!open) { setSharingCertId(null); setShareEmail(""); } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Share2 className="w-5 h-5 text-teal-700" />
+              Compartir expediente
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 pt-1">
+            {/* Invite form */}
+            <div>
+              <p className="text-sm text-muted-foreground mb-3">
+                Introduce el email del técnico colaborador. Tendrá acceso de <strong>solo lectura</strong> a este expediente.
+              </p>
+              <div className="flex gap-2">
+                <Input
+                  type="email"
+                  placeholder="tecnico@ejemplo.com"
+                  value={shareEmail}
+                  onChange={(e) => setShareEmail(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleShare(); }}
+                  className="flex-1"
+                  disabled={shareLoading}
+                />
+                <Button
+                  onClick={handleShare}
+                  disabled={shareLoading || !shareEmail}
+                  className="bg-teal-700 hover:bg-teal-600 text-white gap-1.5"
+                >
+                  <UserCheck className="w-4 h-4" />
+                  {shareLoading ? "..." : "Invitar"}
+                </Button>
+              </div>
+            </div>
+
+            {/* Current shares list */}
+            {existingShares.length > 0 && (
+              <div>
+                <Separator className="mb-3" />
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Con acceso ahora</p>
+                <div className="space-y-2">
+                  {existingShares.map((share: any) => (
+                    <div key={share.id} className="flex items-center justify-between gap-2 bg-muted/50 rounded-lg px-3 py-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <UserCheck className="w-4 h-4 text-teal-600 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium truncate">{share.collaboratorEmail}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {share.status === "accepted" ? "Acceso activo" : "Invitación pendiente"}
+                            {" · "}Solo lectura
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50 flex-shrink-0"
+                        onClick={() => revokeShareMutation.mutate({ certId: sharingCertId!, shareId: share.id })}
+                        disabled={revokeShareMutation.isPending}
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {existingShares.length === 0 && (
+              <p className="text-xs text-center text-muted-foreground py-2">
+                Aún no has compartido este expediente con nadie.
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
