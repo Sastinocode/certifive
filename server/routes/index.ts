@@ -15,6 +15,7 @@ import { registerMiscRoutes } from "./misc";
 import { registerFormularioTecnicoRoutes } from "./formulario-tecnico";
 import { registerVisitFormRoutes } from "./visit-form";
 import { registerExportCE3XRoutes } from "./export-ce3x";
+import { registerDashboardRoutes } from "./dashboard";
 
 const apiRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -43,4 +44,5 @@ export function registerRoutes(app: Express) {
   registerFormularioTecnicoRoutes(app);
   registerVisitFormRoutes(app);
   registerExportCE3XRoutes(app);
+  registerDashboardRoutes(app);
 }
