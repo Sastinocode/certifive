@@ -409,8 +409,8 @@ export default function Reports() {
                     })}
                   </p>
                 </div>
-                <div className="p-3 bg-blue-500/15 rounded-full">
-                  <CheckCircle className="w-6 h-6 text-blue-400" />
+                <div className="p-3 bg-blue-100 dark:bg-blue-500/20 rounded-full">
+                  <CheckCircle className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                 </div>
               </div>
             </CardContent>
@@ -428,8 +428,8 @@ export default function Reports() {
                     })}
                   </p>
                 </div>
-                <div className="p-3 bg-orange-500/15 rounded-full">
-                  <Clock className="w-6 h-6 text-orange-400" />
+                <div className="p-3 bg-orange-100 dark:bg-orange-500/20 rounded-full">
+                  <Clock className="w-6 h-6 text-orange-600 dark:text-orange-400" />
                 </div>
               </div>
             </CardContent>
@@ -444,11 +444,11 @@ export default function Reports() {
                     {summary.revenueGrowth > 0 ? '+' : ''}{summary.revenueGrowth.toFixed(1)}%
                   </p>
                 </div>
-                <div className="p-3 bg-purple-500/15 rounded-full">
+                <div className="p-3 bg-purple-100 dark:bg-purple-500/20 rounded-full">
                   {summary.revenueGrowth >= 0 ? (
-                    <TrendingUp className="w-6 h-6 text-purple-400" />
+                    <TrendingUp className="w-6 h-6 text-purple-600 dark:text-purple-400" />
                   ) : (
-                    <TrendingDown className="w-6 h-6 text-purple-400" />
+                    <TrendingDown className="w-6 h-6 text-purple-600 dark:text-purple-400" />
                   )}
                 </div>
               </div>
@@ -460,7 +460,7 @@ export default function Reports() {
         <div className="mb-6 flex flex-col sm:flex-row gap-4">
           <div className="flex-1">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
                 placeholder="Buscar facturas, cobros..."
                 value={searchTerm}
@@ -787,7 +787,7 @@ export default function Reports() {
                 </CardHeader>
                 <CardContent>
                   <div className="h-[300px] flex items-center justify-center">
-                    <p className="text-slate-500">Datos de análisis disponibles próximamente</p>
+                    <p className="text-muted-foreground">Datos de análisis disponibles próximamente</p>
                   </div>
                 </CardContent>
               </Card>
@@ -1081,13 +1081,13 @@ function InvoicesTable({ invoices, onEdit, onRecordPayment }: {
             </TableCell>
             <TableCell>
               {invoice.isAccountingRegistered ? (
-                <Badge variant="default" className="bg-green-100 text-green-800">
+                <Badge variant="default" className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
                   <CheckCircle className="w-3 h-3 mr-1" />
                   Registrado
                 </Badge>
               ) : invoice.manualAccountingRequired ? (
                 <div className="flex items-center gap-1">
-                  <Badge variant="outline" className="bg-yellow-50 text-yellow-800 border-yellow-200">
+                  <Badge variant="outline" className="bg-yellow-50 text-yellow-800 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-700">
                     <Clock className="w-3 h-3 mr-1" />
                     Pendiente
                   </Badge>
@@ -1102,7 +1102,7 @@ function InvoicesTable({ invoices, onEdit, onRecordPayment }: {
                   </Button>
                 </div>
               ) : (
-                <Badge variant="default" className="bg-blue-100 text-blue-800">
+                <Badge variant="default" className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
                   <CheckCircle className="w-3 h-3 mr-1" />
                   Automático
                 </Badge>
@@ -1190,11 +1190,11 @@ function ManagerFinancialTable({ data, onCreateInvoice, onDeleteCollection }: {
 }) {
   const getPaymentMethodBadge = (method: string) => {
     const methodConfig = {
-      cash: { color: "bg-green-100 text-green-800", label: "Efectivo", icon: Euro },
-      card: { color: "bg-blue-100 text-blue-800", label: "Tarjeta", icon: CreditCard },
-      transfer: { color: "bg-purple-100 text-purple-800", label: "Transferencia", icon: Building2 },
-      bizum: { color: "bg-orange-100 text-orange-800", label: "Bizum", icon: Smartphone },
-      stripe: { color: "bg-indigo-100 text-indigo-800", label: "Stripe", icon: CreditCard },
+      cash: { color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400", label: "Efectivo", icon: Euro },
+      card: { color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400", label: "Tarjeta", icon: CreditCard },
+      transfer: { color: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400", label: "Transferencia", icon: Building2 },
+      bizum: { color: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400", label: "Bizum", icon: Smartphone },
+      stripe: { color: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400", label: "Stripe", icon: CreditCard },
     };
     
     const config = methodConfig[method as keyof typeof methodConfig] || methodConfig.cash;
@@ -1211,21 +1211,21 @@ function ManagerFinancialTable({ data, onCreateInvoice, onDeleteCollection }: {
   const getInvoiceStatusBadge = (hasInvoice: boolean, isCollection: boolean) => {
     if (hasInvoice) {
       return (
-        <Badge variant="default" className="bg-green-100 text-green-800">
+        <Badge variant="default" className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
           <CheckCircle className="w-3 h-3 mr-1" />
           Factura generada
         </Badge>
       );
     } else if (isCollection) {
       return (
-        <Badge variant="outline" className="bg-red-50 text-red-800 border-red-200">
+        <Badge variant="outline" className="bg-red-50 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-700">
           <XCircle className="w-3 h-3 mr-1" />
           Sin Factura
         </Badge>
       );
     }
     return (
-      <Badge variant="secondary" className="bg-gray-100 text-gray-800">
+      <Badge variant="secondary" className="bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300">
         <Clock className="w-3 h-3 mr-1" />
         N/A
       </Badge>
@@ -1273,7 +1273,7 @@ function ManagerFinancialTable({ data, onCreateInvoice, onDeleteCollection }: {
                     <p className="font-semibold">
                       {format(new Date(record.paymentDate || record.collectionDate), "dd/MM/yyyy", { locale: es })}
                     </p>
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs text-muted-foreground">
                       {format(new Date(record.paymentDate || record.collectionDate), "HH:mm", { locale: es })}
                     </p>
                   </div>
@@ -1372,11 +1372,11 @@ function ManagerFinancialTable({ data, onCreateInvoice, onDeleteCollection }: {
 function CollectionsTable({ collections }: { collections: Collection[] }) {
   const getPaymentMethodBadge = (method: string) => {
     const methodConfig = {
-      cash: { color: "bg-green-100 text-green-800", label: "Efectivo", icon: Euro },
-      card: { color: "bg-blue-100 text-blue-800", label: "Tarjeta", icon: CreditCard },
-      transfer: { color: "bg-purple-100 text-purple-800", label: "Transferencia", icon: Building2 },
-      bizum: { color: "bg-orange-100 text-orange-800", label: "Bizum", icon: Smartphone },
-      stripe: { color: "bg-indigo-100 text-indigo-800", label: "Stripe", icon: CreditCard },
+      cash: { color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400", label: "Efectivo", icon: Euro },
+      card: { color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400", label: "Tarjeta", icon: CreditCard },
+      transfer: { color: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400", label: "Transferencia", icon: Building2 },
+      bizum: { color: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400", label: "Bizum", icon: Smartphone },
+      stripe: { color: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400", label: "Stripe", icon: CreditCard },
     };
     
     const config = methodConfig[method as keyof typeof methodConfig] || methodConfig.cash;
@@ -1392,9 +1392,9 @@ function CollectionsTable({ collections }: { collections: Collection[] }) {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      confirmed: { color: "bg-green-100 text-green-800", label: "Confirmado", icon: CheckCircle },
-      pending: { color: "bg-yellow-100 text-yellow-800", label: "Pendiente", icon: Clock },
-      failed: { color: "bg-red-100 text-red-800", label: "Fallido", icon: AlertCircle },
+      confirmed: { color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400", label: "Confirmado", icon: CheckCircle },
+      pending: { color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400", label: "Pendiente", icon: Clock },
+      failed: { color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400", label: "Fallido", icon: AlertCircle },
     };
     
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;

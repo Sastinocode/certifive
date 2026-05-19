@@ -550,11 +550,11 @@ export default function Settings() {
                   </div>
                 </div>
                 {!profileValidation.isValid && profileValidation.missingFields.length > 0 && (
-                  <div className="mt-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
-                    <p className="text-sm text-amber-800">
+                  <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-700/50">
+                    <p className="text-sm text-amber-800 dark:text-amber-300">
                       <strong>Campos requeridos para facturación legal:</strong> {profileValidation.missingFields.join(', ')}
                     </p>
-                    <p className="text-xs text-amber-600 mt-1">
+                    <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
                       Complete estos datos para generar facturas con validez legal española.
                     </p>
                   </div>
@@ -858,10 +858,10 @@ export default function Settings() {
                     </div>
 
                     {certificateSettings.autoBackup && (
-                      <div className="bg-green-50 border border-green-200 p-3 rounded">
+                      <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700/50 p-3 rounded">
                         <div className="flex items-center">
                           <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                          <span className="text-sm text-green-800">
+                          <span className="text-sm text-green-800 dark:text-green-400">
                             Backup automático activado - Se crean copias diarias
                           </span>
                         </div>
@@ -908,17 +908,17 @@ export default function Settings() {
                           data-testid={`toggle-method-${key}`}
                           className={`flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all ${
                             active
-                              ? "border-teal-500 bg-teal-50"
-                              : "border-gray-200 bg-white hover:border-gray-300"
+                              ? "border-teal-500 bg-teal-50 dark:bg-teal-900/20 dark:border-teal-500/70"
+                              : "border-gray-200 bg-white hover:border-gray-300 dark:hover:border-gray-600"
                           }`}
                         >
-                          <div className={`mt-0.5 flex-shrink-0 ${active ? "text-teal-700" : "text-gray-400"}`}>{icon}</div>
+                          <div className={`mt-0.5 flex-shrink-0 ${active ? "text-teal-700 dark:text-teal-400" : "text-gray-400"}`}>{icon}</div>
                           <div className="min-w-0">
-                            <p className={`text-sm font-semibold ${active ? "text-teal-800" : "text-gray-700"}`}>{label}</p>
+                            <p className={`text-sm font-semibold ${active ? "text-teal-800 dark:text-teal-300" : "text-gray-700"}`}>{label}</p>
                             <p className="text-xs text-gray-400">{desc}</p>
                           </div>
                           <div className={`ml-auto flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                            active ? "border-teal-500 bg-teal-500" : "border-gray-300"
+                            active ? "border-teal-500 bg-teal-500" : "border-gray-300 dark:border-gray-600"
                           }`}>
                             {active && <CheckCircle className="w-3 h-3 text-white fill-white" />}
                           </div>
@@ -946,7 +946,7 @@ export default function Settings() {
                     data-testid="input-bizum-phone"
                   />
                   {paymentSettings.enabledPaymentMethods.includes("bizum") && !paymentSettings.bizumPhone && (
-                    <p className="text-xs text-amber-600 mt-1.5 flex items-center gap-1">
+                    <p className="text-xs text-amber-600 dark:text-amber-400 mt-1.5 flex items-center gap-1">
                       <AlertCircle className="w-3 h-3" />
                       Bizum está activo pero no has introducido tu número. Los clientes no podrán usarlo.
                     </p>
@@ -969,7 +969,7 @@ export default function Settings() {
                     data-testid="input-iban"
                   />
                   {paymentSettings.enabledPaymentMethods.includes("transferencia") && !paymentSettings.iban && (
-                    <p className="text-xs text-amber-600 mt-1.5 flex items-center gap-1">
+                    <p className="text-xs text-amber-600 dark:text-amber-400 mt-1.5 flex items-center gap-1">
                       <AlertCircle className="w-3 h-3" />
                       Transferencia está activa pero no has introducido tu IBAN. Los clientes no podrán usarla.
                     </p>
@@ -993,7 +993,7 @@ export default function Settings() {
                   </div>
                   <button
                     onClick={() => refetchSub()}
-                    className="text-slate-400 hover:text-slate-600 transition-colors"
+                    className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                     title="Actualizar"
                     data-testid="btn-refresh-subscription"
                   >
@@ -1055,11 +1055,11 @@ export default function Settings() {
 
                 {/* Stripe not configured warning */}
                 {subData && !subData.stripeConfigured && (
-                  <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm" data-testid="alert-stripe-missing">
-                    <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                  <div className="flex items-start gap-3 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 rounded-xl text-sm" data-testid="alert-stripe-missing">
+                    <AlertCircle className="w-5 h-5 text-amber-500 dark:text-amber-400 flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="font-medium text-amber-800">Stripe no configurado</p>
-                      <p className="text-amber-700 mt-0.5">
+                      <p className="font-medium text-amber-800 dark:text-amber-300">Stripe no configurado</p>
+                      <p className="text-amber-700 dark:text-amber-400 mt-0.5">
                         Añade <code className="bg-amber-100 px-1 rounded font-mono text-xs">STRIPE_SECRET_KEY</code> en las variables de entorno para activar la gestión de suscripciones y pagos.
                       </p>
                     </div>
@@ -1080,7 +1080,7 @@ export default function Settings() {
                           className={`relative rounded-xl border-2 p-4 flex flex-col gap-3 transition-all ${
                             isCurrent
                               ? `${plan.border} ${plan.bg}`
-                              : "border-slate-200 bg-white hover:border-slate-300"
+                              : "border-slate-200 bg-white hover:border-slate-300 dark:hover:border-slate-500"
                           }`}
                           data-testid={`card-plan-${plan.key}`}
                         >

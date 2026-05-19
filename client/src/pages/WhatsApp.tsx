@@ -55,12 +55,12 @@ export default function WhatsApp() {
                     className="w-full bg-emerald-50 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-300 outline-none"
                   />
                 </div>
-                <div className="bg-orange-50 border border-orange-100 rounded-xl p-4">
+                <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-700/40 rounded-xl p-4">
                   <div className="flex items-start gap-3">
-                    <span className="material-symbols-outlined text-orange-500 text-[20px] flex-shrink-0 mt-0.5">info</span>
+                    <span className="material-symbols-outlined text-orange-500 dark:text-orange-400 text-[20px] flex-shrink-0 mt-0.5">info</span>
                     <div>
-                      <p className="text-xs font-semibold text-orange-800 mb-1">Requiere cuenta verificada de WhatsApp Business</p>
-                      <p className="text-xs text-orange-700/70">Necesitas una cuenta de Meta Business Manager verificada para usar la API oficial de WhatsApp Business.</p>
+                      <p className="text-xs font-semibold text-orange-800 dark:text-orange-300 mb-1">Requiere cuenta verificada de WhatsApp Business</p>
+                      <p className="text-xs text-orange-700/70 dark:text-orange-400/70">Necesitas una cuenta de Meta Business Manager verificada para usar la API oficial de WhatsApp Business.</p>
                     </div>
                   </div>
                 </div>
@@ -124,12 +124,4 @@ export default function WhatsApp() {
                   className={`relative inline-flex w-11 h-6 rounded-full transition-colors ${template.active ? "bg-emerald-700" : "bg-emerald-200"}`}
                 >
                   <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${template.active ? "translate-x-5" : "translate-x-0"}`} />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
+                </but

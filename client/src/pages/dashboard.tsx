@@ -1,8 +1,6 @@
 // @ts-nocheck
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Link } from "wouter";
-import { useToast } from "@/hooks/use-toast";
 import Sidebar from "@/components/layout/sidebar";
 import { NotificationModal } from "@/components/notifications/NotificationModal";
 import { ProfileMenu } from "@/components/layout/ProfileMenu";
@@ -12,7 +10,7 @@ import {
   IdCard, Clock, Euro, Users, TrendingUp, TrendingDown,
   Minus, Plus, Eye, Edit, ExternalLink, BarChart2,
   MessageCircle, Settings, Calendar,
-  AlertTriangle, AlertCircle, Bell, FileWarning, CreditCard
+  AlertTriangle, AlertCircle, Bell, FileWarning, CreditCard,
 } from "lucide-react";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
@@ -78,12 +76,17 @@ interface RecentCert {
 
 function TrendBadge({ current, previous }: { current: number; previous: number }) {
   const diff = pct(current, previous);
-  if (diff === null) return <span style={{ fontSize: 12, color: "#94A3B8" }}>Sin datos previos</span>;
+  if (diff === null) return <span className="text-xs text-muted-foreground">Sin datos previos</span>;
   const up = diff >= 0;
   const Icon = diff === 0 ? Minus : up ? TrendingUp : TrendingDown;
-  const color = diff === 0 ? "#94A3B8" : up ? "#16A34A" : "#DC2626";
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 12, color, fontWeight: 500 }}>
+    <span className={`inline-flex items-center gap-1 text-xs font-medium ${
+      diff === 0
+        ? "text-muted-foreground"
+        : up
+          ? "text-green-600 dark:text-green-400"
+          : "text-red-600 dark:text-red-400"
+    }`}>
       <Icon size={12} />
       {diff === 0 ? "Sin cambio" : `${up ? "+" : ""}${diff}% vs mes anterior`}
     </span>
@@ -95,18 +98,20 @@ function KpiCard({ label, value, sub, icon: Icon, iconColor, accent, trend }: {
   icon: any; iconColor: string; accent?: boolean; trend?: React.ReactNode;
 }) {
   return (
-    <div style={{
-      background: "#fff", borderRadius: 12, padding: "20px 20px 16px",
-      border: "1px solid #E2E8F0", borderLeft: accent ? `3px solid ${iconColor}` : "1px solid #E2E8F0",
-      boxShadow: "0 1px 3px rgba(0,0,0,0.06)", position: "relative",
-    }}>
-      <div style={{ position: "absolute", top: 16, right: 16, width: 36, height: 36, borderRadius: 8, background: `${iconColor}18`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div
+      className="bg-card rounded-xl p-5 border border-border shadow-sm relative"
+      style={accent ? { borderLeftWidth: 3, borderLeftColor: iconColor } : undefined}
+    >
+      <div
+        className="absolute top-4 right-4 w-9 h-9 rounded-lg flex items-center justify-center"
+        style={{ background: `${iconColor}18` }}
+      >
         <Icon size={18} color={iconColor} />
       </div>
-      <p style={{ fontSize: 11, fontWeight: 600, color: "#94A3B8", textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 8 }}>{label}</p>
-      <p style={{ fontSize: 28, fontWeight: 700, color: "#0F172A", letterSpacing: "-.02em", lineHeight: 1, marginBottom: 6 }}>{value}</p>
-      {sub && <div style={{ fontSize: 12, color: "#64748B" }}>{sub}</div>}
-      {trend && <div style={{ marginTop: 8 }}>{trend}</div>}
+      <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest mb-2">{label}</p>
+      <p className="text-3xl font-bold text-foreground tracking-tight leading-none mb-1.5">{value}</p>
+      {sub && <div className="text-xs text-muted-foreground">{sub}</div>}
+      {trend && <div className="mt-2">{trend}</div>}
     </div>
   );
 }
@@ -114,13 +119,18 @@ function KpiCard({ label, value, sub, icon: Icon, iconColor, accent, trend }: {
 function StatusBar({ label, count, total, color }: { label: string; count: number; total: number; color: string }) {
   const pctVal = total > 0 ? Math.round((count / total) * 100) : 0;
   return (
-    <div style={{ marginBottom: 12 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-        <span style={{ fontSize: 13, color: "#334155", fontWeight: 500 }}>{label}</span>
-        <span style={{ fontSize: 13, color: "#64748B" }}>{count} <span style={{ color: "#94A3B8", fontSize: 11 }}>({pctVal}%)</span></span>
+    <div className="mb-3">
+      <div className="flex justify-between mb-1">
+        <span className="text-sm text-foreground/80 font-medium">{label}</span>
+        <span className="text-sm text-muted-foreground">
+          {count} <span className="text-[11px] text-muted-foreground/60">({pctVal}%)</span>
+        </span>
       </div>
-      <div style={{ height: 6, background: "#F1F5F9", borderRadius: 4, overflow: "hidden" }}>
-        <div style={{ height: "100%", width: `${pctVal}%`, background: color, borderRadius: 4, transition: "width .4s ease" }} />
+      <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+        <div
+          className="h-full rounded-full transition-all duration-500"
+          style={{ width: `${pctVal}%`, background: color }}
+        />
       </div>
     </div>
   );
@@ -129,15 +139,15 @@ function StatusBar({ label, count, total, color }: { label: string; count: numbe
 function MiniTrendChart({ data }: { data: Array<{ month: string; total: number }> }) {
   const max = Math.max(...data.map(d => d.total), 1);
   return (
-    <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: 56, padding: "0 4px" }}>
+    <div className="flex items-end gap-1.5 h-14 px-1">
       {data.map(d => (
-        <div key={d.month} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-          <div style={{
-            width: "100%", background: "#0D7C66",
-            height: `${Math.max(4, Math.round((d.total / max) * 48))}px`,
-            borderRadius: "3px 3px 0 0", transition: "height .3s ease",
-          }} title={`${d.total} cert.`} />
-          <span style={{ fontSize: 10, color: "#94A3B8", fontWeight: 500, whiteSpace: "nowrap" }}>{fmtMonth(d.month)}</span>
+        <div key={d.month} className="flex-1 flex flex-col items-center gap-1">
+          <div
+            className="w-full rounded-t-[3px] transition-all duration-300"
+            style={{ background: "hsl(var(--primary))", height: `${Math.max(4, Math.round((d.total / max) * 48))}px` }}
+            title={`${d.total} cert.`}
+          />
+          <span className="text-[10px] text-muted-foreground font-medium whitespace-nowrap">{fmtMonth(d.month)}</span>
         </div>
       ))}
     </div>
@@ -145,59 +155,98 @@ function MiniTrendChart({ data }: { data: Array<{ month: string; total: number }
 }
 
 function EnergyBadge({ rating }: { rating: string | null }) {
-  if (!rating) return <span style={{ fontSize: 12, color: "#94A3B8" }}>—</span>;
-  const colors: Record<string, { bg: string; color: string }> = {
-    A: { bg: "#166534", color: "#fff" }, B: { bg: "#15803d", color: "#fff" },
-    C: { bg: "#65a30d", color: "#fff" }, D: { bg: "#ca8a04", color: "#fff" },
-    E: { bg: "#ea580c", color: "#fff" }, F: { bg: "#dc2626", color: "#fff" },
-    G: { bg: "#7f1d1d", color: "#fff" },
+  if (!rating) return <span className="text-xs text-muted-foreground">—</span>;
+  // Energía A-G: colores estándar, mantienen contraste en dark por ser sólidos con texto blanco
+  const colors: Record<string, { bg: string }> = {
+    A: { bg: "#166534" }, B: { bg: "#15803d" }, C: { bg: "#65a30d" },
+    D: { bg: "#ca8a04" }, E: { bg: "#ea580c" }, F: { bg: "#dc2626" },
+    G: { bg: "#7f1d1d" },
   };
-  const c = colors[rating.toUpperCase()] ?? { bg: "#E2E8F0", color: "#334155" };
-  return <span style={{ display: "inline-flex", alignItems: "center", padding: "2px 8px", borderRadius: 6, fontSize: 12, fontWeight: 700, background: c.bg, color: c.color }}>{rating.toUpperCase()}</span>;
+  const c = colors[rating.toUpperCase()] ?? { bg: "#94A3B8" };
+  return (
+    <span
+      className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold text-white"
+      style={{ background: c.bg }}
+    >
+      {rating.toUpperCase()}
+    </span>
+  );
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, { bg: string; color: string; label: string }> = {
-    "Nuevo":      { bg: "#dbeafe", color: "#1e40af", label: "Nuevo"      },
-    "En Proceso": { bg: "#fef9c3", color: "#854d0e", label: "En Proceso" },
-    "Finalizado": { bg: "#dcfce7", color: "#166534", label: "Finalizado" },
+  const cls: Record<string, string> = {
+    "Nuevo":      "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
+    "En Proceso": "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
+    "Finalizado": "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
+    "Archivado":  "bg-muted text-muted-foreground",
   };
-  const s = map[status] ?? { bg: "#F1F5F9", color: "#475569", label: status };
-  return <span style={{ display: "inline-flex", alignItems: "center", padding: "2px 8px", borderRadius: 6, fontSize: 12, fontWeight: 500, background: s.bg, color: s.color }}>{s.label}</span>;
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium ${cls[status] ?? "bg-muted text-muted-foreground"}`}>
+      {status}
+    </span>
+  );
 }
 
 // ─── alert helpers ───────────────────────────────────────────────────────────
 
-const ALERT_META: Record<AlertType, { label: string; Icon: any; color: string; bg: string }> = {
-  deadline_overdue: { label: "Plazo vencido",       Icon: AlertTriangle, color: "#DC2626", bg: "#FEF2F2" },
-  deadline_soon:    { label: "Plazo próximo",        Icon: Clock,         color: "#D97706", bg: "#FFFBEB" },
-  payment_pending:  { label: "Pago pendiente",       Icon: CreditCard,    color: "#0891B2", bg: "#F0F9FF" },
-  form_pending:     { label: "Formulario sin resp.", Icon: FileWarning,   color: "#7C3AED", bg: "#F5F3FF" },
+const ALERT_META: Record<AlertType, {
+  label: string; Icon: any; iconColor: string;
+  rowCls: string; iconBgCls: string; labelCls: string; btnCls: string;
+}> = {
+  deadline_overdue: {
+    label: "Plazo vencido", Icon: AlertTriangle, iconColor: "#DC2626",
+    rowCls:    "bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/40",
+    iconBgCls: "bg-red-100 dark:bg-red-900/40",
+    labelCls:  "text-red-700 dark:text-red-400",
+    btnCls:    "text-red-600 dark:text-red-400 border-red-300 dark:border-red-700/60 hover:bg-red-100 dark:hover:bg-red-900/30",
+  },
+  deadline_soon: {
+    label: "Plazo próximo", Icon: Clock, iconColor: "#D97706",
+    rowCls:    "bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40",
+    iconBgCls: "bg-amber-100 dark:bg-amber-900/40",
+    labelCls:  "text-amber-700 dark:text-amber-400",
+    btnCls:    "text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-700/60 hover:bg-amber-100 dark:hover:bg-amber-900/30",
+  },
+  payment_pending: {
+    label: "Pago pendiente", Icon: CreditCard, iconColor: "#0891B2",
+    rowCls:    "bg-cyan-50 dark:bg-cyan-950/20 border border-cyan-200 dark:border-cyan-800/40",
+    iconBgCls: "bg-cyan-100 dark:bg-cyan-900/40",
+    labelCls:  "text-cyan-700 dark:text-cyan-400",
+    btnCls:    "text-cyan-600 dark:text-cyan-400 border-cyan-300 dark:border-cyan-700/60 hover:bg-cyan-100 dark:hover:bg-cyan-900/30",
+  },
+  form_pending: {
+    label: "Formulario sin resp.", Icon: FileWarning, iconColor: "#7C3AED",
+    rowCls:    "bg-violet-50 dark:bg-violet-950/20 border border-violet-200 dark:border-violet-800/40",
+    iconBgCls: "bg-violet-100 dark:bg-violet-900/40",
+    labelCls:  "text-violet-700 dark:text-violet-400",
+    btnCls:    "text-violet-600 dark:text-violet-400 border-violet-300 dark:border-violet-700/60 hover:bg-violet-100 dark:hover:bg-violet-900/30",
+  },
 };
 
 function AlertRow({ alert, onNavigate }: { alert: CertAlert; onNavigate?: (p: string) => void }) {
   const meta = ALERT_META[alert.type];
   return (
-    <div style={{
-      display: "flex", alignItems: "center", gap: 12, padding: "10px 14px",
-      borderRadius: 8, background: meta.bg, border: `1px solid ${meta.color}22`,
-    }}>
-      <div style={{ width: 32, height: 32, borderRadius: 6, background: `${meta.color}18`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-        <meta.Icon size={15} color={meta.color} />
+    <div className={`flex items-center gap-3 px-3.5 py-2.5 rounded-lg ${meta.rowCls}`}>
+      <div className={`w-8 h-8 rounded-md ${meta.iconBgCls} flex items-center justify-center flex-shrink-0`}>
+        <meta.Icon size={15} color={meta.iconColor} />
       </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 1 }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: meta.color, textTransform: "uppercase", letterSpacing: ".04em" }}>{meta.label}</span>
-          {alert.priority === "high" && <span style={{ fontSize: 10, fontWeight: 700, color: "#DC2626", background: "#FEE2E2", borderRadius: 4, padding: "1px 5px" }}>URGENTE</span>}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5 mb-0.5">
+          <span className={`text-[11px] font-bold uppercase tracking-wide ${meta.labelCls}`}>{meta.label}</span>
+          {alert.priority === "high" && (
+            <span className="text-[10px] font-bold text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-900/50 rounded px-1.5 py-px">
+              URGENTE
+            </span>
+          )}
         </div>
-        <div style={{ fontSize: 13, color: "#334155", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        <div className="text-[13px] text-foreground font-medium truncate">
           {alert.ownerName || "Sin propietario"}{alert.address ? ` · ${alert.address}` : ""}
         </div>
-        <div style={{ fontSize: 12, color: "#64748B", marginTop: 1 }}>{alert.message}</div>
+        <div className="text-xs text-muted-foreground mt-0.5">{alert.message}</div>
       </div>
       <button
         onClick={() => onNavigate?.("certifications")}
-        style={{ fontSize: 12, fontWeight: 500, color: meta.color, background: "none", border: `1px solid ${meta.color}44`, borderRadius: 6, padding: "4px 10px", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}
+        className={`text-xs font-medium border rounded-md px-2.5 py-1 cursor-pointer whitespace-nowrap flex-shrink-0 transition-colors ${meta.btnCls}`}
       >
         Ver →
       </button>
@@ -206,6 +255,13 @@ function AlertRow({ alert, onNavigate }: { alert: CertAlert; onNavigate?: (p: st
 }
 
 // ─── main component ──────────────────────────────────────────────────────────
+
+const QUICK_ACTIONS = [
+  { label: "Nueva Certificación", sub: "Crear expediente",          iconColor: "#0D7C66", Icon: Plus,          page: "certifications" },
+  { label: "Gestión WhatsApp",    sub: "Clientes y conversaciones", iconColor: "#16A34A", Icon: MessageCircle, page: "whatsapp"       },
+  { label: "Ver Certificados",    sub: "Lista completa",            iconColor: "#0891B2", Icon: IdCard,        page: "certifications" },
+  { label: "Configuración",       sub: "Ajustes de cuenta",         iconColor: "#D97706", Icon: Settings,      page: "settings"       },
+];
 
 export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) => void }) {
   const { user } = useAuth();
@@ -222,19 +278,19 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
 
   const { data: alertsRaw = [] } = useQuery<CertAlert[]>({
     queryKey: ["/api/dashboard/alerts"],
-    refetchInterval: 5 * 60 * 1000, // refresca cada 5 min
+    refetchInterval: 5 * 60 * 1000,
   });
+
   const alerts = alertsRaw as CertAlert[];
   const highAlerts = alerts.filter(a => a.priority === "high").length;
   const recentCertifications = recentRaw as RecentCert[];
 
-  // Totales para barras
-  const totalActive = stats?.activeCertificates ?? 0;
-  const nuevo     = stats?.byStatus?.["Nuevo"]       ?? 0;
-  const enProceso = stats?.byStatus?.["En Proceso"]  ?? 0;
-  const finalizado = stats?.byStatus?.["Finalizado"] ?? 0;
-  const archivado = stats?.byStatus?.["Archivado"]   ?? 0;
-  const totalAll  = totalActive + archivado;
+  const totalActive  = stats?.activeCertificates ?? 0;
+  const nuevo        = stats?.byStatus?.["Nuevo"]      ?? 0;
+  const enProceso    = stats?.byStatus?.["En Proceso"] ?? 0;
+  const finalizado   = stats?.byStatus?.["Finalizado"] ?? 0;
+  const archivado    = stats?.byStatus?.["Archivado"]  ?? 0;
+  const totalAll     = totalActive + archivado;
 
   return (
     <div className="flex h-screen bg-background">
@@ -251,16 +307,21 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
           {/* ── Greeting ─────────────────────────────────────────────────────── */}
           <div className="mb-8 flex justify-between items-start">
             <div>
-              <p style={{ fontSize: 13, fontWeight: 500, color: "#64748B", marginBottom: 4 }}>{getGreeting()},</p>
-              <h2 style={{ fontSize: 26, fontWeight: 700, color: "#0F172A", letterSpacing: "-.02em", lineHeight: 1.15, marginBottom: 4 }}>
+              <p className="text-[13px] font-medium text-muted-foreground mb-1">{getGreeting()},</p>
+              <h2 className="text-[26px] font-bold text-foreground tracking-tight leading-tight mb-1">
                 {displayName} 👋
               </h2>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
-                <p style={{ fontSize: 14, color: "#64748B" }}>Aquí tienes el resumen de tu negocio</p>
+              <div className="flex items-center gap-2 mt-1">
+                <p className="text-sm text-muted-foreground">Aquí tienes el resumen de tu negocio</p>
                 {alerts.length > 0 && (
-                  <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 600, color: highAlerts > 0 ? "#DC2626" : "#D97706", background: highAlerts > 0 ? "#FEF2F2" : "#FFFBEB", border: `1px solid ${highAlerts > 0 ? "#FECACA" : "#FDE68A"}`, borderRadius: 20, padding: "2px 8px" }}>
+                  <span className={`inline-flex items-center gap-1 text-xs font-semibold rounded-full px-2 py-0.5 border ${
+                    highAlerts > 0
+                      ? "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/25 border-red-200 dark:border-red-800/40"
+                      : "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/25 border-amber-200 dark:border-amber-800/40"
+                  }`}>
                     <Bell size={11} />
-                    {alerts.length} alerta{alerts.length !== 1 ? "s" : ""}{highAlerts > 0 ? ` · ${highAlerts} urgente${highAlerts !== 1 ? "s" : ""}` : ""}
+                    {alerts.length} alerta{alerts.length !== 1 ? "s" : ""}
+                    {highAlerts > 0 ? ` · ${highAlerts} urgente${highAlerts !== 1 ? "s" : ""}` : ""}
                   </span>
                 )}
               </div>
@@ -277,32 +338,27 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
             <KpiCard
               label="Certificados Activos"
               value={statsLoading ? "…" : String(totalActive)}
-              icon={IdCard}
-              iconColor="#0D7C66"
-              accent
+              icon={IdCard} iconColor="#0D7C66" accent
               sub={`${finalizado} finalizados · ${archivado} archivados`}
               trend={!statsLoading && stats ? <TrendBadge current={totalActive} previous={0} /> : undefined}
             />
             <KpiCard
               label="Ingresos del Mes"
               value={statsLoading ? "…" : fmtEur(stats?.monthlyIncome?.current ?? 0)}
-              icon={Euro}
-              iconColor="#0891B2"
+              icon={Euro} iconColor="#0891B2"
               sub={`Mes anterior: ${fmtEur(stats?.monthlyIncome?.previous ?? 0)}`}
               trend={!statsLoading && stats ? <TrendBadge current={stats.monthlyIncome.current} previous={stats.monthlyIncome.previous} /> : undefined}
             />
             <KpiCard
               label="Tiempo Medio CEE"
               value={statsLoading ? "…" : stats?.avgDaysToComplete ? `${stats.avgDaysToComplete}d` : "—"}
-              icon={Clock}
-              iconColor="#D97706"
+              icon={Clock} iconColor="#D97706"
               sub="Desde apertura hasta archivo"
             />
             <KpiCard
               label="Clientes Nuevos"
               value={statsLoading ? "…" : String(stats?.newClientsThisMonth ?? 0)}
-              icon={Users}
-              iconColor="#7C3AED"
+              icon={Users} iconColor="#7C3AED"
               sub={`Mes anterior: ${stats?.newClientsPrevMonth ?? 0}`}
               trend={!statsLoading && stats ? <TrendBadge current={stats.newClientsThisMonth} previous={stats.newClientsPrevMonth} /> : undefined}
             />
@@ -312,14 +368,14 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
 
             {/* Status distribution */}
-            <div style={{ background: "#fff", borderRadius: 12, padding: 24, border: "1px solid #E2E8F0", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
+            <div className="bg-card rounded-xl p-6 border border-border shadow-sm">
+              <div className="flex items-center gap-2 mb-5">
                 <BarChart2 size={16} color="#0D7C66" />
-                <h3 style={{ fontSize: 14, fontWeight: 600, color: "#0F172A" }}>Distribución por estado</h3>
+                <h3 className="text-sm font-semibold text-foreground">Distribución por estado</h3>
               </div>
               {statsLoading ? (
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  {[1,2,3].map(i => <div key={i} style={{ height: 32, background: "#F1F5F9", borderRadius: 6, animation: "pulse 1.5s infinite" }} />)}
+                <div className="flex flex-col gap-3">
+                  {[1, 2, 3].map(i => <div key={i} className="h-8 bg-muted rounded-md animate-pulse" />)}
                 </div>
               ) : (
                 <>
@@ -327,7 +383,7 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
                   <StatusBar label="En Proceso"  count={enProceso}  total={totalAll} color="#F59E0B" />
                   <StatusBar label="Finalizado"  count={finalizado} total={totalAll} color="#10B981" />
                   <StatusBar label="Archivado"   count={archivado}  total={totalAll} color="#94A3B8" />
-                  <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid #F1F5F9", fontSize: 12, color: "#94A3B8", textAlign: "right" }}>
+                  <div className="mt-3 pt-3 border-t border-border text-xs text-muted-foreground/60 text-right">
                     Total: {totalAll} expedientes
                   </div>
                 </>
@@ -335,19 +391,20 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
             </div>
 
             {/* Monthly trend chart */}
-            <div style={{ background: "#fff", borderRadius: 12, padding: 24, border: "1px solid #E2E8F0", boxShadow: "0 1px 3px rgba(0,0,0,0.06)", gridColumn: "span 2" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div className="bg-card rounded-xl p-6 border border-border shadow-sm lg:col-span-2">
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-2">
                   <TrendingUp size={16} color="#0D7C66" />
-                  <h3 style={{ fontSize: 14, fontWeight: 600, color: "#0F172A" }}>Certificados creados — últimos 6 meses</h3>
+                  <h3 className="text-sm font-semibold text-foreground">Certificados — últimos 6 meses</h3>
                 </div>
-                <span style={{ fontSize: 12, color: "#94A3B8", display: "flex", alignItems: "center", gap: 4 }}>
-                  <Calendar size={12} /> {new Date().toLocaleDateString("es-ES", { month: "long", year: "numeric" })}
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Calendar size={12} />
+                  {new Date().toLocaleDateString("es-ES", { month: "long", year: "numeric" })}
                 </span>
               </div>
               {statsLoading || !stats?.monthlyTrend?.length ? (
-                <div style={{ height: 80, background: "#F8FAFC", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <span style={{ fontSize: 13, color: "#94A3B8" }}>{statsLoading ? "Cargando…" : "Sin datos aún"}</span>
+                <div className="h-20 bg-muted/50 rounded-lg flex items-center justify-center">
+                  <span className="text-sm text-muted-foreground">{statsLoading ? "Cargando…" : "Sin datos aún"}</span>
                 </div>
               ) : (
                 <MiniTrendChart data={stats.monthlyTrend} />
@@ -357,25 +414,27 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
 
           {/* ── Alertas activas ──────────────────────────────────────────────── */}
           {alerts.length > 0 && (
-            <div style={{ background: "#fff", borderRadius: 12, padding: 24, border: "1px solid #E2E8F0", boxShadow: "0 1px 3px rgba(0,0,0,0.06)", marginBottom: 20 }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <AlertCircle size={16} color="#DC2626" />
-                  <h3 style={{ fontSize: 14, fontWeight: 600, color: "#0F172A" }}>Alertas activas</h3>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: "#fff", background: alerts.some(a => a.priority === "high") ? "#DC2626" : "#D97706", borderRadius: 10, padding: "1px 7px" }}>{alerts.length}</span>
+            <div className="bg-card rounded-xl p-6 border border-border shadow-sm mb-5">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <AlertCircle size={16} className="text-red-500 dark:text-red-400" />
+                  <h3 className="text-sm font-semibold text-foreground">Alertas activas</h3>
+                  <span className={`text-xs font-bold text-white rounded-full px-2 py-px ${
+                    alerts.some(a => a.priority === "high") ? "bg-red-500" : "bg-amber-500"
+                  }`}>
+                    {alerts.length}
+                  </span>
                 </div>
-                <span style={{ fontSize: 12, color: "#94A3B8" }}>Se actualiza cada 5 min</span>
+                <span className="text-xs text-muted-foreground">Se actualiza cada 5 min</span>
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {alerts.slice(0, 5).map((alert, i) => (
+              <div className="flex flex-col gap-2">
+                {alerts.slice(0, 5).map(alert => (
                   <AlertRow key={`${alert.certId}-${alert.type}`} alert={alert} onNavigate={onNavigate} />
                 ))}
                 {alerts.length > 5 && (
                   <button
                     onClick={() => onNavigate?.("certifications")}
-                    style={{ fontSize: 13, color: "#64748B", background: "none", border: "1px solid #E2E8F0", borderRadius: 8, padding: "8px", cursor: "pointer", transition: "background .15s" }}
-                    onMouseOver={e => (e.currentTarget.style.background = "#F8FAFC")}
-                    onMouseOut={e => (e.currentTarget.style.background = "none")}
+                    className="text-sm text-muted-foreground bg-transparent border border-border rounded-lg py-2 cursor-pointer hover:bg-muted transition-colors"
                   >
                     +{alerts.length - 5} alertas más → Ver todos los certificados
                   </button>
@@ -385,28 +444,24 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
           )}
 
           {/* ── Quick Actions ─────────────────────────────────────────────────── */}
-          <div style={{ background: "#fff", borderRadius: 12, padding: 24, border: "1px solid #E2E8F0", boxShadow: "0 1px 3px rgba(0,0,0,0.06)", marginBottom: 20 }}>
-            <h3 style={{ fontSize: 14, fontWeight: 600, color: "#0F172A", marginBottom: 16 }}>Acciones Rápidas</h3>
+          <div className="bg-card rounded-xl p-6 border border-border shadow-sm mb-5">
+            <h3 className="text-sm font-semibold text-foreground mb-4">Acciones Rápidas</h3>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-              {[
-                { label: "Nueva Certificación", sub: "Crear expediente", color: "#0D7C66", Icon: Plus,          page: "certifications" },
-                { label: "Gestión WhatsApp",    sub: "Clientes y conversaciones", color: "#16A34A", Icon: MessageCircle, page: "whatsapp" },
-                { label: "Ver Certificados",    sub: "Lista completa",   color: "#0891B2", Icon: IdCard,         page: "certifications" },
-                { label: "Configuración",       sub: "Ajustes de cuenta",color: "#D97706", Icon: Settings,       page: "settings"       },
-              ].map(({ label, sub, color, Icon, page }) => (
+              {QUICK_ACTIONS.map(({ label, sub, iconColor, Icon, page }) => (
                 <button
                   key={label}
                   onClick={() => onNavigate?.(page)}
-                  style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderRadius: 8, border: "1px solid #E2E8F0", background: "#fff", cursor: "pointer", textAlign: "left", transition: "background .15s" }}
-                  onMouseOver={e => (e.currentTarget.style.background = "#F8FAFC")}
-                  onMouseOut={e => (e.currentTarget.style.background = "#fff")}
+                  className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:bg-muted/60 cursor-pointer text-left transition-colors"
                 >
-                  <div style={{ width: 38, height: 38, borderRadius: 8, background: color, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <div
+                    className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style={{ background: iconColor }}
+                  >
                     <Icon size={17} color="#fff" />
                   </div>
                   <div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: "#0F172A" }}>{label}</div>
-                    <div style={{ fontSize: 12, color: "#64748B", marginTop: 1 }}>{sub}</div>
+                    <div className="text-[13px] font-semibold text-foreground">{label}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">{sub}</div>
                   </div>
                 </button>
               ))}
@@ -414,76 +469,71 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
           </div>
 
           {/* ── Recent Certificates ───────────────────────────────────────────── */}
-          <div style={{ background: "#fff", borderRadius: 12, padding: 24, border: "1px solid #E2E8F0", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-              <h3 style={{ fontSize: 14, fontWeight: 600, color: "#0F172A" }}>Certificados Recientes</h3>
+          <div className="bg-card rounded-xl p-6 border border-border shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-foreground">Certificados Recientes</h3>
               <button
                 onClick={() => onNavigate?.("certifications")}
-                style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 500, color: "#0D7C66", background: "none", border: "1px solid #E2E8F0", borderRadius: 8, padding: "7px 14px", cursor: "pointer", transition: "background .15s" }}
-                onMouseOver={e => (e.currentTarget.style.background = "#F8FAFC")}
-                onMouseOut={e => (e.currentTarget.style.background = "none")}
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-primary border border-border rounded-lg px-3.5 py-1.5 hover:bg-muted transition-colors"
               >
                 Ver todos <ExternalLink size={13} />
               </button>
             </div>
 
             {certsLoading ? (
-              <div style={{ textAlign: "center", padding: "32px 0" }}>
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto mb-4" style={{ borderColor: "#0D7C66" }} />
-                <p style={{ color: "#64748B", fontSize: 14 }}>Cargando…</p>
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4" />
+                <p className="text-sm text-muted-foreground">Cargando…</p>
               </div>
             ) : recentCertifications.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "32px 0" }}>
-                <IdCard style={{ color: "#CBD5E1", width: 48, height: 48, margin: "0 auto 16px" }} />
-                <p style={{ color: "#64748B", fontSize: 14, marginBottom: 16 }}>No hay certificaciones aún</p>
+              <div className="text-center py-8">
+                <IdCard className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+                <p className="text-sm text-muted-foreground mb-4">No hay certificaciones aún</p>
                 <button
                   onClick={() => onNavigate?.("certifications")}
-                  style={{ background: "#0D7C66", color: "#fff", border: "none", borderRadius: 8, padding: "10px 20px", fontSize: 14, fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6 }}
+                  className="bg-primary text-primary-foreground rounded-lg px-5 py-2.5 text-sm font-semibold cursor-pointer inline-flex items-center gap-1.5 hover:opacity-90 transition-opacity"
                 >
                   <Plus size={15} /> Crear primera certificación
                 </button>
               </div>
             ) : (
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
                   <thead>
                     <tr>
                       {["Propiedad / Propietario", "Calificación", "Estado", "Fecha", "Acciones"].map(h => (
-                        <th key={h} style={{ padding: "10px 16px", textAlign: "left", fontSize: 11, fontWeight: 600, color: "#94A3B8", textTransform: "uppercase", letterSpacing: ".05em", borderBottom: "1px solid #F1F5F9", whiteSpace: "nowrap" }}>{h}</th>
+                        <th key={h} className="px-4 py-2.5 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider border-b border-border whitespace-nowrap">
+                          {h}
+                        </th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {recentCertifications.map(cert => (
-                      <tr key={cert.id} style={{ borderBottom: "1px solid #F8FAFC", transition: "background .1s" }}
-                        onMouseOver={e => ((e.currentTarget as HTMLElement).style.background = "#FAFAFA")}
-                        onMouseOut={e => ((e.currentTarget as HTMLElement).style.background = "transparent")}
-                      >
-                        <td style={{ padding: "13px 16px" }}>
-                          <div style={{ fontSize: 13, fontWeight: 500, color: "#0F172A" }}>{cert.ownerName || "—"}</div>
-                          <div style={{ fontSize: 12, color: "#94A3B8", marginTop: 1 }}>{cert.address || cert.cadastralReference || "Sin dirección"}</div>
+                      <tr key={cert.id} className="border-b border-border/50 hover:bg-muted/40 transition-colors">
+                        <td className="px-4 py-3">
+                          <div className="text-[13px] font-medium text-foreground">{cert.ownerName || "—"}</div>
+                          <div className="text-xs text-muted-foreground mt-0.5">
+                            {cert.address || cert.cadastralReference || "Sin dirección"}
+                          </div>
                         </td>
-                        <td style={{ padding: "13px 16px" }}><EnergyBadge rating={cert.energyRating} /></td>
-                        <td style={{ padding: "13px 16px" }}><StatusBadge status={cert.status} /></td>
-                        <td style={{ padding: "13px 16px", fontSize: 13, color: "#64748B", whiteSpace: "nowrap" }}>
+                        <td className="px-4 py-3"><EnergyBadge rating={cert.energyRating} /></td>
+                        <td className="px-4 py-3"><StatusBadge status={cert.status} /></td>
+                        <td className="px-4 py-3 text-[13px] text-muted-foreground whitespace-nowrap">
                           {new Date(cert.createdAt).toLocaleDateString("es-ES")}
                         </td>
-                        <td style={{ padding: "13px 16px" }}>
-                          <div style={{ display: "flex", gap: 6 }}>
+                        <td className="px-4 py-3">
+                          <div className="flex gap-1.5">
                             <button
                               onClick={() => onNavigate?.("certifications")}
-                              style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 500, color: "#64748B", background: "none", border: "1px solid #E2E8F0", borderRadius: 6, padding: "4px 10px", cursor: "pointer", transition: "background .15s" }}
-                              onMouseOver={e => (e.currentTarget.style.background = "#F8FAFC")}
-                              onMouseOut={e => (e.currentTarget.style.background = "none")}
+                              className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground border border-border rounded-md px-2.5 py-1 hover:bg-muted transition-colors"
                             >
                               <Eye size={12} /> Ver
                             </button>
                             {cert.status !== "Finalizado" && (
                               <button
                                 onClick={() => onNavigate?.("certifications")}
-                                style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 500, color: "#0D7C66", background: "none", border: "1px solid #E2E8F0", borderRadius: 6, padding: "4px 10px", cursor: "pointer", transition: "background .15s" }}
-                                onMouseOver={e => (e.currentTarget.style.background = "#F0FDF4")}
-                                onMouseOut={e => (e.currentTarget.style.background = "none")}
+                                className="inline-flex items-center gap-1 text-xs font-medium text-primary border border-border rounded-md px-2.5 py-1 hover:bg-muted transition-colors"
                               >
                                 <Edit size={12} /> Continuar
                               </button>

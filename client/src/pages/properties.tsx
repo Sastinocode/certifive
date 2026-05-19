@@ -251,13 +251,13 @@ export default function Properties() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "completed":
-        return <Badge className="bg-green-100 text-green-800">Completado</Badge>;
+        return <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">Completado</Badge>;
       case "in_progress":
-        return <Badge className="bg-yellow-100 text-yellow-800">En Proceso</Badge>;
+        return <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">En Proceso</Badge>;
       case "draft":
-        return <Badge className="bg-gray-100 text-gray-800">Borrador</Badge>;
+        return <Badge className="bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300">Borrador</Badge>;
       default:
-        return <Badge className="bg-gray-100 text-gray-800">{status}</Badge>;
+        return <Badge className="bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300">{status}</Badge>;
     }
   };
 
@@ -596,10 +596,4 @@ export default function Properties() {
       {/* Client Folder Manager */}
       <ClientFolderManager
         folderId={currentClientFolderId || 0}
-        folderName={currentClientFolderName}
-        isOpen={showClientFolder}
-        onClose={() => setShowClientFolder(false)}
-      />
-    </div>
-  );
-}
+      

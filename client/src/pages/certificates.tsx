@@ -218,10 +218,10 @@ interface PendingPayment {
 }
 
 const METHOD_LABELS: Record<string, { label: string; icon: string; color: string }> = {
-  bizum:         { label: "Bizum",         icon: "🟣", color: "bg-violet-100 text-violet-800 border-violet-200" },
-  transferencia: { label: "Transferencia", icon: "🏦", color: "bg-blue-100 text-blue-800 border-blue-200" },
-  efectivo:      { label: "Efectivo",      icon: "💵", color: "bg-amber-100 text-amber-800 border-amber-200" },
-  stripe:        { label: "Tarjeta",       icon: "💳", color: "bg-emerald-100 text-emerald-800 border-emerald-200" },
+  bizum:         { label: "Bizum",         icon: "🟣", color: "bg-violet-100 text-violet-800 border-violet-200 dark:bg-violet-900/30 dark:text-violet-400 dark:border-violet-700" },
+  transferencia: { label: "Transferencia", icon: "🏦", color: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700" },
+  efectivo:      { label: "Efectivo",      icon: "💵", color: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700" },
+  stripe:        { label: "Tarjeta",       icon: "💳", color: "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-700" },
 };
 
 export default function Certificates() {
@@ -386,9 +386,9 @@ export default function Certificates() {
 
   const getStatusSelect = (cert: Certification) => {
     const statusOptions = [
-      { value: "nuevo",      label: "Nuevo",      color: "bg-blue-100 text-blue-800" },
-      { value: "en_proceso", label: "En Proceso", color: "bg-yellow-100 text-yellow-800" },
-      { value: "finalizado", label: "Finalizado", color: "bg-cyan-100 text-cyan-800" },
+      { value: "nuevo",      label: "Nuevo",      color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" },
+      { value: "en_proceso", label: "En Proceso", color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400" },
+      { value: "finalizado", label: "Finalizado", color: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-400" },
     ];
     const currentStatus = cert.status || "nuevo";
     const currentOption = statusOptions.find(opt => opt.value === currentStatus) || statusOptions[0];
@@ -1056,19 +1056,4 @@ export default function Certificates() {
                         <X className="w-3.5 h-3.5" />
                       </Button>
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {existingShares.length === 0 && (
-              <p className="text-xs text-center text-muted-foreground py-2">
-                Aún no has compartido este expediente con nadie.
-              </p>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-}
+  
