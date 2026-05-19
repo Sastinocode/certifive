@@ -10,8 +10,9 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   IdCard, Clock, Euro, Users, TrendingUp, TrendingDown,
-  Minus, Plus, Eye, Edit, ExternalLink, BarChart2, Zap,
-  MessageCircle, Settings, Calendar
+  Minus, Plus, Eye, Edit, ExternalLink, BarChart2,
+  MessageCircle, Settings, Calendar,
+  AlertTriangle, AlertCircle, Bell, FileWarning, CreditCard
 } from "lucide-react";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
@@ -50,6 +51,17 @@ interface DashboardStats {
   newClientsPrevMonth: number;
   monthlyTrend: Array<{ month: string; total: number }>;
   expiringSoon: number;
+}
+
+type AlertType = "deadline_overdue" | "deadline_soon" | "payment_pending" | "form_pending";
+interface CertAlert {
+  type: AlertType;
+  priority: "high" | "medium" | "low";
+  certId: number;
+  ownerName: string | null;
+  address: string | null;
+  daysLeft: number | null;
+  message: string;
 }
 
 interface RecentCert {
@@ -154,6 +166,45 @@ function StatusBadge({ status }: { status: string }) {
   return <span style={{ display: "inline-flex", alignItems: "center", padding: "2px 8px", borderRadius: 6, fontSize: 12, fontWeight: 500, background: s.bg, color: s.color }}>{s.label}</span>;
 }
 
+// ─── alert helpers ───────────────────────────────────────────────────────────
+
+const ALERT_META: Record<AlertType, { label: string; Icon: any; color: string; bg: string }> = {
+  deadline_overdue: { label: "Plazo vencido",       Icon: AlertTriangle, color: "#DC2626", bg: "#FEF2F2" },
+  deadline_soon:    { label: "Plazo próximo",        Icon: Clock,         color: "#D97706", bg: "#FFFBEB" },
+  payment_pending:  { label: "Pago pendiente",       Icon: CreditCard,    color: "#0891B2", bg: "#F0F9FF" },
+  form_pending:     { label: "Formulario sin resp.", Icon: FileWarning,   color: "#7C3AED", bg: "#F5F3FF" },
+};
+
+function AlertRow({ alert, onNavigate }: { alert: CertAlert; onNavigate?: (p: string) => void }) {
+  const meta = ALERT_META[alert.type];
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", gap: 12, padding: "10px 14px",
+      borderRadius: 8, background: meta.bg, border: `1px solid ${meta.color}22`,
+    }}>
+      <div style={{ width: 32, height: 32, borderRadius: 6, background: `${meta.color}18`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        <meta.Icon size={15} color={meta.color} />
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 1 }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: meta.color, textTransform: "uppercase", letterSpacing: ".04em" }}>{meta.label}</span>
+          {alert.priority === "high" && <span style={{ fontSize: 10, fontWeight: 700, color: "#DC2626", background: "#FEE2E2", borderRadius: 4, padding: "1px 5px" }}>URGENTE</span>}
+        </div>
+        <div style={{ fontSize: 13, color: "#334155", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {alert.ownerName || "Sin propietario"}{alert.address ? ` · ${alert.address}` : ""}
+        </div>
+        <div style={{ fontSize: 12, color: "#64748B", marginTop: 1 }}>{alert.message}</div>
+      </div>
+      <button
+        onClick={() => onNavigate?.("certifications")}
+        style={{ fontSize: 12, fontWeight: 500, color: meta.color, background: "none", border: `1px solid ${meta.color}44`, borderRadius: 6, padding: "4px 10px", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}
+      >
+        Ver →
+      </button>
+    </div>
+  );
+}
+
 // ─── main component ──────────────────────────────────────────────────────────
 
 export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) => void }) {
@@ -168,6 +219,13 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
   const { data: recentRaw = [], isLoading: certsLoading } = useQuery<RecentCert[]>({
     queryKey: ["/api/certifications/recent"],
   });
+
+  const { data: alertsRaw = [] } = useQuery<CertAlert[]>({
+    queryKey: ["/api/dashboard/alerts"],
+    refetchInterval: 5 * 60 * 1000, // refresca cada 5 min
+  });
+  const alerts = alertsRaw as CertAlert[];
+  const highAlerts = alerts.filter(a => a.priority === "high").length;
   const recentCertifications = recentRaw as RecentCert[];
 
   // Totales para barras
@@ -197,7 +255,15 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
               <h2 style={{ fontSize: 26, fontWeight: 700, color: "#0F172A", letterSpacing: "-.02em", lineHeight: 1.15, marginBottom: 4 }}>
                 {displayName} 👋
               </h2>
-              <p style={{ fontSize: 14, color: "#64748B" }}>Aquí tienes el resumen de tu negocio</p>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
+                <p style={{ fontSize: 14, color: "#64748B" }}>Aquí tienes el resumen de tu negocio</p>
+                {alerts.length > 0 && (
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 600, color: highAlerts > 0 ? "#DC2626" : "#D97706", background: highAlerts > 0 ? "#FEF2F2" : "#FFFBEB", border: `1px solid ${highAlerts > 0 ? "#FECACA" : "#FDE68A"}`, borderRadius: 20, padding: "2px 8px" }}>
+                    <Bell size={11} />
+                    {alerts.length} alerta{alerts.length !== 1 ? "s" : ""}{highAlerts > 0 ? ` · ${highAlerts} urgente${highAlerts !== 1 ? "s" : ""}` : ""}
+                  </span>
+                )}
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <ThemeToggle />
@@ -288,6 +354,35 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
               )}
             </div>
           </div>
+
+          {/* ── Alertas activas ──────────────────────────────────────────────── */}
+          {alerts.length > 0 && (
+            <div style={{ background: "#fff", borderRadius: 12, padding: 24, border: "1px solid #E2E8F0", boxShadow: "0 1px 3px rgba(0,0,0,0.06)", marginBottom: 20 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <AlertCircle size={16} color="#DC2626" />
+                  <h3 style={{ fontSize: 14, fontWeight: 600, color: "#0F172A" }}>Alertas activas</h3>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: "#fff", background: alerts.some(a => a.priority === "high") ? "#DC2626" : "#D97706", borderRadius: 10, padding: "1px 7px" }}>{alerts.length}</span>
+                </div>
+                <span style={{ fontSize: 12, color: "#94A3B8" }}>Se actualiza cada 5 min</span>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {alerts.slice(0, 5).map((alert, i) => (
+                  <AlertRow key={`${alert.certId}-${alert.type}`} alert={alert} onNavigate={onNavigate} />
+                ))}
+                {alerts.length > 5 && (
+                  <button
+                    onClick={() => onNavigate?.("certifications")}
+                    style={{ fontSize: 13, color: "#64748B", background: "none", border: "1px solid #E2E8F0", borderRadius: 8, padding: "8px", cursor: "pointer", transition: "background .15s" }}
+                    onMouseOver={e => (e.currentTarget.style.background = "#F8FAFC")}
+                    onMouseOut={e => (e.currentTarget.style.background = "none")}
+                  >
+                    +{alerts.length - 5} alertas más → Ver todos los certificados
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* ── Quick Actions ─────────────────────────────────────────────────── */}
           <div style={{ background: "#fff", borderRadius: 12, padding: 24, border: "1px solid #E2E8F0", boxShadow: "0 1px 3px rgba(0,0,0,0.06)", marginBottom: 20 }}>
