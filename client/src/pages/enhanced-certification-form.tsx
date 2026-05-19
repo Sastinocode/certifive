@@ -381,18 +381,18 @@ export default function EnhancedCertificationForm() {
                         />
                       </FieldGroup>
 
-                      {/* Error state */}
+                      {/* Error state — amber aviso, no rojo bloqueante */}
                       <AnimatePresence>
                         {catastroStatus === "error" && (
                           <motion.div
                             initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
-                            className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3"
+                            className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3"
                             data-testid="catastro-error"
                           >
-                            <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
+                            <AlertCircle className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
                             <div>
-                              <p className="text-sm font-medium text-red-700">No se pudo obtener datos del Catastro</p>
-                              <p className="text-xs text-red-600 mt-0.5">{catastroError}</p>
+                              <p className="text-sm font-medium text-amber-800">{catastroError}</p>
+                              <p className="text-xs text-amber-700 mt-0.5">Puedes continuar e introducir los datos del inmueble manualmente en los campos de abajo.</p>
                             </div>
                           </motion.div>
                         )}

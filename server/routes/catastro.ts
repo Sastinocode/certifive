@@ -71,12 +71,53 @@ function first<T>(v: T | T[] | undefined): T | undefined {
   return Array.isArray(v) ? v[0] : v;
 }
 
+// ── RC format validator ──────────────────────────────────────────────────────
+// Spanish cadastral references: 14 alphanumeric chars (or 20 with sublevel)
+// Pattern: 7 parcel chars + 2 letter coordinate block + 4 alphanumeric + 1 control
+function isValidRCFormat(rc: string): boolean {
+  return /^[0-9A-Z]{14}([0-9A-Z]{6})?$/.test(rc);
+}
+
+// ── Try the newer JSON REST endpoint as fallback ─────────────────────────────
+async function tryNewCatastroEndpoint(rc: string): Promise<CatastroData | null> {
+  try {
+    const url = `https://ovc.catastro.meh.es/OVCServWeb/OVCWcfLibres/OVCFicha.svc/Consulta_DNPRC_Libres?RC=${encodeURIComponent(rc)}&SRS=EPSG:4326&Coordenada_X=&Coordenada_Y=`;
+    const r = await fetch(url, {
+      headers: { "User-Agent": UA, "Accept": "application/json, text/xml, */*" },
+      signal: AbortSignal.timeout(8_000),
+    });
+    if (!r.ok) return null;
+    const ct = r.headers.get("content-type") ?? "";
+    if (ct.includes("json")) {
+      const j = await r.json();
+      // New API returns different structure — extract what we can
+      const inmueble = j?.inmueble ?? j?.consulta_dnprc ?? j;
+      if (!inmueble) return null;
+      return {
+        address:          inmueble.dt?.locs?.lous ?? undefined,
+        city:             inmueble.dt?.locs?.locat?.nm ?? undefined,
+        province:         inmueble.dt?.locs?.locat?.np ?? undefined,
+        constructionYear: inmueble.debi?.ant ?? undefined,
+        totalArea:        inmueble.debi?.sco ? String(Math.round(parseFloat(inmueble.debi.sco))) : undefined,
+        propertyType:     inmueble.debi?.luso ? mapUso(inmueble.debi.luso) : undefined,
+      };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 // ── GET /api/catastro/lookup?rc=<referencia_catastral> ───────────────────────
 router.get("/lookup", async (req, res) => {
-  const rc = (req.query.rc as string | undefined)?.trim().toUpperCase().replace(/[\s-]/g, "");
+  const rc = (req.query.rc as string | undefined)?.trim().toUpperCase().replace(/[\s\-\.]/g, "");
 
   if (!rc || rc.length < 14) {
-    return res.status(400).json({ error: "Referencia catastral no válida (mínimo 14 caracteres)" });
+    return res.status(400).json({ error: "La referencia catastral debe tener al menos 14 caracteres." });
+  }
+
+  if (!isValidRCFormat(rc)) {
+    return res.status(400).json({ error: "El formato de la referencia catastral no es válido. Comprueba que no tiene caracteres extraños." });
   }
 
   // Serve from cache if still fresh
@@ -103,21 +144,40 @@ router.get("/lookup", async (req, res) => {
     clearTimeout(timeout);
 
     if (!response.ok) {
-      return res.status(502).json({ error: `Catastro devolvió HTTP ${response.status}` });
+      // Try newer endpoint before giving up
+      if (response.status === 400 || response.status === 500 || response.status === 503) {
+        console.warn(`[catastro] Primary endpoint returned ${response.status}, trying fallback for RC=${rc}`);
+        const fallback = await tryNewCatastroEndpoint(rc);
+        if (fallback && Object.keys(fallback).length > 0) {
+          cache.set(rc, { data: fallback, expiresAt: Date.now() + CACHE_TTL_MS });
+          return res.json({ ok: true, data: fallback, source: "fallback" });
+        }
+      }
+      if (response.status === 400) {
+        return res.status(404).json({ error: "Referencia catastral no encontrada. Comprueba que es correcta e inténtalo de nuevo." });
+      }
+      return res.status(502).json({ error: "El servicio del Catastro no está disponible en este momento. Puedes introducir los datos manualmente." });
     }
 
     xmlText = await response.text();
 
     // Detect HTML fallback (API sometimes returns error page)
     if (xmlText.trim().startsWith("<html") || xmlText.trim().startsWith("<!DOCTYPE")) {
-      return res.status(502).json({ error: "La API del Catastro devolvió un error inesperado. Inténtalo más tarde." });
+      return res.status(502).json({ error: "El servicio del Catastro no está disponible en este momento. Puedes introducir los datos manualmente." });
     }
   } catch (err: any) {
     clearTimeout(timeout);
     if (err?.name === "AbortError") {
-      return res.status(504).json({ error: "La API del Catastro tardó demasiado (timeout 10s)" });
+      return res.status(504).json({ error: "El Catastro tardó demasiado en responder. Inténtalo de nuevo o introduce los datos manualmente." });
     }
-    return res.status(502).json({ error: "No se pudo conectar con la API del Catastro" });
+    // On connection error, try fallback
+    console.warn(`[catastro] Connection error to primary endpoint, trying fallback for RC=${rc}`);
+    const fallback = await tryNewCatastroEndpoint(rc);
+    if (fallback && Object.keys(fallback).length > 0) {
+      cache.set(rc, { data: fallback, expiresAt: Date.now() + CACHE_TTL_MS });
+      return res.json({ ok: true, data: fallback, source: "fallback" });
+    }
+    return res.status(502).json({ error: "No se pudo conectar con el Catastro. Puedes introducir los datos manualmente." });
   }
 
   // Parse XML
@@ -147,11 +207,11 @@ router.get("/lookup", async (req, res) => {
   if (errorCod && errorCod !== "0") {
     const errorDesc = str(errNode?.["des"]) || "RC no encontrada";
     const friendly: Record<string, string> = {
-      "1":  "Error en el sistema del Catastro",
-      "4":  "La referencia catastral no tiene el formato correcto",
-      "5":  "No existe ningún inmueble con esa referencia catastral",
-      "21": "Parámetros incompletos",
-      "43": "La referencia catastral no existe",
+      "1":  "Error interno del Catastro. Inténtalo de nuevo en unos minutos.",
+      "4":  "La referencia catastral no tiene el formato correcto. Compruébala e inténtalo de nuevo.",
+      "5":  "No existe ningún inmueble con esa referencia catastral. Comprueba que es correcta.",
+      "21": "Referencia catastral incompleta. Asegúrate de introducir los 14 caracteres completos.",
+      "43": "La referencia catastral no existe en el Catastro. Comprueba que es correcta.",
     };
     return res.status(404).json({ error: friendly[errorCod] ?? `Catastro: ${errorDesc} (cod ${errorCod})` });
   }

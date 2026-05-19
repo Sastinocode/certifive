@@ -86,9 +86,14 @@ export default function CatastroSearch({ rc, onData, className }: CatastroSearch
       </Button>
 
       {status === "error" && (
-        <div className="mt-2 flex items-start gap-1.5 text-xs text-red-600">
-          <XCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-          <span>{errorMsg}</span>
+        <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-2.5 space-y-1">
+          <div className="flex items-start gap-1.5 text-xs text-amber-800">
+            <XCircle className="h-3.5 w-3.5 mt-0.5 shrink-0 text-amber-600" />
+            <span className="font-medium">{errorMsg}</span>
+          </div>
+          <p className="text-xs text-amber-700 pl-5">
+            Puedes continuar introduciendo los datos del inmueble manualmente.
+          </p>
         </div>
       )}
 
