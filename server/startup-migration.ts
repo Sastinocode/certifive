@@ -91,6 +91,28 @@ const MIGRATIONS = [
     CONSTRAINT session_pkey PRIMARY KEY (sid)
   )`,
   `CREATE INDEX IF NOT EXISTS IDX_session_expire ON session (expire)`,
+
+  // ── certification_shares (Sprint 3.2 — colaboración entre técnicos) ─────────
+  `CREATE TABLE IF NOT EXISTS certification_shares (
+    id                   SERIAL PRIMARY KEY,
+    certification_id     INTEGER NOT NULL REFERENCES certifications(id) ON DELETE CASCADE,
+    owner_user_id        INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    collaborator_email   TEXT NOT NULL,
+    collaborator_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    status               TEXT NOT NULL DEFAULT 'pending',
+    permission           TEXT NOT NULL DEFAULT 'read',
+    invited_at           TIMESTAMP NOT NULL DEFAULT NOW(),
+    accepted_at          TIMESTAMP,
+    revoked_at           TIMESTAMP,
+    created_at           TIMESTAMP NOT NULL DEFAULT NOW()
+  )`,
+  `CREATE INDEX IF NOT EXISTS cert_shares_cert_id_idx      ON certification_shares(certification_id)`,
+  `CREATE INDEX IF NOT EXISTS cert_shares_owner_idx        ON certification_shares(owner_user_id)`,
+  `CREATE INDEX IF NOT EXISTS cert_shares_collab_email_idx ON certification_shares(collaborator_email)`,
+  `CREATE INDEX IF NOT EXISTS cert_shares_collab_user_idx  ON certification_shares(collaborator_user_id)`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS cert_shares_unique_active_idx
+    ON certification_shares(certification_id, collaborator_email)
+    WHERE status != 'revoked'`,
 ];
 
 export async function runStartupMigrations(): Promise<void> {
