@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import Sidebar from "@/components/layout/sidebar";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { 
@@ -647,23 +648,22 @@ export default function Pricing() {
         </div>
 
         {(!pricingRates || pricingRates.length === 0) && !showAddForm && (
-          <Card className="text-center py-12">
-            <CardContent>
-              <Euro className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                No hay tarifas configuradas
-              </h3>
-              <p className="text-gray-600 dark:text-gray-300 mb-6">
-                Comienza creando tu primera configuración de tarifa para el generador público de presupuestos
-              </p>
-              <Button onClick={() => setShowAddForm(true)} className="flex items-center gap-2 mx-auto">
-                <Plus className="h-4 w-4" />
-                Crear Primera Tarifa
-              </Button>
+          <Card>
+            <CardContent className="p-0">
+              <EmptyState
+                icon={<Euro />}
+                title="Sin tarifas configuradas"
+                description="Define tus tarifas por tipo de inmueble y zona para que los clientes puedan solicitar presupuesto online automáticamente."
+                action={{
+                  label: "Crear primera tarifa",
+                  onClick: () => setShowAddForm(true),
+                  icon: <Plus className="w-4 h-4" />,
+                }}
+              />
             </CardContent>
           </Card>
         )}
       </div>
     </div>
   );
-}
+}                                                                                                             

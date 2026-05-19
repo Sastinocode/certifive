@@ -2,6 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import Sidebar from "@/components/layout/sidebar";
+import { EmptyState } from "@/components/ui/empty-state";
 import { NotificationModal } from "@/components/notifications/NotificationModal";
 import { ProfileMenu } from "@/components/layout/ProfileMenu";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -486,16 +487,17 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
                 <p className="text-sm text-muted-foreground">Cargando…</p>
               </div>
             ) : recentCertifications.length === 0 ? (
-              <div className="text-center py-8">
-                <IdCard className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
-                <p className="text-sm text-muted-foreground mb-4">No hay certificaciones aún</p>
-                <button
-                  onClick={() => onNavigate?.("certifications")}
-                  className="bg-primary text-primary-foreground rounded-lg px-5 py-2.5 text-sm font-semibold cursor-pointer inline-flex items-center gap-1.5 hover:opacity-90 transition-opacity"
-                >
-                  <Plus size={15} /> Crear primera certificación
-                </button>
-              </div>
+              <EmptyState
+                icon={<IdCard />}
+                title="Sin certificaciones todavía"
+                description="Crea tu primera certificación y aparecerá aquí junto con su estado de pago y plazo."
+                action={{
+                  label: "Crear primera certificación",
+                  onClick: () => onNavigate?.("certifications"),
+                  icon: <Plus size={16} />,
+                }}
+                size="compact"
+              />
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
@@ -553,3 +555,4 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
     </div>
   );
 }
+                                                                                                     

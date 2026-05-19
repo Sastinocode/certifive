@@ -12,6 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import Sidebar from "@/components/layout/sidebar";
+import { EmptyState } from "@/components/ui/empty-state";
 import { downloadPDF, downloadWord, downloadExcel } from "@/lib/certDownload";
 import ClientFlowWizard from "@/components/ClientFlowWizard";
 import {
@@ -540,11 +541,12 @@ export default function Certificates() {
             <Card className="mb-6">
               <CardContent className="p-0">
                 {(sharedWithMe as SharedCert[]).length === 0 ? (
-                  <div className="text-center py-12">
-                    <Users2 className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-base font-medium text-gray-700 mb-1">Sin expedientes compartidos</h3>
-                    <p className="text-sm text-gray-500">Cuando otro técnico comparta un expediente contigo aparecerá aquí.</p>
-                  </div>
+                  <EmptyState
+                    icon={<Users2 />}
+                    title="Sin expedientes compartidos"
+                    description="Cuando otro técnico comparta un expediente contigo aparecerá aquí."
+                    size="compact"
+                  />
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full">
@@ -737,25 +739,30 @@ export default function Certificates() {
                   ))}
                 </div>
               ) : certList.length === 0 ? (
-                <div className="text-center py-12">
-                  <IdCard className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    {debouncedSearch || statusFilter !== "all" ? "No se encontraron certificaciones" : "No hay certificados aun"}
-                  </h3>
-                  <p className="text-gray-600 mb-4">
-                    {debouncedSearch || statusFilter !== "all"
-                      ? "Intenta ajustar los filtros de busqueda"
-                      : "Comienza creando tu primera certificacion energetica"}
-                  </p>
-                  {!debouncedSearch && statusFilter === "all" && (
-                    <Link to="/certificados/nuevo">
-                      <Button className="btn-certifive">
-                        <Plus className="w-4 h-4 mr-2" />
-                        Crear primer certificado
-                      </Button>
-                    </Link>
-                  )}
-                </div>
+                debouncedSearch || statusFilter !== "all" ? (
+                  <EmptyState
+                    icon={<Search />}
+                    title="Sin resultados"
+                    description="Ninguna certificación coincide con los filtros aplicados. Prueba con otro término o elimina los filtros."
+                    action={{
+                      label: "Limpiar filtros",
+                      onClick: () => { setDebouncedSearch(""); setStatusFilter("all"); },
+                      variant: "outline",
+                    }}
+                    size="compact"
+                  />
+                ) : (
+                  <EmptyState
+                    icon={<IdCard />}
+                    title="Aún no tienes certificaciones"
+                    description="Crea tu primera certificación energética y empieza a gestionar tus expedientes desde aquí."
+                    action={{
+                      label: "Crear primera certificación",
+                      onClick: () => window.location.href = "/certificados/nuevo",
+                      icon: <Plus className="w-4 h-4" />,
+                    }}
+                  />
+                )
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full">
@@ -1053,7 +1060,4 @@ export default function Certificates() {
                         onClick={() => revokeShareMutation.mutate({ certId: sharingCertId!, shareId: share.id })}
                         disabled={revokeShareMutation.isPending}
                       >
-                        <X className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
-  
+                        <X cl

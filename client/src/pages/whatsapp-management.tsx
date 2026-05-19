@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import Sidebar from "@/components/layout/sidebar";
+import { EmptyState } from "@/components/ui/empty-state";
 import { 
   MessageCircle, 
   Phone, 
@@ -292,11 +293,12 @@ export default function WhatsAppManagement() {
               </div>
             </div>
           ) : conversations.length === 0 ? (
-            <div className="p-4 text-center text-gray-500">
-              <MessageCircle className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-              <p>No hay conversaciones</p>
-              <p className="text-xs mt-1">Los clientes aparecerán aquí cuando escriban</p>
-            </div>
+            <EmptyState
+              icon={<MessageCircle />}
+              title="Sin conversaciones"
+              description="Los clientes aparecerán aquí cuando escriban al número de WhatsApp Business conectado."
+              size="compact"
+            />
           ) : (
             conversations.map((conversation: WhatsAppConversation) => {
               const quote = getQuoteForConversation(conversation);
@@ -644,7 +646,4 @@ export default function WhatsAppManagement() {
           </div>
         </DialogContent>
       </Dialog>
-      </div>
-    </div>
-  );
-}
+   

@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import Sidebar from "@/components/layout/sidebar";
+import { EmptyState } from "@/components/ui/empty-state";
 import { SearchFilter } from "@/components/ui/search-filter";
 import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { TableSkeleton } from "@/components/ui/loading-states";
@@ -481,15 +482,12 @@ export default function Properties() {
                       {isLoading ? (
                         <TableSkeleton />
                       ) : properties.length === 0 ? (
-                        <div className="text-center py-12">
-                          <Archive className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-                          <h3 className="text-lg font-medium text-gray-900 mb-2">
-                            No hay propiedades archivadas
-                          </h3>
-                          <p className="text-gray-500 mb-6">
-                            Los certificados completados aparecerán aquí automáticamente
-                          </p>
-                        </div>
+                        <EmptyState
+                          icon={<Archive />}
+                          title="Sin inmuebles archivados"
+                          description="Los expedientes marcados como «Finalizado» aparecerán aquí automáticamente para su consulta histórica."
+                          size="compact"
+                        />
                       ) : (
                         <div className="overflow-x-auto">
                           <table className="w-full data-table">
@@ -596,4 +594,6 @@ export default function Properties() {
       {/* Client Folder Manager */}
       <ClientFolderManager
         folderId={currentClientFolderId || 0}
-      
+        folderName={currentClientFolderName}
+        isOpen={showClientFolder}
+        onClose={() => setShowClientFolder(fal

@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import Sidebar from "@/components/layout/sidebar";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -529,18 +530,32 @@ export default function Reports() {
                 </div>
               </CardHeader>
               <CardContent>
-                <InvoicesTable 
-                  invoices={filteredInvoices.slice(0, 10)} 
-                  onEdit={setEditingInvoice}
-                  onRecordPayment={(invoice) => {
-                    recordPaymentMutation.mutate({
-                      invoiceId: invoice.id,
-                      amount: parseFloat(invoice.total) || 0,
-                      paymentMethod: "transfer",
-                      paymentDate: new Date().toISOString().split('T')[0]
-                    });
-                  }}
-                />
+                {filteredInvoices.length === 0 ? (
+                  <EmptyState
+                    icon={<FileText />}
+                    title="Sin facturas"
+                    description="Aún no has generado ninguna factura. Crea la primera desde el botón «Nueva Factura»."
+                    action={{
+                      label: "Nueva factura",
+                      onClick: () => setShowInvoiceDialog(true),
+                      icon: <Plus className="w-4 h-4" />,
+                    }}
+                    size="compact"
+                  />
+                ) : (
+                  <InvoicesTable
+                    invoices={filteredInvoices.slice(0, 10)}
+                    onEdit={setEditingInvoice}
+                    onRecordPayment={(invoice) => {
+                      recordPaymentMutation.mutate({
+                        invoiceId: invoice.id,
+                        amount: parseFloat(invoice.total) || 0,
+                        paymentMethod: "transfer",
+                        paymentDate: new Date().toISOString().split('T')[0]
+                      });
+                    }}
+                  />
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -1235,10 +1250,12 @@ function ManagerFinancialTable({ data, onCreateInvoice, onDeleteCollection }: {
   return (
     <div className="space-y-4">
       {data.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">
-          <Receipt className="w-12 h-12 mx-auto mb-4 opacity-50" />
-          <p>No hay registros financieros que coincidan con los filtros seleccionados</p>
-        </div>
+        <EmptyState
+          icon={<Receipt />}
+          title="Sin registros financieros"
+          description="No hay cobros ni facturas que coincidan con los filtros seleccionados. Prueba a ampliar el período o eliminar filtros."
+          size="compact"
+        />
       ) : (
         data.map((record, index) => (
           <div 
@@ -1587,31 +1604,4 @@ function CollectionForm({ onSubmit, onCancel }: {
           <Input
             id="clientPhone"
             value={formData.clientPhone}
-            onChange={(e) => setFormData({ ...formData, clientPhone: e.target.value })}
-            placeholder="Teléfono del cliente"
-          />
-        </div>
-      </div>
-
-      <div>
-        <Label htmlFor="notes">Notas</Label>
-        <Textarea
-          id="notes"
-          value={formData.notes}
-          onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-          placeholder="Notas adicionales"
-          rows={3}
-        />
-      </div>
-
-      <div className="flex justify-end gap-2 pt-4">
-        <Button type="button" variant="outline" onClick={onCancel}>
-          Cancelar
-        </Button>
-        <Button type="submit">
-          Registrar Cobro
-        </Button>
-      </div>
-    </form>
-  );
-}
+            onChange={(e) =>
