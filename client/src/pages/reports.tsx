@@ -1604,4 +1604,20 @@ function CollectionForm({ onSubmit, onCancel }: {
           <Input
             id="clientPhone"
             value={formData.clientPhone}
-            onChange={(e) =>
+            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+          placeholder="Notas adicionales"
+          rows={3}
+        />
+      </div>
+
+      <div className="flex justify-end gap-2 pt-4">
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Cancelar
+        </Button>
+        <Button type="submit">
+          Registrar Cobro
+        </Button>
+      </div>
+    </form>
+  );
+}

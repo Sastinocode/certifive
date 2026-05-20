@@ -596,4 +596,8 @@ export default function Properties() {
         folderId={currentClientFolderId || 0}
         folderName={currentClientFolderName}
         isOpen={showClientFolder}
-        onClose={() => setShowClientFolder(fal
+        onClose={() => setShowClientFolder(false)}
+      />
+    </div>
+  );
+}

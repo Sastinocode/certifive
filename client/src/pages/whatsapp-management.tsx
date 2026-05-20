@@ -646,4 +646,7 @@ export default function WhatsAppManagement() {
           </div>
         </DialogContent>
       </Dialog>
-   
+      </div>
+    </div>
+  );
+}

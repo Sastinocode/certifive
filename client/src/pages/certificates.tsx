@@ -1060,4 +1060,22 @@ export default function Certificates() {
                         onClick={() => revokeShareMutation.mutate({ certId: sharingCertId!, shareId: share.id })}
                         disabled={revokeShareMutation.isPending}
                       >
-                        <X cl
+                        <X className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {existingShares.length === 0 && (
+              <p className="text-xs text-center text-muted-foreground py-2">
+                Aún no has compartido este expediente con nadie.
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
