@@ -555,4 +555,3 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
     </div>
   );
 }
-                                                                                                     
