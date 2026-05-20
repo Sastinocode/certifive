@@ -1604,7 +1604,18 @@ function CollectionForm({ onSubmit, onCancel }: {
           <Input
             id="clientPhone"
             value={formData.clientPhone}
-            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+            onChange={(e) => setFormData({ ...formData, clientPhone: e.target.value })}
+            placeholder="Teléfono del cliente"
+          />
+        </div>
+      </div>
+
+      <div>
+        <Label htmlFor="notes">Notas</Label>
+        <Textarea
+          id="notes"
+          value={formData.notes}
+          onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
           placeholder="Notas adicionales"
           rows={3}
         />
