@@ -18,7 +18,8 @@ import {
   Bell,
 } from "lucide-react";
 
-const ONBOARDING_KEY = "certifive_onboarding_v1_done";
+export const ONBOARDING_TOUR_KEY = "certifive_onboarding_v1_done";
+const ONBOARDING_KEY = ONBOARDING_TOUR_KEY;
 
 const steps = [
   {
@@ -159,6 +160,16 @@ export function OnboardingModal({ onComplete }: OnboardingModalProps) {
       const timer = setTimeout(() => setIsVisible(true), 800);
       return () => clearTimeout(timer);
     }
+  }, []);
+
+  // Allow Settings (or any part of the app) to reopen the tour via a custom event
+  useEffect(() => {
+    const handleShowTour = () => {
+      setCurrentStep(0);
+      setIsVisible(true);
+    };
+    window.addEventListener("certifive:show-tour", handleShowTour);
+    return () => window.removeEventListener("certifive:show-tour", handleShowTour);
   }, []);
 
   const markDone = () => {

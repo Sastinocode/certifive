@@ -22,7 +22,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 interface OnboardingFlowProps {
   user: {
-    id: number;
+    id: number | string;
     name?: string | null;
     firstName?: string | null;
     lastName?: string | null;

@@ -9,6 +9,10 @@ interface User {
   username?: string;
   company?: string;
   role: string;
+  phone?: string;
+  dniNif?: string;
+  logoUrl?: string;
+  onboardingCompleted?: boolean;
 }
 
 interface AuthContextType {

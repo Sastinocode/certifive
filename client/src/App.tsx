@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { OnboardingModal } from "@/components/OnboardingModal";
+import OnboardingFlow from "@/components/OnboardingFlow";
 import Dashboard from "@/pages/dashboard";
 import CertificationWizard from "@/pages/certification-wizard";
 import CertificationForm from "@/pages/certification-form";
@@ -80,8 +81,16 @@ const SUBSCRIPTION_FREE_PATHS = [
   "/solicitar-demo",
 ];
 
+// Route prefixes where the setup wizard should NOT appear
+const SETUP_SKIP_PREFIXES = [
+  "/presupuesto/", "/cotizacion/", "/solicitud/", "/formulario-",
+  "/pay/", "/certificacion-cliente/", "/generador-tarifas", "/recogida/",
+  "/login", "/register", "/verify-email", "/reset-password", "/solicitar-demo",
+  "/privacy", "/terms", "/success", "/cancel", "/renovar-suscripcion",
+];
+
 function Router() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const [location] = useLocation();
 
   // Fetch subscription status when logged in (soft fail — never blocks render)
@@ -113,6 +122,33 @@ function Router() {
 
   if (isBlocked) {
     return <RenovarSuscripcion />;
+  }
+
+  // Show full-screen setup wizard for genuinely new users:
+  // - DB flag not yet set (onboardingCompleted === false)
+  // - Not a demo account
+  // - Not on a public/unauthenticated route
+  // - localStorage key absent (guards existing users whose DB flag wasn't set yet)
+  const isPublicRoute = SETUP_SKIP_PREFIXES.some(p => location.startsWith(p));
+  const hasUsedAppBefore = typeof window !== "undefined"
+    && localStorage.getItem("certifive_onboarding_v1_done") !== null;
+  const isNewUser =
+    isAuthenticated &&
+    user?.onboardingCompleted === false &&
+    !isPublicRoute &&
+    !hasUsedAppBefore &&
+    user?.username !== "demo" &&
+    user?.email !== "demo@certifive.es";
+
+  if (isNewUser) {
+    return (
+      <OnboardingFlow
+        user={user!}
+        onComplete={() => {
+          queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+        }}
+      />
+    );
   }
 
   return (

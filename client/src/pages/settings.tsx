@@ -42,7 +42,10 @@ import {
   RefreshCw,
   Package,
   Receipt,
-  Building2
+  Building2,
+  BookOpen,
+  RotateCcw,
+  HelpCircle
 } from "lucide-react";
 
 export default function Settings() {
@@ -1262,6 +1265,64 @@ export default function Settings() {
                     </button>.
                   </p>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* Help & Tutorial */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center">
+                  <HelpCircle className="w-5 h-5 text-primary mr-2" />
+                  <CardTitle>Ayuda y soporte</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Repeat tour */}
+                  <div className="flex items-start gap-4 p-4 rounded-xl border border-border bg-card hover:border-primary/30 transition-colors">
+                    <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                      <BookOpen className="w-4 h-4 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground">Tutorial de la plataforma</p>
+                      <p className="text-xs text-muted-foreground mt-0.5 mb-3">
+                        Repasa las secciones clave de Certifive en cualquier momento
+                      </p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-2"
+                        onClick={() => {
+                          window.dispatchEvent(new CustomEvent("certifive:show-tour"));
+                        }}
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                        Ver tutorial
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Help center */}
+                  <div className="flex items-start gap-4 p-4 rounded-xl border border-border bg-card hover:border-primary/30 transition-colors">
+                    <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0 mt-0.5">
+                      <HelpCircle className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground">Centro de ayuda</p>
+                      <p className="text-xs text-muted-foreground mt-0.5 mb-3">
+                        Documentación, preguntas frecuentes y guías
+                      </p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled
+                        className="gap-2 opacity-60"
+                      >
+                        Próximamente
+                      </Button>
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
