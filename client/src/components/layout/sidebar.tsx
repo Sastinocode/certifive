@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import {
   LayoutDashboard, FileText, Users, Award, ClipboardList,
   MessageCircle, Receipt, BarChart2, Settings, LogOut,
-  HelpCircle, Plus
+  HelpCircle, Plus, Search
 } from "lucide-react";
 
 interface SidebarProps {
@@ -24,17 +24,17 @@ const allItems = [
   { id: "clientes",      label: "Clientes",      icon: Users,           path: "/propiedades" },
   { id: "certificados",  label: "Certificados",  icon: Award,           path: "/certificados" },
   { id: "cuestionarios", label: "Cuestionarios", icon: ClipboardList,   path: "/formulario-cee" },
-  { id: "whatsapp",      label: "WhatsApp",      icon: MessageCircle,   path: "/whatsapp" },
+  { id: "whatsapp",      label: "WhatsApp",       icon: MessageCircle,   path: "/whatsapp" },
   { id: "facturacion",   label: "Facturación",   icon: Receipt,         path: "/tarifas" },
   { id: "informes",      label: "Informes",      icon: BarChart2,       path: "/informes" },
   { id: "settings",      label: "Configuración", icon: Settings,        path: "/configuracion" },
 ];
 
 const sections = [
-  { label: "Principal",     ids: ["dashboard", "expedientes", "clientes", "certificados", "cuestionarios"] },
-  { label: "Comunicación",  ids: ["whatsapp"] },
-  { label: "Negocio",       ids: ["facturacion", "informes"] },
-  { label: "Sistema",       ids: ["settings"] },
+  { label: "Principal",    ids: ["dashboard", "expedientes", "clientes", "certificados", "cuestionarios"] },
+  { label: "Comunicación", ids: ["whatsapp"] },
+  { label: "Negocio",      ids: ["facturacion", "informes"] },
+  { label: "Sistema",      ids: ["settings"] },
 ];
 
 export default function Sidebar({ selectedTab, onTabChange }: SidebarProps) {
@@ -72,16 +72,45 @@ export default function Sidebar({ selectedTab, onTabChange }: SidebarProps) {
           </div>
         </div>
 
-        {/* New cert CTA */}
-        <div style={{ padding: "14px 12px 4px" }}>
+        {/* CTAs: Nuevo certificado + Buscador global */}
+        <div style={{ padding: "14px 12px 4px", display: "flex", flexDirection: "column", gap: 6 }}>
           <button
             onClick={() => { setLocation("/certificados"); onTabChange("certificados"); }}
-            style={{ width: "100%", background: ACTIVE, color: "#fff", border: "none", borderRadius: 8, padding: "10px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "background .15s" }}
+            style={{
+              width: "100%", background: ACTIVE, color: "#fff", border: "none",
+              borderRadius: 8, padding: "10px 16px", fontSize: 13, fontWeight: 600,
+              cursor: "pointer", display: "flex", alignItems: "center",
+              justifyContent: "center", gap: 6, transition: "background .15s",
+            }}
             onMouseOver={e => (e.currentTarget.style.background = "#178A3C")}
             onMouseOut={e => (e.currentTarget.style.background = ACTIVE)}
           >
             <Plus size={15} />
             Nuevo Certificado
+          </button>
+
+          <button
+            onClick={() => (window as any).__openGlobalSearch?.()}
+            style={{
+              width: "100%", background: "rgba(255,255,255,0.05)",
+              color: "rgba(255,255,255,0.45)",
+              border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8,
+              padding: "8px 12px", fontSize: 12, cursor: "pointer",
+              display: "flex", alignItems: "center", gap: 8,
+              transition: "background .15s",
+            }}
+            onMouseOver={e => (e.currentTarget.style.background = "rgba(255,255,255,0.09)")}
+            onMouseOut={e => (e.currentTarget.style.background = "rgba(255,255,255,0.05)")}
+          >
+            <Search size={13} style={{ flexShrink: 0 }} />
+            <span style={{ flex: 1, textAlign: "left" }}>Buscar…</span>
+            <kbd style={{
+              fontSize: 10, border: "1px solid rgba(255,255,255,0.15)",
+              borderRadius: 4, padding: "1px 5px", fontFamily: "inherit",
+              color: "rgba(255,255,255,0.30)", background: "rgba(255,255,255,0.05)",
+            }}>
+              Ctrl K
+            </kbd>
           </button>
         </div>
 
@@ -90,7 +119,11 @@ export default function Sidebar({ selectedTab, onTabChange }: SidebarProps) {
           {sections.map((section, si) => (
             <div key={section.label}>
               {si > 0 && <div style={{ margin: "10px 2px", borderTop: `1px solid ${DIVIDER}` }} />}
-              <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: ".08em", textTransform: "uppercase", color: DIM, padding: "0 10px", marginBottom: 4, marginTop: si > 0 ? 8 : 4 }}>
+              <div style={{
+                fontSize: 10, fontWeight: 600, letterSpacing: ".08em",
+                textTransform: "uppercase", color: DIM,
+                padding: "0 10px", marginBottom: 4, marginTop: si > 0 ? 8 : 4,
+              }}>
                 {section.label}
               </div>
               {allItems
@@ -126,7 +159,12 @@ export default function Sidebar({ selectedTab, onTabChange }: SidebarProps) {
         {/* Help + User footer */}
         <div style={{ borderTop: `1px solid ${DIVIDER}`, padding: "10px 10px 16px" }}>
           <button
-            style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderRadius: 6, border: "none", background: "transparent", cursor: "pointer", marginBottom: 6, fontSize: 12, color: DIM, transition: "background .15s" }}
+            style={{
+              width: "100%", display: "flex", alignItems: "center", gap: 10,
+              padding: "8px 12px", borderRadius: 6, border: "none",
+              background: "transparent", cursor: "pointer", marginBottom: 6,
+              fontSize: 12, color: DIM, transition: "background .15s",
+            }}
             onMouseOver={e => (e.currentTarget.style.background = HOVER)}
             onMouseOut={e => (e.currentTarget.style.background = "transparent")}
           >
@@ -135,17 +173,26 @@ export default function Sidebar({ selectedTab, onTabChange }: SidebarProps) {
           </button>
 
           <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 8, background: "rgba(255,255,255,0.05)" }}>
-            <div style={{ width: 32, height: 32, borderRadius: "50%", background: ACTIVE, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <div style={{
+              width: 32, height: 32, borderRadius: "50%", background: ACTIVE,
+              display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+            }}>
               <span style={{ color: "#fff", fontWeight: 700, fontSize: 12 }}>{initials}</span>
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: TEXT, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{displayName}</div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: TEXT, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {displayName}
+              </div>
               <div style={{ fontSize: 11, color: DIM }}>Certificador</div>
             </div>
             <button
               onClick={handleLogout}
               title="Cerrar sesión"
-              style={{ background: "none", border: "none", cursor: "pointer", color: DIM, padding: 4, borderRadius: 4, display: "flex", alignItems: "center", transition: "color .15s" }}
+              style={{
+                background: "none", border: "none", cursor: "pointer",
+                color: DIM, padding: 4, borderRadius: 4,
+                display: "flex", alignItems: "center", transition: "color .15s",
+              }}
               onMouseOver={e => (e.currentTarget.style.color = "#fff")}
               onMouseOut={e => (e.currentTarget.style.color = DIM)}
             >

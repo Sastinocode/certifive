@@ -18,6 +18,7 @@ import { registerExportCE3XRoutes } from "./export-ce3x";
 import { registerDashboardRoutes } from "./dashboard";
 import { registerAlertRoutes } from "./alerts";
 import { registerCollaborationRoutes } from "./collaboration";
+import { registerSearchRoutes } from "./search";
 
 const apiRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -49,4 +50,5 @@ export function registerRoutes(app: Express) {
   registerDashboardRoutes(app);
   registerAlertRoutes(app);
   registerCollaborationRoutes(app);
+  registerSearchRoutes(app);
 }

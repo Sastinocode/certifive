@@ -1,4 +1,5 @@
 import { Switch, Route, useParams, useLocation } from "wouter";
+import { useState, useEffect } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -6,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import OnboardingFlow from "@/components/OnboardingFlow";
+import { GlobalSearch } from "@/components/GlobalSearch";
 import Dashboard from "@/pages/dashboard";
 import CertificationWizard from "@/pages/certification-wizard";
 import CertificationForm from "@/pages/certification-form";
@@ -208,13 +210,45 @@ function Router() {
   );
 }
 
+// ── Global Ctrl+K search wrapper ─────────────────────────────────────────────
+function AppWithSearch() {
+  const { isAuthenticated } = useAuth();
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault();
+        if (isAuthenticated) setSearchOpen(o => !o);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [isAuthenticated]);
+
+  // Expose setter globally so Sidebar can open it
+  useEffect(() => {
+    (window as any).__openGlobalSearch = () => setSearchOpen(true);
+    return () => { delete (window as any).__openGlobalSearch; };
+  }, []);
+
+  return (
+    <>
+      <Router />
+      {isAuthenticated && (
+        <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
+      )}
+    </>
+  );
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TooltipProvider>
           <Toaster />
-          <Router />
+          <AppWithSearch />
         </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>
