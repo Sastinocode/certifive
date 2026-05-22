@@ -15,6 +15,7 @@ import Sidebar from "@/components/layout/sidebar";
 import { EmptyState } from "@/components/ui/empty-state";
 import { downloadPDF, downloadWord, downloadExcel } from "@/lib/certDownload";
 import ClientFlowWizard from "@/components/ClientFlowWizard";
+import { CertDetailPanel } from "@/components/CertDetailPanel";
 import {
   IdCard,
   Plus,
@@ -234,6 +235,7 @@ export default function Certificates() {
   const [rejectingId, setRejectingId] = useState<number | null>(null);
   const [rejectMotivo, setRejectMotivo] = useState("");
   const [wizardCertId, setWizardCertId] = useState<number | null>(null);
+  const [detailCertId, setDetailCertId] = useState<number | null>(null);
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<"mine" | "shared">("mine");
   const [sharingCertId, setSharingCertId] = useState<number | null>(null);
@@ -835,12 +837,15 @@ export default function Certificates() {
                                   Enviar
                                 </Button>
 
-                                <Link to={`/certificacion-request/${cert.id}`}>
-                                  <Button variant="outline" size="sm" data-testid={`btn-ver-${cert.id}`}>
-                                    <Eye className="w-4 h-4 mr-1" />
-                                    Ver
-                                  </Button>
-                                </Link>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  data-testid={`btn-ver-${cert.id}`}
+                                  onClick={() => setDetailCertId(cert.id)}
+                                >
+                                  <Eye className="w-4 h-4 mr-1" />
+                                  Ver
+                                </Button>
 
                                 <DropdownMenu>
                                   <DropdownMenuTrigger asChild>
@@ -997,6 +1002,17 @@ export default function Certificates() {
           onClose={() => setWizardCertId(null)}
         />
       )}
+
+      <CertDetailPanel
+        certId={detailCertId}
+        onClose={() => setDetailCertId(null)}
+        onDownload={(certId, format) => {
+          const cert = (certData?.certifications ?? []).find((c: Certification) => c.id === certId);
+          if (cert) handleDownload(cert, format);
+        }}
+        onSend={(certId) => { setDetailCertId(null); setWizardCertId(certId); }}
+        onArchive={(certId) => archiveCertificationMutation.mutate(certId)}
+      />
 
       {/* ── Share Dialog ─────────────────────────────────────────────────── */}
       <Dialog open={sharingCertId !== null} onOpenChange={(open) => { if (!open) { setSharingCertId(null); setShareEmail(""); } }}>
