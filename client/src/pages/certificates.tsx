@@ -393,7 +393,7 @@ export default function Certificates() {
     const statusOptions = [
       { value: "nuevo",      label: "Nuevo",      color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" },
       { value: "en_proceso", label: "En Proceso", color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400" },
-      { value: "finalizado", label: "Finalizado", color: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-400" },
+      { value: "finalizado", label: "Finalizado", color: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400" },
     ];
     const currentStatus = cert.status || "nuevo";
     const currentOption = statusOptions.find(opt => opt.value === currentStatus) || statusOptions[0];
@@ -492,24 +492,24 @@ export default function Certificates() {
 
   return (
     <div className="flex h-screen bg-background">
-      <Sidebar selectedTab="certificates" onTabChange={() => {}} />
+      <Sidebar selectedTab="certificados" onTabChange={() => {}} />
 
       <div className="flex-1 overflow-auto p-6">
         <div className="max-w-7xl mx-auto">
 
-          <div className="flex justify-between items-center mb-4">
+          <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Certificaciones</h1>
-              <p className="text-muted-foreground mt-1">
+              <h1 className="text-xl font-bold text-foreground tracking-tight">Certificaciones</h1>
+              <p className="text-sm text-muted-foreground mt-0.5">
                 {activeTab === "mine"
-                  ? `${totalCount} solicitud${totalCount !== 1 ? "es" : ""}`
-                  : `${(sharedWithMe as SharedCert[]).length} expediente${(sharedWithMe as SharedCert[]).length !== 1 ? "s" : ""} compartido${(sharedWithMe as SharedCert[]).length !== 1 ? "s" : ""} contigo`}
+                  ? `${totalCount} expediente${totalCount !== 1 ? "s" : ""}`
+                  : `${(sharedWithMe as SharedCert[]).length} compartido${(sharedWithMe as SharedCert[]).length !== 1 ? "s" : ""} contigo`}
               </p>
             </div>
             <Link to="/certificados/nuevo">
-              <Button className="btn-certifive">
-                <Plus className="w-4 h-4 mr-2" />
-                Procesar Nueva Solicitud
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2">
+                <Plus className="w-4 h-4" />
+                Nueva Certificación
               </Button>
             </Link>
           </div>
@@ -517,7 +517,7 @@ export default function Certificates() {
           {/* Tabs */}
           <div className="flex gap-1 mb-6 border-b border-border">
             {[
-              { id: "mine",   label: "Mis expedientes", Icon: IdCard   },
+              { id: "mine",   label: "Mis expedientes",    Icon: IdCard },
               { id: "shared", label: "Compartido conmigo", Icon: Users2 },
             ].map(({ id, label, Icon }) => (
               <button
@@ -525,14 +525,14 @@ export default function Certificates() {
                 onClick={() => setActiveTab(id as "mine" | "shared")}
                 className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
                   activeTab === id
-                    ? "border-teal-700 text-teal-700"
+                    ? "border-primary text-primary"
                     : "border-transparent text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <Icon className="w-4 h-4" />
                 {label}
                 {id === "shared" && (sharedWithMe as SharedCert[]).length > 0 && (
-                  <span className="bg-teal-700 text-white text-xs rounded-full px-1.5 py-0.5">
+                  <span className="bg-primary text-primary-foreground text-xs rounded-full px-1.5 py-0.5">
                     {(sharedWithMe as SharedCert[]).length}
                   </span>
                 )}
@@ -703,21 +703,35 @@ export default function Certificates() {
             </div>
           )}
 
-          <div className="mb-6 flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <div className="mb-5 flex items-center gap-3 flex-wrap">
+            <div className="relative flex-1 min-w-[180px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-3.5 h-3.5" />
               <Input
-                placeholder="Buscar por nombre o referencia catastral..."
+                placeholder="Buscar por nombre, DNI o ref. catastral…"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-9 h-9 text-sm"
               />
             </div>
-            <div className="flex gap-2">
-              <Button variant={statusFilter === "all"       ? "default" : "outline"} onClick={() => handleStatusFilter("all")}       size="sm">Todos</Button>
-              <Button variant={statusFilter === "draft"     ? "default" : "outline"} onClick={() => handleStatusFilter("draft")}     size="sm">Borradores</Button>
-              <Button variant={statusFilter === "pending"   ? "default" : "outline"} onClick={() => handleStatusFilter("pending")}   size="sm">Pendientes</Button>
-              <Button variant={statusFilter === "completed" ? "default" : "outline"} onClick={() => handleStatusFilter("completed")} size="sm">Completados</Button>
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              {[
+                { value: "all",       label: "Todos"      },
+                { value: "draft",     label: "Borrador"   },
+                { value: "pending",   label: "Pendiente"  },
+                { value: "completed", label: "Completado" },
+              ].map(({ value, label }) => (
+                <button
+                  key={value}
+                  onClick={() => handleStatusFilter(value)}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
+                    statusFilter === value
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
           </div>
 
