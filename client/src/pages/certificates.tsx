@@ -32,6 +32,7 @@ import {
   X,
   Link2,
   FileCheck,
+  FileCode,
   CheckCircle,
   XCircle,
   Clock,
@@ -237,6 +238,7 @@ export default function Certificates() {
   const [wizardCertId, setWizardCertId] = useState<number | null>(null);
   const [detailCertId, setDetailCertId] = useState<number | null>(null);
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
+  const [exportingCE3XId, setExportingCE3XId] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<"mine" | "shared">("mine");
   const [sharingCertId, setSharingCertId] = useState<number | null>(null);
   const [shareEmail, setShareEmail] = useState("");
@@ -883,6 +885,15 @@ export default function Certificates() {
                                     >
                                       <Sheet className="w-4 h-4 mr-2 text-green-600" />
                                       Descargar Excel
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      onClick={() => handleExportCE3X(cert.id)}
+                                      disabled={exportingCE3XId === cert.id}
+                                      data-testid={`btn-ce3x-${cert.id}`}
+                                    >
+                                      <FileCode className="w-4 h-4 mr-2 text-purple-500" />
+                                      {exportingCE3XId === cert.id ? "Generando..." : "Exportar CE3X (.xml)"}
                                     </DropdownMenuItem>
                                   </DropdownMenuContent>
                                 </DropdownMenu>

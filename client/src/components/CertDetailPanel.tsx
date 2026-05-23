@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import {
-  X, ExternalLink, Download, Send, Archive,
+  X, ExternalLink, Download, Send, Archive, FileCode,
   User, Home, MapPin, Zap, Thermometer, Droplets,
   Wind, Building2, Calendar, Ruler, Euro,
   CheckCircle, Clock, XCircle, ChevronRight,
@@ -124,6 +124,29 @@ export function CertDetailPanel({ certId, onClose, onDownload, onSend, onArchive
   const [tab, setTab] = useState<"resumen" | "técnico" | "pagos">("resumen");
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const [exportingCE3X, setExportingCE3X] = useState(false);
+
+  async function handleExportCE3X() {
+    if (!certId) return;
+    setExportingCE3X(true);
+    try {
+      const res = await fetch(`/api/certifications/${certId}/export-ce3x.xml`, { credentials: "include" });
+      if (!res.ok) throw new Error("Error generando XML");
+      const blob = await res.blob();
+      const disposition = res.headers.get("Content-Disposition") ?? "";
+      const match = disposition.match(/filename="([^"]+)"/);
+      const filename = match ? match[1] : `CEE_cert_${certId}.xml`;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = filename; a.click();
+      URL.revokeObjectURL(url);
+      toast({ title: "CE3X exportado", description: filename });
+    } catch {
+      toast({ title: "Error", description: "No se pudo generar el XML CE3X", variant: "destructive" });
+    } finally {
+      setExportingCE3X(false);
+    }
+  }
 
   const { data: cert, isLoading } = useQuery<CertDetail>({
     queryKey: ["/api/certifications", certId],
@@ -294,6 +317,11 @@ export function CertDetailPanel({ certId, onClose, onDownload, onSend, onArchive
             display: "flex", gap: 8, flexShrink: 0, background: PANEL_BG,
           }}>
             <ActionBtn icon={<Download size={13} />} label="PDF" onClick={() => onDownload?.(certId!, "pdf")} />
+            <ActionBtn
+              icon={exportingCE3X ? <span style={{fontSize:11}}>...</span> : <FileCode size={13} />}
+              label="CE3X"
+              onClick={handleExportCE3X}
+            />
             <ActionBtn icon={<Send size={13} />}     label="Enviar" onClick={() => onSend?.(certId!)} primary />
             {!cert.isArchived && (
               <ActionBtn icon={<Archive size={13} />} label="Archivar" onClick={() => { onArchive?.(certId!); onClose(); }} />
