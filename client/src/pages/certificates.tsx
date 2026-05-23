@@ -346,6 +346,26 @@ export default function Certificates() {
     }
   };
 
+  async function handleExportCE3X(certId: number) {
+    setExportingCE3XId(certId);
+    try {
+      const res = await fetch(`/api/certifications/${certId}/export-ce3x.xml`, { credentials: "include" });
+      if (!res.ok) throw new Error();
+      const blob = await res.blob();
+      const disposition = res.headers.get("Content-Disposition") ?? "";
+      const match = disposition.match(/filename="([^"]+)"/);
+      const filename = match ? match[1] : `CEE_cert_${certId}.xml`;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a"); a.href = url; a.download = filename; a.click();
+      URL.revokeObjectURL(url);
+      toast({ title: "CE3X exportado", description: filename });
+    } catch {
+      toast({ title: "Error", description: "No se pudo generar el XML CE3X", variant: "destructive" });
+    } finally {
+      setExportingCE3XId(null);
+    }
+  }
+
   const archiveCertificationMutation = useMutation({
     mutationFn: async (certificationId: number) => {
       return await apiRequest("POST", `/api/certifications/${certificationId}/archive`);
@@ -1032,7 +1052,7 @@ export default function Certificates() {
         certId={detailCertId}
         onClose={() => setDetailCertId(null)}
         onDownload={(certId, format) => {
-          const cert = (certData?.certifications ?? []).find((c: Certification) => c.id === certId);
+          const cert = (certData?.data ?? []).find((c: Certification) => c.id === certId);
           if (cert) handleDownload(cert, format);
         }}
         onSend={(certId) => { setDetailCertId(null); setWizardCertId(certId); }}
