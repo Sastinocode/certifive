@@ -9,9 +9,9 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   IdCard, Clock, Euro, Users,
-  TrendingUp, TrendingDown, Minus,
+  TrendingUp, TrendingDown,
   Plus, Eye, Edit, ExternalLink, Bell,
-  AlertTriangle, FileWarning, CreditCard,
+  AlertTriangle, FileWarning, CreditCard, BarChart3,
 } from "lucide-react";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -82,19 +82,16 @@ interface RecentCert {
 
 function TrendBadge({ current, previous }: { current: number; previous: number }) {
   const diff = pct(current, previous);
-  if (diff === null) return null;
-  const Icon = diff === 0 ? Minus : diff > 0 ? TrendingUp : TrendingDown;
-  const cls =
-    diff === 0
-      ? "text-muted-foreground"
-      : diff > 0
-        ? "text-emerald-600 dark:text-emerald-400"
-        : "text-red-500 dark:text-red-400";
+  if (diff === null || diff === 0) return null;
+  const isUp = diff > 0;
+  const cls = isUp
+    ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40"
+    : "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40";
+  const Icon = isUp ? TrendingUp : TrendingDown;
   return (
-    <span className={`inline-flex items-center gap-1 text-xs font-medium ${cls}`}>
+    <span className={`inline-flex items-center gap-1 text-[11px] font-semibold rounded-full px-2 py-0.5 ${cls}`}>
       <Icon size={11} />
-      {diff === 0 ? "Sin cambio" : `${diff > 0 ? "+" : ""}${diff}%`}
-      <span className="font-normal text-muted-foreground">vs mes ant.</span>
+      {`${diff > 0 ? "+" : ""}${diff}%`}
     </span>
   );
 }
@@ -117,30 +114,22 @@ function KpiCard({
   trend?: React.ReactNode;
 }) {
   return (
-    <div className="bg-card rounded-xl border border-border p-4 sm:p-5 flex flex-col gap-3">
-      <div className="flex items-start justify-between gap-2">
-        <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground leading-tight">
+    <div className="bg-card rounded-2xl border border-border shadow-sm p-5 sm:p-6 flex flex-col gap-4 hover:shadow-md transition-shadow">
+      <div className="flex items-start justify-between gap-3">
+        <div className={`w-11 h-11 rounded-xl flex items-center justify-center shadow-sm ${iconBg}`}>
+          <Icon size={20} className="text-white" />
+        </div>
+        {trend}
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground leading-tight">
           {label}
         </p>
-        <div
-          className={`w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center ${iconBg}`}
-        >
-          <Icon size={15} className="text-white" />
-        </div>
-      </div>
-
-      <div>
-        <p className="text-[2rem] font-bold text-foreground tracking-tight leading-none">
+        <p className="text-[2.25rem] sm:text-[2.5rem] font-bold text-foreground tracking-tight leading-none">
           {value}
         </p>
-        {sub && (
-          <p className="text-xs text-muted-foreground mt-1.5">{sub}</p>
-        )}
+        {sub && <p className="text-xs text-muted-foreground mt-1">{sub}</p>}
       </div>
-
-      {trend && (
-        <div className="pt-2.5 border-t border-border mt-auto">{trend}</div>
-      )}
     </div>
   );
 }
@@ -154,21 +143,21 @@ function ActivityChart({
   data: Array<{ month: string; total: number }>;
   loading: boolean;
 }) {
-  const BAR_H = 128;
+  const BAR_H = 160;
 
   if (loading) {
     return (
-      <div className="space-y-2">
-        <div className="flex items-end gap-2" style={{ height: BAR_H }}>
+      <div className="space-y-3">
+        <div className="flex items-end gap-3" style={{ height: BAR_H }}>
           {[55, 35, 70, 45, 80, 60].map((h, i) => (
             <div
               key={i}
-              className="flex-1 bg-muted animate-pulse rounded-t-md"
+              className="flex-1 bg-muted animate-pulse rounded-lg"
               style={{ height: `${h}%` }}
             />
           ))}
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="flex-1 h-3 bg-muted animate-pulse rounded" />
           ))}
@@ -191,24 +180,29 @@ function ActivityChart({
   const max = Math.max(...data.map((d) => d.total), 1);
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-end gap-2" style={{ height: BAR_H }}>
+    <div className="space-y-3">
+      <div className="flex items-end gap-3" style={{ height: BAR_H }}>
         {data.map((d) => {
           const h = Math.max(4, Math.round((d.total / max) * BAR_H));
+          const isLast = d === data[data.length - 1];
           return (
-            <div
-              key={d.month}
-              className="flex-1 rounded-t-md bg-primary/70 hover:bg-primary transition-colors cursor-default"
-              style={{ height: h }}
-              title={`${fmtMonth(d.month)}: ${d.total} certificados`}
-            />
+            <div key={d.month} className="flex-1 flex flex-col items-center justify-end gap-2">
+              {isLast && (
+                <span className="text-[11px] font-semibold text-foreground">{d.total}</span>
+              )}
+              <div
+                className="w-full rounded-lg bg-primary/70 hover:bg-primary transition-colors cursor-default"
+                style={{ height: h }}
+                title={`${fmtMonth(d.month)}: ${d.total} certificados`}
+              />
+            </div>
           );
         })}
       </div>
-      <div className="flex gap-2">
+      <div className="flex gap-3">
         {data.map((d) => (
           <div key={d.month} className="flex-1 text-center">
-            <span className="text-[11px] text-muted-foreground capitalize">
+            <span className="text-[11px] font-medium text-muted-foreground capitalize">
               {fmtMonth(d.month)}
             </span>
           </div>
@@ -223,27 +217,23 @@ function ActivityChart({
 const ALERT_CFG = {
   deadline_overdue: {
     Icon: AlertTriangle,
-    iconCls: "text-red-500",
-    bg: "bg-red-50 dark:bg-red-950/20",
-    border: "border-red-200 dark:border-red-800/40",
+    iconCls: "text-red-600 dark:text-red-400",
+    iconBg: "bg-red-100 dark:bg-red-950/50",
   },
   deadline_soon: {
     Icon: Clock,
-    iconCls: "text-amber-500",
-    bg: "bg-amber-50 dark:bg-amber-950/20",
-    border: "border-amber-200 dark:border-amber-800/40",
+    iconCls: "text-amber-600 dark:text-amber-400",
+    iconBg: "bg-amber-100 dark:bg-amber-950/50",
   },
   payment_pending: {
     Icon: CreditCard,
-    iconCls: "text-blue-500 dark:text-blue-400",
-    bg: "bg-blue-50 dark:bg-blue-950/20",
-    border: "border-blue-200 dark:border-blue-800/40",
+    iconCls: "text-blue-600 dark:text-blue-400",
+    iconBg: "bg-blue-100 dark:bg-blue-950/50",
   },
   form_pending: {
     Icon: FileWarning,
-    iconCls: "text-violet-500",
-    bg: "bg-violet-50 dark:bg-violet-950/20",
-    border: "border-violet-200 dark:border-violet-800/40",
+    iconCls: "text-violet-600 dark:text-violet-400",
+    iconBg: "bg-violet-100 dark:bg-violet-950/50",
   },
 } as const;
 
@@ -258,21 +248,23 @@ function AlertItem({
   return (
     <button
       onClick={() => onNavigate?.("certifications")}
-      className={`w-full text-left flex items-start gap-2.5 px-3 py-2.5 rounded-lg border transition-opacity hover:opacity-75 active:opacity-60 ${cfg.bg} ${cfg.border}`}
+      className="w-full text-left flex items-start gap-3 p-3 rounded-xl hover:bg-muted/60 transition-colors"
     >
-      <cfg.Icon size={13} className={`${cfg.iconCls} flex-shrink-0 mt-0.5`} />
-      <div className="min-w-0 flex-1">
+      <div className={`w-9 h-9 rounded-lg flex-shrink-0 flex items-center justify-center ${cfg.iconBg}`}>
+        <cfg.Icon size={16} className={cfg.iconCls} />
+      </div>
+      <div className="min-w-0 flex-1 pt-0.5">
         <div className="flex items-center gap-1.5 flex-wrap">
-          <p className="text-[12px] font-semibold text-foreground truncate">
+          <p className="text-[13px] font-semibold text-foreground truncate">
             {alert.ownerName || "Sin propietario"}
           </p>
           {alert.priority === "high" && (
-            <span className="text-[9px] font-bold uppercase tracking-wide text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/40 rounded px-1 leading-tight">
+            <span className="text-[9px] font-bold uppercase tracking-wide text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-950/50 rounded-full px-1.5 py-0.5 leading-none">
               Urgente
             </span>
           )}
         </div>
-        <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">
+        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
           {alert.message}
         </p>
       </div>
@@ -290,7 +282,7 @@ function EnergyBadge({ rating }: { rating: string | null }) {
   };
   return (
     <span
-      className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold text-white"
+      className="inline-flex items-center justify-center min-w-[26px] px-2 py-0.5 rounded-md text-xs font-bold text-white shadow-sm"
       style={{ background: colors[rating.toUpperCase()] ?? "#94A3B8" }}
     >
       {rating.toUpperCase()}
@@ -302,17 +294,18 @@ function EnergyBadge({ rating }: { rating: string | null }) {
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, string> = {
-    "Nuevo":      "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
-    "En Proceso": "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
-    "Finalizado": "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300",
+    "Nuevo":      "bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300",
+    "En Proceso": "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300",
+    "Finalizado": "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300",
     "Archivado":  "bg-muted text-muted-foreground",
   };
   return (
     <span
-      className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+      className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold ${
         map[status] ?? "bg-muted text-muted-foreground"
       }`}
     >
+      <span className="w-1.5 h-1.5 rounded-full bg-current mr-1.5 opacity-70" />
       {status}
     </span>
   );
@@ -322,10 +315,11 @@ function StatusBadge({ status }: { status: string }) {
 
 export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) => void }) {
   const { user } = useAuth();
+  const firstName = user?.firstName ?? user?.username?.split("@")[0] ?? "Certificador";
   const displayName =
     user?.firstName
       ? `${user.firstName}${user.lastName ? " " + user.lastName : ""}`
-      : user?.username?.split("@")[0] ?? "Certificador";
+      : firstName;
 
   const [selectedTab, setSelectedTab] = useState("dashboard");
 
@@ -368,13 +362,15 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
 
         {/* ── Scrollable body ────────────────────────────────────────────────── */}
         <div className="flex-1 overflow-auto">
-          <div className="px-4 py-4 sm:px-6 sm:py-6 max-w-[1400px] mx-auto space-y-5">
+          <div className="px-4 py-5 sm:px-8 sm:py-8 max-w-[1400px] mx-auto space-y-6">
 
             {/* ── Desktop header ─────────────────────────────────────────────── */}
-            <div className="hidden lg:flex items-center justify-between">
+            <div className="hidden lg:flex items-end justify-between">
               <div>
-                <h1 className="text-xl font-bold text-foreground tracking-tight">Dashboard</h1>
-                <p className="text-sm text-muted-foreground mt-0.5 capitalize">{todayLabel()}</p>
+                <h1 className="text-2xl font-bold text-foreground tracking-tight">
+                  Hola, {firstName} 👋
+                </h1>
+                <p className="text-sm text-muted-foreground mt-1 capitalize">{todayLabel()}</p>
               </div>
               <div className="flex items-center gap-3">
                 <div className="text-right">
@@ -390,7 +386,7 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
             </div>
 
             {/* ── KPI cards — 2×2 móvil, 4 cols desktop ──────────────────────── */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <KpiCard
                 label="Certificados activos"
                 value={statsLoading ? "…" : String(totalActive)}
@@ -444,19 +440,25 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
             </div>
 
             {/* ── Gráfico + Alertas ──────────────────────────────────────────── */}
-            {/* Desktop: chart 2/3 + alerts 1/3. Móvil: apilados */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
               {/* Gráfico de actividad */}
-              <div className="lg:col-span-2 bg-card rounded-xl border border-border p-5">
-                <div className="flex items-start justify-between mb-5">
-                  <div>
-                    <h2 className="text-sm font-semibold text-foreground">Actividad mensual</h2>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Certificados creados — últimos 6 meses
-                    </p>
+              <div className="lg:col-span-2 bg-card rounded-2xl border border-border shadow-sm p-6">
+                <div className="flex items-start justify-between mb-6">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <BarChart3 size={18} className="text-primary" />
+                    </div>
+                    <div>
+                      <h2 className="text-base font-semibold text-foreground tracking-tight">
+                        Actividad mensual
+                      </h2>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Certificados creados — últimos 6 meses
+                      </p>
+                    </div>
                   </div>
-                  <span className="text-xs text-muted-foreground capitalize">
+                  <span className="text-xs font-medium text-muted-foreground capitalize bg-muted/60 rounded-full px-3 py-1">
                     {new Date().toLocaleDateString("es-ES", {
                       month: "long",
                       year: "numeric",
@@ -470,15 +472,20 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
               </div>
 
               {/* Panel de alertas */}
-              <div className="bg-card rounded-xl border border-border p-5 flex flex-col">
-                <div className="flex items-center justify-between mb-4 flex-shrink-0">
-                  <div className="flex items-center gap-2">
-                    <Bell size={14} className="text-foreground" />
-                    <h2 className="text-sm font-semibold text-foreground">Alertas activas</h2>
+              <div className="bg-card rounded-2xl border border-border shadow-sm p-6 flex flex-col">
+                <div className="flex items-center justify-between mb-5 flex-shrink-0">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-red-100 dark:bg-red-950/50">
+                      <Bell size={18} className="text-red-600 dark:text-red-400" />
+                    </div>
+                    <div>
+                      <h2 className="text-base font-semibold text-foreground tracking-tight">Alertas</h2>
+                      <p className="text-xs text-muted-foreground mt-0.5">{alerts.length} activas</p>
+                    </div>
                   </div>
                   {alerts.length > 0 && (
                     <span
-                      className={`text-xs font-bold text-white rounded-full px-2 py-0.5 ${
+                      className={`text-xs font-bold text-white rounded-full min-w-[26px] h-[26px] inline-flex items-center justify-center px-1.5 ${
                         highAlerts > 0 ? "bg-red-500" : "bg-amber-500"
                       }`}
                     >
@@ -496,7 +503,7 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
                     <p className="text-xs text-muted-foreground mt-1">Todo al día</p>
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-2 overflow-auto flex-1">
+                  <div className="flex flex-col gap-1 -mx-2 overflow-auto flex-1">
                     {alerts.slice(0, 6).map((alert) => (
                       <AlertItem
                         key={`${alert.certId}-${alert.type}`}
@@ -518,16 +525,27 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
             </div>
 
             {/* ── Certificaciones recientes ───────────────────────────────────── */}
-            <div className="bg-card rounded-xl border border-border">
-              <div className="px-5 py-4 border-b border-border flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-foreground">
-                  Certificaciones recientes
-                </h2>
+            <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+              <div className="px-6 py-5 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <IdCard size={18} className="text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-semibold text-foreground tracking-tight">
+                      Certificaciones recientes
+                    </h2>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Los últimos expedientes registrados
+                    </p>
+                  </div>
+                </div>
                 <button
                   onClick={() => onNavigate?.("certifications")}
-                  className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:opacity-70 transition-opacity"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:bg-primary/5 rounded-lg px-3 py-1.5 transition-colors"
                 >
-                  Ver todas <ExternalLink size={12} />
+                  Ver todas
+                  <ExternalLink size={14} />
                 </button>
               </div>
 
@@ -555,7 +573,7 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="border-b border-border">
+                      <tr>
                         {[
                           "Propietario / Dirección",
                           "Calificación",
@@ -565,7 +583,7 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
                         ].map((h, i) => (
                           <th
                             key={i}
-                            className="px-5 py-3 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider whitespace-nowrap"
+                            className="px-6 py-3 text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-[0.08em] whitespace-nowrap bg-muted/30"
                           >
                             {h}
                           </th>
@@ -576,39 +594,39 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
                       {recentCerts.map((cert) => (
                         <tr
                           key={cert.id}
-                          className="border-b border-border/50 hover:bg-muted/30 transition-colors"
+                          className="hover:bg-muted/40 transition-colors"
                         >
-                          <td className="px-5 py-3.5">
-                            <p className="text-sm font-medium text-foreground">
+                          <td className="px-6 py-4">
+                            <p className="text-sm font-semibold text-foreground">
                               {cert.ownerName || "—"}
                             </p>
                             <p className="text-xs text-muted-foreground mt-0.5">
                               {cert.address || cert.cadastralReference || "Sin dirección"}
                             </p>
                           </td>
-                          <td className="px-5 py-3.5">
+                          <td className="px-6 py-4">
                             <EnergyBadge rating={cert.energyRating} />
                           </td>
-                          <td className="px-5 py-3.5">
+                          <td className="px-6 py-4">
                             <StatusBadge status={cert.status} />
                           </td>
-                          <td className="px-5 py-3.5 text-xs text-muted-foreground whitespace-nowrap">
+                          <td className="px-6 py-4 text-xs text-muted-foreground whitespace-nowrap font-medium">
                             {new Date(cert.createdAt).toLocaleDateString("es-ES")}
                           </td>
-                          <td className="px-5 py-3.5">
+                          <td className="px-6 py-4">
                             <div className="flex gap-1.5 justify-end">
                               <button
                                 onClick={() => onNavigate?.("certifications")}
-                                className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground border border-border rounded-md px-2.5 py-1 hover:bg-muted hover:text-foreground transition-colors"
+                                className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground rounded-lg px-3 py-1.5 hover:bg-muted hover:text-foreground transition-colors"
                               >
-                                <Eye size={11} /> Ver
+                                <Eye size={12} /> Ver
                               </button>
                               {cert.status !== "Finalizado" && (
                                 <button
                                   onClick={() => onNavigate?.("certifications")}
-                                  className="inline-flex items-center gap-1 text-xs font-medium text-primary border border-primary/20 rounded-md px-2.5 py-1 hover:bg-primary/5 transition-colors"
+                                  className="inline-flex items-center gap-1 text-xs font-semibold text-primary bg-primary/10 rounded-lg px-3 py-1.5 hover:bg-primary/15 transition-colors"
                                 >
-                                  <Edit size={11} /> Editar
+                                  <Edit size={12} /> Editar
                                 </button>
                               )}
                             </div>
