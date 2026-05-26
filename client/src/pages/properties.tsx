@@ -1,63 +1,8 @@
 // @ts-nocheck
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { queryClient } from "@/lib/queryClient";
+import { useQuery } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
-import { Link } from "wouter";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { LayoutGrid, List, Map, Search, Upload, Plus } from "lucide-react";
 import Sidebar from "@/components/layout/sidebar";
-import { EmptyState } from "@/components/ui/empty-state";
-import { SearchFilter } from "@/components/ui/search-filter";
-import { Breadcrumb } from "@/components/ui/breadcrumb";
-import { TableSkeleton } from "@/components/ui/loading-states";
-import {
-  Archive,
-  FileText,
-  FolderPlus,
-  Folder,
-  Upload,
-  Eye,
-  Download,
-  FolderOpen
-} from "lucide-react";
-import CertificateManagement from "@/components/certificates/CertificateManagement";
-import ClientFolderManager from "@/components/ClientFolderManager";
-import CertificateUploadDialog from "@/components/certificates/CertificateUploadDialog";
-
-interface Property {
-  id: number;
-  ownerName: string;
-  ownerDni: string;
-  propertyAddress: string;
-  cadastralRef: string;
-  buildingFloors: number | null;
-  propertyFloors: number | null;
-  rooms: number | null;
-  roofType: string | null;
-  status: string;
-  energyRating: string | null;
-  folderId: number | null;
-  userId: string;
-  createdAt: Date | null;
-  updatedAt: Date | null;
-}
-
-interface Folder {
-  id: number;
-  name: string;
-  description: string | null;
-  color: string | null;
-  icon: string | null;
-  userId: string;
-  createdAt: Date | null;
-  updatedAt: Date | null;
-}
 
 interface Certification {
   id: number;
@@ -70,534 +15,380 @@ interface Certification {
   energyRating: string | null;
   userId: string;
   createdAt: Date | null;
-  updatedAt: Date | null;
+}
+
+const ENERGY_COLORS: Record<string, { bg: string; text: string }> = {
+  A: { bg: "#00a651", text: "#fff" },
+  B: { bg: "#50b848", text: "#fff" },
+  C: { bg: "#c2d500", text: "#1a1a1a" },
+  D: { bg: "#ffe600", text: "#1a1a1a" },
+  E: { bg: "#f6a800", text: "#fff" },
+  F: { bg: "#ed6e1f", text: "#fff" },
+  G: { bg: "#e62e2d", text: "#fff" },
+};
+
+function EnergyChip({ letter, size = "sm" }: { letter: string; size?: "sm" | "lg" }) {
+  const colors = ENERGY_COLORS[letter?.toUpperCase()] ?? { bg: "#ccc", text: "#000" };
+  const dim = size === "lg" ? { w: 36, h: 32, fs: 15 } : { w: 28, h: 24, fs: 13 };
+  return (
+    <div className="relative inline-flex items-center" style={{ marginRight: 8 }}>
+      <div
+        className="rounded flex items-center justify-center font-black"
+        style={{ width: dim.w, height: dim.h, fontSize: dim.fs, backgroundColor: colors.bg, color: colors.text }}
+      >
+        {letter?.toUpperCase() ?? "?"}
+      </div>
+      <div
+        className="absolute"
+        style={{
+          right: -8,
+          top: 0,
+          bottom: 0,
+          width: 0,
+          height: 0,
+          borderTop: `${dim.h / 2}px solid transparent`,
+          borderBottom: `${dim.h / 2}px solid transparent`,
+          borderLeft: `8px solid ${colors.bg}`,
+        }}
+      />
+    </div>
+  );
+}
+
+function StatusPill({ status }: { status: string }) {
+  const variants: Record<string, { cls: string; label: string }> = {
+    completed:   { cls: "bg-primary/10 text-primary", label: "Vigente" },
+    expiring:    { cls: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400", label: "Caduca pronto" },
+    expired:     { cls: "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400", label: "Caducado" },
+    in_progress: { cls: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400", label: "En proceso" },
+    draft:       { cls: "bg-muted text-muted-foreground", label: "Borrador" },
+    archived:    { cls: "bg-muted text-muted-foreground", label: "Archivado" },
+  };
+  const v = variants[status] ?? variants.draft;
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold flex-shrink-0 ${v.cls}`}>
+      <span className="w-1.5 h-1.5 rounded-full bg-current" />
+      {v.label}
+    </span>
+  );
+}
+
+function PropertyCard({ property }: { property: any }) {
+  return (
+    <article className="group bg-card rounded-2xl border border-border shadow-sm overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg">
+      <div className="aspect-[4/3] relative bg-muted/60">
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-[10px] font-mono font-semibold text-muted-foreground bg-card px-2 py-1 rounded border border-border">
+            foto fachada
+          </span>
+        </div>
+        {property.energyRating && (
+          <div className="absolute top-3 left-3">
+            <EnergyChip letter={property.energyRating} />
+          </div>
+        )}
+        {property.propertyType && property.propertyType !== "Vivienda" && (
+          <span className="absolute top-3 right-12 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-card/90 text-foreground">
+            {property.propertyType}
+          </span>
+        )}
+        <button className="absolute top-3 right-3 w-8 h-8 rounded-full bg-card/90 backdrop-blur-sm flex items-center justify-center text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+          ···
+        </button>
+      </div>
+      <div className="p-4">
+        <div className="flex items-start justify-between gap-2 mb-1">
+          <h3 className="text-sm font-bold leading-snug line-clamp-1">{property.propertyAddress}</h3>
+          <StatusPill status={property.status} />
+        </div>
+        <p className="text-[11px] text-muted-foreground">{property.city ?? "España"}</p>
+        <div className="flex items-center gap-3 mt-3 pt-3 border-t border-border text-[11px] text-muted-foreground">
+          {property.surfaceArea && <span>{property.surfaceArea} m²</span>}
+          {property.constructionYear && <span>{property.constructionYear}</span>}
+          <span className="ml-auto font-mono text-[10px] truncate max-w-[80px]">
+            {property.cadastralRef?.slice(0, 10) ?? "—"}
+          </span>
+        </div>
+        <div className="flex items-center gap-2 mt-3">
+          <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary flex-shrink-0">
+            {property.ownerName?.slice(0, 2).toUpperCase() ?? "??"}
+          </div>
+          <p className="text-[11px] text-muted-foreground truncate">{property.ownerName}</p>
+        </div>
+      </div>
+    </article>
+  );
 }
 
 export default function Properties() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filters, setFilters] = useState<Record<string, string>>({});
-  const [selectedFolder, setSelectedFolder] = useState<number | null | undefined>(undefined);
-  const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
-  const [selectedFolderName, setSelectedFolderName] = useState("");
-  const [showUploadDialog, setShowUploadDialog] = useState(false);
-  const [showClientFolder, setShowClientFolder] = useState(false);
-  const [currentClientFolderId, setCurrentClientFolderId] = useState<number | null>(null);
-  const [currentClientFolderName, setCurrentClientFolderName] = useState("");
-  const [showCreateFolder, setShowCreateFolder] = useState(false);
-  const [newFolderName, setNewFolderName] = useState("");
-  const [newFolderDescription, setNewFolderDescription] = useState("");
-  const [newFolderColor, setNewFolderColor] = useState("#059669");
-  const [newFolderIcon, setNewFolderIcon] = useState("folder");
-  const [activeTab, setActiveTab] = useState<'properties' | 'certificates'>('properties');
-  const { toast } = useToast();
+  const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [view, setView] = useState<"grid" | "table" | "map">("grid");
 
-  const { data: certifications = [], isLoading } = useQuery({
+  const { data: certifications = [], isLoading } = useQuery<Certification[]>({
     queryKey: ["/api/certifications", "archived"],
     queryFn: async () => {
-      const response = await fetch("/api/certifications?status=archived");
-      if (!response.ok) {
-        throw new Error("Failed to fetch archived certifications");
-      }
-      return response.json();
-    }
+      const r = await fetch("/api/certifications?status=archived");
+      if (!r.ok) throw new Error("Failed to fetch");
+      return r.json();
+    },
   });
 
-  const { data: folders = [] } = useQuery({
-    queryKey: ["/api/folders"],
-  });
+  const { data: folders = [] } = useQuery({ queryKey: ["/api/folders"] });
 
-  // Optimized filtering with memoization
-  const filteredFolders = useMemo(() => {
-    if (!Array.isArray(folders)) return [];
-    
-    let filtered = folders.filter((folder: any) => {
-      const matchesSearch = folder.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           folder.description?.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesFilters = Object.entries(filters).every(([key, value]) => {
-        if (!value) return true;
-        return folder[key] === value;
-      });
-      
-      return matchesSearch && matchesFilters;
+  const properties = useMemo(() => {
+    const seen = new Set<string>();
+    return (certifications as Certification[]).filter((c) => {
+      if (seen.has(c.cadastralRef)) return false;
+      seen.add(c.cadastralRef);
+      return true;
     });
-    
-    return filtered;
-  }, [folders, searchTerm, filters]);
+  }, [certifications]);
 
-  const filterOptions = [
-    {
-      key: 'color',
-      label: 'Color',
-      values: [
-        { value: '#059669', label: 'Verde' },
-        { value: '#3b82f6', label: 'Azul' },
-        { value: '#ef4444', label: 'Rojo' },
-        { value: '#f59e0b', label: 'Naranja' },
-        { value: '#8b5cf6', label: 'Púrpura' },
-      ]
-    }
+  const filtered = useMemo(() => {
+    return properties.filter((p: any) => {
+      const matchesSearch =
+        !search ||
+        p.propertyAddress?.toLowerCase().includes(search.toLowerCase()) ||
+        p.cadastralRef?.toLowerCase().includes(search.toLowerCase()) ||
+        p.ownerName?.toLowerCase().includes(search.toLowerCase());
+      const matchesType =
+        typeFilter === "all" || p.propertyType?.toLowerCase() === typeFilter;
+      return matchesSearch && matchesType;
+    });
+  }, [properties, search, typeFilter]);
+
+  const total = properties.length;
+  const active = properties.filter((p) => p.status === "completed").length;
+  const expiring = properties.filter((p) => p.status === "expiring").length;
+  const expired = properties.filter((p) => p.status === "expired").length;
+  const inProgress = properties.filter((p) => p.status === "in_progress").length;
+
+  const typeCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: properties.length };
+    properties.forEach((p: any) => {
+      const t = (p.propertyType ?? "vivienda").toLowerCase();
+      counts[t] = (counts[t] ?? 0) + 1;
+    });
+    return counts;
+  }, [properties]);
+
+  const typeFilters = [
+    { key: "all", label: "Todos" },
+    { key: "vivienda", label: "Vivienda" },
+    { key: "local", label: "Local" },
+    { key: "oficina", label: "Oficina" },
   ];
 
-  const handleFilterChange = (key: string, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
-  };
-
-  const clearFilters = () => {
-    setFilters({});
-  };
-
-  const createFolderMutation = useMutation({
-    mutationFn: async (data: { name: string; description: string; color: string; icon: string }) =>
-      apiRequest("POST", "/api/folders", data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/folders"] });
-      setShowCreateFolder(false);
-      setNewFolderName("");
-      setNewFolderDescription("");
-      setNewFolderColor("#059669");
-      setNewFolderIcon("folder");
-      toast({
-        title: "Carpeta creada",
-        description: "La carpeta de cliente se ha creado correctamente",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "No se pudo crear la carpeta",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleCreateFolder = () => {
-    if (!newFolderName.trim()) {
-      toast({
-        title: "Error",
-        description: "El nombre de la carpeta es obligatorio",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    createFolderMutation.mutate({
-      name: newFolderName.trim(),
-      description: newFolderDescription.trim(),
-      color: newFolderColor,
-      icon: newFolderIcon,
-    });
-  };
-
-  const getCertificationsInFolder = (folderId: number | null) => {
-    return (certifications as Certification[]).filter(cert => cert.folderId === folderId).length;
-  };
-
-  const filteredCertifications = (certifications as Certification[]).filter((cert: Certification) => {
-    const matchesSearch = (cert.ownerName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (cert.cadastralRef || '').toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesFolder = selectedFolder === null ? 
-      cert.folderId === null :
-      selectedFolder === undefined ? 
-        true :
-        cert.folderId === selectedFolder;
-    
-    return matchesSearch && matchesFolder;
-  });
-
-  // Group certifications by property (cadastral reference)
-  const properties: Property[] = filteredCertifications.reduce((acc: Property[], cert: any) => {
-    const existingProperty = acc.find(p => p.cadastralRef === cert.cadastralRef);
-    
-    if (existingProperty) {
-      if (cert.status === 'completed' && !existingProperty.energyRating) {
-        existingProperty.energyRating = cert.energyRating;
-        existingProperty.status = cert.status;
-      }
-    } else {
-      acc.push({
-        id: cert.id,
-        ownerName: cert.ownerName,
-        ownerDni: cert.ownerDni,
-        propertyAddress: cert.propertyAddress,
-        cadastralRef: cert.cadastralRef,
-        buildingFloors: cert.buildingFloors,
-        propertyFloors: cert.propertyFloors,
-        rooms: cert.rooms,
-        roofType: cert.roofType,
-        status: cert.status,
-        energyRating: cert.energyRating,
-        folderId: cert.folderId,
-        userId: cert.userId,
-        createdAt: cert.createdAt,
-        updatedAt: cert.updatedAt
-      });
-    }
-    
-    return acc;
-  }, []);
-
-  const getIconComponent = (iconName: string) => {
-    switch (iconName) {
-      case "folder":
-        return Folder;
-      case "archive":
-        return Archive;
-      default:
-        return Folder;
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "completed":
-        return <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">Completado</Badge>;
-      case "in_progress":
-        return <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">En Proceso</Badge>;
-      case "draft":
-        return <Badge className="bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300">Borrador</Badge>;
-      default:
-        return <Badge className="bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300">{status}</Badge>;
-    }
-  };
-
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-background overflow-hidden">
       <Sidebar selectedTab="properties" onTabChange={() => {}} />
-      
-      <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Header with Tabs */}
-        <div className="bg-white border-b border-gray-200 px-6 py-4">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-bold text-gray-900">Archivo de Certificados Finales</h1>
-          </div>
-          <div className="flex space-x-1">
-            <Button
-              variant={activeTab === 'properties' ? 'default' : 'ghost'}
-              onClick={() => setActiveTab('properties')}
-              className="flex items-center gap-2"
-            >
-              <Archive className="h-4 w-4" />
-              Archivo de Certificados
-            </Button>
-            <Button
-              variant={activeTab === 'certificates' ? 'default' : 'ghost'}
-              onClick={() => setActiveTab('certificates')}
-              className="flex items-center gap-2"
-            >
-              <FileText className="h-4 w-4" />
-              Gestión de Subidas
-            </Button>
-          </div>
-        </div>
 
-        {/* Content based on active tab */}
-        {activeTab === 'properties' ? (
-          <div className="flex flex-1 overflow-hidden">
-            {/* Folder Sidebar */}
-            <div className="w-80 bg-white border-r border-gray-200 overflow-y-auto">
-              <div className="p-4 border-b border-gray-200">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-semibold text-gray-900">Gestión de Clientes</h2>
-                  <Dialog open={showCreateFolder} onOpenChange={setShowCreateFolder}>
-                    <DialogTrigger asChild>
-                      <Button size="sm" variant="outline">
-                        <FolderPlus className="w-4 h-4" />
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Crear Nueva Carpeta de Cliente</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4 py-4">
-                        <div>
-                          <label className="text-sm font-medium">Nombre del Cliente</label>
-                          <Input
-                            value={newFolderName}
-                            onChange={(e) => setNewFolderName(e.target.value)}
-                            placeholder="Ej: Juan Martínez"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium">Descripción (opcional)</label>
-                          <Input
-                            value={newFolderDescription}
-                            onChange={(e) => setNewFolderDescription(e.target.value)}
-                            placeholder="Información adicional del cliente"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-sm font-medium">Color</label>
-                          <Select value={newFolderColor} onValueChange={setNewFolderColor}>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="#059669">Verde</SelectItem>
-                              <SelectItem value="#3b82f6">Azul</SelectItem>
-                              <SelectItem value="#ef4444">Rojo</SelectItem>
-                              <SelectItem value="#f59e0b">Naranja</SelectItem>
-                              <SelectItem value="#8b5cf6">Púrpura</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button onClick={handleCreateFolder} disabled={createFolderMutation.isPending}>
-                            {createFolderMutation.isPending ? "Creando..." : "Crear Carpeta"}
-                          </Button>
-                          <Button variant="outline" onClick={() => setShowCreateFolder(false)}>
-                            Cancelar
-                          </Button>
-                        </div>
+      <main className="flex-1 overflow-auto">
+        <div className="px-4 py-5 sm:px-8 sm:py-8 max-w-[1500px] mx-auto space-y-6">
+
+          {/* Header */}
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">Inmuebles</h1>
+              <p className="text-sm text-muted-foreground mt-1">
+                Todas las viviendas, locales y oficinas certificadas
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button className="h-10 px-4 rounded-full border border-border bg-card text-sm font-medium hover:bg-muted/40 inline-flex items-center gap-1.5">
+                <Upload className="w-4 h-4" />
+                Importar catastro
+              </button>
+              <button className="h-10 px-4 rounded-full bg-primary text-primary-foreground text-sm font-semibold shadow-sm inline-flex items-center gap-1.5">
+                <Plus className="w-4 h-4" />
+                Nuevo inmueble
+              </button>
+            </div>
+          </div>
+
+          {/* KPI strip */}
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+            <div className="bg-card rounded-2xl border border-border shadow-sm p-4">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Total</p>
+              <p className="text-2xl font-bold mt-1.5 leading-none">{total}</p>
+              <p className="text-[11px] text-muted-foreground mt-1.5">Inmuebles</p>
+            </div>
+            <div className="bg-card rounded-2xl border border-border shadow-sm p-4">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-primary">Activos</p>
+              <p className="text-2xl font-bold mt-1.5 leading-none">{active}</p>
+              <p className="text-[11px] text-muted-foreground mt-1.5">Certificado vigente</p>
+            </div>
+            <div className="bg-card rounded-2xl border border-border shadow-sm p-4 ring-1 ring-amber-200 dark:ring-amber-900/50">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">Próx. a caducar</p>
+              <p className="text-2xl font-bold mt-1.5 leading-none">{expiring}</p>
+              <p className="text-[11px] text-muted-foreground mt-1.5">&lt; 6 meses</p>
+            </div>
+            <div className="bg-card rounded-2xl border border-border shadow-sm p-4">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-red-600 dark:text-red-400">Caducados</p>
+              <p className="text-2xl font-bold mt-1.5 leading-none">{expired}</p>
+              <p className="text-[11px] text-muted-foreground mt-1.5">A renovar</p>
+            </div>
+            <div className="bg-card rounded-2xl border border-border shadow-sm p-4">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">En proceso</p>
+              <p className="text-2xl font-bold mt-1.5 leading-none">{inProgress}</p>
+              <p className="text-[11px] text-muted-foreground mt-1.5">Expedientes abiertos</p>
+            </div>
+          </div>
+
+          {/* Toolbar */}
+          <div className="bg-card rounded-2xl border border-border shadow-sm p-3 flex flex-wrap items-center gap-3">
+            <div className="flex-1 min-w-[240px] relative">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar por dirección, referencia catastral o propietario…"
+                className="w-full h-10 pl-10 pr-4 bg-muted/40 border border-transparent rounded-xl text-sm font-medium placeholder:text-muted-foreground focus:outline-none focus:bg-background focus:border-border transition-colors"
+              />
+            </div>
+
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {typeFilters.map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => setTypeFilter(key)}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-all ${
+                    typeFilter === key
+                      ? "bg-foreground text-background border-foreground"
+                      : "bg-card border-border text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {label}
+                  <span
+                    className={`rounded-full px-1.5 text-[10px] font-bold ${
+                      typeFilter === key
+                        ? "bg-background/20 text-background"
+                        : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {typeCounts[key === "all" ? "all" : key] ?? 0}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-0.5 bg-muted/40 rounded-lg p-1">
+              <button
+                onClick={() => setView("grid")}
+                title="Cuadrícula"
+                className={`p-2 rounded-md transition-all ${view === "grid" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                <LayoutGrid className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setView("table")}
+                title="Tabla"
+                className={`p-2 rounded-md transition-all ${view === "table" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                <List className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setView("map")}
+                title="Mapa"
+                className={`p-2 rounded-md transition-all ${view === "map" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                <Map className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Grid view */}
+          {view === "grid" && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+              {isLoading
+                ? Array.from({ length: 8 }).map((_, i) => (
+                    <div key={i} className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+                      <div className="aspect-[4/3] bg-muted animate-pulse" />
+                      <div className="p-4 space-y-2">
+                        <div className="h-4 bg-muted rounded animate-pulse w-3/4" />
+                        <div className="h-3 bg-muted rounded animate-pulse w-1/2" />
                       </div>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-                
-                {/* Enhanced Search and Filter for Folders */}
-                <SearchFilter
-                  searchValue={searchTerm}
-                  onSearchChange={setSearchTerm}
-                  filters={filterOptions}
-                  activeFilters={filters}
-                  onFilterChange={handleFilterChange}
-                  onClearFilters={clearFilters}
-                  placeholder="Buscar carpetas..."
-                  className="mb-4"
-                />
-
-                {/* All Properties */}
-                <Button
-                  variant={selectedFolder === undefined ? "default" : "ghost"}
-                  className="w-full justify-start mb-2"
-                  onClick={() => setSelectedFolder(undefined)}
-                >
-                  <Archive className="w-4 h-4 mr-2" />
-                  Todas las propiedades
-                  <Badge variant="secondary" className="ml-auto">
-                    {properties.length}
-                  </Badge>
-                </Button>
-                
-                {/* Uncategorized */}
-                <Button
-                  variant={selectedFolder === null ? "default" : "ghost"}
-                  className="w-full justify-start mb-4"
-                  onClick={() => setSelectedFolder(null)}
-                >
-                  <Folder className="w-4 h-4 mr-2" />
-                  Sin cliente asignado
-                  <Badge variant="secondary" className="ml-auto">
-                    {getCertificationsInFolder(null)}
-                  </Badge>
-                </Button>
-              </div>
-              
-              {/* Folders List with Enhanced Display */}
-              <div className="p-4">
-                <h3 className="text-sm font-medium text-gray-700 mb-3">Clientes</h3>
-                <div className="space-y-1">
-                  {filteredFolders.length > 0 ? (
-                    filteredFolders.map((folder) => {
-                      const IconComponent = getIconComponent(folder.icon || "folder");
-                      return (
-                        <Button
-                          key={folder.id}
-                          variant={selectedFolder === folder.id ? "default" : "ghost"}
-                          className="w-full justify-start floating-card"
-                          onClick={() => setSelectedFolder(folder.id)}
-                        >
-                          <IconComponent 
-                            className="w-4 h-4 mr-2" 
-                            style={{ color: folder.color || '#059669' }}
-                          />
-                          <span className="truncate">{folder.name}</span>
-                          <Badge variant="secondary" className="ml-auto">
-                            {getCertificationsInFolder(folder.id)}
-                          </Badge>
-                        </Button>
-                      );
-                    })
-                  ) : (
-                    <div className="text-center py-8 text-gray-500">
-                      <FolderOpen className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">No se encontraron carpetas</p>
-                      {searchTerm && (
-                        <Button 
-                          variant="link" 
-                          size="sm" 
-                          onClick={() => setSearchTerm("")}
-                          className="mt-2"
-                        >
-                          Limpiar búsqueda
-                        </Button>
-                      )}
                     </div>
-                  )}
-                </div>
-              </div>
+                  ))
+                : filtered.length === 0
+                ? (
+                    <div className="col-span-full bg-card rounded-2xl border border-border p-16 text-center">
+                      <p className="text-muted-foreground text-sm">No se encontraron inmuebles</p>
+                    </div>
+                  )
+                : filtered.map((p) => <PropertyCard key={p.id} property={p} />)
+              }
             </div>
+          )}
 
-            {/* Main Content */}
-            <div className="flex-1 overflow-auto">
-              {/* Breadcrumb Navigation */}
-              <div className="bg-white border-b border-gray-200 px-6 py-3">
-                <Breadcrumb
-                  items={[
-                    { label: "Archivo", href: "#" },
-                    { 
-                      label: selectedFolder === undefined 
-                        ? "Todas las Propiedades"
-                        : selectedFolder === null 
-                          ? "Sin Cliente"
-                          : filteredFolders.find(f => f.id === selectedFolder)?.name || "Propiedades"
+          {/* Table view */}
+          {view === "table" && (
+            <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/30">
+                      {["Inmueble", "Letra", "Propietario", "Ref. catastral", "Estado"].map((h) => (
+                        <th key={h} className="text-left px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground whitespace-nowrap">
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {isLoading
+                      ? Array.from({ length: 5 }).map((_, i) => (
+                          <tr key={i} className="border-b border-border">
+                            {Array.from({ length: 5 }).map((_, j) => (
+                              <td key={j} className="px-5 py-3">
+                                <div className="h-4 bg-muted rounded animate-pulse" />
+                              </td>
+                            ))}
+                          </tr>
+                        ))
+                      : filtered.map((p) => (
+                          <tr key={p.id} className="border-b border-border last:border-0 hover:bg-muted/40 cursor-pointer">
+                            <td className="px-5 py-3">
+                              <p className="font-semibold text-foreground">{p.propertyAddress}</p>
+                              <p className="text-[11px] text-muted-foreground">{(p as any).city ?? "España"}</p>
+                            </td>
+                            <td className="px-5 py-3">
+                              {p.energyRating ? (
+                                <div className="pl-1"><EnergyChip letter={p.energyRating} /></div>
+                              ) : (
+                                <span className="text-muted-foreground">—</span>
+                              )}
+                            </td>
+                            <td className="px-5 py-3">{p.ownerName}</td>
+                            <td className="px-5 py-3">
+                              <span className="font-mono text-[11px] text-muted-foreground">{p.cadastralRef}</span>
+                            </td>
+                            <td className="px-5 py-3"><StatusPill status={p.status} /></td>
+                          </tr>
+                        ))
                     }
-                  ]}
-                />
+                  </tbody>
+                </table>
               </div>
+            </div>
+          )}
 
-              <div className="p-6">
-                <div className="mb-8">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
-                    <div>
-                      <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                        {selectedFolder === undefined 
-                          ? "Todas las Propiedades"
-                          : selectedFolder === null 
-                            ? "Propiedades sin cliente"
-                            : filteredFolders.find(f => f.id === selectedFolder)?.name || "Propiedades"
-                        }
-                      </h1>
-                      <p className="text-gray-600">
-                        {properties.length} propiedad{properties.length !== 1 ? 'es' : ''} 
-                        {selectedFolder !== undefined && ` en esta ${selectedFolder === null ? 'categoría' : 'carpeta de cliente'}`}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Properties Table */}
-                  <Card>
-                    <CardContent className="p-0">
-                      {isLoading ? (
-                        <TableSkeleton />
-                      ) : properties.length === 0 ? (
-                        <EmptyState
-                          icon={<Archive />}
-                          title="Sin inmuebles archivados"
-                          description="Los expedientes marcados como «Finalizado» aparecerán aquí automáticamente para su consulta histórica."
-                          size="compact"
-                        />
-                      ) : (
-                        <div className="overflow-x-auto">
-                          <table className="w-full data-table">
-                            <thead>
-                              <tr>
-                                <th>Propietario</th>
-                                <th>Referencia Catastral</th>
-                                <th>Estado</th>
-                                <th>Cliente</th>
-                                <th className="text-right">Acciones</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {properties.map((property) => {
-                                const folder = (folders as Folder[]).find(f => f.id === property.folderId);
-                                return (
-                                  <tr key={property.id}>
-                                    <td>
-                                      <div className="font-medium text-gray-900">
-                                        {property.ownerName}
-                                      </div>
-                                      <div className="text-sm text-gray-500">
-                                        {property.ownerDni}
-                                      </div>
-                                    </td>
-                                    <td className="text-sm text-gray-900">
-                                      {property.cadastralRef}
-                                    </td>
-                                    <td>
-                                      {getStatusBadge(property.status)}
-                                    </td>
-                                    <td>
-                                      {folder ? (
-                                        <div className="flex items-center">
-                                          <div 
-                                            className="w-3 h-3 rounded-full mr-2"
-                                            style={{ backgroundColor: folder.color || '#059669' }}
-                                          />
-                                          <span className="text-sm text-gray-900">{folder.name}</span>
-                                        </div>
-                                      ) : (
-                                        <span className="text-gray-400">Sin asignar</span>
-                                      )}
-                                    </td>
-                                    <td className="text-right">
-                                      <div className="flex items-center justify-end space-x-2">
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() => {
-                                            if (folder) {
-                                              setCurrentClientFolderId(folder.id);
-                                              setCurrentClientFolderName(folder.name);
-                                              setShowClientFolder(true);
-                                            }
-                                          }}
-                                          className="text-blue-600 hover:text-blue-800"
-                                        >
-                                          <Eye className="w-4 h-4" />
-                                        </Button>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          className="text-green-600 hover:text-green-800"
-                                        >
-                                          <Download className="w-4 h-4" />
-                                        </Button>
-                                      </div>
-                                    </td>
-                                  </tr>
-                                );
-                              })}
-                            </tbody>
-                          </table>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
+          {/* Map view */}
+          {view === "map" && (
+            <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+              <div className="h-[500px] flex items-center justify-center bg-muted/20">
+                <div className="text-center">
+                  <Map className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-sm font-medium">Vista de mapa</p>
+                  <p className="text-xs text-muted-foreground mt-1">{total} inmuebles en tu zona</p>
                 </div>
               </div>
             </div>
-          </div>
-        ) : (
-          // Certificate Management Tab
-          <div className="flex-1 overflow-hidden p-6">
-            <CertificateManagement 
-              folders={folders} 
-              selectedFolderId={selectedFolder === null || selectedFolder === undefined ? undefined : selectedFolder}
-            />
-          </div>
-        )}
-      </div>
+          )}
 
-      {/* Certificate Upload Dialog */}
-      {selectedFolderId && (
-        <CertificateUploadDialog 
-          open={showUploadDialog}
-          onOpenChange={setShowUploadDialog}
-          folderId={selectedFolderId}
-          folderName={selectedFolderName}
-        />
-      )}
-
-      {/* Client Folder Manager */}
-      <ClientFolderManager
-        folderId={currentClientFolderId || 0}
-        folderName={currentClientFolderName}
-        isOpen={showClientFolder}
-        onClose={() => setShowClientFolder(false)}
-      />
+        </div>
+      </main>
     </div>
   );
 }
