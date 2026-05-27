@@ -143,7 +143,7 @@ app.put("/api/certifications/:id", authenticate, async (req: Request, res: Respo
     }
 
     const [cert] = await db.update(certifications)
-      .set({ ...parsed.data, updatedAt: new Date() })
+      .set({ ...(parsed.data as Partial<typeof certifications.$inferInsert>), updatedAt: new Date() })
       .where(and(eq(certifications.id, parseInt(req.params.id)), eq(certifications.userId, userId)))
       .returning();
     if (!cert) return res.status(404).json({ message: "Certificación no encontrada" });
