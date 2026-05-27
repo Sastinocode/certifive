@@ -2,119 +2,96 @@
 import { useParams } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  Camera, 
-  Upload, 
-  CheckCircle, 
-  AlertCircle, 
-  Home, 
-  Thermometer,
-  Lightbulb,
-  Wind,
-  Droplets,
-  Zap,
-  Info,
-  Clock
+import {
+  Camera, Upload, CheckCircle, Home, Thermometer,
+  Droplets, Zap, Info, Clock,
 } from "lucide-react";
 
 interface CertificationFormData {
-  // Datos administrativos (from template)
   dni: string;
   fullName: string;
+  address: string;
+  postalCode: string;
+  city: string;
+  province: string;
   cadastralRef: string;
-  phone: string;
-  email: string;
-  
-  // Datos de la propiedad (from template)
-  habitableFloors: number; // Nº de plantas habitables (sin contar sótano)
-  rooms: number; // Nº de habitaciones
-  
-  // Fachadas y ventanas (from template)
-  facadeOrientation: string; // Orientación de fachadas y ventanas
-  windowDetails: string; // Material, color, tipo vidrio, caja persiana
-  
-  // Estructura del edificio (from template)
-  roofType: string; // Tipo cubierta (plana/inclinada)
-  
-  // Sistemas HVAC (from template)
-  airConditioningSystem: string; // Equipos climatización
-  heatingSystem: string; // Equipos calefacción (radiadores si/no)
-  
-  // Sistema de agua caliente (from template)
-  waterHeatingType: string; // Eléctrico, gas natural, gas butano
-  waterHeatingCapacity: number; // Capacidad en litros si eléctrico
-  
-  // Fotos requeridas
+  propertyType: string;
+  totalArea: number;
+  heatedArea: number;
+  buildYear: number;
+  floors: number;
+  rooms: number;
+  bathrooms: number;
+  heatingSystem: string;
+  coolingSystem: string;
+  dhwSystem: string;
+  renewableEnergy: string;
   photos: string[];
-  
-  // Información adicional
   observations: string;
 }
 
 const photoRequirements = [
   {
     id: "facade",
-    title: "Fachada Principal",
-    description: "Foto completa de la fachada principal del edificio desde la calle",
+    title: "Fachada principal",
+    description: "Foto completa de la fachada principal desde la calle",
     icon: Home,
     required: true,
-    tips: "Toma la foto desde una distancia que permita ver todo el edificio. Asegúrate de que esté bien iluminado."
+    tips: "Toma la foto desde una distancia que permita ver todo el edificio. Asegurate de que este bien iluminado.",
   },
   {
     id: "windows",
-    title: "Ventanas Exteriores",
+    title: "Ventanas exteriores",
     description: "Fotos detalladas de diferentes tipos de ventanas",
     icon: Camera,
     required: true,
-    tips: "Fotografía al menos 3 ventanas diferentes, incluyendo marcos y cristales. Si hay contraventanas, inclúyelas."
+    tips: "Fotografía al menos 3 ventanas diferentes, incluyendo marcos y cristales.",
   },
   {
     id: "heating",
-    title: "Sistema de Calefacción",
-    description: "Caldera, radiadores o sistema de climatización principal",
+    title: "Sistema de calefaccion",
+    description: "Caldera, radiadores o sistema de climatizacion principal",
     icon: Thermometer,
     required: true,
-    tips: "Incluye la etiqueta energética si está visible. Fotografía tanto la unidad exterior como interior si es aire acondicionado."
+    tips: "Incluye la etiqueta energetica si esta visible.",
   },
   {
     id: "dhw",
-    title: "Agua Caliente Sanitaria",
-    description: "Calentador, termo eléctrico o sistema de ACS",
+    title: "Agua caliente sanitaria",
+    description: "Calentador, termo electrico o sistema de ACS",
     icon: Droplets,
     required: true,
-    tips: "Si es un termo, incluye la etiqueta energética. Si es gas, fotografía la caldera."
+    tips: "Si es un termo, incluye la etiqueta energetica. Si es gas, fotografía la caldera.",
   },
   {
     id: "electrical",
-    title: "Cuadro Eléctrico",
-    description: "Panel eléctrico principal con etiquetas de potencia",
+    title: "Cuadro electrico",
+    description: "Panel electrico principal con etiquetas de potencia",
     icon: Zap,
     required: false,
-    tips: "Asegúrate de que se puedan leer las etiquetas de potencia contratada."
+    tips: "Asegurate de que se puedan leer las etiquetas de potencia contratada.",
   },
   {
     id: "interior",
-    title: "Espacios Interiores",
-    description: "Fotos representativas de salón, cocina y dormitorios",
+    title: "Espacios interiores",
+    description: "Fotos representativas de salon, cocina y dormitorios",
     icon: Home,
     required: false,
-    tips: "2-3 fotos de diferentes estancias para valorar el estado general."
-  }
+    tips: "2-3 fotos de diferentes estancias para valorar el estado general.",
+  },
 ];
+
+const stepLabels = ["Datos generales", "Inmueble", "Instalaciones", "Fotografias"];
 
 export default function CertificationForm() {
   const { uniqueLink } = useParams<{ uniqueLink: string }>();
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
-  const [uploadedPhotos, setUploadedPhotos] = useState<{[key: string]: string[]}>({});
+  const [uploadedPhotos, setUploadedPhotos] = useState<{ [key: string]: string[] }>({});
   const [formData, setFormData] = useState<Partial<CertificationFormData>>({});
 
   const { data: quoteData, isLoading } = useQuery({
@@ -134,74 +111,59 @@ export default function CertificationForm() {
     onSuccess: () => {
       toast({
         title: "Formulario enviado",
-        description: "Hemos recibido toda la información. Comenzaremos tu certificación energética.",
+        description: "Hemos recibido toda la informacion. Comenzaremos tu certificacion energetica.",
       });
-      setCurrentStep(5); // Success step
+      setCurrentStep(5);
     },
     onError: () => {
       toast({
         title: "Error",
-        description: "No se pudo enviar el formulario. Inténtalo de nuevo.",
+        description: "No se pudo enviar el formulario. Intentalo de nuevo.",
         variant: "destructive",
       });
     },
   });
 
   const handleInputChange = (field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handlePhotoUpload = async (photoType: string, files: FileList) => {
-    // Aquí iría la lógica de subida de fotos
-    // Por simplicidad, simularemos la subida
-    const photoUrls = Array.from(files).map(file => URL.createObjectURL(file));
-    setUploadedPhotos(prev => ({
-      ...prev,
-      [photoType]: [...(prev[photoType] || []), ...photoUrls]
-    }));
+  const handlePhotoUpload = (photoType: string, files: FileList) => {
+    const urls = Array.from(files).map((f) => URL.createObjectURL(f));
+    setUploadedPhotos((prev) => ({ ...prev, [photoType]: [...(prev[photoType] || []), ...urls] }));
   };
 
-  const handleNextStep = () => {
+  const handleNext = () => {
     if (currentStep < 4) {
       setCurrentStep(currentStep + 1);
     } else {
-      // Submit form
-      const finalData = {
-        ...formData,
-        photos: Object.values(uploadedPhotos).flat()
-      };
-      submitFormMutation.mutate(finalData);
+      submitFormMutation.mutate({ ...formData, photos: Object.values(uploadedPhotos).flat() });
     }
   };
 
-  const handlePrevStep = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    }
+  const handlePrev = () => {
+    if (currentStep > 1) setCurrentStep(currentStep - 1);
   };
 
   const isStepComplete = (step: number) => {
     switch (step) {
-      case 1:
-        return formData.fullName && formData.address && formData.cadastralRef;
-      case 2:
-        return formData.propertyType && formData.totalArea && formData.buildYear;
-      case 3:
-        return formData.heatingSystem && formData.dhwSystem;
+      case 1: return !!(formData.fullName && formData.address && formData.cadastralRef);
+      case 2: return !!(formData.propertyType && formData.totalArea && formData.buildYear);
+      case 3: return !!(formData.heatingSystem && formData.dhwSystem);
       case 4:
-        const requiredPhotos = photoRequirements.filter(p => p.required);
-        return requiredPhotos.every(p => uploadedPhotos[p.id]?.length > 0);
-      default:
-        return false;
+        return photoRequirements
+          .filter((p) => p.required)
+          .every((p) => (uploadedPhotos[p.id]?.length ?? 0) > 0);
+      default: return false;
     }
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando formulario...</p>
+          <div className="animate-spin rounded-full h-10 w-10 border-2 border-border border-t-primary mx-auto mb-4" />
+          <p className="text-sm text-muted-foreground">Cargando formulario…</p>
         </div>
       </div>
     );
@@ -209,170 +171,176 @@ export default function CertificationForm() {
 
   if (!quoteData) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Card className="w-full max-w-md">
-          <CardContent className="p-6 text-center">
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Enlace no válido</h2>
-            <p className="text-gray-600">El enlace del formulario no existe o ha expirado.</p>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="bg-card border border-border rounded-2xl p-8 text-center w-full max-w-sm shadow-sm">
+          <h2 className="text-lg font-semibold text-foreground mb-2">Enlace no valido</h2>
+          <p className="text-sm text-muted-foreground">El enlace del formulario no existe o ha expirado.</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4">
+    <div className="min-h-screen bg-background py-8">
+      <div className="max-w-3xl mx-auto px-4">
+
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center mb-4">
-            <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
-              <Home className="w-6 h-6 text-white" />
-            </div>
+          <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
+            <Home className="w-6 h-6 text-primary-foreground" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">Formulario de Certificación Energética</h1>
-          <p className="text-gray-600 mt-2">
-            Completa los datos de tu propiedad para generar el certificado energético oficial
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">
+            Formulario de certificacion energetica
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1.5">
+            Completa los datos de tu propiedad para generar el certificado energetico oficial
           </p>
-          <div className="mt-4 flex items-center justify-center space-x-2">
-            <Clock className="w-4 h-4 text-green-600" />
-            <span className="text-sm text-green-600 font-medium">
-              Certificado listo en {quoteData.deliveryDays} días tras completar este formulario
-            </span>
+          <div className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-primary">
+            <Clock className="w-4 h-4" />
+            <span>Certificado listo en {quoteData.deliveryDays} dias tras completar este formulario</span>
           </div>
         </div>
 
-        {/* Progress Steps */}
+        {/* Progress steps */}
         <div className="mb-8">
-          <div className="flex items-center justify-between">
-            {[1, 2, 3, 4].map((step) => (
-              <div key={step} className="flex items-center">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                  step <= currentStep 
-                    ? 'bg-primary text-white' 
-                    : isStepComplete(step) 
-                    ? 'bg-green-500 text-white'
-                    : 'bg-gray-200 text-gray-600'
-                }`}>
-                  {isStepComplete(step) ? <CheckCircle className="w-4 h-4" /> : step}
+          <div className="flex items-center">
+            {[1, 2, 3, 4].map((step, i) => (
+              <div key={step} className={i < 3 ? "flex-1 flex items-center" : "flex items-center"}>
+                <div
+                  className={[
+                    "w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 transition-all",
+                    isStepComplete(step) && step !== currentStep
+                      ? "bg-primary text-primary-foreground"
+                      : step === currentStep
+                      ? "bg-primary/10 text-primary ring-2 ring-primary/30"
+                      : "bg-muted text-muted-foreground",
+                  ].join(" ")}
+                >
+                  {isStepComplete(step) && step !== currentStep ? (
+                    <CheckCircle className="w-4 h-4" />
+                  ) : (
+                    step
+                  )}
                 </div>
-                {step < 4 && (
-                  <div className={`w-full h-1 mx-4 ${
-                    step < currentStep ? 'bg-primary' : 'bg-gray-200'
-                  }`} />
+                {i < 3 && (
+                  <div
+                    className={[
+                      "flex-1 h-0.5 mx-2 transition-all",
+                      step < currentStep ? "bg-primary" : "bg-border",
+                    ].join(" ")}
+                  />
                 )}
               </div>
             ))}
           </div>
-          <div className="flex justify-between mt-2 text-xs text-gray-600">
-            <span>Datos Generales</span>
-            <span>Inmueble</span>
-            <span>Instalaciones</span>
-            <span>Fotografías</span>
+          <div className="flex justify-between mt-2">
+            {stepLabels.map((label, i) => (
+              <span
+                key={i}
+                className={[
+                  "text-[11px] font-semibold",
+                  i + 1 === currentStep ? "text-foreground" : "text-muted-foreground",
+                ].join(" ")}
+              >
+                {label}
+              </span>
+            ))}
           </div>
         </div>
 
-        {/* Step Content */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>
-              {currentStep === 1 && "Datos Generales del Inmueble"}
-              {currentStep === 2 && "Características del Inmueble"}
-              {currentStep === 3 && "Instalaciones y Sistemas"}
-              {currentStep === 4 && "Documentación Fotográfica"}
-              {currentStep === 5 && "Formulario Completado"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+        {/* Main card */}
+        <div className="bg-card border border-border rounded-2xl shadow-sm mb-6 overflow-hidden">
+          <div className="px-6 py-4 border-b border-border">
+            <h2 className="text-sm font-semibold text-foreground tracking-tight">
+              {currentStep === 1 && "Datos generales del inmueble"}
+              {currentStep === 2 && "Caracteristicas del inmueble"}
+              {currentStep === 3 && "Instalaciones y sistemas"}
+              {currentStep === 4 && "Documentacion fotografica"}
+              {currentStep === 5 && "Formulario completado"}
+            </h2>
+          </div>
+
+          <div className="p-6">
+
+            {/* ── Step 1: Datos generales ── */}
             {currentStep === 1 && (
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <Label htmlFor="fullName">Nombre completo del propietario *</Label>
+              <div className="space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <Field label="Nombre completo" required>
                     <Input
-                      id="fullName"
                       value={formData.fullName || ""}
                       onChange={(e) => handleInputChange("fullName", e.target.value)}
                       placeholder="Nombre y apellidos"
                     />
-                  </div>
-                  <div>
-                    <Label htmlFor="dni">DNI/NIE *</Label>
+                  </Field>
+                  <Field label="DNI / NIE" required>
                     <Input
-                      id="dni"
                       value={formData.dni || ""}
                       onChange={(e) => handleInputChange("dni", e.target.value)}
                       placeholder="12345678A"
+                      className="font-mono"
                     />
-                  </div>
+                  </Field>
                 </div>
 
-                <div>
-                  <Label htmlFor="address">Dirección completa *</Label>
+                <Field label="Direccion completa" required>
                   <Input
-                    id="address"
                     value={formData.address || ""}
                     onChange={(e) => handleInputChange("address", e.target.value)}
-                    placeholder="Calle, número, piso, puerta"
+                    placeholder="Calle, numero, piso, puerta"
                   />
-                </div>
+                </Field>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div>
-                    <Label htmlFor="postalCode">Código Postal</Label>
+                <div className="grid grid-cols-3 gap-4">
+                  <Field label="Codigo postal">
                     <Input
-                      id="postalCode"
                       value={formData.postalCode || ""}
                       onChange={(e) => handleInputChange("postalCode", e.target.value)}
                       placeholder="30001"
                     />
-                  </div>
-                  <div>
-                    <Label htmlFor="city">Ciudad</Label>
+                  </Field>
+                  <Field label="Ciudad">
                     <Input
-                      id="city"
                       value={formData.city || ""}
                       onChange={(e) => handleInputChange("city", e.target.value)}
-                      placeholder="Murcia"
+                      placeholder="Madrid"
                     />
-                  </div>
-                  <div>
-                    <Label htmlFor="province">Provincia</Label>
+                  </Field>
+                  <Field label="Provincia">
                     <Input
-                      id="province"
                       value={formData.province || ""}
                       onChange={(e) => handleInputChange("province", e.target.value)}
-                      placeholder="Murcia"
+                      placeholder="Madrid"
                     />
-                  </div>
+                  </Field>
                 </div>
 
-                <div>
-                  <Label htmlFor="cadastralRef">Referencia Catastral *</Label>
+                <Field
+                  label="Referencia catastral"
+                  required
+                  hint="20 caracteres alfanumericos. La encuentras en el recibo del IBI o en la web del Catastro."
+                >
                   <Input
-                    id="cadastralRef"
                     value={formData.cadastralRef || ""}
                     onChange={(e) => handleInputChange("cadastralRef", e.target.value)}
                     placeholder="1234567CS1234S0001WX"
+                    className="font-mono"
                   />
-                  <p className="text-xs text-gray-500 mt-1">
-                    La puedes encontrar en tu recibo del IBI o en la web del Catastro
-                  </p>
-                </div>
+                </Field>
               </div>
             )}
 
+            {/* ── Step 2: Inmueble ── */}
             {currentStep === 2 && (
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <Label htmlFor="propertyType">Tipo de inmueble *</Label>
-                    <Select 
+              <div className="space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <Field label="Tipo de inmueble" required>
+                    <Select
                       value={formData.propertyType}
-                      onValueChange={(value) => handleInputChange("propertyType", value)}
+                      onValueChange={(v) => handleInputChange("propertyType", v)}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar..." />
+                        <SelectValue placeholder="Seleccionar…" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="vivienda">Vivienda</SelectItem>
@@ -381,11 +349,9 @@ export default function CertificationForm() {
                         <SelectItem value="edificio">Edificio completo</SelectItem>
                       </SelectContent>
                     </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="buildYear">Año de construcción *</Label>
+                  </Field>
+                  <Field label="Ano de construccion" required>
                     <Input
-                      id="buildYear"
                       type="number"
                       min="1900"
                       max={new Date().getFullYear()}
@@ -393,14 +359,12 @@ export default function CertificationForm() {
                       onChange={(e) => handleInputChange("buildYear", parseInt(e.target.value))}
                       placeholder="1990"
                     />
-                  </div>
+                  </Field>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <Label htmlFor="totalArea">Superficie total (m²) *</Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <Field label="Superficie total (m²)" required>
                     <Input
-                      id="totalArea"
                       type="number"
                       min="1"
                       step="0.1"
@@ -408,11 +372,9 @@ export default function CertificationForm() {
                       onChange={(e) => handleInputChange("totalArea", parseFloat(e.target.value))}
                       placeholder="80"
                     />
-                  </div>
-                  <div>
-                    <Label htmlFor="heatedArea">Superficie climatizada (m²)</Label>
+                  </Field>
+                  <Field label="Superficie climatizada (m²)">
                     <Input
-                      id="heatedArea"
                       type="number"
                       min="1"
                       step="0.1"
@@ -420,265 +382,295 @@ export default function CertificationForm() {
                       onChange={(e) => handleInputChange("heatedArea", parseFloat(e.target.value))}
                       placeholder="75"
                     />
-                  </div>
+                  </Field>
                 </div>
 
                 <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="floors">Plantas</Label>
+                  <Field label="Plantas">
                     <Input
-                      id="floors"
                       type="number"
                       min="1"
                       value={formData.floors || ""}
                       onChange={(e) => handleInputChange("floors", parseInt(e.target.value))}
                       placeholder="1"
                     />
-                  </div>
-                  <div>
-                    <Label htmlFor="rooms">Habitaciones</Label>
+                  </Field>
+                  <Field label="Habitaciones">
                     <Input
-                      id="rooms"
                       type="number"
                       min="1"
                       value={formData.rooms || ""}
                       onChange={(e) => handleInputChange("rooms", parseInt(e.target.value))}
                       placeholder="3"
                     />
-                  </div>
-                  <div>
-                    <Label htmlFor="bathrooms">Baños</Label>
+                  </Field>
+                  <Field label="Banos">
                     <Input
-                      id="bathrooms"
                       type="number"
                       min="1"
                       value={formData.bathrooms || ""}
                       onChange={(e) => handleInputChange("bathrooms", parseInt(e.target.value))}
                       placeholder="2"
                     />
-                  </div>
+                  </Field>
                 </div>
               </div>
             )}
 
+            {/* ── Step 3: Instalaciones ── */}
             {currentStep === 3 && (
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <Label htmlFor="heatingSystem">Sistema de calefacción *</Label>
-                    <Select 
+              <div className="space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <Field label="Sistema de calefaccion" required>
+                    <Select
                       value={formData.heatingSystem}
-                      onValueChange={(value) => handleInputChange("heatingSystem", value)}
+                      onValueChange={(v) => handleInputChange("heatingSystem", v)}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar..." />
+                        <SelectValue placeholder="Seleccionar…" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="gas_individual">Caldera individual gas</SelectItem>
-                        <SelectItem value="gas_central">Calefacción central gas</SelectItem>
-                        <SelectItem value="electrico">Eléctrico</SelectItem>
+                        <SelectItem value="gas_central">Calefaccion central gas</SelectItem>
+                        <SelectItem value="electrico">Electrico</SelectItem>
                         <SelectItem value="aire_acondicionado">Aire acondicionado</SelectItem>
                         <SelectItem value="biomasa">Biomasa</SelectItem>
-                        <SelectItem value="sin_calefaccion">Sin calefacción</SelectItem>
+                        <SelectItem value="sin_calefaccion">Sin calefaccion</SelectItem>
                       </SelectContent>
                     </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="coolingSystem">Sistema de refrigeración</Label>
-                    <Select 
+                  </Field>
+                  <Field label="Sistema de refrigeracion">
+                    <Select
                       value={formData.coolingSystem}
-                      onValueChange={(value) => handleInputChange("coolingSystem", value)}
+                      onValueChange={(v) => handleInputChange("coolingSystem", v)}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar..." />
+                        <SelectValue placeholder="Seleccionar…" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="aire_acondicionado">Aire acondicionado</SelectItem>
                         <SelectItem value="split">Split</SelectItem>
                         <SelectItem value="central">Sistema central</SelectItem>
                         <SelectItem value="ventiladores">Solo ventiladores</SelectItem>
-                        <SelectItem value="sin_refrigeracion">Sin refrigeración</SelectItem>
+                        <SelectItem value="sin_refrigeracion">Sin refrigeracion</SelectItem>
                       </SelectContent>
                     </Select>
-                  </div>
+                  </Field>
                 </div>
 
-                <div>
-                  <Label htmlFor="dhwSystem">Sistema de agua caliente sanitaria *</Label>
-                  <Select 
+                <Field label="Sistema de agua caliente sanitaria" required>
+                  <Select
                     value={formData.dhwSystem}
-                    onValueChange={(value) => handleInputChange("dhwSystem", value)}
+                    onValueChange={(v) => handleInputChange("dhwSystem", v)}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar..." />
+                      <SelectValue placeholder="Seleccionar…" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="caldera_gas">Caldera de gas</SelectItem>
-                      <SelectItem value="termo_electrico">Termo eléctrico</SelectItem>
+                      <SelectItem value="termo_electrico">Termo electrico</SelectItem>
                       <SelectItem value="calentador_gas">Calentador de gas</SelectItem>
-                      <SelectItem value="solar_termica">Solar térmica + apoyo</SelectItem>
+                      <SelectItem value="solar_termica">Solar termica + apoyo</SelectItem>
                       <SelectItem value="bomba_calor">Bomba de calor</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
+                </Field>
 
-                <div>
-                  <Label htmlFor="renewableEnergy">Energías renovables</Label>
-                  <Select 
+                <Field label="Energias renovables">
+                  <Select
                     value={formData.renewableEnergy}
-                    onValueChange={(value) => handleInputChange("renewableEnergy", value)}
+                    onValueChange={(v) => handleInputChange("renewableEnergy", v)}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar..." />
+                      <SelectValue placeholder="Seleccionar…" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="ninguna">Ninguna</SelectItem>
                       <SelectItem value="solar_fotovoltaica">Solar fotovoltaica</SelectItem>
-                      <SelectItem value="solar_termica">Solar térmica</SelectItem>
-                      <SelectItem value="ambas">Solar fotovoltaica + térmica</SelectItem>
+                      <SelectItem value="solar_termica">Solar termica</SelectItem>
+                      <SelectItem value="ambas">Solar fotovoltaica + termica</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
+                </Field>
               </div>
             )}
 
+            {/* ── Step 4: Fotografias ── */}
             {currentStep === 4 && (
-              <div className="space-y-8">
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <div className="flex items-start">
-                    <Info className="w-5 h-5 text-blue-600 mt-0.5 mr-3" />
-                    <div>
-                      <h4 className="font-medium text-blue-900">Instrucciones para las fotografías</h4>
-                      <p className="text-sm text-blue-700 mt-1">
-                        Las fotos son fundamentales para una evaluación precisa. Sigue las indicaciones para cada tipo de fotografía.
-                        Las fotos marcadas como obligatorias son imprescindibles para completar el certificado.
-                      </p>
-                    </div>
+              <div className="space-y-5">
+                <div className="flex items-start gap-3 p-4 rounded-xl bg-primary/6 border border-primary/15">
+                  <Info className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-xs font-semibold text-foreground">Instrucciones para las fotografias</p>
+                    <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                      Las fotos son fundamentales para una evaluacion precisa. Las marcadas como obligatorias
+                      son imprescindibles para completar el certificado.
+                    </p>
                   </div>
                 </div>
 
-                {photoRequirements.map((photo) => (
-                  <Card key={photo.id} className="border-l-4 border-l-primary">
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-center">
-                          <photo.icon className="w-6 h-6 text-primary mr-3" />
-                          <div>
-                            <h4 className="font-semibold text-gray-900 flex items-center">
-                              {photo.title}
-                              {photo.required && (
-                                <Badge className="ml-2 bg-red-100 text-red-800 text-xs">Obligatorio</Badge>
-                              )}
-                            </h4>
-                            <p className="text-sm text-gray-600">{photo.description}</p>
+                <div className="space-y-3">
+                  {photoRequirements.map((photo) => {
+                    const uploaded = uploadedPhotos[photo.id] || [];
+                    const done = uploaded.length > 0;
+                    return (
+                      <div
+                        key={photo.id}
+                        className={[
+                          "rounded-xl border p-4 transition-colors",
+                          done ? "border-primary/25 bg-primary/3" : "border-border bg-card",
+                        ].join(" ")}
+                      >
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex items-center gap-3">
+                            <div
+                              className={[
+                                "w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0",
+                                done ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground",
+                              ].join(" ")}
+                            >
+                              <photo.icon className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <p className="text-sm font-semibold text-foreground">{photo.title}</p>
+                                {photo.required && (
+                                  <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
+                                    Obligatorio
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs text-muted-foreground mt-0.5">{photo.description}</p>
+                            </div>
                           </div>
+                          {done && (
+                            <div className="flex items-center gap-1 text-primary text-xs font-semibold flex-shrink-0">
+                              <CheckCircle className="w-3.5 h-3.5" />
+                              {uploaded.length} foto{uploaded.length > 1 ? "s" : ""}
+                            </div>
+                          )}
                         </div>
-                        <div className="text-right">
-                          <div className={`text-lg font-bold ${
-                            uploadedPhotos[photo.id]?.length > 0 ? 'text-green-600' : 'text-gray-400'
-                          }`}>
-                            {uploadedPhotos[photo.id]?.length || 0}
-                          </div>
-                          <div className="text-xs text-gray-500">fotos</div>
-                        </div>
-                      </div>
 
-                      <div className="bg-yellow-50 p-3 rounded-md mb-4">
-                        <p className="text-sm text-yellow-800">
-                          <strong>Consejo:</strong> {photo.tips}
+                        <p className="text-xs text-muted-foreground bg-muted/40 rounded-lg px-3 py-2 mb-3 leading-relaxed">
+                          {photo.tips}
                         </p>
-                      </div>
 
-                      <div className="flex items-center space-x-4">
                         <input
                           type="file"
                           accept="image/*"
                           multiple
                           className="hidden"
-                          id={`upload-${photo.id}`}
-                          onChange={(e) => e.target.files && handlePhotoUpload(photo.id, e.target.files)}
+                          id={"upload-" + photo.id}
+                          onChange={(e) =>
+                            e.target.files && handlePhotoUpload(photo.id, e.target.files)
+                          }
                         />
-                        <label htmlFor={`upload-${photo.id}`}>
-                          <Button variant="outline" className="cursor-pointer" asChild>
+                        <label htmlFor={"upload-" + photo.id}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="rounded-full h-8 px-3 text-xs font-semibold cursor-pointer border-border"
+                            asChild
+                          >
                             <span>
-                              <Upload className="w-4 h-4 mr-2" />
+                              <Upload className="w-3.5 h-3.5 mr-1.5" />
                               Subir fotos
                             </span>
                           </Button>
                         </label>
-                        
-                        {uploadedPhotos[photo.id]?.length > 0 && (
-                          <div className="flex items-center text-green-600">
-                            <CheckCircle className="w-4 h-4 mr-1" />
-                            <span className="text-sm">
-                              {uploadedPhotos[photo.id].length} foto{uploadedPhotos[photo.id].length > 1 ? 's' : ''} subida{uploadedPhotos[photo.id].length > 1 ? 's' : ''}
-                            </span>
+
+                        {uploaded.length > 0 && (
+                          <div className="mt-3 grid grid-cols-3 gap-2">
+                            {uploaded.slice(0, 3).map((url, i) => (
+                              <img
+                                key={i}
+                                src={url}
+                                alt={photo.title + " " + (i + 1)}
+                                className="w-full h-20 object-cover rounded-lg border border-border"
+                              />
+                            ))}
                           </div>
                         )}
                       </div>
-
-                      {/* Preview de fotos subidas */}
-                      {uploadedPhotos[photo.id]?.length > 0 && (
-                        <div className="mt-4 grid grid-cols-3 gap-2">
-                          {uploadedPhotos[photo.id].slice(0, 3).map((url, index) => (
-                            <img
-                              key={index}
-                              src={url}
-                              alt={`${photo.title} ${index + 1}`}
-                              className="w-full h-20 object-cover rounded border"
-                            />
-                          ))}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
+                    );
+                  })}
+                </div>
               </div>
             )}
 
+            {/* ── Step 5: Exito ── */}
             {currentStep === 5 && (
-              <div className="text-center py-8">
-                <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">¡Formulario completado!</h2>
-                <p className="text-gray-600 mb-6">
-                  Hemos recibido toda la información necesaria para generar tu certificación energética.
-                  Nuestro técnico comenzará el procesamiento inmediatamente.
+              <div className="text-center py-10">
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-5">
+                  <CheckCircle className="w-8 h-8 text-primary" />
+                </div>
+                <h2 className="text-xl font-bold text-foreground mb-2">Formulario completado</h2>
+                <p className="text-sm text-muted-foreground mb-6 leading-relaxed max-w-sm mx-auto">
+                  Hemos recibido toda la informacion necesaria. Nuestro tecnico comenzara el procesamiento inmediatamente.
                 </p>
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <p className="text-sm text-green-800">
-                    <strong>Tiempo estimado de entrega:</strong> {quoteData.deliveryDays} días laborables
+                <div className="inline-block bg-primary/8 border border-primary/15 rounded-xl px-5 py-3 text-left">
+                  <p className="text-xs font-semibold text-foreground">
+                    Tiempo estimado: {quoteData.deliveryDays} dias laborables
                   </p>
-                  <p className="text-sm text-green-700 mt-1">
-                    Te mantendremos informado del progreso por email y WhatsApp.
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Te mantendremos informado por email y WhatsApp.
                   </p>
                 </div>
               </div>
             )}
-          </CardContent>
-        </Card>
 
-        {/* Navigation */}
+          </div>
+        </div>
+
+        {/* Navigation buttons */}
         {currentStep < 5 && (
           <div className="flex justify-between">
-            <Button 
-              variant="outline" 
-              onClick={handlePrevStep}
+            <Button
+              variant="outline"
+              onClick={handlePrev}
               disabled={currentStep === 1}
+              className="rounded-full h-9 px-4 text-xs font-semibold border-border"
             >
               Anterior
             </Button>
-            <Button 
-              onClick={handleNextStep}
+            <Button
+              onClick={handleNext}
               disabled={!isStepComplete(currentStep) || submitFormMutation.isPending}
+              className="rounded-full h-9 px-5 text-xs font-semibold"
             >
-              {currentStep === 4 
-                ? (submitFormMutation.isPending ? "Enviando..." : "Finalizar")
-                : "Siguiente"
-              }
+              {currentStep === 4
+                ? submitFormMutation.isPending
+                  ? "Enviando…"
+                  : "Finalizar"
+                : "Siguiente →"}
             </Button>
           </div>
         )}
+
       </div>
+    </div>
+  );
+}
+
+function Field({
+  label,
+  required,
+  hint,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <label className="block text-xs font-semibold text-foreground mb-1.5">
+        {label}
+        {required && <span className="text-primary ml-0.5 font-bold">*</span>}
+      </label>
+      {children}
+      {hint && <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">{hint}</p>}
     </div>
   );
 }
