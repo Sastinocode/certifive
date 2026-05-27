@@ -45,27 +45,33 @@ const STORAGE_KEY_PREFIX = "certifive_form_";
 function ProgressBar({ step, total }: { step: number; total: number }) {
   return (
     <div className="w-full">
-      <div className="flex justify-between mb-2">
+      <div className="flex items-center mb-3">
         {Array.from({ length: total }, (_, i) => (
-          <div key={i} className="flex items-center gap-1 flex-1">
+          <div key={i} className={i < total - 1 ? "flex-1 flex items-center" : "flex items-center"}>
             <div
-              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 transition-all ${
+              className={[
+                "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 transition-all",
                 i + 1 < step
-                  ? "bg-emerald-600 text-white"
+                  ? "bg-primary text-primary-foreground"
                   : i + 1 === step
-                  ? "bg-emerald-800 text-white ring-4 ring-emerald-100"
-                  : "bg-gray-100 text-gray-400"
-              }`}
+                  ? "bg-primary/10 text-primary ring-2 ring-primary/25"
+                  : "bg-muted text-muted-foreground",
+              ].join(" ")}
             >
               {i + 1 < step ? "✓" : i + 1}
             </div>
             {i < total - 1 && (
-              <div className={`h-0.5 flex-1 mx-1 transition-all ${i + 1 < step ? "bg-emerald-600" : "bg-gray-100"}`} />
+              <div
+                className={[
+                  "flex-1 h-0.5 mx-2 transition-all",
+                  i + 1 < step ? "bg-primary" : "bg-border",
+                ].join(" ")}
+              />
             )}
           </div>
         ))}
       </div>
-      <p className="text-[11px] text-gray-400 font-medium mt-1">Paso {step} de {total}</p>
+      <p className="text-[11px] text-muted-foreground font-medium">Paso {step} de {total}</p>
     </div>
   );
 }
@@ -87,16 +93,17 @@ function OptionCard({
     <button
       type="button"
       onClick={onClick}
-      className={`w-full flex items-center gap-3 px-4 py-4 rounded-2xl border-2 text-left transition-all active:scale-[0.98] ${
+      className={[
+        "w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl border-2 text-left transition-all active:scale-[0.98]",
         selected
-          ? "border-emerald-600 bg-emerald-50 text-emerald-900"
-          : "border-gray-100 bg-white text-gray-700 hover:border-emerald-200"
-      }`}
+          ? "border-primary bg-primary/5 text-foreground"
+          : "border-border bg-card text-foreground hover:border-primary/30",
+      ].join(" ")}
     >
       <span className="text-2xl leading-none">{emoji}</span>
       <span className="text-sm font-medium">{label}</span>
       {selected && (
-        <span className="ml-auto text-emerald-600 font-bold text-lg leading-none">✓</span>
+        <span className="ml-auto text-primary font-bold text-base leading-none">✓</span>
       )}
     </button>
   );
@@ -113,27 +120,27 @@ function Field({
 }) {
   return (
     <div className="space-y-1.5">
-      <label className="block text-sm font-semibold text-gray-700">{label}</label>
-      {hint && <p className="text-xs text-gray-400">{hint}</p>}
+      <label className="block text-sm font-semibold text-foreground">{label}</label>
+      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
       {children}
     </div>
   );
 }
 
 const inputCls =
-  "w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-transparent";
+  "w-full bg-card border border-border rounded-xl px-4 py-3.5 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 transition-all";
 
 // ── Screens ───────────────────────────────────────────────────────────────────
 
 function AlreadyDoneScreen() {
   return (
-    <div className="min-h-screen bg-emerald-50 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="text-center max-w-sm">
-        <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
+        <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
           <span className="text-4xl">✅</span>
         </div>
-        <h1 className="text-xl font-bold text-emerald-900 mb-2">Ya enviaste tus datos</h1>
-        <p className="text-gray-500 text-sm">Tu certificador ya tiene toda la información. Te contactará en breve.</p>
+        <h1 className="text-xl font-bold text-foreground mb-2">Ya enviaste tus datos</h1>
+        <p className="text-muted-foreground text-sm">Tu certificador ya tiene toda la informacion. Te contactara en breve.</p>
       </div>
     </div>
   );
@@ -141,19 +148,18 @@ function AlreadyDoneScreen() {
 
 function ThankYouScreen({ certifierName }: { certifierName: string }) {
   return (
-    <div className="min-h-screen bg-emerald-50 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="text-center max-w-sm">
-        <div className="w-24 h-24 bg-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-emerald-200">
+        <div className="w-24 h-24 bg-primary rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-primary/20">
           <span className="text-5xl">🎉</span>
         </div>
-        <h1 className="text-2xl font-bold text-emerald-900 mb-3">¡Listo! Tus datos han llegado</h1>
-        <p className="text-gray-600 text-sm leading-relaxed mb-4">
-          <strong>{certifierName}</strong> ya tiene toda la información que necesita para tu certificado energético.
+        <h1 className="text-2xl font-bold text-foreground mb-3">Tus datos han llegado</h1>
+        <p className="text-muted-foreground text-sm leading-relaxed mb-4">
+          <strong className="text-foreground">{certifierName}</strong> ya tiene toda la informacion que necesita para tu certificado energetico.
         </p>
-        <p className="text-gray-400 text-xs">Recibirás noticias suyas en breve. Puedes cerrar esta ventana.</p>
-        <div className="mt-8 flex items-center justify-center gap-2 text-xs text-gray-300">
-          <span className="material-symbols-outlined text-[14px]">energy_savings_leaf</span>
-          <span>CERTIFIVE</span>
+        <p className="text-muted-foreground/60 text-xs">Recibiras noticias suyas en breve. Puedes cerrar esta ventana.</p>
+        <div className="mt-8 flex items-center justify-center gap-2 text-xs text-muted-foreground/40">
+          <span className="font-bold tracking-widest uppercase">Certifive</span>
         </div>
       </div>
     </div>
@@ -162,11 +168,13 @@ function ThankYouScreen({ certifierName }: { certifierName: string }) {
 
 function ErrorScreen() {
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="text-center max-w-sm">
         <div className="text-5xl mb-4">🔗</div>
-        <h1 className="text-xl font-bold text-gray-800 mb-2">Enlace no válido</h1>
-        <p className="text-gray-500 text-sm">Este enlace no existe o ya no está disponible. Pide a tu certificador que te envíe uno nuevo.</p>
+        <h1 className="text-xl font-bold text-foreground mb-2">Enlace no valido</h1>
+        <p className="text-muted-foreground text-sm">
+          Este enlace no existe o ya no esta disponible. Pide a tu certificador que te envie uno nuevo.
+        </p>
       </div>
     </div>
   );
@@ -202,7 +210,6 @@ export default function PublicForm({ token }: PublicFormProps) {
       .then((data: FormInfo) => {
         setInfo(data);
         if (!data.alreadyCompleted && data.prefill) {
-          // Restore saved progress first, then pre-fill from server
           const saved = localStorage.getItem(storageKey);
           if (saved) {
             try {
@@ -221,7 +228,6 @@ export default function PublicForm({ token }: PublicFormProps) {
       })
       .catch(() => setLoadError(true));
 
-    // Mark as opened
     fetch(`/api/form/${token}/open`, { method: "POST" }).catch(() => {});
   }, [token]);
 
@@ -268,7 +274,7 @@ export default function PublicForm({ token }: PublicFormProps) {
       localStorage.removeItem(storageKey);
       setSubmitted(true);
     } catch (e: any) {
-      setSubmitError(e.message ?? "No se pudo enviar. Inténtalo de nuevo.");
+      setSubmitError(e.message ?? "No se pudo enviar. Intentalo de nuevo.");
     } finally {
       setSubmitting(false);
     }
@@ -278,10 +284,10 @@ export default function PublicForm({ token }: PublicFormProps) {
 
   if (!info && !loadError) {
     return (
-      <div className="min-h-screen bg-emerald-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="w-10 h-10 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-sm text-gray-400">Cargando formulario…</p>
+          <div className="w-10 h-10 border-2 border-border border-t-primary rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-sm text-muted-foreground">Cargando formulario…</p>
         </div>
       </div>
     );
@@ -295,27 +301,32 @@ export default function PublicForm({ token }: PublicFormProps) {
 
   // ── Step validation ────────────────────────────────────────────────────────
   const step1Valid = step1.ownerName.trim().length > 1 && step1.ownerPhone.trim().length > 5;
-  const step2Valid = step2.address.trim().length > 3 && step2.city.trim().length > 1 && step2.postalCode.trim().length === 5;
+  const step2Valid =
+    step2.address.trim().length > 3 &&
+    step2.city.trim().length > 1 &&
+    step2.postalCode.trim().length === 5;
   const step3Valid = !!step3.heating && !!step3.hotWater && !!step3.cooling;
 
-  // ── Layout wrapper ─────────────────────────────────────────────────────────
+  // ── Layout ─────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
+
       {/* Header */}
-      <div className="bg-emerald-800 px-6 py-5 sticky top-0 z-10">
+      <div className="bg-card border-b border-border px-5 py-4 sticky top-0 z-10">
         <div className="max-w-lg mx-auto flex items-center gap-3">
-          <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center">
-            <span className="material-symbols-outlined text-white text-[16px]">energy_savings_leaf</span>
+          <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center flex-shrink-0">
+            <span className="text-primary-foreground font-bold text-sm">C</span>
           </div>
           <div>
-            <p className="text-white font-bold text-sm leading-tight">Certificado energético</p>
-            <p className="text-emerald-300 text-[11px]">Enviado por {certifierName}</p>
+            <p className="text-foreground font-bold text-sm leading-tight">Certifive</p>
+            <p className="text-muted-foreground text-[11px]">Enviado por {certifierName}</p>
           </div>
         </div>
       </div>
 
-      <div className="max-w-lg mx-auto px-5 py-6 pb-24">
+      <div className="max-w-lg mx-auto px-5 py-6 pb-28">
+
         {/* Progress */}
         <ProgressBar step={step} total={3} />
 
@@ -323,22 +334,22 @@ export default function PublicForm({ token }: PublicFormProps) {
         {step === 1 && (
           <div className="mt-6 space-y-5">
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Tus datos</h2>
-              <p className="text-sm text-gray-400 mt-1">
-                Solo usaremos esta información para el certificado. Los campos con * son obligatorios.
+              <h2 className="text-xl font-bold text-foreground tracking-tight">Tus datos</h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Solo usaremos esta informacion para el certificado. Los campos con * son obligatorios.
               </p>
             </div>
 
             <Field label="Tu nombre completo *">
               <input
                 className={inputCls}
-                placeholder="María García López"
+                placeholder="Maria Garcia Lopez"
                 value={step1.ownerName}
                 onChange={e => setStep1(s => ({ ...s, ownerName: e.target.value }))}
               />
             </Field>
 
-            <Field label="Tu teléfono *" hint="Para que el certificador pueda contactarte si hay alguna duda">
+            <Field label="Tu telefono *" hint="Para que el certificador pueda contactarte si hay alguna duda">
               <input
                 className={inputCls}
                 type="tel"
@@ -373,14 +384,14 @@ export default function PublicForm({ token }: PublicFormProps) {
         {step === 2 && (
           <div className="mt-6 space-y-5">
             <div>
-              <h2 className="text-xl font-bold text-gray-900">La vivienda</h2>
-              <p className="text-sm text-gray-400 mt-1">Datos sobre el inmueble a certificar.</p>
+              <h2 className="text-xl font-bold text-foreground tracking-tight">La vivienda</h2>
+              <p className="text-sm text-muted-foreground mt-1">Datos sobre el inmueble a certificar.</p>
             </div>
 
-            <Field label="Dirección completa *" hint="Calle, número, piso y puerta">
+            <Field label="Direccion completa *" hint="Calle, numero, piso y puerta">
               <input
                 className={inputCls}
-                placeholder="Calle Mayor 1, 2º B"
+                placeholder="Calle Mayor 1, 2 B"
                 value={step2.address}
                 onChange={e => setStep2(s => ({ ...s, address: e.target.value }))}
               />
@@ -395,7 +406,7 @@ export default function PublicForm({ token }: PublicFormProps) {
                   onChange={e => setStep2(s => ({ ...s, city: e.target.value }))}
                 />
               </Field>
-              <Field label="Código postal *">
+              <Field label="Codigo postal *">
                 <input
                   className={inputCls}
                   placeholder="28001"
@@ -415,13 +426,13 @@ export default function PublicForm({ token }: PublicFormProps) {
               />
             </Field>
 
-            <Field label="¿Qué tipo de vivienda es?">
+            <Field label="Tipo de vivienda">
               <select
                 className={inputCls}
                 value={step2.propertyType}
                 onChange={e => setStep2(s => ({ ...s, propertyType: e.target.value }))}
               >
-                <option value="">Selecciona una opción…</option>
+                <option value="">Selecciona una opcion…</option>
                 <option value="Piso/Apartamento">Piso o apartamento</option>
                 <option value="Vivienda unifamiliar">Casa unifamiliar (adosada o aislada)</option>
                 <option value="Local comercial">Local comercial</option>
@@ -433,7 +444,7 @@ export default function PublicForm({ token }: PublicFormProps) {
             </Field>
 
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Año de construcción" hint="Opcional, si lo sabes">
+              <Field label="Ano de construccion" hint="Opcional, si lo sabes">
                 <input
                   className={inputCls}
                   placeholder="1985"
@@ -454,7 +465,7 @@ export default function PublicForm({ token }: PublicFormProps) {
 
             <Field
               label="Referencia catastral"
-              hint="La puedes encontrar en el recibo del IBI o en la escritura. Es opcional."
+              hint="La encuentras en el recibo del IBI o en la escritura. Es opcional."
             >
               <input
                 className={inputCls}
@@ -466,26 +477,26 @@ export default function PublicForm({ token }: PublicFormProps) {
           </div>
         )}
 
-        {/* ── STEP 3: Energía en casa ───────────────────────────────────────── */}
+        {/* ── STEP 3: Energia en casa ───────────────────────────────────────── */}
         {step === 3 && (
           <div className="mt-6 space-y-7">
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Energía en casa</h2>
-              <p className="text-sm text-gray-400 mt-1">
-                Sin tecnicismos. Elige la opción que más se parezca a tu situación. Las tres primeras son obligatorias.
+              <h2 className="text-xl font-bold text-foreground tracking-tight">Energia en casa</h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Sin tecnicismos. Elige la opcion que mas se parezca a tu situacion. Las tres primeras son obligatorias.
               </p>
             </div>
 
-            {/* Calefacción */}
-            <div className="space-y-3">
-              <p className="text-sm font-bold text-gray-800">¿Cómo calientas la casa? *</p>
+            {/* Calefaccion */}
+            <div className="space-y-2.5">
+              <p className="text-sm font-bold text-foreground">Como calientas la casa? *</p>
               {[
                 { value: "gas_natural", emoji: "🔥", label: "Caldera de gas natural" },
                 { value: "gasoil", emoji: "🛢️", label: "Caldera de gasoil" },
                 { value: "bomba_calor", emoji: "♨️", label: "Bomba de calor (aerotermia)" },
-                { value: "radiadores_electricos", emoji: "⚡", label: "Radiadores o suelo eléctrico" },
-                { value: "leña_pellet", emoji: "🪵", label: "Estufa de leña o pellet" },
-                { value: "sin_calefaccion", emoji: "❌", label: "No tengo calefacción" },
+                { value: "radiadores_electricos", emoji: "⚡", label: "Radiadores o suelo electrico" },
+                { value: "leña_pellet", emoji: "🪵", label: "Estufa de lena o pellet" },
+                { value: "sin_calefaccion", emoji: "❌", label: "No tengo calefaccion" },
               ].map(o => (
                 <OptionCard
                   key={o.value}
@@ -497,15 +508,15 @@ export default function PublicForm({ token }: PublicFormProps) {
             </div>
 
             {/* Agua caliente */}
-            <div className="space-y-3">
-              <p className="text-sm font-bold text-gray-800">¿Cómo calientas el agua? *</p>
+            <div className="space-y-2.5">
+              <p className="text-sm font-bold text-foreground">Como calientas el agua? *</p>
               {[
-                { value: "caldera_gas", emoji: "🔥", label: "Caldera de gas (la misma de la calefacción)" },
+                { value: "caldera_gas", emoji: "🔥", label: "Caldera de gas (la misma de la calefaccion)" },
                 { value: "calentador_gas", emoji: "💧", label: "Calentador de gas (solo para el agua)" },
-                { value: "termo_electrico", emoji: "⚡", label: "Termo o calentador eléctrico" },
+                { value: "termo_electrico", emoji: "⚡", label: "Termo o calentador electrico" },
                 { value: "bomba_calor_acs", emoji: "♨️", label: "Bomba de calor para el agua" },
                 { value: "solar", emoji: "☀️", label: "Paneles solares" },
-                { value: "no_se", emoji: "🤷", label: "No lo sé" },
+                { value: "no_se", emoji: "🤷", label: "No lo se" },
               ].map(o => (
                 <OptionCard
                   key={o.value}
@@ -517,11 +528,11 @@ export default function PublicForm({ token }: PublicFormProps) {
             </div>
 
             {/* Aire acondicionado */}
-            <div className="space-y-3">
-              <p className="text-sm font-bold text-gray-800">¿Tienes aire acondicionado? *</p>
+            <div className="space-y-2.5">
+              <p className="text-sm font-bold text-foreground">Tienes aire acondicionado? *</p>
               {[
-                { value: "si_splits", emoji: "❄️", label: "Sí, aparatos en algunos cuartos (splits)" },
-                { value: "si_central", emoji: "🌬️", label: "Sí, sistema central (conductos)" },
+                { value: "si_splits", emoji: "❄️", label: "Si, aparatos en algunos cuartos (splits)" },
+                { value: "si_central", emoji: "🌬️", label: "Si, sistema central (conductos)" },
                 { value: "no", emoji: "❌", label: "No tengo aire" },
               ].map(o => (
                 <OptionCard
@@ -534,13 +545,16 @@ export default function PublicForm({ token }: PublicFormProps) {
             </div>
 
             {/* Ventanas */}
-            <div className="space-y-3">
-              <p className="text-sm font-bold text-gray-700">¿Qué tipo de ventanas tienes? <span className="text-gray-400 font-normal">(opcional)</span></p>
+            <div className="space-y-2.5">
+              <p className="text-sm font-bold text-foreground">
+                Que tipo de ventanas tienes?{" "}
+                <span className="text-muted-foreground font-normal">(opcional)</span>
+              </p>
               {[
-                { value: "vidrio_simple", emoji: "🪟", label: "Vidrio simple (antiguas, sin cámara de aire)" },
-                { value: "doble_vidrio", emoji: "🏠", label: "Doble vidrio (modernas, con cámara)" },
+                { value: "vidrio_simple", emoji: "🪟", label: "Vidrio simple (antiguas, sin camara de aire)" },
+                { value: "doble_vidrio", emoji: "🏠", label: "Doble vidrio (modernas, con camara)" },
                 { value: "triple_vidrio", emoji: "🔒", label: "Triple vidrio (muy eficientes)" },
-                { value: "no_se", emoji: "🤷", label: "No lo sé" },
+                { value: "no_se", emoji: "🤷", label: "No lo se" },
               ].map(o => (
                 <OptionCard
                   key={o.value}
@@ -552,12 +566,15 @@ export default function PublicForm({ token }: PublicFormProps) {
             </div>
 
             {/* Aislamiento */}
-            <div className="space-y-3">
-              <p className="text-sm font-bold text-gray-700">¿Tiene aislamiento en paredes, techo o suelo? <span className="text-gray-400 font-normal">(opcional)</span></p>
+            <div className="space-y-2.5">
+              <p className="text-sm font-bold text-foreground">
+                Tiene aislamiento en paredes, techo o suelo?{" "}
+                <span className="text-muted-foreground font-normal">(opcional)</span>
+              </p>
               {[
-                { value: "si", emoji: "🧱", label: "Sí, tiene aislamiento" },
+                { value: "si", emoji: "🧱", label: "Si, tiene aislamiento" },
                 { value: "no", emoji: "❌", label: "No tiene aislamiento" },
-                { value: "no_se", emoji: "🤷", label: "No lo sé" },
+                { value: "no_se", emoji: "🤷", label: "No lo se" },
               ].map(o => (
                 <OptionCard
                   key={o.value}
@@ -569,7 +586,7 @@ export default function PublicForm({ token }: PublicFormProps) {
             </div>
 
             {submitError && (
-              <div className="bg-red-50 border border-red-100 rounded-xl px-4 py-3 text-sm text-red-700">
+              <div className="bg-destructive/8 border border-destructive/20 rounded-xl px-4 py-3 text-sm text-destructive">
                 {submitError}
               </div>
             )}
@@ -578,14 +595,14 @@ export default function PublicForm({ token }: PublicFormProps) {
       </div>
 
       {/* ── Sticky bottom navigation ─────────────────────────────────────────── */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-5 py-4 safe-area-bottom">
+      <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border px-5 py-4">
         <div className="max-w-lg mx-auto flex gap-3">
           {step > 1 && (
             <button
               onClick={() => setStep(s => s - 1)}
-              className="px-5 py-3.5 rounded-xl border-2 border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+              className="px-5 py-3.5 rounded-full border border-border text-sm font-semibold text-muted-foreground hover:bg-muted/40 transition-colors"
             >
-              ← Atrás
+              Atras
             </button>
           )}
 
@@ -593,7 +610,7 @@ export default function PublicForm({ token }: PublicFormProps) {
             <button
               onClick={() => setStep(s => s + 1)}
               disabled={step === 1 ? !step1Valid : !step2Valid}
-              className="flex-1 py-3.5 bg-emerald-800 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-md shadow-emerald-100"
+              className="flex-1 py-3.5 bg-primary text-primary-foreground rounded-full text-sm font-bold hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
             >
               Siguiente →
             </button>
@@ -601,13 +618,14 @@ export default function PublicForm({ token }: PublicFormProps) {
             <button
               onClick={handleSubmit}
               disabled={!step3Valid || submitting}
-              className="flex-1 py-3.5 bg-orange-600 text-white rounded-xl text-sm font-bold hover:bg-orange-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-md shadow-orange-100"
+              className="flex-1 py-3.5 bg-primary text-primary-foreground rounded-full text-sm font-bold hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
             >
               {submitting ? "Enviando…" : "Enviar mis datos ✓"}
             </button>
           )}
         </div>
       </div>
+
     </div>
   );
 }
