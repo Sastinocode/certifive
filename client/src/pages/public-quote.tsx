@@ -33,7 +33,7 @@ const stripePromise = import.meta.env.VITE_STRIPE_PUBLIC_KEY
 
 interface QuoteData {
   id: number;
-  userId: string;
+  userId: number;
   clientName: string | null;
   clientEmail: string | null;
   clientPhone: string | null;

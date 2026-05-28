@@ -32,7 +32,7 @@ import {
 
 interface WhatsAppFlowTemplate {
   id: number;
-  userId: string;
+  userId: number;
   name: string;
   description: string | null;
   isActive: boolean;

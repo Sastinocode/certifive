@@ -90,7 +90,7 @@ interface Payment {
 
 interface Collection {
   id: number;
-  userId: string;
+  userId: number;
   amount: string;
   concept: string;
   paymentMethod: string;

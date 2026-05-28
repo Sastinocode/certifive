@@ -9,8 +9,11 @@ import { initEmail } from "./email";
 import { startReminderCron } from "./notifications";
 import { startDigestCron } from "./digest";
 import catastroRouter from "./routes/catastro";
-import { config } from "./config";
+import { config, printConfigWarnings } from "./config";
 import { runStartupMigrations } from "./startup-migration";
+
+// Mostrar warnings de configuración agrupados antes de cualquier otro log
+printConfigWarnings();
 
 const PgStore = connectPg(session);
 

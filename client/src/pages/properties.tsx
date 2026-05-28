@@ -13,7 +13,7 @@ interface Certification {
   status: string;
   folderId: number | null;
   energyRating: string | null;
-  userId: string;
+  userId: number;
   createdAt: Date | null;
 }
 

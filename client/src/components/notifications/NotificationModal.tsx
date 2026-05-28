@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 
 interface Notification {
   id: number;
-  userId: string;
+  userId: number;
   type: string;
   title: string;
   message: string;

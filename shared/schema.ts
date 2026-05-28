@@ -58,9 +58,12 @@ export const users = pgTable("users", {
   // ── Payment settings ────────────────────────────────────────────────────────
   bizumPhone: text("bizum_phone"),
   iban: text("iban"),
-  enabledPaymentMethods: jsonb("enabled_payment_methods"),   // string[]
+  enabledPaymentMethods: jsonb("enabled_payment_methods"),   // string[]: "stripe"|"bizum"|"transferencia"|"efectivo"
+  /** Porcentaje del precio total cobrado en el tramo 1 (anticipo). Tramo 2 = 100 - tramo1Percent. */
   tramo1Percent: integer("tramo1_percent").default(25),
+  /** Si true, bloquea el acceso al formulario CEE hasta que el propietario pague el tramo 1. */
   blockFormUntilPayment1: boolean("block_form_until_payment1").default(false).notNull(),
+  /** Si true, bloquea la descarga del certificado final hasta que se pague el tramo 2. */
   blockCertificateUntilPayment2: boolean("block_certificate_until_payment2").default(false).notNull(),
   paymentReminderDays: integer("payment_reminder_days").default(3),
 
@@ -143,6 +146,7 @@ export const certifications = pgTable("certifications", {
   status: text("status").notNull().default("Nuevo"),   // "Nuevo" | "En Proceso" | "Finalizado"
   isArchived: boolean("is_archived").default(false).notNull(),
   archivedAt: timestamp("archived_at"),
+  /** Estado de entrega del certificado final: "pendiente"|"entregado"|"enviado_registro". */
   deliveryStatus: text("delivery_status"),
 
   // Owner (propietario del inmueble)
@@ -174,6 +178,7 @@ export const certifications = pgTable("certifications", {
   tramo2PaidAt: timestamp("tramo2_paid_at"),
 
   // ── Free-form data ───────────────────────────────────────────────────────────
+  /** Datos brutos del formulario simplificado heredado (formToken). No usar en expedientes nuevos. */
   formData: jsonb("form_data"),
 
   // ── Datos del Catastro (auto-rellenados desde API pública) ───────────────────
@@ -219,7 +224,18 @@ export const certifications = pgTable("certifications", {
     cantidad?: number;
   }>>(),
 
+  // ── TOKENS DE WORKFLOW ───────────────────────────────────────────────────────
+  // Flujo de una certificación: técnico crea el expediente → envía solicitud al
+  // propietario → propietario rellena datos → técnico prepara presupuesto →
+  // propietario acepta y paga → técnico visita el inmueble → emite el certificado.
+  // Cada paso usa un UUID único que da acceso a una URL pública sin login.
+
   // ── SOLICITUD (Formulario 1 — tasación) ─────────────────────────────────────
+  /**
+   * Token enviado al propietario para recoger datos básicos del inmueble (paso 1).
+   * URL: /solicitud/:token · Destinatario: propietario.
+   * Se genera al crear el expediente; el técnico lo envía por email o WhatsApp.
+   */
   solicitudToken: text("solicitud_token").unique(),
   solicitudStatus: text("solicitud_status"),   // "enviado"|"abierto"|"completado"
   solicitudSentAt: timestamp("solicitud_sent_at"),
@@ -227,6 +243,11 @@ export const certifications = pgTable("certifications", {
   solicitudCompletedAt: timestamp("solicitud_completed_at"),
 
   // ── PRESUPUESTO ──────────────────────────────────────────────────────────────
+  /**
+   * Token enviado al propietario para ver, aceptar o pedir cambios en el presupuesto.
+   * URL: /presupuesto/:token · Destinatario: propietario.
+   * Se genera cuando el técnico prepara y envía el presupuesto.
+   */
   presupuestoToken: text("presupuesto_token").unique(),
   presupuestoStatus: text("presupuesto_status"),  // "enviado"|"aceptado"|"modificacion_solicitada"
   presupuestoSentAt: timestamp("presupuesto_sent_at"),
@@ -234,10 +255,20 @@ export const certifications = pgTable("certifications", {
   modificacionSolicitada: boolean("modificacion_solicitada").default(false),
   modificacionMotivo: text("modificacion_motivo"),
 
-  // ── PAYMENT TOKEN (public payment page) ─────────────────────────────────────
+  // ── PAGO ─────────────────────────────────────────────────────────────────────
+  /**
+   * Token de acceso a la página de pago pública (Stripe, Bizum o transferencia).
+   * URL: /pay/:token · Destinatario: propietario.
+   * Cubre tramo 1 y tramo 2; el importe se calcula desde tramo1Amount / tramo2Amount.
+   */
   paymentToken: text("payment_token").unique(),
 
   // ── FORMULARIO CEE completo (Formulario 2) ───────────────────────────────────
+  /**
+   * Token para el formulario completo del CEE: datos técnicos, envolvente, instalaciones.
+   * URL: /formulario-cee/:token · Destinatario: propietario.
+   * El técnico lo activa (normalmente) tras aceptar el propietario el presupuesto.
+   */
   ceeToken: text("cee_token").unique(),
   ceeFormStatus: text("cee_form_status"),   // "enviado"|"abierto"|"completado"
   ceeFormSentAt: timestamp("cee_form_sent_at"),
@@ -245,7 +276,11 @@ export const certifications = pgTable("certifications", {
   ceeFormCompletedAt: timestamp("cee_form_completed_at"),
 
   // ── FORMULARIO TÉCNICO GUIADO (Modo B — propietario recoge datos técnicos) ──
-  // Ruta pública: /formulario-tecnico/:tecnicoToken
+  /**
+   * Token del formulario técnico guiado paso a paso (Modo B, sin visita física).
+   * URL: /formulario-tecnico/:token · Destinatario: propietario o persona in situ.
+   * Alternativa al Modo A (visita del técnico); los datos quedan en tecnicoFormData.
+   */
   tecnicoToken: text("tecnico_token").unique(),
   tecnicoFormStatus: text("tecnico_form_status"),  // "enviado"|"abierto"|"guardado"|"completado"
   tecnicoFormSentAt: timestamp("tecnico_form_sent_at"),
@@ -258,10 +293,20 @@ export const certifications = pgTable("certifications", {
   tecnicoFormReviewedAt: timestamp("tecnico_form_reviewed_at"),
   tecnicoFormReviewNotes: text("tecnico_form_review_notes"),
 
-  // ── Overall pipeline status ──────────────────────────────────────────────────
+  // ── Estado global del pipeline ───────────────────────────────────────────────
+  /**
+   * Seguimiento granular del pipeline completo, independiente de `status`.
+   * Valores conocidos: "nuevo" | "solicitud_enviada" | "presupuesto_enviado" |
+   * "presupuesto_aceptado" | "formulario_enviado" | "formulario_completado" | "finalizado".
+   */
   workflowStatus: text("workflow_status").default("nuevo"),
 
-  // ── Legacy simple form (backward compat) ────────────────────────────────────
+  // ── Formulario simple heredado (compatibilidad con expedientes anteriores) ────
+  /**
+   * Token del formulario simplificado original, predecesor de ceeToken.
+   * URL: ninguna ruta activa en App.tsx — solo se mantiene para expedientes creados
+   * antes de la migración al flujo de dos formularios (solicitud + CEE completo).
+   */
   formToken: text("form_token").unique(),
   formStatus: text("form_status"),
   formSentAt: timestamp("form_sent_at"),

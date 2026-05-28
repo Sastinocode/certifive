@@ -17,7 +17,7 @@ import { es } from "date-fns/locale";
 
 interface Notification {
   id: number;
-  userId: string;
+  userId: number;
   type: string;
   title: string;
   message: string;

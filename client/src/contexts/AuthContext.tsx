@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 import { apiRequest } from "@/lib/queryClient";
 
 interface User {
-  id: string | number;
+  id: number;
   email: string;
   firstName?: string;
   lastName?: string;

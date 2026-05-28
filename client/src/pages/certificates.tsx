@@ -66,7 +66,7 @@ interface Certification {
   createdAt: Date | null;
   updatedAt: Date | null;
   folderId: number | null;
-  userId: string;
+  userId: number;
   rooms: number | null;
   facadeOrientation: string | null;
   heatingSystem: string | null;
