@@ -174,7 +174,8 @@ function Router() {
         <Route path="/solicitar-demo" component={DemoRequest} />
 
         {/* Home: dashboard if authenticated, landing if not */}
-        <Route path="/" component={isAuthenticated ? Dashboard : Landing} />
+        {/* Dashboard tiene onNavigate opcional — lambda para compatibilidad con Wouter RouteComponentProps */}
+        <Route path="/" component={isAuthenticated ? () => <Dashboard /> : Landing} />
 
         {/* Authenticated routes */}
         <Route path="/certificacion/:id?" component={isAuthenticated ? CertificationWizard : Login} />

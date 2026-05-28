@@ -30,7 +30,7 @@ const mapInvoice = (i: any) => ({
 
 app.get("/api/invoices", authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const result = await db.select().from(invoices).where(eq(invoices.userId, userId)).orderBy(desc(invoices.createdAt));
     res.json(result.map(mapInvoice));
   } catch {
@@ -40,7 +40,7 @@ app.get("/api/invoices", authenticate, async (req: Request, res: Response) => {
 
 app.post("/api/invoices", authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const year = new Date().getFullYear();
     const countResult = await db.select().from(invoices).where(eq(invoices.userId, userId));
     const seq = String(countResult.length + 1).padStart(4, "0");
@@ -70,7 +70,7 @@ app.post("/api/invoices", authenticate, async (req: Request, res: Response) => {
 
 app.put("/api/invoices/:id", authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const id = parseInt(req.params.id);
     const dbPayload: any = { updatedAt: new Date() };
     if (req.body.clientName !== undefined) dbPayload.clientName = req.body.clientName;
@@ -98,7 +98,7 @@ app.put("/api/invoices/:id", authenticate, async (req: Request, res: Response) =
 // Invoice actions (stubs + implemented)
 app.post("/api/invoices/:id/register-accounting", authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const id = parseInt(req.params.id);
     const [inv] = await db.update(invoices)
       .set({ updatedAt: new Date() })
@@ -113,7 +113,7 @@ app.post("/api/invoices/:id/register-accounting", authenticate, async (req: Requ
 
 app.post("/api/invoices/:id/convert-to-invoice", authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const id = parseInt(req.params.id);
     const [inv] = await db.update(invoices)
       .set({ status: "issued", updatedAt: new Date() })
@@ -141,7 +141,7 @@ app.post("/api/export/:type", authenticate, async (req: Request, res: Response) 
 
 app.get("/api/financial/summary", authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const allInvoices = await db.select().from(invoices).where(eq(invoices.userId, userId));
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -203,7 +203,7 @@ const mapPaymentToCollection = (p: any) => ({
 
 app.get("/api/payments", authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const result = await db.select().from(payments).where(eq(payments.userId, userId)).orderBy(desc(payments.createdAt));
     res.json(result.map(mapPayment));
   } catch {
@@ -213,7 +213,7 @@ app.get("/api/payments", authenticate, async (req: Request, res: Response) => {
 
 app.post("/api/payments", authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const [pay] = await db.insert(payments).values({
       userId,
       amount: req.body.amount?.toString() ?? "0",
@@ -233,7 +233,7 @@ app.post("/api/payments", authenticate, async (req: Request, res: Response) => {
 // Collections: stored as payments with manual methods, no invoiceId
 app.get("/api/collections", authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const result = await db.select().from(payments)
       .where(and(
         eq(payments.userId, userId),
@@ -248,7 +248,7 @@ app.get("/api/collections", authenticate, async (req: Request, res: Response) =>
 
 app.post("/api/collections", authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const [pay] = await db.insert(payments).values({
       userId,
       amount: req.body.amount?.toString() ?? "0",
@@ -267,7 +267,7 @@ app.post("/api/collections", authenticate, async (req: Request, res: Response) =
 
 app.delete("/api/collections/:id", authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const id = parseInt(req.params.id);
     await db.delete(payments).where(and(eq(payments.id, id), eq(payments.userId, userId)));
     res.json({ success: true });
@@ -278,7 +278,7 @@ app.delete("/api/collections/:id", authenticate, async (req: Request, res: Respo
 
 app.post("/api/collections/:id/create-invoice", authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const paymentId = parseInt(req.params.id);
     const [payment] = await db.select().from(payments).where(and(eq(payments.id, paymentId), eq(payments.userId, userId)));
     if (!payment) return res.status(404).json({ message: "Cobro no encontrado" });

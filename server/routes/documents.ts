@@ -25,7 +25,7 @@ export function registerDocumentRoutes(app: Express) {
   // ── GET /api/certifications/:id/documentos ────────────────────────────────
   app.get("/api/certifications/:id/documentos", authenticate, async (req: Request, res: Response) => {
     try {
-      const userId = (req as any).user.id;
+      const userId = req.user!.id;
       const certId = parseInt(req.params.id);
 
       const [cert] = await db.select({ id: certifications.id })
@@ -51,7 +51,7 @@ export function registerDocumentRoutes(app: Express) {
     async (req: Request, res: Response) => {
       try {
         if (!req.file) return res.status(400).json({ message: "No se subió ningún archivo" });
-        const userId = (req as any).user.id;
+        const userId = req.user!.id;
         const certId = parseInt(req.params.id);
         const { tipoDoc = "certificado" } = req.body;
 
@@ -89,7 +89,7 @@ export function registerDocumentRoutes(app: Express) {
   // ── PUT /api/documentos/:id/estado — update review state ─────────────────
   app.put("/api/documentos/:id/estado", authenticate, async (req: Request, res: Response) => {
     try {
-      const userId = (req as any).user.id;
+      const userId = req.user!.id;
       const docId = parseInt(req.params.id);
       const { estadoRevision, motivoRechazo } = req.body;
 
@@ -155,7 +155,7 @@ export function registerDocumentRoutes(app: Express) {
   // ── DELETE /api/documentos/:id ────────────────────────────────────────────
   app.delete("/api/documentos/:id", authenticate, async (req: Request, res: Response) => {
     try {
-      const userId = (req as any).user.id;
+      const userId = req.user!.id;
       const docId = parseInt(req.params.id);
 
       const [doc] = await db.select().from(documentos).where(eq(documentos.id, docId)).limit(1);
@@ -185,7 +185,7 @@ export function registerDocumentRoutes(app: Express) {
   // con cualquier frontend que use la ruta antigua.
   app.get("/api/uploads/:certId/:filename", authenticate, async (req: Request, res: Response) => {
     try {
-      const userId = (req as any).user.id;
+      const userId = req.user!.id;
       const certId = parseInt(req.params.certId);
 
       const [cert] = await db

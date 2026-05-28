@@ -8,7 +8,7 @@ export function registerDashboardRoutes(app: Express) {
 
   app.get("/api/dashboard/stats", authenticate, async (req: Request, res: Response) => {
     try {
-      const userId = (req as any).user.id;
+      const userId = req.user!.id;
       const now = new Date();
 
       // ── Límites de mes actual y anterior ────────────────────────────────────

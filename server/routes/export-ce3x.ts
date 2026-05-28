@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Express, Request, Response } from "express";
 import { db } from "../db";
 import { eq, and } from "drizzle-orm";
@@ -21,7 +20,7 @@ export function registerExportCE3XRoutes(app: Express) {
     authenticate,
     async (req: Request, res: Response) => {
       try {
-        const userId = (req as any).user.id;
+        const userId = req.user!.id;
         const certId = parseInt(req.params.id);
 
         const [cert] = await db
@@ -75,7 +74,7 @@ export function registerExportCE3XRoutes(app: Express) {
     authenticate,
     async (req: Request, res: Response) => {
       try {
-        const userId = (req as any).user.id;
+        const userId = req.user!.id;
         const certId = parseInt(req.params.id);
 
         const [cert] = await db

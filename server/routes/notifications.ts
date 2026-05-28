@@ -36,7 +36,7 @@ app.get("/api/notifications/stream", async (req: Request, res: Response) => {
 /** List last 20 notifications for the authenticated user. */
 app.get("/api/notifications", authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user?.id ?? (req as any).userId;
+    const userId = req.user!.id;
     const rows = await db
       .select()
       .from(notificaciones)
@@ -54,7 +54,7 @@ app.get("/api/notifications", authenticate, async (req: Request, res: Response) 
 /** Activity feed for the dashboard — last 10 events from the past 24 h. */
 app.get("/api/activity", authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user?.id ?? (req as any).userId;
+    const userId = req.user!.id;
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const rows = await db
       .select()
@@ -72,7 +72,7 @@ app.get("/api/activity", authenticate, async (req: Request, res: Response) => {
 /** Mark one notification as read. */
 app.patch("/api/notifications/:id/read", authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).userId ?? (req as any).user?.id;
+    const userId = req.user!.id;
     const id = parseInt(req.params.id);
     await db
       .update(notificaciones)
@@ -87,7 +87,7 @@ app.patch("/api/notifications/:id/read", authenticate, async (req: Request, res:
 /** Mark ALL notifications as read. */
 app.patch("/api/notifications/read-all", authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).userId ?? (req as any).user?.id;
+    const userId = req.user!.id;
     await db
       .update(notificaciones)
       .set({ leida: true })

@@ -31,7 +31,7 @@ export function registerSubscriptionRoutes(app: Express) {
 // ──────────────────────────────────────────────────────────────────────────────
 async function getSubscription(req: Request, res: Response) {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
     if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
 
@@ -83,7 +83,7 @@ app.get("/api/stripe/subscription", authenticate, getSubscription);
 app.post("/api/subscription/portal", authenticate, async (req: Request, res: Response) => {
   try {
     if (!stripe) return res.status(503).json({ message: "Stripe no configurado. Añade STRIPE_SECRET_KEY al .env" });
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
     if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
 
@@ -123,7 +123,7 @@ async function createCheckout(req: Request, res: Response) {
       });
     }
 
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
     if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
 
@@ -175,7 +175,7 @@ app.post("/api/stripe/create-checkout-session", authenticate, createCheckout);
 async function cancelSubscription(req: Request, res: Response) {
   try {
     if (!stripe) return res.status(503).json({ message: "Stripe no configurado" });
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
     if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
     if (!user.stripeSubscriptionId) return res.status(400).json({ message: "No hay suscripción activa" });
@@ -208,7 +208,7 @@ app.post("/api/stripe/cancel", authenticate, cancelSubscription);
 app.get("/api/subscription/invoices", authenticate, async (req: Request, res: Response) => {
   try {
     if (!stripe) return res.json({ invoices: [], stripeConfigured: false });
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
     if (!user?.stripeCustomerId) return res.json({ invoices: [], stripeConfigured: true });
 

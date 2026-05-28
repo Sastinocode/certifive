@@ -20,7 +20,7 @@ export function registerSearchRoutes(app: Express) {
 
   app.get("/api/search", authenticate, async (req: Request, res: Response) => {
     try {
-      const userId = (req as any).user.id;
+      const userId = req.user!.id;
       const query  = ((req.query.q as string) || "").trim();
       const limit  = Math.min(20, Math.max(1, parseInt(req.query.limit as string) || 8));
 

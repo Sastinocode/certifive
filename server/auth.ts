@@ -90,8 +90,8 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
   if (token) {
     const user = verifyToken(token);
     if (user) {
-      (req as any).user = user;
-      (req as any).userId = user.id; // compatibilidad con handlers que usan req.userId
+      req.user   = user;
+      req.userId = user.id;
       return next();
     }
     // Token present but invalid — log it

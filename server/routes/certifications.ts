@@ -19,7 +19,7 @@ export function registerCertificationRoutes(app: Express) {
 
 app.get("/api/certifications", authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const { search, status, archived, page, pageSize } = req.query;
 
     // ── Paginación (opt-in: sólo activa si el cliente envía ?page=N) ─────────
@@ -80,7 +80,7 @@ app.get("/api/certifications", authenticate, async (req: Request, res: Response)
 
 app.get("/api/certifications/recent", authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const results = await db.select().from(certifications)
       .where(and(eq(certifications.userId, userId), eq(certifications.isArchived, false)))
       .orderBy(desc(certifications.createdAt))
@@ -93,7 +93,7 @@ app.get("/api/certifications/recent", authenticate, async (req: Request, res: Re
 
 app.get("/api/certifications/pending", authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const results = await db.select().from(certifications)
       .where(and(eq(certifications.userId, userId), eq(certifications.isArchived, false)))
       .orderBy(desc(certifications.createdAt))
@@ -107,7 +107,7 @@ app.get("/api/certifications/pending", authenticate, async (req: Request, res: R
 
 app.get("/api/certifications/:id", authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const [cert] = await db.select().from(certifications).where(
       and(eq(certifications.id, parseInt(req.params.id)), eq(certifications.userId, userId))
     ).limit(1);
@@ -120,7 +120,7 @@ app.get("/api/certifications/:id", authenticate, async (req: Request, res: Respo
 
 app.post("/api/certifications", authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const [cert] = await db.insert(certifications).values({ ...req.body, userId }).returning();
     res.status(201).json(cert);
   } catch {
@@ -130,7 +130,7 @@ app.post("/api/certifications", authenticate, async (req: Request, res: Response
 
 app.put("/api/certifications/:id", authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
 
     // ── Seguridad: whitelist estricta de campos actualizables ─────────────────
     // Rechaza campos desconocidos o protegidos (userId, stripeCustomerId, etc.)
@@ -154,7 +154,7 @@ app.put("/api/certifications/:id", authenticate, async (req: Request, res: Respo
 });
 app.post("/api/certifications/:id/archive", authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const certId = parseInt(req.params.id);
     const [existing] = await db.select().from(certifications).where(
       and(eq(certifications.id, certId), eq(certifications.userId, userId))
@@ -197,7 +197,7 @@ app.post("/api/certifications/:id/archive", authenticate, async (req: Request, r
 
 app.delete("/api/certifications/:id", authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     await db.delete(certifications).where(
       and(eq(certifications.id, parseInt(req.params.id)), eq(certifications.userId, userId))
     );

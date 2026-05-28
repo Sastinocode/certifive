@@ -283,7 +283,7 @@ app.post("/api/auth/demo", async (_req: Request, res: Response) => {
 
 app.get("/api/auth/user", authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
     if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
     const { password: _, emailVerificationToken: __, whatsappApiKey: ___, ...safeUser } = user as any;
@@ -295,7 +295,7 @@ app.get("/api/auth/user", authenticate, async (req: Request, res: Response) => {
 
 app.put("/api/auth/user", authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const {
       firstName, lastName, email, phone, company, commercialName,
       licenseNumber, dniNif, address, city, postalCode, province,
@@ -362,7 +362,7 @@ app.post("/api/auth/user/firma", authenticate, avatarUpload.single("firma"), asy
 // PATCH /api/auth/onboarding/complete — mark onboarding as done
 app.patch("/api/auth/onboarding/complete", authenticate, async (req: any, res) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     await db
       .update(users)
       .set({ onboardingCompleted: true, onboardingCompletedAt: new Date(), updatedAt: new Date() } as any)

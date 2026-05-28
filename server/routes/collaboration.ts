@@ -10,7 +10,7 @@ export function registerCollaborationRoutes(app: Express) {
   // Propietario invita a un técnico por email (solo lectura)
   app.post("/api/certifications/:id/share", authenticate, async (req: Request, res: Response) => {
     try {
-      const ownerId = (req as any).user.id;
+      const ownerId = req.user!.id;
       const certId  = parseInt(req.params.id);
       const { email } = req.body as { email?: string };
 
@@ -86,7 +86,7 @@ export function registerCollaborationRoutes(app: Express) {
   // Propietario lista quién tiene acceso a un expediente
   app.get("/api/certifications/:id/shares", authenticate, async (req: Request, res: Response) => {
     try {
-      const ownerId = (req as any).user.id;
+      const ownerId = req.user!.id;
       const certId  = parseInt(req.params.id);
 
       const [cert] = await db.select({ id: certifications.id })
@@ -116,7 +116,7 @@ export function registerCollaborationRoutes(app: Express) {
   // Propietario revoca el acceso
   app.delete("/api/certifications/:id/share/:shareId", authenticate, async (req: Request, res: Response) => {
     try {
-      const ownerId = (req as any).user.id;
+      const ownerId = req.user!.id;
       const shareId = parseInt(req.params.shareId);
 
       const [share] = await db.select()
@@ -144,7 +144,7 @@ export function registerCollaborationRoutes(app: Express) {
   // Técnico colaborador ve los expedientes compartidos con él
   app.get("/api/shared-with-me", authenticate, async (req: Request, res: Response) => {
     try {
-      const userId = (req as any).user.id;
+      const userId = req.user!.id;
 
       // Buscar el email del usuario
       const [me] = await db.select({ email: users.email })
@@ -214,7 +214,7 @@ export function registerCollaborationRoutes(app: Express) {
   // Colaborador ve el detalle completo (read-only) de un expediente compartido
   app.get("/api/certifications/:id/shared-view", authenticate, async (req: Request, res: Response) => {
     try {
-      const userId = (req as any).user.id;
+      const userId = req.user!.id;
       const certId = parseInt(req.params.id);
 
       const [me] = await db.select({ email: users.email })

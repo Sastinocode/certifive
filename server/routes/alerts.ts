@@ -24,7 +24,7 @@ export function registerAlertRoutes(app: Express) {
 
   app.get("/api/dashboard/alerts", authenticate, async (req: Request, res: Response) => {
     try {
-      const userId = (req as any).user.id;
+      const userId = req.user!.id;
       const now = new Date();
       const alerts: Alert[] = [];
 

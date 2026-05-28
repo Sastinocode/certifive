@@ -9,7 +9,7 @@ export function registerFolderRoutes(app: Express) {
 
 app.get("/api/folders", authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const result = await db.select().from(folders).where(eq(folders.userId, userId)).orderBy(desc(folders.createdAt));
     res.json(result);
   } catch {
@@ -19,7 +19,7 @@ app.get("/api/folders", authenticate, async (req: Request, res: Response) => {
 
 app.post("/api/folders", authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const [folder] = await db.insert(folders).values({ ...req.body, userId }).returning();
     res.status(201).json(folder);
   } catch {
@@ -29,7 +29,7 @@ app.post("/api/folders", authenticate, async (req: Request, res: Response) => {
 
 app.delete("/api/folders/:id", authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     await db.delete(folders).where(and(eq(folders.id, parseInt(req.params.id)), eq(folders.userId, userId)));
     res.json({ message: "Eliminada" });
   } catch {

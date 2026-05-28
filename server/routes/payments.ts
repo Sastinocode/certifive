@@ -1,10 +1,11 @@
 import { Express, Request, Response } from "express";
 import { db } from "../db";
 import { eq, and, desc } from "drizzle-orm";
-import { certifications, payments, invoices } from "../../shared/schema";
+import { certifications, payments, invoices, users } from "../../shared/schema";
 import { authenticate } from "../auth";
 import { createNotification } from "../createNotification";
-import { sendPagoConfirmadoEmail, sendPagoManualPendienteEmail } from "../email";
+import { sendPagoConfirmadoEmail, sendPagoManualPendienteEmail, sendCEEFormLinkEmail } from "../email";
+import { nanoid } from "nanoid";
 import Stripe from "stripe";
 import rateLimit from "express-rate-limit";
 
@@ -214,7 +215,7 @@ app.post("/api/stripe/webhook", async (req: Request, res: Response) => {
 // Authenticated: get pending manual payments
 app.get("/api/payments/pending", authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const pending = await db.select({
       id: payments.id,
       certificationId: payments.certificationId,
@@ -245,7 +246,7 @@ app.get("/api/payments/pending", authenticate, async (req: Request, res: Respons
 // Authenticated: confirm manual payment
 app.post("/api/payments/:id/confirm", authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const paymentId = parseInt(req.params.id);
 
     const [payment] = await db.select().from(payments)
@@ -321,7 +322,7 @@ app.post("/api/payments/:id/confirm", authenticate, async (req: Request, res: Re
 // Authenticated: reject manual payment
 app.post("/api/payments/:id/reject", authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const paymentId = parseInt(req.params.id);
     const { motivo } = req.body;
 
@@ -338,6 +339,12 @@ app.post("/api/payments/:id/reject", authenticate, async (req: Request, res: Res
 
     // In-app notification
     if (rejectedPayment?.certificationId) {
+      const [rejCert] = await db
+        .select()
+        .from(certifications)
+        .where(eq(certifications.id, rejectedPayment.certificationId))
+        .limit(1)
+        .catch(() => [null]);
       createNotification({
         userId,
         tipo: "pago_fallido",

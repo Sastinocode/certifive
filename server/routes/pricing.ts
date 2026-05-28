@@ -31,7 +31,7 @@ export function registerPricingRoutes(app: Express) {
 
 const getPricingRates = async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const result = await db.select().from(pricingRates).where(eq(pricingRates.userId, userId));
     res.json(result);
   } catch {
@@ -41,7 +41,7 @@ const getPricingRates = async (req: Request, res: Response) => {
 
 const createPricingRate = async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const [rate] = await db.insert(pricingRates).values({ ...req.body, userId }).returning();
     res.status(201).json(rate);
   } catch {
@@ -51,7 +51,7 @@ const createPricingRate = async (req: Request, res: Response) => {
 
 const updatePricingRate = async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const [rate] = await db.update(pricingRates)
       .set(req.body)
       .where(and(eq(pricingRates.id, parseInt(req.params.id)), eq(pricingRates.userId, userId)))
@@ -64,7 +64,7 @@ const updatePricingRate = async (req: Request, res: Response) => {
 
 const deletePricingRate = async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     await db.delete(pricingRates).where(and(eq(pricingRates.id, parseInt(req.params.id)), eq(pricingRates.userId, userId)));
     res.json({ message: "Eliminada" });
   } catch {

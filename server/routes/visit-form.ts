@@ -35,7 +35,7 @@ export function registerVisitFormRoutes(app: Express) {
     authenticate,
     async (req: Request, res: Response) => {
       try {
-        const userId = (req as any).user.id;
+        const userId = req.user!.id;
         const certId = parseInt(req.params.id);
 
         const [cert] = await db
@@ -67,7 +67,7 @@ export function registerVisitFormRoutes(app: Express) {
     authenticate,
     async (req: Request, res: Response) => {
       try {
-        const userId = (req as any).user.id;
+        const userId = req.user!.id;
         const certId = parseInt(req.params.id);
         const [cert] = await db.select({ id: certifications.id }).from(certifications).where(certOwner(userId, certId)).limit(1);
         if (!cert) return res.status(404).json({ message: "Certificación no encontrada" });
@@ -119,7 +119,7 @@ export function registerVisitFormRoutes(app: Express) {
     authenticate,
     async (req: Request, res: Response) => {
       try {
-        const userId = (req as any).user.id;
+        const userId = req.user!.id;
         const certId = parseInt(req.params.id);
         const [cert] = await db.select({ id: certifications.id }).from(certifications).where(certOwner(userId, certId)).limit(1);
         if (!cert) return res.status(404).json({ message: "Certificación no encontrada" });
@@ -171,7 +171,7 @@ export function registerVisitFormRoutes(app: Express) {
     authenticate,
     async (req: Request, res: Response) => {
       try {
-        const userId = (req as any).user.id;
+        const userId = req.user!.id;
         const certId = parseInt(req.params.id);
         const [cert] = await db.select({ id: certifications.id }).from(certifications).where(certOwner(userId, certId)).limit(1);
         if (!cert) return res.status(404).json({ message: "Certificación no encontrada" });
@@ -223,7 +223,7 @@ export function registerVisitFormRoutes(app: Express) {
     authenticate,
     async (req: Request, res: Response) => {
       try {
-        const userId = (req as any).user.id;
+        const userId = req.user!.id;
         const certId = parseInt(req.params.id);
         const [cert] = await db.select({ id: certifications.id }).from(certifications).where(certOwner(userId, certId)).limit(1);
         if (!cert) return res.status(404).json({ message: "Certificación no encontrada" });
@@ -276,7 +276,7 @@ export function registerVisitFormRoutes(app: Express) {
     visitUpload.single("file"),
     async (req: Request, res: Response) => {
       try {
-        const userId = (req as any).user.id;
+        const userId = req.user!.id;
         const certId = parseInt(req.params.id);
 
         if (!req.file) return res.status(400).json({ message: "No se subió ningún archivo" });

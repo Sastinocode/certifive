@@ -52,7 +52,7 @@ app.post("/api/notify-waitlist", async (req: Request, res: Response) => {
 
 app.get("/api/manager/financial-records", authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const allInvoices = await db.select().from(invoices).where(eq(invoices.userId, userId)).orderBy(desc(invoices.createdAt));
     const allPayments = await db.select().from(payments).where(eq(payments.userId, userId)).orderBy(desc(payments.createdAt));
     const records = [
@@ -70,7 +70,7 @@ app.get("/api/manager/financial-records", authenticate, async (req: Request, res
 
 app.get("/api/stats", authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const allCerts = await db.select().from(certifications).where(eq(certifications.userId, userId));
     const allFolders = await db.select().from(folders).where(eq(folders.userId, userId));
     const allInvoices = await db.select().from(invoices).where(eq(invoices.userId, userId));
@@ -99,7 +99,7 @@ app.get("/api/stats", authenticate, async (req: Request, res: Response) => {
 
 app.put("/api/auth/user/settings", authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const {
       publicSlug, condicionesServicio, plazoEntregaDias,
       bizumPhone, iban, enabledPaymentMethods,

@@ -38,7 +38,7 @@ export function registerPublicFormRoutes(app: Express) {
 // Generate a shareable link for a certification
 app.post("/api/certifications/:id/generate-link", authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const certId = parseInt(req.params.id);
 
     const [cert] = await db.select().from(certifications)
@@ -250,7 +250,7 @@ app.post("/api/form/:token/submit", publicSubmitLimiter, async (req: Request, re
 
 app.post("/api/test-email", authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
     const to = req.body.email || user?.email;
     if (!to) return res.status(400).json({ message: "No hay dirección de email configurada en tu cuenta" });
@@ -269,7 +269,7 @@ app.post("/api/test-email", authenticate, async (req: Request, res: Response) =>
 // Certifier generates solicitud token and sends link
 app.post("/api/certifications/:id/generate-solicitud", authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const certId = parseInt(req.params.id);
 
     const [cert] = await db.select().from(certifications)
@@ -525,7 +525,7 @@ app.post("/api/solicitud/:token/submit", publicSubmitLimiter, async (req: Reques
 // Suggest price from catastro data + pricing rates
 app.get("/api/certifications/:id/suggest-price", authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const certId = parseInt(req.params.id);
 
     const [cert] = await db.select().from(certifications)
@@ -604,7 +604,7 @@ app.get("/api/certifications/:id/suggest-price", authenticate, async (req: Reque
 // Certifier generates presupuesto
 app.post("/api/certifications/:id/generate-presupuesto", authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const certId = parseInt(req.params.id);
     const { finalPrice, plazoEntregaDias } = req.body;
 
@@ -822,7 +822,7 @@ app.post("/api/presupuesto/:token/modificar", publicSubmitLimiter, async (req: R
 
 app.post("/api/certifications/:id/generate-cee-form", authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.id;
+    const userId = req.user!.id;
     const certId = parseInt(req.params.id);
 
     const [cert] = await db.select().from(certifications)

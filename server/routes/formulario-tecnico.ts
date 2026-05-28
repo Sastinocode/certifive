@@ -41,7 +41,7 @@ export function registerFormularioTecnicoRoutes(app: Express) {
     authenticate,
     async (req: Request, res: Response) => {
       try {
-        const userId = (req as any).user.id;
+        const userId = req.user!.id;
         const certId = parseInt(req.params.id);
 
         const [cert] = await db
@@ -281,7 +281,7 @@ export function registerFormularioTecnicoRoutes(app: Express) {
     authenticate,
     async (req: Request, res: Response) => {
       try {
-        const userId = (req as any).user.id;
+        const userId = req.user!.id;
         const certId = parseInt(req.params.id);
 
         const [cert] = await db
@@ -327,7 +327,7 @@ export function registerFormularioTecnicoRoutes(app: Express) {
     authenticate,
     async (req: Request, res: Response) => {
       try {
-        const userId = (req as any).user.id;
+        const userId = req.user!.id;
         const certId = parseInt(req.params.id);
         // "validado" | "visita_complementaria" | "visita_completa"
         const { reviewStatus, reviewNotes } = req.body;
