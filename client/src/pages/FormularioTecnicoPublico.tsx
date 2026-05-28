@@ -331,6 +331,7 @@ export default function FormularioTecnicoPublico({ token }: Props) {
   const [certId, setCertId] = useState<number | null>(null);
   const [ownerName, setOwnerName] = useState("");
   const [certifier, setCertifier] = useState<{ name: string; company: string | null } | null>(null);
+  const [rgpdAccepted, setRgpdAccepted] = useState(false);
 
   const [formData, setFormData] = useState<FormState>(defaultFormState());
   const [currentScreenIdx, setCurrentScreenIdx] = useState(0);
@@ -1348,7 +1349,46 @@ export default function FormularioTecnicoPublico({ token }: Props) {
               y te contactará si necesita algo más.
             </p>
           </div>
-          <button style={styles.btnPrimary} onClick={handleSubmit}>
+          {/* Consentimiento RGPD — requerido por LOPDGDD / RGPD art. 6.1.a */}
+          <div style={{ marginBottom: 16, padding: 16, background: "#f7fafc", borderRadius: 12, border: "1px solid #e2e8f0" }}>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+              <button
+                type="button"
+                role="checkbox"
+                aria-checked={rgpdAccepted}
+                onClick={() => setRgpdAccepted(v => !v)}
+                style={{
+                  width: 20, height: 20, borderRadius: 4, flexShrink: 0, marginTop: 2,
+                  border: rgpdAccepted ? "2px solid #0D7C66" : "2px solid #cbd5e0",
+                  background: rgpdAccepted ? "#0D7C66" : "#fff",
+                  cursor: "pointer", display: "flex", alignItems: "center",
+                  justifyContent: "center", padding: 0,
+                }}
+              >
+                {rgpdAccepted && <span style={{ color: "#fff", fontSize: 12, fontWeight: 700, lineHeight: 1 }}>✓</span>}
+              </button>
+              <p style={{ fontSize: 13, color: "#4a5568", lineHeight: 1.6, margin: 0 }}>
+                He leído y acepto la{" "}
+                <a href="/privacy" target="_blank" rel="noreferrer" style={{ color: "#0D7C66" }}>
+                  Política de Privacidad
+                </a>.{" "}
+                Responsable: {certifier?.company ?? certifier?.name ?? "[NOMBRE_EMPRESA]"}.
+                Finalidad: gestión de tu certificado de eficiencia energética.
+                Puedes ejercer tus derechos en [EMAIL_CONTACTO].
+              </p>
+            </div>
+            {!rgpdAccepted && (
+              <p style={{ fontSize: 12, color: "#d69e2e", marginTop: 8, marginBottom: 0, display: "flex", alignItems: "center", gap: 6 }}>
+                <span>⚠️</span>
+                <span>Debes aceptar la política de privacidad para continuar.</span>
+              </p>
+            )}
+          </div>
+          <button
+            style={{ ...styles.btnPrimary, opacity: rgpdAccepted ? 1 : 0.5, cursor: rgpdAccepted ? "pointer" : "not-allowed" }}
+            onClick={handleSubmit}
+            disabled={!rgpdAccepted}
+          >
             Enviar información →
           </button>
           <button style={{ ...styles.btnSecondary, marginTop: 12 }} onClick={goBack}>

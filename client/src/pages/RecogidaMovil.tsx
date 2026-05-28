@@ -13,6 +13,10 @@
  */
 import { useState, useEffect, useRef } from "react";
 import { getZonaClimatica } from "../lib/zonaClimatica";
+import {
+  VENTANAS_OPTS, MARCOS_OPTS, CALEFACCION_SISTEMAS, ACS_SISTEMAS,
+  REFORMA_TIPOS, REFORMA_PERIODOS, ILUMINACION_TIPOS, PROPERTY_TYPES,
+} from "../lib/options";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants & option lists
@@ -20,66 +24,6 @@ import { getZonaClimatica } from "../lib/zonaClimatica";
 
 const STORAGE_KEY = (token: string) => `certifive_recogida_${token}`;
 
-const PROPERTY_TYPES = [
-  { v: "Vivienda unifamiliar", e: "🏠" },
-  { v: "Piso/Apartamento",     e: "🏢" },
-  { v: "Adosado",              e: "🏘️" },
-  { v: "Local comercial",      e: "🏪" },
-  { v: "Oficinas",             e: "🖥️" },
-  { v: "Nave industrial",      e: "🏭" },
-  { v: "Edificio de viviendas",e: "🏗️" },
-];
-
-const VENTANAS_OPTS = [
-  { v: "Simple acristalamiento",  e: "🪟", sub: "1 luna — más antiguo, peor aislamiento" },
-  { v: "Doble acristalamiento",   e: "🪟", sub: "2 lunas — el más habitual" },
-  { v: "Triple acristalamiento",  e: "🪟", sub: "3 lunas — alta eficiencia" },
-  { v: "No sé",                   e: "🤷", sub: "El técnico lo confirmará en la visita" },
-];
-
-const MARCOS_OPTS = [
-  { v: "aluminio_sin_rpt", label: "Aluminio sin RPT",       sub: "Sin rotura de puente térmico · más antiguo" },
-  { v: "aluminio_con_rpt", label: "Aluminio con RPT",       sub: "Con rotura de puente térmico · más eficiente" },
-  { v: "pvc",              label: "PVC",                    sub: "Plástico · buena aislación" },
-  { v: "madera",           label: "Madera",                 sub: "Natural · buena aislación" },
-  { v: "mixto",            label: "Mixto madera + aluminio",sub: "" },
-  { v: "no_se",            label: "No lo sé",               sub: "El técnico lo comprobará" },
-];
-
-const CALEFACCION_SISTEMAS = [
-  { v: "caldera_gas_natural",   e: "🔵", label: "Caldera de gas natural" },
-  { v: "caldera_gasoleo",       e: "🛢️", label: "Caldera de gasóleo" },
-  { v: "caldera_propano",       e: "🟠", label: "Caldera de propano/butano" },
-  { v: "radiadores_electricos", e: "⚡", label: "Radiadores eléctricos" },
-  { v: "suelo_radiante_agua",   e: "🌡️", label: "Suelo radiante (agua)" },
-  { v: "suelo_radiante_elec",   e: "⚡", label: "Suelo radiante (eléctrico)" },
-  { v: "bomba_calor",           e: "🔄", label: "Bomba de calor / aerotermia" },
-  { v: "chimenea_biomasa",      e: "🪵", label: "Chimenea o estufa de leña" },
-  { v: "fancoil",               e: "💨", label: "Fan-coil" },
-];
-
-const ACS_SISTEMAS = [
-  { v: "termo_electrico",       e: "⚡", label: "Termo eléctrico" },
-  { v: "calentador_gas_nat",    e: "🔵", label: "Calentador de gas natural" },
-  { v: "calentador_butano",     e: "🟠", label: "Calentador de butano/propano" },
-  { v: "caldera_mixta_gas",     e: "🔥", label: "Caldera mixta de gas" },
-  { v: "caldera_mixta_gasoleo", e: "🛢️", label: "Caldera mixta de gasóleo" },
-  { v: "bomba_calor_acs",       e: "🌿", label: "Bomba de calor (aerotermia)" },
-  { v: "solar_termica",         e: "☀️", label: "Solar térmica" },
-];
-
-const REFORMA_TIPOS = [
-  { tipo: "fachada",     e: "🧱", label: "Fachada (aislamiento, revestimiento…)" },
-  { tipo: "cubierta",    e: "🏠", label: "Tejado o cubierta" },
-  { tipo: "ventanas",    e: "🪟", label: "Ventanas o puertas exteriores" },
-  { tipo: "calefaccion", e: "🔥", label: "Calefacción" },
-  { tipo: "acs",         e: "🚿", label: "Agua caliente" },
-  { tipo: "aire",        e: "❄️", label: "Aire acondicionado" },
-  { tipo: "electrica",   e: "⚡", label: "Instalación eléctrica o solar" },
-];
-
-const REFORMA_PERIODOS = ["Antes de 2000", "2000–2010", "2011–2020", "2021 o más reciente"];
-const ILUMINACION_TIPOS = ["LED (predominante)", "Fluorescente", "Halógena / Incandescente", "Mixta"];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -439,6 +383,7 @@ export default function RecogidaMovil({ token }: { token: string }) {
   const [loading, setLoading]     = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone]           = useState(false);
+  const [rgpdAccepted, setRgpdAccepted] = useState(false);
   const [paymentBlocked, setPaymentBlocked] = useState(false);
   const [paymentToken, setPaymentToken]     = useState<string | null>(null);
   const [errors, setErrors]       = useState<string[]>([]);
@@ -564,10 +509,6 @@ export default function RecogidaMovil({ token }: { token: string }) {
       ? (parseFloat(form.anchoVentana) * parseFloat(form.altoVentana)).toFixed(2)
       : null;
 
-  const MARCOS_LABEL: Record<string, string> = {
-    aluminio_sin_rpt: "Aluminio sin RPT", aluminio_con_rpt: "Aluminio con RPT",
-    pvc: "PVC", madera: "Madera", mixto: "Mixto", no_se: "No lo sé",
-  };
 
   // ── Screen states ───────────────────────────────────────────────────────────
 
@@ -764,11 +705,11 @@ export default function RecogidaMovil({ token }: { token: string }) {
                 <div className="space-y-2 mt-3">
                   {PROPERTY_TYPES.map(pt => (
                     <BigOption
-                      key={pt.v}
-                      emoji={pt.e}
-                      label={pt.v}
-                      selected={form.propertyType === pt.v}
-                      onClick={() => set("propertyType", pt.v)}
+                      key={pt.value}
+                      emoji={pt.emoji}
+                      label={pt.value}
+                      selected={form.propertyType === pt.value}
+                      onClick={() => set("propertyType", pt.value)}
                     />
                   ))}
                 </div>
@@ -853,9 +794,9 @@ export default function RecogidaMovil({ token }: { token: string }) {
                   <div className="space-y-2">
                     {VENTANAS_OPTS.map(o => (
                       <BigOption
-                        key={o.v} emoji={o.e} label={o.v} sub={o.sub}
-                        selected={form.tipoVentanas === o.v}
-                        onClick={() => set("tipoVentanas", o.v)}
+                        key={o.value} emoji={o.emoji} label={o.value} sub={o.sublabel}
+                        selected={form.tipoVentanas === o.value}
+                        onClick={() => set("tipoVentanas", o.value)}
                       />
                     ))}
                   </div>
@@ -865,9 +806,9 @@ export default function RecogidaMovil({ token }: { token: string }) {
                   <div className="space-y-2">
                     {MARCOS_OPTS.map(o => (
                       <BigOption
-                        key={o.v} emoji="🔲" label={o.label} sub={o.sub}
-                        selected={form.tipoMarcos === o.v}
-                        onClick={() => set("tipoMarcos", o.v)}
+                        key={o.value} emoji="🔲" label={o.label} sub={o.sublabel}
+                        selected={form.tipoMarcos === o.value}
+                        onClick={() => set("tipoMarcos", o.value)}
                       />
                     ))}
                   </div>
@@ -911,9 +852,9 @@ export default function RecogidaMovil({ token }: { token: string }) {
                     <div className="space-y-2">
                       {CALEFACCION_SISTEMAS.map(s => (
                         <BigOption
-                          key={s.v} emoji={s.e} label={s.label}
-                          selected={form.tipoCalefaccion === s.v}
-                          onClick={() => set("tipoCalefaccion", s.v)}
+                          key={s.value} emoji={s.emoji} label={s.label}
+                          selected={form.tipoCalefaccion === s.value}
+                          onClick={() => set("tipoCalefaccion", s.value)}
                         />
                       ))}
                     </div>
@@ -935,9 +876,9 @@ export default function RecogidaMovil({ token }: { token: string }) {
                     <div className="space-y-2">
                       {ACS_SISTEMAS.map(s => (
                         <BigOption
-                          key={s.v} emoji={s.e} label={s.label}
-                          selected={form.tipoACS === s.v}
-                          onClick={() => set("tipoACS", s.v)}
+                          key={s.value} emoji={s.emoji} label={s.label}
+                          selected={form.tipoACS === s.value}
+                          onClick={() => set("tipoACS", s.value)}
                         />
                       ))}
                     </div>
@@ -1040,7 +981,7 @@ export default function RecogidaMovil({ token }: { token: string }) {
                                 : "border-stone-200 bg-white"
                             }`}
                           >
-                            <span className="text-xl leading-none">{rt.e}</span>
+                            <span className="text-xl leading-none">{rt.emoji}</span>
                             <span className={`text-sm font-medium flex-1 ${selected ? "text-emerald-800" : "text-stone-700"}`}>
                               {rt.label}
                             </span>
@@ -1169,7 +1110,7 @@ export default function RecogidaMovil({ token }: { token: string }) {
 
               <SummaryCard emoji="⚙️" title="Instalaciones">
                 <SummaryRow label="Ventanas" value={form.tipoVentanas} />
-                <SummaryRow label="Marcos" value={MARCOS_LABEL[form.tipoMarcos] ?? form.tipoMarcos} />
+                <SummaryRow label="Marcos" value={MARCOS_OPTS.find(m => m.value === form.tipoMarcos)?.label ?? form.tipoMarcos} />
                 <SummaryRow
                   label="Dimensión ventana"
                   value={superficieVentana ? `${form.anchoVentana} × ${form.altoVentana} m (${superficieVentana} m²)` : null}
@@ -1180,7 +1121,7 @@ export default function RecogidaMovil({ token }: { token: string }) {
                     form.calefaccionTipoInstalacion === "no_tiene" ? "Sin calefacción"
                     : form.calefaccionTipoInstalacion === "comunitaria" ? "Comunitaria"
                     : form.tipoCalefaccion
-                      ? CALEFACCION_SISTEMAS.find(s => s.v === form.tipoCalefaccion)?.label
+                      ? CALEFACCION_SISTEMAS.find(s => s.value === form.tipoCalefaccion)?.label
                       : form.calefaccionTipoInstalacion === "individual" ? "Individual (sin especificar)" : null
                   }
                 />
@@ -1190,7 +1131,7 @@ export default function RecogidaMovil({ token }: { token: string }) {
                     form.acsTipoInstalacion === "no_tiene" ? "Sin ACS"
                     : form.acsTipoInstalacion === "comunitaria" ? "Comunitaria"
                     : form.tipoACS
-                      ? ACS_SISTEMAS.find(s => s.v === form.tipoACS)?.label
+                      ? ACS_SISTEMAS.find(s => s.value === form.tipoACS)?.label
                       : form.acsTipoInstalacion === "individual" ? "Individual (sin especificar)" : null
                   }
                 />
@@ -1217,7 +1158,7 @@ export default function RecogidaMovil({ token }: { token: string }) {
                         const rt = REFORMA_TIPOS.find(x => x.tipo === r.tipo);
                         return (
                           <div key={r.tipo} className="flex items-center gap-2 py-1">
-                            <span>{rt?.e}</span>
+                            <span>{rt?.emoji}</span>
                             <span className="text-sm text-stone-700 flex-1">{rt?.label}</span>
                             {r.periodo && (
                               <span className="text-xs text-stone-400 font-medium">{r.periodo}</span>
@@ -1250,6 +1191,42 @@ export default function RecogidaMovil({ token }: { token: string }) {
                   </p>
                 </div>
               )}
+
+              {/* Consentimiento RGPD — requerido por LOPDGDD / RGPD art. 6.1.a */}
+              <div className="bg-white rounded-3xl p-5 border border-stone-200">
+                <div className="flex items-start gap-3">
+                  <button
+                    type="button"
+                    role="checkbox"
+                    aria-checked={rgpdAccepted}
+                    onClick={() => setRgpdAccepted(v => !v)}
+                    className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-all mt-0.5 ${
+                      rgpdAccepted
+                        ? "border-emerald-500 bg-emerald-500"
+                        : "border-stone-300 bg-white"
+                    }`}
+                  >
+                    {rgpdAccepted && <span className="text-white text-xs font-black leading-none">✓</span>}
+                  </button>
+                  <p className="text-sm text-stone-600 leading-relaxed">
+                    He leído y acepto la{" "}
+                    <a href="/privacy" target="_blank" rel="noreferrer" className="text-emerald-700 underline font-medium">
+                      Política de Privacidad
+                    </a>.{" "}
+                    <span className="text-stone-500">
+                      Responsable: {certifier?.company ?? certifier?.name ?? "[NOMBRE_EMPRESA]"}.
+                      Finalidad: gestión de tu certificado de eficiencia energética.
+                      Puedes ejercer tus derechos en [EMAIL_CONTACTO].
+                    </span>
+                  </p>
+                </div>
+                {!rgpdAccepted && (
+                  <p className="text-xs text-amber-600 mt-3 flex items-center gap-1.5">
+                    <span>⚠️</span>
+                    <span>Debes aceptar la política de privacidad para continuar.</span>
+                  </p>
+                )}
+              </div>
 
               {globalError && (
                 <div className="bg-red-50 border border-red-200 rounded-2xl px-4 py-3 text-sm text-red-700">
@@ -1290,7 +1267,7 @@ export default function RecogidaMovil({ token }: { token: string }) {
             <button
               type="button"
               onClick={submit}
-              disabled={submitting}
+              disabled={submitting || !rgpdAccepted}
               className="flex-1 h-12 bg-emerald-600 text-white rounded-2xl font-bold text-sm disabled:opacity-50 hover:bg-emerald-700 active:bg-emerald-800 transition-colors"
             >
               {submitting ? (

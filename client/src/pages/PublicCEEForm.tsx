@@ -1,63 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { getZonaClimatica } from "../lib/zonaClimatica";
+import {
+  CERRAMIENTO_OPTS, VENTANAS_OPTS, MARCOS_OPTS, PERSIANA_TIPOS,
+  CALEFACCION_SISTEMAS, ACS_SISTEMAS, AIRE_TIPOS, ILUMINACION_TIPOS,
+  REFORMA_TIPOS, REFORMA_PERIODOS,
+  type OptionSimple,
+} from "../lib/options";
 
 const STORAGE_KEY = (token: string) => `certifive_cee_${token}`;
 
-// ── Option lists ───────────────────────────────────────────────────────────────
-const CERRAMIENTO_OPTS = ["Ladrillo", "Hormigón", "Piedra natural", "Madera", "Panel sándwich", "No sé"];
-const VENTANAS_OPTS = ["Simple acristalamiento", "Doble acristalamiento", "Triple acristalamiento", "No sé"];
-
-interface MarcoOpt { value: string; label: string; sublabel?: string; }
-const MARCOS_OPTS_CEX: MarcoOpt[] = [
-  { value: "aluminio_sin_rpt", label: "Aluminio sin RPT",       sublabel: "Sin rotura de puente térmico — el más antiguo" },
-  { value: "aluminio_con_rpt", label: "Aluminio con RPT",       sublabel: "Con rotura de puente térmico — más eficiente" },
-  { value: "pvc",              label: "PVC",                    sublabel: "Plástico — buena aislación térmica" },
-  { value: "madera",           label: "Madera",                 sublabel: "Natural — buena aislación" },
-  { value: "mixto",            label: "Mixto (madera + aluminio)" },
-  { value: "no_se",            label: "No lo sé",               sublabel: "El técnico lo verificará en la visita" },
-];
-
-const PERSIANA_TIPOS: { value: string; label: string }[] = [
-  { value: "lamas_plastico",  label: "Lamas de plástico (PVC)" },
-  { value: "lamas_metalico",  label: "Lamas metálicas" },
-  { value: "lamas_madera",    label: "Lamas de madera" },
-  { value: "enrollable_otro", label: "Otro tipo de cierre" },
-];
-
-interface SistemaOpt { value: string; emoji: string; label: string; sublabel?: string; }
-const CALEFACCION_SISTEMAS: SistemaOpt[] = [
-  { value: "caldera_gas_natural",   emoji: "🔵", label: "Caldera de gas natural" },
-  { value: "caldera_gasoleo",       emoji: "🛢️", label: "Caldera de gasóleo" },
-  { value: "caldera_propano",       emoji: "🟠", label: "Caldera de propano / butano" },
-  { value: "radiadores_electricos", emoji: "⚡", label: "Radiadores eléctricos" },
-  { value: "suelo_radiante_agua",   emoji: "🌡️", label: "Suelo radiante (agua)" },
-  { value: "suelo_radiante_elec",   emoji: "⚡", label: "Suelo radiante (eléctrico)" },
-  { value: "bomba_calor",           emoji: "🔄", label: "Bomba de calor / aerotermia" },
-  { value: "chimenea_biomasa",      emoji: "🪵", label: "Chimenea o estufa de leña / pellets" },
-  { value: "fancoil",               emoji: "💨", label: "Fan-coil (agua caliente-fría)" },
-];
-const ACS_SISTEMAS: SistemaOpt[] = [
-  { value: "termo_electrico",       emoji: "⚡", label: "Termo eléctrico" },
-  { value: "calentador_gas_nat",    emoji: "🔵", label: "Calentador de gas natural" },
-  { value: "calentador_butano",     emoji: "🟠", label: "Calentador de butano / propano" },
-  { value: "caldera_mixta_gas",     emoji: "🔥", label: "Caldera mixta de gas natural" },
-  { value: "caldera_mixta_gasoleo", emoji: "🛢️", label: "Caldera mixta de gasóleo" },
-  { value: "bomba_calor_acs",       emoji: "🌿", label: "Bomba de calor para ACS (aerotermia)" },
-  { value: "solar_termica",         emoji: "☀️", label: "Solar térmica (placas solares)" },
-];
-const AIRE_TIPOS = ["Split individual", "Multi-split", "Cassette", "Conductos centralizado", "VRV/VRF", "No sé"];
-const ILUMINACION_TIPOS = ["LED (predominante)", "Fluorescente", "Halógena / Incandescente", "Mixta"];
-
-const REFORMA_TIPOS = [
-  { tipo: "fachada",    emoji: "🧱", label: "Fachada (aislamiento exterior, revestimiento…)" },
-  { tipo: "cubierta",   emoji: "🏠", label: "Tejado o cubierta" },
-  { tipo: "ventanas",   emoji: "🪟", label: "Ventanas o puertas exteriores" },
-  { tipo: "calefaccion",emoji: "🔥", label: "Calefacción (caldera, suelo radiante, bomba de calor…)" },
-  { tipo: "acs",        emoji: "🚿", label: "Agua caliente (termo, calentador…)" },
-  { tipo: "aire",       emoji: "❄️", label: "Aire acondicionado" },
-  { tipo: "electrica",  emoji: "⚡", label: "Instalación eléctrica o solar" },
-];
-const REFORMA_PERIODOS = ["Antes de 2000", "2000-2010", "2011-2020", "2021 o más reciente"];
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface Reforma { tipo: string; periodo: string; }
@@ -81,6 +32,7 @@ export default function PublicCEEForm({ token }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
+  const [rgpdAccepted, setRgpdAccepted] = useState(false);
   const [certifier, setCertifier] = useState<any>(null);
   const [certId, setCertId] = useState<number | null>(null);
   const [paymentBlocked, setPaymentBlocked] = useState(false);
@@ -217,7 +169,7 @@ export default function PublicCEEForm({ token }: Props) {
   );
 
   // OptionGrid with sub-labels (for MARCOS_OPTS_CEX and PERSIANA_TIPOS)
-  const OptionGridCEX = ({ field, options }: { field: string; options: MarcoOpt[] }) => (
+  const OptionGridCEX = ({ field, options }: { field: string; options: OptionSimple[] }) => (
     <div className="space-y-2">
       {options.map(opt => (
         <button key={opt.value} type="button" onClick={() => set(field, opt.value)}
@@ -574,7 +526,7 @@ export default function PublicCEEForm({ token }: Props) {
               {/* Tipo de vidrio — unchanged */}
               <div>
                 <label className={labelCls}>¿Qué tipo de acristalamiento tienen las ventanas?</label>
-                <OptionGrid field="tipoVentanas" options={VENTANAS_OPTS} cols={1} />
+                <OptionGrid field="tipoVentanas" options={VENTANAS_OPTS.map(o => o.value)} cols={1} />
               </div>
 
               {/* ── Window dimensions (MEJORA 2) ── */}
@@ -613,7 +565,7 @@ export default function PublicCEEForm({ token }: Props) {
               {/* ── Marco del marco — CEX options (MEJORA 2) ── */}
               <div>
                 <label className={labelCls}>¿De qué material son los marcos?</label>
-                <OptionGridCEX field="tipoMarcos" options={MARCOS_OPTS_CEX} />
+                <OptionGridCEX field="tipoMarcos" options={MARCOS_OPTS} />
               </div>
 
               {/* ── Persiana (MEJORA 2) ── */}
@@ -624,7 +576,7 @@ export default function PublicCEEForm({ token }: Props) {
                     <label className={labelCls}>Tipo de persiana o cierre</label>
                     <OptionGridCEX
                       field="tipoPersiana"
-                      options={PERSIANA_TIPOS.map(p => ({ value: p.value, label: p.label }))}
+                      options={PERSIANA_TIPOS}
                     />
                   </div>
                 )}
@@ -1051,7 +1003,7 @@ export default function PublicCEEForm({ token }: Props) {
               {[
                 { label: "Cerramiento",    value: form.cerramientoExterior },
                 { label: "Ventanas",       value: form.tipoVentanas },
-                { label: "Marcos",         value: MARCOS_OPTS_CEX.find(m => m.value === form.tipoMarcos)?.label ?? form.tipoMarcos },
+                { label: "Marcos",         value: MARCOS_OPTS.find(m => m.value === form.tipoMarcos)?.label ?? form.tipoMarcos },
                 {
                   label: "Dimensión ventana",
                   value: superficieVentana ? `${form.anchoVentana} × ${form.altoVentana} m = ${superficieVentana} m²` : "",
@@ -1136,6 +1088,42 @@ export default function PublicCEEForm({ token }: Props) {
               Al pulsar "Enviar", tu documentación llegará a <strong>{certifier?.name ?? "tu certificador"}</strong> y recibirás una confirmación por email.
             </div>
 
+            {/* Consentimiento RGPD — requerido por LOPDGDD / RGPD art. 6.1.a */}
+            <div className="bg-white rounded-3xl p-5 border border-stone-200 shadow-sm">
+              <div className="flex items-start gap-3">
+                <button
+                  type="button"
+                  role="checkbox"
+                  aria-checked={rgpdAccepted}
+                  onClick={() => setRgpdAccepted(v => !v)}
+                  className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-all mt-0.5 ${
+                    rgpdAccepted
+                      ? "border-emerald-500 bg-emerald-500"
+                      : "border-stone-300 bg-white"
+                  }`}
+                >
+                  {rgpdAccepted && <span className="text-white text-xs font-black leading-none">✓</span>}
+                </button>
+                <p className="text-sm text-stone-600 leading-relaxed">
+                  He leído y acepto la{" "}
+                  <a href="/privacy" target="_blank" rel="noreferrer" className="text-emerald-700 underline font-medium">
+                    Política de Privacidad
+                  </a>.{" "}
+                  <span className="text-stone-500">
+                    Responsable: {certifier?.company ?? certifier?.name ?? "[NOMBRE_EMPRESA]"}.
+                    Finalidad: gestión de tu certificado de eficiencia energética.
+                    Puedes ejercer tus derechos en [EMAIL_CONTACTO].
+                  </span>
+                </p>
+              </div>
+              {!rgpdAccepted && (
+                <p className="text-xs text-amber-600 mt-3 flex items-center gap-1.5">
+                  <span>⚠️</span>
+                  <span>Debes aceptar la política de privacidad para continuar.</span>
+                </p>
+              )}
+            </div>
+
             {error && (
               <div className="bg-red-50 border border-red-100 rounded-2xl px-4 py-3 text-sm text-red-700">{error}</div>
             )}
@@ -1159,7 +1147,7 @@ export default function PublicCEEForm({ token }: Props) {
               Continuar →
             </button>
           ) : (
-            <button onClick={submit} disabled={submitting}
+            <button onClick={submit} disabled={submitting || !rgpdAccepted}
               className="flex-1 py-4 bg-emerald-700 text-white rounded-2xl font-bold text-sm disabled:opacity-50 hover:bg-emerald-600 transition-colors min-h-[52px]">
               {submitting ? "Enviando…" : "Enviar documentación →"}
             </button>
