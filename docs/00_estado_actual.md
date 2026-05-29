@@ -1,7 +1,9 @@
 # CERTIFIVE — Estado Actual del Proyecto
 
-> Auditoría realizada: 2026-05-16  
-> Basada en el código fuente en `certifive/` (commit HEAD: `232daff`)
+> Auditoría inicial: 2026-05-16 · Última actualización: 2026-05-29  
+> Commit HEAD actual: `3eef0cc`
+>
+> **Cambios aplicados desde la auditoría inicial** → ver sección [Historial de mejoras](#historial-de-mejoras)
 
 ---
 
@@ -11,7 +13,7 @@
 |------|-----------|---------|
 | Runtime servidor | Node.js + Express | express 4.x |
 | Lenguaje | TypeScript | 5.6.3 |
-| ORM | Drizzle ORM | 0.39.x |
+| ORM | Drizzle ORM | 0.45.2 |
 | Base de datos | PostgreSQL (Railway) | via `pg` + `@neondatabase/serverless` |
 | Autenticación | JWT (jsonwebtoken) + bcryptjs | tokens 7d / 30d |
 | Frontend | React 18 + Vite | vite 5.x |
@@ -252,8 +254,8 @@ certifive/
 | `/renovar-suscripcion` | RenovarSuscripcion | Funcional |
 | `/privacy` | PrivacyPolicy | Funcional |
 | `/terms` | TermsOfService | Funcional |
-| `/verify-email` | **NO EXISTE** | **BUG CRÍTICO** |
-| `/reset-password` | **NO EXISTE** | **BUG CRÍTICO** |
+| `/verify-email` | VerifyEmail | Funcional (añadido) |
+| `/reset-password` | ResetPassword | Funcional (añadido) |
 
 ---
 
@@ -336,18 +338,18 @@ El sistema usa **JWT sin estado** (no express-session para proteger rutas API):
 | Automatizaciones | Stub | Solo waitlist — módulo no implementado |
 | Marketing | Stub | Solo waitlist — módulo no implementado |
 | Página pública del certificador | Parcial | `CertifierLanding.tsx` existe pero no está en el router |
-| `/verify-email` (frontend) | Roto | Ruta no existe en App.tsx — emails de verificación van a 404 |
-| `/reset-password` (frontend) | Roto | Ruta no existe en App.tsx — links de reset van a 404 |
+| `/verify-email` (frontend) | ✅ Funcional | Componente `VerifyEmail` añadido al router |
+| `/reset-password` (frontend) | ✅ Funcional | Componente `ResetPassword` añadido al router |
 
 ---
 
 ## Riesgos Principales
 
-1. **CRÍTICO — Links de email van a 404**: Las rutas `/verify-email` y `/reset-password` no existen en el router frontend (`App.tsx`). Los emails de registro y recuperación de contraseña son completamente no funcionales.
+1. ~~**CRÍTICO — Links de email van a 404**~~ ✅ **CORREGIDO** (`commit 3eef0cc` / App.tsx): Las rutas `/verify-email` y `/reset-password` fueron añadidas al router con sus componentes correspondientes.
 
 2. **CRÍTICO — JWT_SECRET genérico en producción**: `certifive-dev-secret-2024` está en el código como fallback. Si no se setea `JWT_SECRET` en Railway, los tokens son predecibles.
 
-3. **BUG — `req.userId` vs `req.user.id`**: El middleware `authenticate` setea `req.user` (objeto), pero ~21 handlers en rutas protegidas usan `req.userId` (undefined). Afecta: logo upload, firma upload, notificaciones, settings, WhatsApp. Las operaciones devuelven 500 o corrompen datos.
+3. ~~**BUG — `req.userId` vs `req.user.id`**~~ ✅ **CORREGIDO** (`commit 5362e2e`): Se creó `server/types/express.d.ts` con la augmentación global de Express Request. Se reemplazaron 64 ocurrencias de `(req as any).user.id` → `req.user!.id` en 18 archivos de rutas. Se eliminó `// @ts-nocheck` de `export-ce3x.ts`. TypeScript pasa con 0 errores.
 
 4. **ALTO — Cloudinary no configurado**: Sin `CLOUDINARY_URL`, cualquier upload (documentos, fotos de visita, logo, firma) falla con error no controlado que puede crashear el handler.
 
@@ -363,3 +365,30 @@ El sistema usa **JWT sin estado** (no express-session para proteger rutas API):
 
 10. **BAJO — Login no busca por email**: Aunque el endpoint acepta `email` como campo, la query busca por `users.username`. Un usuario que intente iniciar sesión con su email no encontrará su cuenta.
 
+---
+
+## Historial de mejoras
+
+### Sprint 2026-05-16 → 2026-05-29
+
+| Commit | Descripción |
+|--------|-------------|
+| `255994c` | **chore**: upgrade drizzle-orm `0.39.3 → 0.45.2` (security + API correcta) |
+| `bd5f265` | **feat**: consentimiento RGPD en todos los formularios públicos (LOPDGDD art. 6.1.a) |
+| `1a971c6` | **fix**: `id` en `AuthContext` siempre es `number` (elimina ambigüedad `string\|number`) |
+| `5362e2e` | **refactor**: eliminar `// @ts-nocheck` + tipar `req.user` en todo el servidor — 64 ocurrencias de `(req as any).user.id` → `req.user!.id` en 18 ficheros — TypeScript: 0 errores |
+| `3eef0cc` | **test**: tests mínimos de API — vitest + supertest — 10 tests en 4 suites (health, login, cert, CE3X) |
+
+### Pendiente (backlog técnico)
+
+| Prioridad | Tarea |
+|-----------|-------|
+| CRÍTICO | Setear `JWT_SECRET` real en Railway (nunca usar el fallback de código) |
+| ALTO | Configurar Cloudinary (`CLOUDINARY_URL`) — sin esto los uploads crashean |
+| ALTO | Configurar Stripe Price IDs reales — suscripciones no operativas |
+| ALTO | Configurar `SENDGRID_API_KEY` real — sin esto no se envía ningún email |
+| MEDIO | Corregir query de login para buscar también por `email` (actualmente solo busca por `username`) |
+| MEDIO | Eliminar `server/routes.ts` (2000+ líneas dead code) |
+| MEDIO | Eliminar páginas dead code frontend (`properties-broken.tsx`, etc.) |
+| BAJO | Parametrizar query SQL en `misc.ts` (potencial SQL injection en módulo waitlist) |
+| BAJO | Tes
