@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { Express, Request, Response } from "express";
 import { db } from "../db";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, count } from "drizzle-orm";
 import { users, waitlist, betaLeads, certifications, pricingRates } from "../../shared/schema";
 import { authenticate } from "../auth";
 import { sendBetaLeadConfirmation } from "../email";
@@ -27,8 +27,8 @@ app.post("/api/waitlist", async (req: Request, res: Response) => {
     if (!mod) return res.status(400).json({ message: "El campo 'module' es obligatorio" });
     if (!email && !phone) return res.status(400).json({ message: "Introduce un email o teléfono" });
     await db.insert(waitlist).values({ email: email?.trim() || null, phone: phone?.trim() || null, module: mod });
-    const [{ count }] = await db.execute(`SELECT COUNT(*)::int AS count FROM waitlist WHERE module = '${mod.replace(/'/g, "''")}'`) as any;
-    res.status(201).json({ success: true, count: Number(count) });
+    const [{ value }] = await db.select({ value: count() }).from(waitlist).where(eq(waitlist.module, mod));
+    res.status(201).json({ success: true, count: Number(value) });
   } catch (e: any) {
     res.status(500).json({ message: "Error al guardar el registro", detail: e?.message });
   }
@@ -37,9 +37,8 @@ app.post("/api/waitlist", async (req: Request, res: Response) => {
 app.get("/api/waitlist/count/:module", async (req: Request, res: Response) => {
   try {
     const mod = req.params.module;
-    const result = await db.execute(`SELECT COUNT(*)::int AS count FROM waitlist WHERE module = '${mod.replace(/'/g, "''")}'`) as any;
-    const count = Number(result[0]?.count ?? result?.rows?.[0]?.count ?? 0);
-    res.json({ count });
+    const [{ value }] = await db.select({ value: count() }).from(waitlist).where(eq(waitlist.module, mod));
+    res.json({ count: Number(value) });
   } catch {
     res.json({ count: 0 });
   }
