@@ -6,4 +6,6 @@ vite.config.ts.*
 *.tar.gz
 .env
 .env.local
-.env.*.local
+.env.*.local# Scripts temporales de sesiones de desarrollo
+write_*.py
+design-previews/
