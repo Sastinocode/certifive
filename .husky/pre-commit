@@ -1,0 +1,11 @@
+#!/bin/sh
+# Si package.json está staged, package-lock.json también debe estarlo
+if git diff --cached --name-only | grep -q "^package\.json$"; then
+  if ! git diff --cached --name-only | grep -q "^package-lock\.json$"; then
+    echo ""
+    echo "ERROR: package.json staged pero package-lock.json no."
+    echo "Ejecuta 'npm install' y añade package-lock.json al commit."
+    echo ""
+    exit 1
+  fi
+fi
