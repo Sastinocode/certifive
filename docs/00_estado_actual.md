@@ -1,7 +1,7 @@
 # CERTIFIVE — Estado Actual del Proyecto
 
 > Auditoría inicial: 2026-05-16 · Última actualización: 2026-05-29  
-> Commit HEAD actual: `3eef0cc`
+> Commit HEAD actual: `a7e8bd1`
 >
 > **Cambios aplicados desde la auditoría inicial** → ver sección [Historial de mejoras](#historial-de-mejoras)
 
@@ -355,15 +355,15 @@ El sistema usa **JWT sin estado** (no express-session para proteger rutas API):
 
 5. **ALTO — Stripe en modo placeholder**: Todos los pagos de suscripción y los pagos de clientes están en modo no-operativo hasta configurar las keys reales.
 
-6. **MEDIO — SQL injection potencial en misc.ts**: El módulo de waitlist construye queries SQL con interpolación de strings (`module = '${mod.replace(/'/g, "''")}'`). El replace es insuficiente — debería usarse query parametrizada de Drizzle.
+6. ✅ **CORREGIDO (`c469edc`) — SQL injection en misc.ts**: Reemplazadas queries SQL con interpolación de strings por `db.select({ value: count() }).from(waitlist).where(eq(...))` — completamente parametrizado con Drizzle ORM.
 
 7. **MEDIO — SESSION_SECRET no seteada**: express-session usa el fallback `certifive-session-secret-2024`.
 
-8. **BAJO — `server/routes.ts` (monolítico) es dead code**: El archivo de 2000+ líneas existe pero no está importado. Confunde a quien lea el código.
+8. ✅ **YA ELIMINADO — `server/routes.ts` (monolítico)**: Archivo de 2000+ líneas ya no existe en el repositorio.
 
-9. **BAJO — Archivos dead code en frontend**: `properties-broken.tsx`, `certification-wizard-old.tsx`, `reports-backup.tsx`, `reports-collections.tsx` no están en el router.
+9. ✅ **YA ELIMINADO — Archivos dead code en frontend**: `properties-broken.tsx`, `certification-wizard-old.tsx`, `reports-backup.tsx`, `reports-collections.tsx` ya no existen en el repositorio.
 
-10. **BAJO — Login no busca por email**: Aunque el endpoint acepta `email` como campo, la query busca por `users.username`. Un usuario que intente iniciar sesión con su email no encontrará su cuenta.
+10. ~~**BAJO — Login no busca por email**~~ ✅ **FALSO POSITIVO**: La auditoría inicial fue incorrecta. El código ya usa `or(eq(users.username, lookup), eq(users.email, lookup))` — acepta tanto username como email desde el inicio.
 
 ---
 
@@ -378,6 +378,9 @@ El sistema usa **JWT sin estado** (no express-session para proteger rutas API):
 | `1a971c6` | **fix**: `id` en `AuthContext` siempre es `number` (elimina ambigüedad `string\|number`) |
 | `5362e2e` | **refactor**: eliminar `// @ts-nocheck` + tipar `req.user` en todo el servidor — 64 ocurrencias de `(req as any).user.id` → `req.user!.id` en 18 ficheros — TypeScript: 0 errores |
 | `3eef0cc` | **test**: tests mínimos de API — vitest + supertest — 10 tests en 4 suites (health, login, cert, CE3X) |
+| `c469edc` | **fix**: SQL injection en waitlist — count parametrizado con Drizzle ORM |
+| `9e36095` | **refactor**: onboarding simplificado a pantalla única (nombre, empresa, teléfono, DNI) — de 689 → 172 líneas |
+| `a7e8bd1` | **docs**: estado_actual actualizado — onboarding y SQL injection marcados como resueltos |
 
 ### Pendiente (backlog técnico)
 
@@ -387,8 +390,8 @@ El sistema usa **JWT sin estado** (no express-session para proteger rutas API):
 | ALTO | Configurar Cloudinary (`CLOUDINARY_URL`) — sin esto los uploads crashean |
 | ALTO | Configurar Stripe Price IDs reales — suscripciones no operativas |
 | ALTO | Configurar `SENDGRID_API_KEY` real — sin esto no se envía ningún email |
-| MEDIO | Corregir query de login para buscar también por `email` (actualmente solo busca por `username`) |
-| MEDIO | Eliminar `server/routes.ts` (2000+ líneas dead code) |
-| MEDIO | Eliminar páginas dead code frontend (`properties-broken.tsx`, etc.) |
-| BAJO | Parametrizar query SQL en `misc.ts` (potencial SQL injection en módulo waitlist) |
-| BAJO | Tes
+| ~~MEDIO~~ | ~~Eliminar `server/routes.ts`~~ → ✅ Ya eliminado del repo |
+| ~~MEDIO~~ | ~~Eliminar páginas dead code frontend~~ → ✅ Ya eliminado del repo |
+| ~~BAJO~~ | ~~Parametrizar query SQL en `misc.ts`~~ → ✅ `c469edc` |
+| BAJO | Test CE3X real — generar XML e importar en software CE3X para validar |
+| ~~BAJO~~ | ~~Simplificar flujo de onboarding~~ → ✅ `9e36095` 
