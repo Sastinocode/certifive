@@ -44,7 +44,7 @@ const FILTER_TABS = [
   { value: "overdue",   label: "Vencidas" },
 ];
 
-const INPUT_CLS = "w-full h-10 bg-muted/40 border border-transparent rounded-xl px-4 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/40 outline-none text-foreground placeholder:text-muted-foreground";
+const INPUT_CLS = "w-full h-10 bg-muted/40 border border-border hover:border-border/70 rounded-xl px-4 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary/40 outline-none text-foreground placeholder:text-muted-foreground transition-colors";
 
 export default function Invoices() {
   const [showForm, setShowForm] = useState(false);

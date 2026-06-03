@@ -94,10 +94,10 @@ function OptionCard({
       type="button"
       onClick={onClick}
       className={[
-        "w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl border-2 text-left transition-all active:scale-[0.98]",
+        "w-full flex items-center gap-3 px-4 py-4 rounded-2xl border-[1.5px] text-left transition-all active:scale-[0.98]",
         selected
-          ? "border-primary bg-primary/5 text-foreground"
-          : "border-border bg-card text-foreground hover:border-primary/30",
+          ? "border-primary bg-primary/5 text-foreground ring-[3px] ring-primary/8"
+          : "border-border bg-card text-foreground hover:border-muted-foreground/40 hover:bg-muted/30",
       ].join(" ")}
     >
       <span className="text-2xl leading-none">{emoji}</span>
@@ -128,7 +128,7 @@ function Field({
 }
 
 const inputCls =
-  "w-full bg-card border border-border rounded-xl px-4 py-3.5 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 transition-all";
+  "w-full bg-card border-[1.5px] border-border rounded-xl px-4 py-3 text-[15px] text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 hover:border-muted-foreground/40 transition-all min-h-[48px]";
 
 // ── Screens ───────────────────────────────────────────────────────────────────
 
@@ -313,7 +313,7 @@ export default function PublicForm({ token }: PublicFormProps) {
     <div className="min-h-screen bg-background">
 
       {/* Header */}
-      <div className="bg-card border-b border-border px-5 py-4 sticky top-0 z-10">
+      <div className="bg-background/80 backdrop-blur-sm border-b border-border px-5 py-4 sticky top-0 z-30 h-16 flex items-center">
         <div className="max-w-lg mx-auto flex items-center gap-3">
           <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center flex-shrink-0">
             <span className="text-primary-foreground font-bold text-sm">C</span>
@@ -595,7 +595,7 @@ export default function PublicForm({ token }: PublicFormProps) {
       </div>
 
       {/* ── Sticky bottom navigation ─────────────────────────────────────────── */}
-      <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border px-5 py-4">
+      <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border px-5 py-4" style={{ boxShadow: '0 -8px 20px -8px rgba(15,31,46,0.08)' }}>
         <div className="max-w-lg mx-auto flex gap-3">
           {step > 1 && (
             <button

@@ -34,7 +34,7 @@ function EnergyChip({ letter, size = "sm" }: { letter: string; size?: "sm" | "lg
     <div className="relative inline-flex items-center" style={{ marginRight: 8 }}>
       <div
         className="rounded flex items-center justify-center font-black"
-        style={{ width: dim.w, height: dim.h, fontSize: dim.fs, backgroundColor: colors.bg, color: colors.text }}
+        style={{ width: dim.w, height: dim.h, fontSize: dim.fs, backgroundColor: colors.bg, color: colors.text, boxShadow: '0 1px 2px rgba(0,0,0,0.15)' }}
       >
         {letter?.toUpperCase() ?? "?"}
       </div>

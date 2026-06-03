@@ -509,6 +509,16 @@ export default function Settings() {
                       </div>
                     )}
 
+                    <div className="flex items-center gap-5">
+                      <div className="w-20 h-20 rounded-full bg-primary/15 flex items-center justify-center text-2xl font-bold text-primary flex-shrink-0">
+                        {((profileData.firstName?.[0] ?? "") + (profileData.lastName?.[0] ?? "")).toUpperCase() || "?"}
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">{profileData.firstName} {profileData.lastName}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{profileData.email}</p>
+                      </div>
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       <div>
                         <Label htmlFor="firstName">Nombre</Label>
