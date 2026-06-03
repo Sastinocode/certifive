@@ -1,5 +1,6 @@
 import {
   pgTable,
+  pgEnum,
   text,
   serial,
   integer,
@@ -757,6 +758,39 @@ export const certificationShares = pgTable("certification_shares", {
 ]);
 
 // ─────────────────────────────────────────────────────────────────────────────
+// SOLICITUDES PÚBLICAS CEE  (leads del formulario público de contratación)
+// ─────────────────────────────────────────────────────────────────────────────
+export const estadoSolicitudEnum = pgEnum("estado_solicitud", [
+  "lead",
+  "presupuesto",
+  "pagado",
+  "en_proceso",
+  "finalizado",
+]);
+
+export const solicitudes = pgTable("solicitudes", {
+  id:                    serial("id").primaryKey(),
+  nombre:                text("nombre"),
+  email:                 text("email"),
+  telefono:              text("telefono"),
+  tipoInmueble:          text("tipo_inmueble"),
+  ciudad:                text("ciudad"),
+  superficie:            text("superficie"),
+  finalidad:             text("finalidad"),
+  numeroPedido:          text("numero_pedido").notNull().unique(),
+  estado:                estadoSolicitudEnum("estado").notNull().default("lead"),
+  metodoPago:            text("metodo_pago"),
+  importeTotal:          decimal("importe_total", { precision: 10, scale: 2 }),
+  stripePaymentIntentId: text("stripe_payment_intent_id"),
+  createdAt:             timestamp("created_at").defaultNow().notNull(),
+  updatedAt:             timestamp("updated_at").defaultNow().notNull(),
+}, (t) => [
+  uniqueIndex("solicitudes_numero_pedido_idx").on(t.numeroPedido),
+  index("solicitudes_estado_idx").on(t.estado),
+  index("solicitudes_email_idx").on(t.email),
+]);
+
+// ─────────────────────────────────────────────────────────────────────────────
 // INSERT SCHEMAS (Zod validation for API endpoints)
 // ─────────────────────────────────────────────────────────────────────────────
 export const insertUserSchema = createInsertSchema(users).omit({
@@ -820,3 +854,9 @@ export type InsertDocumento = z.infer<typeof insertDocumentoSchema>;
 export type PlantillaWhatsapp = typeof plantillasWhatsapp.$inferSelect;
 export type MensajeComunicacion = typeof mensajesComunicacion.$inferSelect;
 export type Notificacion = typeof notificaciones.$inferSelect;
+
+export const insertSolicitudSchema = createInsertSchema(solicitudes).omit({
+  id: true, createdAt: true, updatedAt: true,
+});
+export type Solicitud = typeof solicitudes.$inferSelect;
+export type InsertSolicitud = z.infer<typeof insertSolicitudSchema>;

@@ -394,4 +394,4 @@ El sistema usa **JWT sin estado** (no express-session para proteger rutas API):
 | ~~MEDIO~~ | ~~Eliminar páginas dead code frontend~~ → ✅ Ya eliminado del repo |
 | ~~BAJO~~ | ~~Parametrizar query SQL en `misc.ts`~~ → ✅ `c469edc` |
 | BAJO | Test CE3X real — generar XML e importar en software CE3X para validar |
-| ~~BAJO~~ | ~~Simplificar flujo de onboarding~~ → ✅ `9e36095` 
+| ~~BAJO~~ | ~~Simplificar flujo de onboarding~~ → ✅ `9e36095` |

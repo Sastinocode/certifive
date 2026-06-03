@@ -183,6 +183,65 @@ app.get("/api/c/:slug", async (req: Request, res: Response) => {
 // ─────────────────────────────────────────────────────────────────────────
 
 
+// ─────────────────────────────────────────────────────────────────────────
+// PUBLIC ORDER TRACKING  GET /api/solicitudes/seguimiento/:token
+// ─────────────────────────────────────────────────────────────────────────
+
+app.get("/api/solicitudes/seguimiento/:token", async (req: Request, res: Response) => {
+  const { token } = req.params;
+  if (!token) return res.status(400).json({ message: "Token requerido" });
+
+  // TODO: replace with real DB lookup by token
+  const mock = {
+    paso:         3,
+    totalPasos:   4,
+    progreso:     70,
+    estado:       "Certificado en redacción",
+    subtitulo:    "El técnico ya ha realizado la visita. Estamos redactando tu certificado y lo registraremos en la CCAA.",
+    entrega:      "5-6 jun",
+    numero:       "CTF-2026-04821",
+    inmueble:     "Vivienda · 84 m²",
+    direccion:    "Calle Mayor 14, 4ºB",
+    ciudad:       "Madrid · 28013",
+    finalidad:    "Venta",
+    calificacion: "C",
+    pdfUrl:       null,
+    total:        129,
+    timeline: [
+      {
+        done: true, current: false, pending: false,
+        label: "Solicitud y pago confirmados",
+        sub:   "31 may · 18:42 · Pago de 129 € recibido",
+        badge: null,
+        detail: null,
+      },
+      {
+        done: true, current: false, pending: false,
+        label: "Visita técnica realizada",
+        sub:   "4 jun · 10:15 · Técnico: Javier Ruiz (COIIM 21548)",
+        badge: "Datos tomados correctamente · 84 m²",
+        detail: null,
+      },
+      {
+        done: false, current: true, pending: false,
+        label: "Redacción del certificado",
+        sub:   "En curso · estimado 5 jun",
+        badge: null,
+        detail: "Nuestro equipo está calculando la calificación energética y preparando el informe. Te avisaremos cuando esté listo para registrar.",
+      },
+      {
+        done: false, current: false, pending: true,
+        label: "Registro en la CCAA y entrega",
+        sub:   "Pendiente · estimado 5-6 jun",
+        badge: null,
+        detail: null,
+      },
+    ],
+  };
+
+  res.json(mock);
+});
+
 // ── BETA LEADS ──────────────────────────────────────────────────────────────
 
 // POST /api/beta-leads — landing page registration
@@ -221,10 +280,6 @@ app.post("/api/beta-leads", async (req, res) => {
   } catch (err) {
     console.error("[beta-leads] Error:", err);
     res.status(500).json({ message: "Error al guardar el registro" });
-  }
-});
-}
- });
   }
 });
 }
