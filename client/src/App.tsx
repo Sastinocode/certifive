@@ -46,6 +46,15 @@ import TermsOfService from "@/pages/TermsOfService";
 import VerifyEmail from "@/pages/VerifyEmail";
 import ResetPassword from "@/pages/ResetPassword";
 import RecogidaMovil from "@/pages/RecogidaMovil";
+// ── Flujo público de captación (diseño hi-fi) ────────────────────────────────
+import PreciosCEE from "@/pages/PreciosCEE";
+import SolicitudCEE from "@/pages/SolicitudCEE";
+import SolicitudTecnico from "@/pages/SolicitudTecnico";
+import SolicitudPresupuesto from "@/pages/SolicitudPresupuesto";
+import SolicitudPago from "@/pages/SolicitudPago";
+import SolicitudConfirmacion from "@/pages/SolicitudConfirmacion";
+import SolicitudSeguimiento from "@/pages/SolicitudSeguimiento";
+import SolicitudPagoRechazado from "@/pages/SolicitudPagoRechazado";
 
 function RecogidaMovilWrapper() {
   const { token } = useParams<{ token: string }>();
@@ -89,6 +98,7 @@ const SETUP_SKIP_PREFIXES = [
   "/pay/", "/certificacion-cliente/", "/generador-tarifas", "/recogida/",
   "/login", "/register", "/verify-email", "/reset-password", "/solicitar-demo",
   "/privacy", "/terms", "/success", "/cancel", "/renovar-suscripcion",
+  "/precios", "/solicitud-cee",
 ];
 
 function Router() {
@@ -167,6 +177,16 @@ function Router() {
         <Route path="/certificacion-cliente/:uniqueLink" component={CertificationForm} />
         <Route path="/generador-tarifas" component={PublicTariffGenerator} />
         <Route path="/recogida/:token" component={RecogidaMovilWrapper} />
+        {/* ── Flujo público de captación CEE ──────────────────────────────── */}
+        <Route path="/precios" component={PreciosCEE} />
+        <Route path="/solicitud-cee" component={SolicitudCEE} />
+        <Route path="/solicitud-cee/tecnico" component={SolicitudTecnico} />
+        <Route path="/solicitud-cee/presupuesto" component={SolicitudPresupuesto} />
+        <Route path="/solicitud-cee/pago" component={SolicitudPago} />
+        <Route path="/solicitud-cee/confirmacion" component={SolicitudConfirmacion} />
+        <Route path="/solicitud-cee/seguimiento" component={SolicitudSeguimiento} />
+        <Route path="/solicitud-cee/pago-rechazado" component={SolicitudPagoRechazado} />
+
         <Route path="/login" component={Login} />
         <Route path="/register" component={Register} />
         <Route path="/verify-email" component={VerifyEmail} />
@@ -203,7 +223,7 @@ function Router() {
         {/* Stripe payment result pages */}
         <Route path="/success" component={PaymentSuccess} />
         <Route path="/cancel" component={PaymentCancel} />
-        <Route path="/renovar-suscripcion" component={RenovarSuscripcion} />
+        <Route path="/renovar-suscripción" component={RenovarSuscripcion} />
 
         <Route component={NotFound} />
       </Switch>
@@ -220,40 +240,32 @@ function AppWithSearch() {
     const handler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "k") {
         e.preventDefault();
-        if (isAuthenticated) setSearchOpen(o => !o);
+        if (isAuthenticated) setSearchOpen(true);
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [isAuthenticated]);
 
-  // Expose setter globally so Sidebar can open it
-  useEffect(() => {
-    (window as any).__openGlobalSearch = () => setSearchOpen(true);
-    return () => { delete (window as any).__openGlobalSearch; };
-  }, []);
-
   return (
     <>
       <Router />
-      {isAuthenticated && (
+      {isAuthenticated && searchOpen && (
         <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
       )}
     </>
   );
 }
 
-function App() {
+export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TooltipProvider>
-          <Toaster />
           <AppWithSearch />
+          <Toaster />
         </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
 }
-
-export default App;
