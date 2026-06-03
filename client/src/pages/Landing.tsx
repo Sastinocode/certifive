@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest } from "@/lib/queryClient";
@@ -10,8 +10,6 @@ export default function Landing() {
   const [isAnnual, setIsAnnual] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [calcCerts, setCalcCerts] = useState(10);
-  const [heroTab, setHeroTab] = useState("Expedientes");
-  const [showcaseTab, setShowcaseTab] = useState("Expedientes");
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -240,46 +238,8 @@ export default function Landing() {
         .trust-checks span{display:inline-flex;align-items:center;gap:6px;color:var(--s600);font-size:13px;font-weight:500}
         .trust-checks svg{color:var(--green);flex-shrink:0}
 
-        /* Hero dashboard mock */
-        .hero-visual{
-          background:white;border-radius:var(--rxl);
-          border:1px solid var(--s200);
-          box-shadow:0 24px 64px rgba(15,23,42,.12);
-          overflow:hidden;padding:24px;
-        }
-        .dash-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
-        .dash-title{font-size:15px;font-weight:700;color:var(--ink)}
-        .dash-live{
-          background:var(--green-lt);color:var(--green);
-          font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;
-          display:flex;align-items:center;gap:5px;
-        }
-        .dash-live-dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:gpulse 2s infinite}
-        .dash-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
-        .dash-stat{background:var(--s50);border-radius:var(--rl);padding:14px;text-align:center}
-        .dash-stat-n{font-size:22px;font-weight:800;color:var(--green)}
-        .dash-stat-l{font-size:11px;color:var(--s500);font-weight:500;margin-top:2px}
-        .dash-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--s100)}
-        .dash-row:last-child{border-bottom:none}
-        .cal-tag{font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;flex-shrink:0}
-        .cal-a{background:#dcfce7;color:#15803d}
-        .cal-b{background:#d1fae5;color:#059669}
-        .cal-c{background:#fef9c3;color:#a16207}
-        .cal-d{background:#fee2e2;color:#dc2626}
-        .dash-row-main{flex:1;min-width:0}
-        .dash-row-name{font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-        .dash-row-sub{font-size:11px;color:var(--s400)}
-        .cert-status{font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px;flex-shrink:0}
-        .st-done{background:var(--green-lt);color:var(--green)}
-        .st-pending{background:#fef3c7;color:#d97706}
-        .st-new{background:var(--s100);color:var(--s500)}
-
-        /* ── HERO INTERACTIVE TABS ── */
-        .hero-tabs{display:flex;border-bottom:1px solid var(--s200);margin:0 -24px 14px;padding:0 24px;overflow-x:auto;scrollbar-width:none}
-        .hero-tabs::-webkit-scrollbar{display:none}
-        .hero-tab{font-size:11px;font-weight:600;padding:8px 10px;color:var(--s400);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;transition:color .15s,border-color .15s;flex-shrink:0}
-        .hero-tab:hover{color:var(--ink700)}
-        .hero-tab.active{color:var(--green);border-bottom-color:var(--green)}
+        /* Hero visual */
+        .hero-visual{border-radius:var(--rxl);overflow:hidden}
 
         /* ── STATS STRIP ── */
         .stats-strip{
@@ -308,30 +268,6 @@ export default function Landing() {
         }
         .section-sub{font-size:18px;color:var(--s500);line-height:1.65;max-width:580px;margin:0 auto}
 
-        /* ── SHOWCASE MOCK ── */
-        .showcase-mock{
-          background:white;border:1px solid var(--s200);
-          border-radius:var(--rxl);box-shadow:var(--shadow-card);overflow:hidden;
-        }
-        .showcase-tabs{display:flex;border-bottom:1px solid var(--s200);padding:0 24px}
-        .showcase-tab{
-          font-size:13px;font-weight:600;padding:14px 18px;color:var(--s500);
-          cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;
-        }
-        .showcase-tab.active{color:var(--green);border-bottom-color:var(--green)}
-        .showcase-body{padding:24px}
-        .showcase-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
-        .showcase-card{background:var(--s50);border-radius:var(--rl);padding:16px;text-align:center}
-        .showcase-card-n{font-size:24px;font-weight:800;color:var(--green);margin-bottom:4px}
-        .showcase-card-l{font-size:11px;color:var(--s500);font-weight:500}
-        .showcase-list{display:flex;flex-direction:column}
-        .showcase-row{
-          display:flex;align-items:center;gap:16px;
-          padding:12px 0;border-bottom:1px solid var(--s100);
-        }
-        .showcase-row:last-child{border-bottom:none}
-        .cert-id{font-size:12px;font-weight:700;color:var(--s400);font-family:monospace;flex-shrink:0}
-        .cert-name{font-size:13px;font-weight:600;color:var(--ink);flex:1}
 
         /* ── MULTIPLICA MOCK ── */
         .mult-mock{
@@ -740,220 +676,12 @@ export default function Landing() {
             </div>
           </div>
 
-          {/* Dashboard mock — Interactive Demo */}
           <div className="hero-visual reveal d1">
-            <div className="dash-header">
-              <div className="dash-title">Panel de control</div>
-              <div className="dash-live">
-                <span className="dash-live-dot" />
-                En vivo
-              </div>
-            </div>
-
-            {/* Tab navigation */}
-            <div className="hero-tabs">
-              {["Expedientes","Clientes","Informes","Cuestionarios","WhatsApp"].map(tab => (
-                <div
-                  key={tab}
-                  className={`hero-tab${heroTab === tab ? " active" : ""}`}
-                  onClick={() => setHeroTab(tab)}
-                >
-                  {tab}
-                </div>
-              ))}
-            </div>
-
-            {/* ── Tab: Expedientes ── */}
-            {heroTab === "Expedientes" && (
-              <>
-                <div className="dash-stats">
-                  {[
-                    { n: "47",     l: "Activos"   },
-                    { n: "3.840€", l: "Este mes"  },
-                    { n: "94%",    l: "Aprobados" },
-                  ].map(s => (
-                    <div className="dash-stat" key={s.l}>
-                      <div className="dash-stat-n">{s.n}</div>
-                      <div className="dash-stat-l">{s.l}</div>
-                    </div>
-                  ))}
-                </div>
-                {[
-                  { id: "CEE-2408", name: "C/ Almería 14, Madrid",  cal: "B", calCls: "cal-b", status: "Registrado", stCls: "st-done"    },
-                  { id: "CEE-2407", name: "Av. Diagonal 88, BCN",    cal: "A", calCls: "cal-a", status: "En proceso", stCls: "st-pending" },
-                  { id: "CEE-2406", name: "C/ Gran Vía 12, Madrid",  cal: "C", calCls: "cal-c", status: "Registrado", stCls: "st-done"    },
-                  { id: "CEE-2405", name: "C/ Colón 5, Valencia",    cal: "B", calCls: "cal-b", status: "Nuevo",      stCls: "st-new"     },
-                ].map(row => (
-                  <div className="dash-row" key={row.id}>
-                    <span className={`cal-tag ${row.calCls}`}>{row.cal}</span>
-                    <div className="dash-row-main">
-                      <div className="dash-row-name">{row.name}</div>
-                      <div className="dash-row-sub">{row.id}</div>
-                    </div>
-                    <span className={`cert-status ${row.stCls}`}>{row.status}</span>
-                  </div>
-                ))}
-              </>
-            )}
-
-            {/* ── Tab: Clientes ── */}
-            {heroTab === "Clientes" && (
-              <>
-                {[
-                  { ini: "MG", name: "María García Ruiz",   tel: "612 345 678", certs: 3,  ult: "hace 2 días"   },
-                  { ini: "JM", name: "Juan Martínez López", tel: "634 890 123", certs: 7,  ult: "hace 1 semana" },
-                  { ini: "RF", name: "Rosa Fernández Vila", tel: "678 901 234", certs: 2,  ult: "hace 3 días"   },
-                  { ini: "CS", name: "Carlos Soler Ibáñez", tel: "655 432 198", certs: 12, ult: "hoy"           },
-                ].map(c => (
-                  <div className="dash-row" key={c.ini}>
-                    <div style={{
-                      width: 30, height: 30, borderRadius: "50%",
-                      background: "linear-gradient(135deg,var(--green) 0%,var(--green-dk) 100%)",
-                      color: "white", display: "flex", alignItems: "center",
-                      justifyContent: "center", fontSize: 11, fontWeight: 700, flexShrink: 0,
-                    }}>{c.ini}</div>
-                    <div className="dash-row-main">
-                      <div className="dash-row-name">{c.name}</div>
-                      <div className="dash-row-sub">{c.tel}</div>
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
-                      <span style={{
-                        background: "var(--green-lt)", color: "var(--green)",
-                        fontSize: 11, fontWeight: 700, padding: "2px 7px", borderRadius: 999,
-                      }}>{c.certs} cert.</span>
-                      <span style={{ fontSize: 10, color: "var(--s400)" }}>{c.ult}</span>
-                    </div>
-                  </div>
-                ))}
-              </>
-            )}
-
-            {/* ── Tab: Certificados ── */}
-            {/* ── Tab: Informes ── */}
-            {heroTab === "Informes" && (
-              <>
-                <div style={{ display: "flex", alignItems: "flex-end", gap: 5, marginBottom: 4 }}>
-                  {[
-                    { mes: "Ene", val: 1800 },
-                    { mes: "Feb", val: 2100 },
-                    { mes: "Mar", val: 2400 },
-                    { mes: "Abr", val: 2200 },
-                    { mes: "May", val: 2800 },
-                    { mes: "Jun", val: 3200 },
-                  ].map((b, i) => (
-                    <div key={b.mes} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
-                      <div style={{ fontSize: 9, fontWeight: 700, color: i === 5 ? "var(--green)" : "var(--s400)" }}>
-                        {b.val >= 1000 ? (b.val / 1000).toFixed(1) + "k" : b.val}
-                      </div>
-                      <div style={{
-                        width: "100%",
-                        height: Math.round((b.val / 3200) * 72) + "px",
-                        background: i === 5 ? "var(--green)" : "rgba(31,169,75,.3)",
-                        borderRadius: "3px 3px 0 0",
-                      }} />
-                    </div>
-                  ))}
-                </div>
-                <div style={{ display: "flex", gap: 5, borderBottom: "1px solid var(--s200)", paddingBottom: 10, marginBottom: 10 }}>
-                  {["Ene","Feb","Mar","Abr","May","Jun"].map(m => (
-                    <div key={m} style={{ flex: 1, fontSize: 9, color: "var(--s400)", textAlign: "center" }}>{m}</div>
-                  ))}
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8 }}>
-                  {[
-                    { n: "3.200€", l: "Ingresos del mes"     },
-                    { n: "21",     l: "Certificados emitidos" },
-                    { n: "94%",    l: "Tasa de aprobación"    },
-                  ].map(k => (
-                    <div key={k.l} style={{ background: "var(--s50)", borderRadius: 10, padding: "10px 8px", textAlign: "center" }}>
-                      <div style={{ fontSize: 18, fontWeight: 800, color: "var(--green)", letterSpacing: "-.02em" }}>{k.n}</div>
-                      <div style={{ fontSize: 10, color: "var(--s500)", marginTop: 2, lineHeight: 1.3 }}>{k.l}</div>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-
-            {/* ── Tab: Cuestionarios ── */}
-            {heroTab === "Cuestionarios" && (
-              <div style={{ background: "var(--s50)", borderRadius: 12, padding: 14 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink)", marginBottom: 10 }}>
-                  📋 Formulario del cliente
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-                  {[
-                    { label: "Nombre del propietario", placeholder: "Ej: María García Ruiz"      },
-                    { label: "Dirección",              placeholder: "Calle, número, piso"        },
-                    { label: "Tipo de inmueble",       placeholder: "Piso / Unifamiliar / Local" },
-                    { label: "Superficie (m²)",        placeholder: "Ej: 85 m²"                  },
-                    { label: "Año de construcción",    placeholder: "Ej: 1985"                   },
-                  ].map(f => (
-                    <div key={f.label}>
-                      <div style={{ fontSize: 10, fontWeight: 600, color: "var(--s600)", marginBottom: 3 }}>{f.label}</div>
-                      <div style={{
-                        background: "white", border: "1px solid var(--s200)",
-                        borderRadius: 6, padding: "6px 10px",
-                        fontSize: 11, color: "var(--s400)",
-                      }}>{f.placeholder}</div>
-                    </div>
-                  ))}
-                  <button style={{
-                    background: "var(--green)", color: "white",
-                    border: "none", borderRadius: 8, padding: "9px",
-                    fontSize: 13, fontWeight: 700, cursor: "pointer", marginTop: 2,
-                  }}>
-                    Enviar cuestionario
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* ── Tab: WhatsApp ── */}
-            {heroTab === "WhatsApp" && (
-              <div style={{ borderRadius: 12, overflow: "hidden", border: "1px solid var(--s200)" }}>
-                <div style={{
-                  background: "#075E54", padding: "8px 12px",
-                  display: "flex", alignItems: "center", gap: 8,
-                }}>
-                  <div style={{
-                    width: 32, height: 32, borderRadius: "50%",
-                    background: "#25D366", display: "flex", alignItems: "center",
-                    justifyContent: "center", fontSize: 12, fontWeight: 700,
-                    color: "white", flexShrink: 0,
-                  }}>MG</div>
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: "white" }}>María García</div>
-                    <div style={{ fontSize: 10, color: "rgba(255,255,255,.65)" }}>en línea</div>
-                  </div>
-                </div>
-                <div style={{
-                  background: "#E5DDD5", padding: "12px 10px",
-                  display: "flex", flexDirection: "column", gap: 8,
-                }}>
-                  <div style={{ alignSelf: "flex-end", maxWidth: "84%" }}>
-                    <div style={{
-                      background: "#DCF8C6", borderRadius: "12px 12px 2px 12px",
-                      padding: "8px 10px", fontSize: 11, lineHeight: 1.5, color: "#1a1a1a",
-                    }}>
-                      Hola María 👋 Soy Carlos, técnico certificador. Te envío el formulario para
-                      preparar tu certificado energético:{" "}
-                      <span style={{ color: "#128C7E", textDecoration: "underline" }}>certifive.es/form/abc123</span>{" "}
-                      El presupuesto estimado es de 120€. ¿Alguna duda?
-                    </div>
-                    <div style={{ fontSize: 9, color: "var(--s400)", textAlign: "right", marginTop: 2 }}>10:32 ✓✓</div>
-                  </div>
-                  <div style={{ alignSelf: "flex-start", maxWidth: "70%" }}>
-                    <div style={{
-                      background: "white", borderRadius: "12px 12px 12px 2px",
-                      padding: "8px 10px", fontSize: 11, lineHeight: 1.5, color: "#1a1a1a",
-                    }}>
-                      Perfecto, ahora mismo lo relleno 👍
-                    </div>
-                    <div style={{ fontSize: 9, color: "var(--s400)", marginTop: 2 }}>10:34</div>
-                  </div>
-                </div>
-              </div>
-            )}
+            <img
+              src="/assets/hero-dashboard.png"
+              alt="Panel de control Certifive"
+              style={{ width: "100%", display: "block", filter: "drop-shadow(0 24px 48px rgba(15,23,42,.10))" }}
+            />
           </div>
         </div>
       </section>
@@ -978,263 +706,12 @@ export default function Landing() {
             <h2 className="section-title">Todo tu flujo de certificación, <span className="accent">en un solo lugar.</span></h2>
             <p className="section-sub">Centraliza cada etapa del proceso y toma decisiones más inteligentes con Certifive.</p>
           </div>
-          <div className="showcase-mock reveal d1">
-            <div className="showcase-tabs">
-              {["Expedientes","Clientes","Certificados","Informes","Cuestionarios","WhatsApp"].map(t => (
-                <div
-                  key={t}
-                  className={`showcase-tab${showcaseTab === t ? " active" : ""}`}
-                  onClick={() => setShowcaseTab(t)}
-                  style={{ cursor: "pointer" }}
-                >{t}</div>
-              ))}
-            </div>
-            <div className="showcase-body">
-
-              {/* ── Tab: Expedientes ── */}
-              {showcaseTab === "Expedientes" && (
-                <>
-                  <div className="showcase-grid">
-                    {[
-                      { n: "47",     l: "Expedientes activos" },
-                      { n: "12",     l: "Pendientes registro" },
-                      { n: "35",     l: "Completados"         },
-                      { n: "3.840€", l: "Facturado este mes"  },
-                    ].map(s => (
-                      <div className="showcase-card" key={s.l}>
-                        <div className="showcase-card-n">{s.n}</div>
-                        <div className="showcase-card-l">{s.l}</div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="showcase-list">
-                    {[
-                      { id: "CEE-2408", name: "C/ Almería 14, 3.º D — Madrid",    cal: "B", calCls: "cal-b", status: "Registrado", stCls: "st-done"    },
-                      { id: "CEE-2407", name: "Av. Diagonal 88, 1.º — Barcelona",  cal: "A", calCls: "cal-a", status: "En proceso", stCls: "st-pending" },
-                      { id: "CEE-2406", name: "C/ Gran Vía 12, 5.º — Madrid",      cal: "C", calCls: "cal-c", status: "Registrado", stCls: "st-done"    },
-                      { id: "CEE-2405", name: "C/ Colón 5, 4.º A — Valencia",      cal: "B", calCls: "cal-b", status: "Nuevo",      stCls: "st-new"     },
-                    ].map(row => (
-                      <div className="showcase-row" key={row.id}>
-                        <span className="cert-id">{row.id}</span>
-                        <span className="cert-name">{row.name}</span>
-                        <span className={`cal-tag ${row.calCls}`}>{row.cal}</span>
-                        <span className={`cert-status ${row.stCls}`}>{row.status}</span>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-
-              {/* ── Tab: Clientes ── */}
-              {showcaseTab === "Clientes" && (
-                <div className="showcase-list">
-                  {[
-                    { ini: "MG", name: "María García Ruiz",    tel: "612 345 678", certs: 3,  ult: "hace 2 días"   },
-                    { ini: "JM", name: "Juan Martínez López",  tel: "634 890 123", certs: 7,  ult: "hace 1 semana" },
-                    { ini: "RF", name: "Rosa Fernández Vila",  tel: "678 901 234", certs: 2,  ult: "hace 3 días"   },
-                    { ini: "CS", name: "Carlos Soler Ibáñez",  tel: "655 432 198", certs: 12, ult: "hoy"           },
-                  ].map(c => (
-                    <div className="showcase-row" key={c.ini}>
-                      <div style={{
-                        width: 36, height: 36, borderRadius: "50%", flexShrink: 0,
-                        background: "linear-gradient(135deg,var(--green) 0%,var(--green-dk) 100%)",
-                        color: "white", display: "flex", alignItems: "center",
-                        justifyContent: "center", fontSize: 12, fontWeight: 700,
-                      }}>{c.ini}</div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>{c.name}</div>
-                        <div style={{ fontSize: 12, color: "var(--s400)" }}>{c.tel}</div>
-                      </div>
-                      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
-                        <span style={{
-                          background: "var(--green-lt)", color: "var(--green)",
-                          fontSize: 12, fontWeight: 700, padding: "3px 9px", borderRadius: 999,
-                        }}>{c.certs} cert.</span>
-                        <span style={{ fontSize: 11, color: "var(--s400)" }}>{c.ult}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* ── Tab: Certificados ── */}
-              {showcaseTab === "Certificados" && (
-                <div className="showcase-list">
-                  {[
-                    { ref: "4528301LM2847", addr: "C/ Almería 14, 3.º D — Madrid",    cal: "A", calCls: "cal-a", est: "Registrado", stCls: "st-done"    },
-                    { ref: "7812934CS9034", addr: "Av. Diagonal 88, 1.º — Barcelona",  cal: "C", calCls: "cal-c", est: "En proceso", stCls: "st-pending" },
-                    { ref: "3309182KL5619", addr: "C/ Gran Vía 12, 5.º — Madrid",      cal: "B", calCls: "cal-b", est: "Registrado", stCls: "st-done"    },
-                    { ref: "9021765AB1258", addr: "C/ Colón 5, 4.º A — Valencia",      cal: "A", calCls: "cal-a", est: "Registrado", stCls: "st-done"    },
-                  ].map(c => (
-                    <div className="showcase-row" key={c.ref}>
-                      <span className={`cal-tag ${c.calCls}`}>{c.cal}</span>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>{c.addr}</div>
-                        <div style={{ fontSize: 11, color: "var(--s400)", fontFamily: "monospace" }}>{c.ref}</div>
-                      </div>
-                      <span className={`cert-status ${c.stCls}`}>{c.est}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* ── Tab: Informes ── */}
-              {showcaseTab === "Informes" && (
-                <>
-                  <div style={{ display: "flex", alignItems: "flex-end", gap: 8, marginBottom: 6 }}>
-                    {[
-                      { mes: "Ene", val: 1800 },
-                      { mes: "Feb", val: 2100 },
-                      { mes: "Mar", val: 2400 },
-                      { mes: "Abr", val: 2200 },
-                      { mes: "May", val: 2800 },
-                      { mes: "Jun", val: 3200 },
-                    ].map((b, i) => (
-                      <div key={b.mes} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: i === 5 ? "var(--green)" : "var(--s400)" }}>
-                          {b.val >= 1000 ? (b.val / 1000).toFixed(1) + "k" : b.val}
-                        </div>
-                        <div style={{
-                          width: "100%",
-                          height: Math.round((b.val / 3200) * 100) + "px",
-                          background: i === 5 ? "var(--green)" : "rgba(31,169,75,.3)",
-                          borderRadius: "4px 4px 0 0",
-                        }} />
-                      </div>
-                    ))}
-                  </div>
-                  <div style={{ display: "flex", gap: 8, borderBottom: "1px solid var(--s200)", paddingBottom: 12, marginBottom: 16 }}>
-                    {["Ene","Feb","Mar","Abr","May","Jun"].map(m => (
-                      <div key={m} style={{ flex: 1, fontSize: 11, color: "var(--s400)", textAlign: "center" }}>{m}</div>
-                    ))}
-                  </div>
-                  <div className="showcase-grid">
-                    {[
-                      { n: "3.200€", l: "Ingresos del mes"     },
-                      { n: "21",     l: "Certificados emitidos" },
-                      { n: "94%",    l: "Tasa de aprobación"    },
-                      { n: "4,2 h",  l: "Ahorro por expediente" },
-                    ].map(k => (
-                      <div className="showcase-card" key={k.l}>
-                        <div className="showcase-card-n">{k.n}</div>
-                        <div className="showcase-card-l">{k.l}</div>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-
-              {/* ── Tab: Cuestionarios ── */}
-              {showcaseTab === "Cuestionarios" && (
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32, alignItems: "start" }}>
-                  <div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginBottom: 6 }}>📋 Formulario enviado al cliente</div>
-                    <div style={{ fontSize: 13, color: "var(--s500)", marginBottom: 20, lineHeight: 1.6 }}>
-                      El cliente rellena desde su móvil. Tú recibes los datos listos para trabajar.
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                      {[
-                        { label: "Nombre del propietario", placeholder: "Ej: María García Ruiz"      },
-                        { label: "Dirección",              placeholder: "Calle, número, piso"        },
-                        { label: "Tipo de inmueble",       placeholder: "Piso / Unifamiliar / Local" },
-                        { label: "Superficie (m²)",        placeholder: "Ej: 85 m²"                  },
-                        { label: "Año de construcción",    placeholder: "Ej: 1985"                   },
-                      ].map(f => (
-                        <div key={f.label}>
-                          <div style={{ fontSize: 11, fontWeight: 600, color: "var(--s600)", marginBottom: 4 }}>{f.label}</div>
-                          <div style={{
-                            background: "var(--s50)", border: "1px solid var(--s200)",
-                            borderRadius: 7, padding: "8px 12px",
-                            fontSize: 13, color: "var(--s400)",
-                          }}>{f.placeholder}</div>
-                        </div>
-                      ))}
-                      <button style={{
-                        background: "var(--green)", color: "white", border: "none",
-                        borderRadius: 8, padding: "11px", fontSize: 14,
-                        fontWeight: 700, cursor: "pointer", marginTop: 4,
-                      }}>Enviar cuestionario</button>
-                    </div>
-                  </div>
-                  <div style={{ background: "var(--green-lt)", borderRadius: 14, padding: "24px 20px" }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--green)", marginBottom: 16 }}>✓ Datos recibidos automáticamente</div>
-                    {[
-                      { l: "Propietario",     v: "María García Ruiz"   },
-                      { l: "Dirección",       v: "C/ Almería 14, 3.º D" },
-                      { l: "Tipo",            v: "Piso"                 },
-                      { l: "Superficie",      v: "85 m²"                },
-                      { l: "Año const.",      v: "1987"                 },
-                    ].map(r => (
-                      <div key={r.l} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid rgba(31,169,75,.15)" }}>
-                        <span style={{ fontSize: 12, color: "var(--s600)", fontWeight: 500 }}>{r.l}</span>
-                        <span style={{ fontSize: 13, color: "var(--ink)", fontWeight: 600 }}>{r.v}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* ── Tab: WhatsApp ── */}
-              {showcaseTab === "WhatsApp" && (
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32, alignItems: "start" }}>
-                  <div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)", marginBottom: 6 }}>💬 Comunicación directa con el cliente</div>
-                    <div style={{ fontSize: 13, color: "var(--s500)", marginBottom: 20, lineHeight: 1.6 }}>
-                      Envía el formulario y presupuesto por WhatsApp con un solo clic. Sin llamadas, sin emails perdidos.
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                      {[
-                        { icon: "✓", text: "Formulario de datos enviado automáticamente" },
-                        { icon: "✓", text: "Presupuesto personalizado incluido"          },
-                        { icon: "✓", text: "Enlace de pago online adjunto"               },
-                        { icon: "✓", text: "Recordatorios automáticos si no responde"    },
-                      ].map(i => (
-                        <div key={i.text} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-                          <span style={{ color: "var(--green)", fontWeight: 700, fontSize: 14, marginTop: 1 }}>{i.icon}</span>
-                          <span style={{ fontSize: 13, color: "var(--s600)", lineHeight: 1.5 }}>{i.text}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div style={{ borderRadius: 14, overflow: "hidden", border: "1px solid var(--s200)", boxShadow: "0 4px 16px rgba(15,23,42,.06)" }}>
-                    <div style={{ background: "#075E54", padding: "10px 14px", display: "flex", alignItems: "center", gap: 10 }}>
-                      <div style={{
-                        width: 36, height: 36, borderRadius: "50%", background: "#25D366",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: 13, fontWeight: 700, color: "white", flexShrink: 0,
-                      }}>MG</div>
-                      <div>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: "white" }}>María García</div>
-                        <div style={{ fontSize: 11, color: "rgba(255,255,255,.65)" }}>en línea</div>
-                      </div>
-                    </div>
-                    <div style={{ background: "#E5DDD5", padding: "14px 12px", display: "flex", flexDirection: "column", gap: 10 }}>
-                      <div style={{ alignSelf: "flex-end", maxWidth: "88%" }}>
-                        <div style={{
-                          background: "#DCF8C6", borderRadius: "12px 12px 2px 12px",
-                          padding: "10px 12px", fontSize: 12, lineHeight: 1.55, color: "#1a1a1a",
-                        }}>
-                          Hola María 👋 Soy Carlos, técnico certificador. Te envío el formulario para preparar tu certificado energético:{" "}
-                          <span style={{ color: "#128C7E", textDecoration: "underline" }}>certifive.es/form/abc123</span>{" "}
-                          El presupuesto estimado es de 120€. ¿Alguna duda?
-                        </div>
-                        <div style={{ fontSize: 10, color: "var(--s400)", textAlign: "right", marginTop: 3 }}>10:32 ✓✓</div>
-                      </div>
-                      <div style={{ alignSelf: "flex-start", maxWidth: "70%" }}>
-                        <div style={{
-                          background: "white", borderRadius: "12px 12px 12px 2px",
-                          padding: "10px 12px", fontSize: 12, lineHeight: 1.55, color: "#1a1a1a",
-                        }}>
-                          Perfecto, ahora mismo lo relleno 👍
-                        </div>
-                        <div style={{ fontSize: 10, color: "var(--s400)", marginTop: 3 }}>10:34</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-            </div>
+          <div className="reveal d1">
+            <img
+              src="/assets/flujo.png"
+              alt="Plataforma Certifive — gestión de expedientes"
+              style={{ width: "100%", borderRadius: "var(--rxl)", boxShadow: "var(--shadow-card)", display: "block" }}
+            />
           </div>
         </div>
       </section>
@@ -1346,6 +823,24 @@ export default function Landing() {
               </div>
             );
           })()}
+        </div>
+      </section>
+
+      {/* ── PILARES + DEMO ── */}
+      <section className="section" id="pilares">
+        <div className="container">
+          <div className="section-head reveal">
+            <span className="section-eyebrow">La plataforma más completa</span>
+            <h2 className="section-title">Todo lo que necesitas para gestionar tu <span className="accent">negocio con confianza.</span></h2>
+            <p className="section-sub">Desde el primer contacto hasta el certificado registrado, Certifive elimina cada fricción del camino.</p>
+          </div>
+          <div className="reveal d1">
+            <img
+              src="/assets/pilares-demo.png"
+              alt="Pilares de la plataforma Certifive"
+              style={{ width: "100%", borderRadius: "var(--rxl)", boxShadow: "var(--shadow-card)", display: "block" }}
+            />
+          </div>
         </div>
       </section>
 
