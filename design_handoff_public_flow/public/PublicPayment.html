@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Certifive · Pago seguro</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="certifive-public.css?v=2" rel="stylesheet">
+<script>
+  tailwind.config = { theme: { extend: {
+    colors: { ink:'#0f1f2e', primary:{DEFAULT:'hsl(142 69% 36%)'}, muted:'#5e6772' },
+    fontFamily: { sans:['Inter','system-ui','sans-serif'] },
+  }}}
+</script>
+</head>
+<body class="min-h-screen flex flex-col">
+
+<header class="bg-white border-b border-gray-100 sticky top-0 z-30">
+  <div class="max-w-6xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between">
+    <a href="pricing.html" class="flex items-center gap-2.5">
+      <div class="w-9 h-9 rounded-lg bg-primary text-white font-bold flex items-center justify-center text-base">C</div>
+      <div><p class="text-sm font-bold text-ink leading-none">Certifive</p><p class="text-[10px] text-muted mt-0.5">Certificación energética</p></div>
+    </a>
+    <div class="flex items-center gap-2 text-xs text-muted font-medium">
+      <svg class="w-3.5 h-3.5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+      Pago cifrado SSL · 256-bit
+    </div>
+  </div>
+</header>
+
+<!-- Stepper -->
+<div class="bg-white border-b border-gray-100">
+  <div class="max-w-3xl mx-auto px-5 sm:px-8 py-5">
+    <div class="stepper">
+      <div class="stp done"><span class="bubble"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span class="stp-label hidden sm:inline">Solicitud</span></div>
+      <div class="seg fill"></div>
+      <div class="stp done"><span class="bubble"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span class="stp-label hidden sm:inline">Datos técnicos</span></div>
+      <div class="seg fill"></div>
+      <div class="stp done"><span class="bubble"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span class="stp-label hidden sm:inline">Presupuesto</span></div>
+      <div class="seg fill"></div>
+      <div class="stp active"><span class="bubble">4</span><span class="stp-label">Pago</span></div>
+    </div>
+  </div>
+</div>
+
+<main class="flex-1">
+  <section class="max-w-4xl mx-auto px-5 sm:px-8 pt-10 sm:pt-12 pb-14">
+
+    <div class="mb-8">
+      <p class="text-[11px] font-bold tracking-wider uppercase text-primary">Paso 4 de 4</p>
+      <h1 class="text-[1.9rem] sm:text-[2.3rem] font-extrabold text-ink mt-2 leading-[1.05] tracking-tight">Confirma y paga</h1>
+      <p class="text-[15px] text-muted mt-3 max-w-xl leading-relaxed">Solo se realizará el cargo cuando confirmemos la visita técnica. Cancela gratis hasta 24 h antes.</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_330px] gap-8 items-start">
+
+      <!-- Payment form -->
+      <form class="space-y-6 reveal">
+
+        <!-- Method -->
+        <div class="bg-white border border-gray-100 rounded-3xl shadow-sm p-6 sm:p-8 space-y-5">
+          <h2 class="text-base font-bold text-ink">Método de pago</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            <label class="choice choice-v selected">
+              <span class="ico"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></span>
+              <div class="min-w-0"><p class="text-sm font-semibold text-ink">Tarjeta</p></div>
+              <span class="dot"></span>
+            </label>
+            <label class="choice choice-v">
+              <span class="ico"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M7.4 6.5h3.5c2.3 0 3.4 1.2 3 3.3-.4 2.2-2 3.3-4.2 3.3H8.3l-.5 3.4H5.5L7.4 6.5zm1.2 4.6h1c1 0 1.7-.4 1.9-1.4.1-.8-.3-1.2-1.2-1.2H9l-.4 2.6z"/><path d="M14 6.5h3.5c2.3 0 3.4 1.2 3 3.3-.4 2.2-2 3.3-4.2 3.3h-1.4l-.5 3.4h-2.3L14 6.5z" opacity=".55"/></svg></span>
+              <div class="min-w-0"><p class="text-sm font-semibold text-ink">PayPal</p></div>
+              <span class="dot"></span>
+            </label>
+            <label class="choice choice-v">
+              <span class="ico"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10h18M3 10l2-5h14l2 5M5 10v9a1 1 0 001 1h12a1 1 0 001-1v-9"/></svg></span>
+              <div class="min-w-0"><p class="text-sm font-semibold text-ink">Transferencia</p></div>
+              <span class="dot"></span>
+            </label>
+          </div>
+
+          <div class="space-y-5 pt-1" id="card-fields">
+            <div>
+              <label class="label" for="p-card">Número de tarjeta</label>
+              <div class="relative">
+                <input id="p-card" class="fi pr-24" placeholder="1234 5678 9012 3456" inputmode="numeric" />
+                <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                  <span class="w-8 h-5 rounded bg-gradient-to-br from-[#1a1f71] to-[#2b3a9e] text-white text-[8px] font-bold italic flex items-center justify-center">VISA</span>
+                  <span class="w-8 h-5 rounded bg-slate-100 flex items-center justify-center"><span class="w-3 h-3 rounded-full bg-[#eb001b] -mr-1"></span><span class="w-3 h-3 rounded-full bg-[#f79e1b] opacity-90"></span></span>
+                </div>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-5">
+              <div><label class="label" for="p-exp">Caducidad</label><input id="p-exp" class="fi" placeholder="MM / AA" inputmode="numeric" /></div>
+              <div><label class="label" for="p-cvc">CVC</label><input id="p-cvc" class="fi" placeholder="123" inputmode="numeric" /></div>
+            </div>
+            <div>
+              <label class="label" for="p-holder">Titular de la tarjeta</label>
+              <input id="p-holder" class="fi" placeholder="Como aparece en la tarjeta" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Billing -->
+        <div class="bg-white border border-gray-100 rounded-3xl shadow-sm p-6 sm:p-8 space-y-5">
+          <h2 class="text-base font-bold text-ink">Datos de facturación</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div><label class="label" for="b-name">Nombre / Razón social</label><input id="b-name" class="fi" placeholder="María González" /></div>
+            <div><label class="label" for="b-nif">NIF / DNI</label><input id="b-nif" class="fi" placeholder="00000000X" /></div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-[2fr_1fr] gap-5">
+            <div><label class="label" for="b-addr">Dirección</label><input id="b-addr" class="fi" placeholder="Calle, número" /></div>
+            <div><label class="label" for="b-cp">C. Postal</label><input id="b-cp" class="fi" placeholder="28013" /></div>
+          </div>
+          <label class="flex items-center gap-2.5 cursor-pointer">
+            <input type="checkbox" class="check" />
+            <span class="text-[13px] text-muted">Necesito factura con datos de empresa</span>
+          </label>
+        </div>
+
+        <!-- Terms -->
+        <label class="flex items-start gap-2.5 cursor-pointer px-1">
+          <input type="checkbox" class="check mt-0.5" checked />
+          <span class="text-xs text-muted leading-relaxed">
+            Acepto los <a href="#" class="link">términos de contratación</a> y autorizo el cargo una vez confirmada la visita técnica. Conozco mi derecho de desistimiento.
+          </span>
+        </label>
+      </form>
+
+      <!-- Order summary -->
+      <aside class="lg:sticky lg:top-24 self-start space-y-5 reveal">
+        <div class="bg-white border border-gray-100 rounded-3xl shadow-sm p-6">
+          <div class="flex items-center justify-between mb-4">
+            <p class="text-[10px] font-bold tracking-wider uppercase text-muted">Tu pedido</p>
+            <a href="PublicPresupuesto.html" class="text-[11px] font-semibold link">Editar</a>
+          </div>
+
+          <div class="flex gap-3 pb-4 border-b border-gray-100">
+            <span class="w-10 h-10 rounded-xl bg-emerald-50 text-primary flex items-center justify-center flex-shrink-0"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+            <div class="min-w-0">
+              <p class="text-sm font-semibold text-ink leading-tight">Certificado energético</p>
+              <p class="text-[12px] text-muted mt-0.5">Vivienda · 84 m² · Madrid</p>
+            </div>
+          </div>
+
+          <div class="pt-2">
+            <div class="sum-row"><span class="k">Subtotal</span><span class="v">106,61 €</span></div>
+            <div class="sum-row"><span class="k">Registro + tasa CCAA</span><span class="v">14,00 €</span></div>
+            <div class="sum-row"><span class="k">IVA (21%)</span><span class="v">22,39 €</span></div>
+            <div class="sum-row"><span class="k flex items-center gap-1.5 text-primary font-semibold">Descuento web</span><span class="v text-primary">−20,00 €</span></div>
+          </div>
+
+          <div class="flex items-end justify-between pt-4 mt-1 border-t border-gray-100">
+            <p class="text-sm font-semibold text-ink">Total a pagar</p>
+            <p class="text-[30px] font-extrabold text-ink leading-none tracking-tight">129 €</p>
+          </div>
+
+          <button type="submit" class="btn-primary w-full mt-5">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+            Pagar 129 €
+          </button>
+          <p class="text-[11px] text-muted text-center mt-3 leading-relaxed">No se realiza el cargo hasta confirmar la visita. Cancela gratis hasta 24 h antes.</p>
+        </div>
+
+        <!-- Trust -->
+        <div class="bg-white border border-gray-100 rounded-2xl p-5 space-y-3">
+          <div class="trust-item"><span class="trust-ico"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></span> Pago cifrado SSL 256-bit</div>
+          <div class="trust-item"><span class="trust-ico"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span> Garantía de devolución</div>
+          <div class="trust-item"><span class="trust-ico"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L3 7v6c0 5 3.8 8.5 9 9 5.2-.5 9-4 9-9V7z"/></svg></span> Datos protegidos · RGPD</div>
+        </div>
+        <p class="text-center text-[11px] text-muted">Procesado por <span class="font-semibold text-ink">Stripe</span> · no almacenamos tu tarjeta</p>
+      </aside>
+    </div>
+  </section>
+</main>
+
+<footer class="bg-white border-t border-gray-100 mt-auto">
+  <div class="max-w-6xl mx-auto px-5 sm:px-8 py-6 flex flex-wrap items-center justify-between gap-3 text-xs text-muted">
+    <div class="flex items-center gap-3">
+      <div class="w-7 h-7 rounded-md bg-primary text-white font-bold flex items-center justify-center text-xs">C</div>
+      <p>© 2026 Certifive Soluciones Energéticas S.L. · CIF B-87654321 · Madrid · COIIM 21548</p>
+    </div>
+    <div class="flex items-center gap-4"><a href="#" class="hover:text-ink">Aviso legal</a><a href="#" class="hover:text-ink">Privacidad</a><a href="#" class="hover:text-ink">Contacto</a></div>
+  </div>
+</footer>
+
+<script>
+  document.querySelectorAll('.choice').forEach(c => c.addEventListener('click', () => {
+    c.parentElement.querySelectorAll('.choice').forEach(x => x.classList.remove('selected'));
+    c.classList.add('selected');
+    const isCard = c.querySelector('.text-sm')?.textContent.trim() === 'Tarjeta';
+    document.getElementById('card-fields').style.display = isCard ? '' : 'none';
+  }));
+  document.querySelector('form').addEventListener('submit', e => { e.preventDefault(); window.location.href = 'PublicConfirmacion.html'; });
+</script>
+</body>
+</html>

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Certifive · Solicita tu certificado energético</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="certifive-public.css?v=2" rel="stylesheet">
+<script>
+  tailwind.config = { theme: { extend: {
+    colors: { ink:'#0f1f2e', primary:{DEFAULT:'hsl(142 69% 36%)'}, muted:'#5e6772' },
+    fontFamily: { sans:['Inter','system-ui','sans-serif'] },
+  }}}
+</script>
+</head>
+<body class="min-h-screen flex flex-col">
+
+<!-- Top bar -->
+<header class="bg-white border-b border-gray-100 sticky top-0 z-30">
+  <div class="max-w-6xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between">
+    <a href="pricing.html" class="flex items-center gap-2.5">
+      <div class="w-9 h-9 rounded-lg bg-primary text-white font-bold flex items-center justify-center text-base">C</div>
+      <div>
+        <p class="text-sm font-bold text-ink leading-none">Certifive</p>
+        <p class="text-[10px] text-muted mt-0.5">Certificación energética</p>
+      </div>
+    </a>
+    <nav class="hidden md:flex items-center gap-7 text-sm font-medium text-muted">
+      <a href="pricing.html" class="hover:text-ink">Precios</a>
+      <a href="#" class="hover:text-ink">Cómo funciona</a>
+      <a href="#" class="hover:text-ink">Contacto</a>
+    </nav>
+    <div class="hidden sm:flex items-center gap-2 text-xs text-muted">
+      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+      Conexión segura
+    </div>
+  </div>
+</header>
+
+<!-- Stepper -->
+<div class="bg-white border-b border-gray-100">
+  <div class="max-w-3xl mx-auto px-5 sm:px-8 py-5">
+    <div class="stepper">
+      <div class="stp active"><span class="bubble">1</span><span class="stp-label">Solicitud</span></div>
+      <div class="seg"></div>
+      <div class="stp"><span class="bubble">2</span><span class="stp-label hidden sm:inline">Datos técnicos</span></div>
+      <div class="seg"></div>
+      <div class="stp"><span class="bubble">3</span><span class="stp-label hidden sm:inline">Presupuesto</span></div>
+      <div class="seg"></div>
+      <div class="stp"><span class="bubble">4</span><span class="stp-label hidden sm:inline">Pago</span></div>
+    </div>
+  </div>
+</div>
+
+<main class="flex-1">
+
+  <!-- Hero -->
+  <section class="bg-white border-b border-gray-100">
+    <div class="max-w-3xl mx-auto px-5 sm:px-8 pt-10 sm:pt-12 pb-8 text-center">
+      <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-[11px] font-bold tracking-wider uppercase">
+        <span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+        Paso 1 de 4 · sin compromiso
+      </span>
+      <h1 class="text-[2rem] sm:text-[2.5rem] font-extrabold text-ink mt-4 leading-[1.05] tracking-tight">
+        Empieza tu certificado<br />energético (CEE)
+      </h1>
+      <p class="text-[15px] sm:text-base text-muted mt-4 max-w-xl mx-auto leading-relaxed">
+        Cuéntanos lo básico sobre ti y tu inmueble. En el siguiente paso recogeremos los datos técnicos y te daremos un precio cerrado.
+      </p>
+    </div>
+  </section>
+
+  <!-- Form -->
+  <section class="max-w-3xl mx-auto px-5 sm:px-8 py-10 sm:py-14">
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-8 lg:gap-12 items-start">
+
+      <form class="bg-white border border-gray-100 rounded-3xl shadow-sm p-6 sm:p-9 space-y-7 reveal">
+
+        <div>
+          <h2 class="text-lg font-bold text-ink">Sobre ti</h2>
+          <p class="text-xs text-muted mt-1">Solo necesitamos lo justo para contactarte</p>
+        </div>
+
+        <div class="space-y-5">
+          <div>
+            <label class="label" for="f-name">¿Cómo te llamas?</label>
+            <input id="f-name" class="fi" placeholder="Nombre y apellidos" />
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div>
+              <label class="label" for="f-email">Email</label>
+              <input id="f-email" type="email" class="fi" placeholder="tu@email.com" />
+            </div>
+            <div>
+              <label class="label" for="f-phone">Teléfono</label>
+              <input id="f-phone" type="tel" class="fi" placeholder="+34 600 000 000" />
+              <p class="hint">Solo lo usamos para confirmar la visita técnica</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="h-px bg-gray-100"></div>
+
+        <div>
+          <h2 class="text-lg font-bold text-ink">Sobre el inmueble</h2>
+          <p class="text-xs text-muted mt-1">Lo justo para estimar tu precio</p>
+        </div>
+
+        <div class="space-y-5">
+          <div>
+            <label class="label">Tipo de inmueble</label>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              <label class="choice choice-v selected">
+                <span class="ico"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+                <div class="min-w-0"><p class="text-sm font-semibold text-ink">Vivienda</p><p class="text-[11px] text-muted">Piso, casa, chalet</p></div>
+                <span class="dot"></span>
+              </label>
+              <label class="choice choice-v">
+                <span class="ico"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="14" rx="1"/><path d="M3 10h18"/></svg></span>
+                <div class="min-w-0"><p class="text-sm font-semibold text-ink">Local</p><p class="text-[11px] text-muted">Comercial</p></div>
+                <span class="dot"></span>
+              </label>
+              <label class="choice choice-v">
+                <span class="ico"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="1"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="13" y2="14"/></svg></span>
+                <div class="min-w-0"><p class="text-sm font-semibold text-ink">Oficina</p><p class="text-[11px] text-muted">Terciario</p></div>
+                <span class="dot"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-[2fr_1fr] gap-5">
+            <div>
+              <label class="label" for="f-city">Ciudad o código postal</label>
+              <div class="relative">
+                <input id="f-city" class="fi pl-11" placeholder="Ej. Madrid, 28013" />
+                <svg class="w-4 h-4 text-muted absolute left-4 top-1/2 -translate-y-1/2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              </div>
+            </div>
+            <div>
+              <label class="label" for="f-m2">Superficie aprox.</label>
+              <div class="relative">
+                <input id="f-m2" type="number" class="fi pr-12" placeholder="0" />
+                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-muted">m²</span>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label class="label">¿Para qué lo necesitas? <span class="opt">(opcional)</span></label>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+              <label class="choice-sm selected"><span class="dot"></span> Vender</label>
+              <label class="choice-sm"><span class="dot"></span> Alquilar</label>
+              <label class="choice-sm"><span class="dot"></span> Trámite</label>
+            </div>
+          </div>
+        </div>
+
+        <label class="flex items-start gap-2.5 cursor-pointer pt-2 border-t border-gray-100">
+          <input type="checkbox" class="check mt-4" checked />
+          <span class="text-xs text-muted leading-relaxed pt-3">
+            He leído y acepto la <a href="#" class="link">política de privacidad</a> y el tratamiento de mis datos por Certifive Soluciones Energéticas S.L.
+          </span>
+        </label>
+
+        <div class="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3 pt-2">
+          <p class="text-xs text-muted flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Sin pago hasta confirmar el precio
+          </p>
+          <a href="formulario-tecnico.html" class="btn-primary">
+            Continuar
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </a>
+        </div>
+      </form>
+
+      <!-- Right rail -->
+      <aside class="space-y-6 lg:sticky lg:top-24 self-start">
+        <div class="bg-white border border-gray-100 rounded-2xl p-5">
+          <p class="text-[10px] font-bold tracking-wider uppercase text-muted mb-4">Así de fácil</p>
+          <ol class="space-y-4">
+            <li class="flex gap-3"><span class="step-num">1</span><div><p class="text-sm font-semibold text-ink">Rellenas el formulario</p><p class="text-[12px] text-muted mt-0.5">Menos de 1 minuto</p></div></li>
+            <li class="flex gap-3"><span class="step-num">2</span><div><p class="text-sm font-semibold text-ink">Datos técnicos</p><p class="text-[12px] text-muted mt-0.5">Y precio cerrado al instante</p></div></li>
+            <li class="flex gap-3"><span class="step-num">3</span><div><p class="text-sm font-semibold text-ink">Visita técnica</p><p class="text-[12px] text-muted mt-0.5">45 min · cuando te encaje</p></div></li>
+            <li class="flex gap-3"><span class="step-num">4</span><div><p class="text-sm font-semibold text-ink">Recibes el PDF</p><p class="text-[12px] text-muted mt-0.5">Registrado en la CCAA</p></div></li>
+          </ol>
+        </div>
+
+        <div class="rounded-2xl p-5 border border-emerald-100 bg-emerald-50/50">
+          <p class="text-[10px] font-bold tracking-wider uppercase text-primary mb-2">Precio orientativo</p>
+          <p class="text-[15px] font-semibold text-ink leading-snug">Vivienda hasta 100 m²<br />desde <span class="text-2xl font-extrabold tracking-tight">120 €</span></p>
+          <p class="text-[11.5px] text-muted mt-2">Incluye visita, certificado PDF y registro oficial en la CCAA.</p>
+        </div>
+      </aside>
+    </div>
+  </section>
+</main>
+
+<footer class="bg-white border-t border-gray-100 mt-auto">
+  <div class="max-w-6xl mx-auto px-5 sm:px-8 py-6 flex flex-wrap items-center justify-between gap-3 text-xs text-muted">
+    <div class="flex items-center gap-3">
+      <div class="w-7 h-7 rounded-md bg-primary text-white font-bold flex items-center justify-center text-xs">C</div>
+      <p>© 2026 Certifive Soluciones Energéticas S.L. · CIF B-87654321 · Madrid · COIIM 21548</p>
+    </div>
+    <div class="flex items-center gap-4">
+      <a href="#" class="hover:text-ink">Aviso legal</a>
+      <a href="#" class="hover:text-ink">Privacidad</a>
+      <a href="#" class="hover:text-ink">Contacto</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  document.querySelectorAll('.choice, .choice-sm').forEach(c => c.addEventListener('click', e => {
+    if (c.tagName === 'LABEL' && c.querySelector('.dot')) {
+      c.parentElement.querySelectorAll('.choice, .choice-sm').forEach(x => x.classList.remove('selected'));
+      c.classList.add('selected');
+    }
+  }));
+</script>
+</body>
+</html>

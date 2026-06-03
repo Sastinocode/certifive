@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Certifive · Tu presupuesto</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="certifive-public.css?v=2" rel="stylesheet">
+<script>
+  tailwind.config = { theme: { extend: {
+    colors: { ink:'#0f1f2e', primary:{DEFAULT:'hsl(142 69% 36%)'}, muted:'#5e6772' },
+    fontFamily: { sans:['Inter','system-ui','sans-serif'] },
+  }}}
+</script>
+</head>
+<body class="min-h-screen flex flex-col">
+
+<header class="bg-white border-b border-gray-100 sticky top-0 z-30">
+  <div class="max-w-6xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between">
+    <a href="pricing.html" class="flex items-center gap-2.5">
+      <div class="w-9 h-9 rounded-lg bg-primary text-white font-bold flex items-center justify-center text-base">C</div>
+      <div><p class="text-sm font-bold text-ink leading-none">Certifive</p><p class="text-[10px] text-muted mt-0.5">Certificación energética</p></div>
+    </a>
+    <nav class="hidden md:flex items-center gap-7 text-sm font-medium text-muted">
+      <a href="pricing.html" class="hover:text-ink">Precios</a>
+      <a href="#" class="hover:text-ink">Cómo funciona</a>
+      <a href="#" class="hover:text-ink">Contacto</a>
+    </nav>
+    <div class="hidden sm:flex items-center gap-2 text-xs text-muted">
+      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+      Conexión segura
+    </div>
+  </div>
+</header>
+
+<!-- Stepper -->
+<div class="bg-white border-b border-gray-100">
+  <div class="max-w-3xl mx-auto px-5 sm:px-8 py-5">
+    <div class="stepper">
+      <div class="stp done"><span class="bubble"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span class="stp-label hidden sm:inline">Solicitud</span></div>
+      <div class="seg fill"></div>
+      <div class="stp done"><span class="bubble"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span><span class="stp-label hidden sm:inline">Datos técnicos</span></div>
+      <div class="seg fill"></div>
+      <div class="stp active"><span class="bubble">3</span><span class="stp-label">Presupuesto</span></div>
+      <div class="seg"></div>
+      <div class="stp"><span class="bubble">4</span><span class="stp-label hidden sm:inline">Pago</span></div>
+    </div>
+  </div>
+</div>
+
+<main class="flex-1">
+  <section class="bg-white border-b border-gray-100">
+    <div class="max-w-4xl mx-auto px-5 sm:px-8 pt-10 sm:pt-12 pb-8">
+      <div class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p class="text-[11px] font-bold tracking-wider uppercase text-primary">Paso 3 de 4</p>
+          <h1 class="text-[1.9rem] sm:text-[2.3rem] font-extrabold text-ink mt-2 leading-[1.05] tracking-tight">Tu presupuesto está listo</h1>
+          <p class="text-[15px] text-muted mt-3 max-w-xl leading-relaxed">Precio cerrado, sin sorpresas. Revísalo y confirma para agendar la visita técnica.</p>
+        </div>
+        <div class="pill pill-amber"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Válido 14 días</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="max-w-4xl mx-auto px-5 sm:px-8 py-10 sm:py-14">
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_330px] gap-8 items-start">
+
+      <!-- Left: details -->
+      <div class="space-y-6 reveal">
+
+        <!-- Quote header -->
+        <div class="bg-white border border-gray-100 rounded-3xl shadow-sm p-6 sm:p-8">
+          <div class="flex items-start justify-between gap-4 pb-5 border-b border-gray-100">
+            <div>
+              <p class="text-[10px] font-bold tracking-wider uppercase text-muted">Presupuesto</p>
+              <p class="text-lg font-bold text-ink mt-1">Nº CTF-2026-04821</p>
+              <p class="text-[12.5px] text-muted mt-1">Emitido el 31 may 2026 · a nombre de María González</p>
+            </div>
+            <span class="pill pill-green">Recomendado</span>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 py-5">
+            <div><p class="text-[11px] text-muted">Inmueble</p><p class="text-sm font-semibold text-ink mt-0.5">Vivienda</p></div>
+            <div><p class="text-[11px] text-muted">Superficie</p><p class="text-sm font-semibold text-ink mt-0.5">84 m²</p></div>
+            <div><p class="text-[11px] text-muted">Ubicación</p><p class="text-sm font-semibold text-ink mt-0.5">Madrid · 28013</p></div>
+            <div><p class="text-[11px] text-muted">Finalidad</p><p class="text-sm font-semibold text-ink mt-0.5">Venta</p></div>
+          </div>
+        </div>
+
+        <!-- Line items -->
+        <div class="bg-white border border-gray-100 rounded-3xl shadow-sm p-6 sm:p-8">
+          <h2 class="text-base font-bold text-ink mb-2">Qué incluye</h2>
+
+          <div class="line-item">
+            <div class="flex gap-3">
+              <span class="w-9 h-9 rounded-xl bg-emerald-50 text-primary flex items-center justify-center flex-shrink-0"><svg class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></span>
+              <div><p class="text-sm font-semibold text-ink">Visita técnica + toma de datos</p><p class="text-[12.5px] text-muted mt-0.5">Técnico colegiado · 45 min · cuando te encaje</p></div>
+            </div>
+            <p class="text-sm font-semibold text-ink whitespace-nowrap">incluido</p>
+          </div>
+
+          <div class="line-item">
+            <div class="flex gap-3">
+              <span class="w-9 h-9 rounded-xl bg-emerald-50 text-primary flex items-center justify-center flex-shrink-0"><svg class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+              <div><p class="text-sm font-semibold text-ink">Certificado oficial en PDF</p><p class="text-[12.5px] text-muted mt-0.5">Etiqueta energética + informe completo</p></div>
+            </div>
+            <p class="text-sm font-semibold text-ink whitespace-nowrap">incluido</p>
+          </div>
+
+          <div class="line-item">
+            <div class="flex gap-3">
+              <span class="w-9 h-9 rounded-xl bg-emerald-50 text-primary flex items-center justify-center flex-shrink-0"><svg class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg></span>
+              <div><p class="text-sm font-semibold text-ink">Registro oficial en la CCAA</p><p class="text-[12.5px] text-muted mt-0.5">Tramitamos el registro y tasa autonómica</p></div>
+            </div>
+            <p class="text-sm font-semibold text-ink whitespace-nowrap">incluido</p>
+          </div>
+
+          <div class="line-item">
+            <div class="flex gap-3">
+              <span class="w-9 h-9 rounded-xl bg-emerald-50 text-primary flex items-center justify-center flex-shrink-0"><svg class="w-4.5 h-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 100 20 10 10 0 000-20z"/><path d="M12 6v6l4 2"/></svg></span>
+              <div><p class="text-sm font-semibold text-ink">Recomendaciones de mejora</p><p class="text-[12.5px] text-muted mt-0.5">Medidas para subir tu calificación</p></div>
+            </div>
+            <p class="text-sm font-semibold text-ink whitespace-nowrap">incluido</p>
+          </div>
+        </div>
+
+        <!-- Estimated rating -->
+        <div class="bg-white border border-gray-100 rounded-3xl shadow-sm p-6 sm:p-8">
+          <div class="flex items-center justify-between gap-4">
+            <div>
+              <h2 class="text-base font-bold text-ink">Calificación estimada</h2>
+              <p class="text-[12.5px] text-muted mt-1">Según los datos aportados. El certificado final la confirma.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="erating er-a opacity-30">A</span>
+              <span class="erating er-b opacity-30">B</span>
+              <span class="erating er-c" style="width:38px;height:38px">C</span>
+              <span class="erating er-d opacity-30">D</span>
+              <span class="erating er-e opacity-30">E</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: sticky payment summary -->
+      <aside class="lg:sticky lg:top-24 self-start space-y-5 reveal">
+        <div class="bg-white border border-gray-100 rounded-3xl shadow-sm p-6">
+          <p class="text-[10px] font-bold tracking-wider uppercase text-muted mb-4">Resumen</p>
+          <div class="sum-row"><span class="k">Certificado vivienda · 84 m²</span><span class="v">115,00 €</span></div>
+          <div class="sum-row"><span class="k">Registro + tasa CCAA</span><span class="v">14,00 €</span></div>
+          <div class="sum-row"><span class="k">Tramitación urgente <span class="text-muted">(opcional)</span></span><span class="v">—</span></div>
+
+          <div class="flex items-end justify-between pt-5 mt-2 border-t border-gray-100">
+            <div><p class="text-[12px] text-muted">Total <span class="text-[10px]">(IVA incl.)</span></p><p class="text-[33px] font-extrabold text-ink leading-none tracking-tight mt-1">129 €</p></div>
+            <p class="text-[12px] text-muted line-through mb-1">149 €</p>
+          </div>
+
+          <a href="PublicPayment.html" class="btn-primary w-full mt-5">Aceptar y pagar<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+          <a href="formulario-tecnico.html" class="btn-ghost w-full mt-3" style="height:46px">Revisar datos</a>
+
+          <div class="mt-5 space-y-2.5">
+            <div class="trust-item"><span class="trust-ico"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span> Garantía de aceptación oficial</div>
+            <div class="trust-item"><span class="trust-ico"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></span> Pago seguro · no se cobra hasta la visita</div>
+          </div>
+        </div>
+
+        <div class="bg-white border border-gray-100 rounded-2xl p-5">
+          <div class="flex items-center gap-1 mb-2">
+            <svg class="w-3 h-3 text-amber-500 fill-current" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/></svg>
+            <svg class="w-3 h-3 text-amber-500 fill-current" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/></svg>
+            <svg class="w-3 h-3 text-amber-500 fill-current" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/></svg>
+            <svg class="w-3 h-3 text-amber-500 fill-current" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/></svg>
+            <svg class="w-3 h-3 text-amber-500 fill-current" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/></svg>
+          </div>
+          <p class="text-[13px] text-ink leading-snug">"Precio cerrado desde el principio y sin letra pequeña. Justo lo que pagué."</p>
+          <p class="text-[11px] text-muted mt-2">Carlos R. · Madrid</p>
+        </div>
+      </aside>
+    </div>
+  </section>
+</main>
+
+<footer class="bg-white border-t border-gray-100 mt-auto">
+  <div class="max-w-6xl mx-auto px-5 sm:px-8 py-6 flex flex-wrap items-center justify-between gap-3 text-xs text-muted">
+    <div class="flex items-center gap-3">
+      <div class="w-7 h-7 rounded-md bg-primary text-white font-bold flex items-center justify-center text-xs">C</div>
+      <p>© 2026 Certifive Soluciones Energéticas S.L. · CIF B-87654321 · Madrid · COIIM 21548</p>
+    </div>
+    <div class="flex items-center gap-4"><a href="#" class="hover:text-ink">Aviso legal</a><a href="#" class="hover:text-ink">Privacidad</a><a href="#" class="hover:text-ink">Contacto</a></div>
+  </div>
+</footer>
+</body>
+</html>

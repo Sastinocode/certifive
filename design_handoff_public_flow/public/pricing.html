@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Certifive · Precios del certificado energético</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="certifive-public.css?v=2" rel="stylesheet">
+<script>
+  tailwind.config = { theme: { extend: {
+    colors: { ink:'#0f1f2e', primary:{DEFAULT:'hsl(142 69% 36%)'}, muted:'#5e6772' },
+    fontFamily: { sans:['Inter','system-ui','sans-serif'] },
+  }}}
+</script>
+<style>
+  .plan{ background:#fff; border:1.5px solid var(--border); border-radius:24px; padding:30px 28px; transition:transform .2s, box-shadow .2s, border-color .2s; display:flex; flex-direction:column; }
+  .plan:hover{ transform:translateY(-3px); box-shadow:0 18px 40px rgba(15,31,46,.08); border-color:#cdd1d8; }
+  .plan.featured{ border-color:var(--primary); box-shadow:0 18px 44px hsl(142 69% 36% / .16); }
+  .feat-row{ display:flex; align-items:center; gap:10px; font-size:13.5px; color:var(--ink); padding:7px 0; }
+  .feat-row svg{ flex-shrink:0; }
+  .faq{ border-bottom:1px solid var(--border-soft); }
+  .faq summary{ list-style:none; cursor:pointer; padding:20px 0; display:flex; align-items:center; justify-content:space-between; gap:16px; font-weight:600; font-size:15.5px; color:var(--ink); }
+  .faq summary::-webkit-details-marker{ display:none; }
+  .faq summary .chev{ transition:transform .2s; flex-shrink:0; color:var(--muted); }
+  .faq[open] summary .chev{ transform:rotate(180deg); }
+  .faq p{ padding:0 0 20px; margin:0; font-size:14px; color:var(--muted); line-height:1.65; max-width:62ch; }
+</style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+<header class="bg-white border-b border-gray-100 sticky top-0 z-30">
+  <div class="max-w-6xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between">
+    <a href="pricing.html" class="flex items-center gap-2.5">
+      <div class="w-9 h-9 rounded-lg bg-primary text-white font-bold flex items-center justify-center text-base">C</div>
+      <div><p class="text-sm font-bold text-ink leading-none">Certifive</p><p class="text-[10px] text-muted mt-0.5">Certificación energética</p></div>
+    </a>
+    <nav class="hidden md:flex items-center gap-7 text-sm font-medium text-muted">
+      <a href="pricing.html" class="text-ink">Precios</a>
+      <a href="#faq" class="hover:text-ink">Preguntas</a>
+      <a href="#" class="hover:text-ink">Contacto</a>
+    </nav>
+    <a href="PublicCEEForm.html" class="btn-primary" style="height:42px;font-size:14px;padding:0 20px">Solicitar ahora</a>
+  </div>
+</header>
+
+<main class="flex-1">
+
+  <!-- Hero -->
+  <section class="bg-white border-b border-gray-100">
+    <div class="max-w-3xl mx-auto px-5 sm:px-8 pt-14 sm:pt-20 pb-10 text-center">
+      <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-[11px] font-bold tracking-wider uppercase">
+        <span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+        Precio cerrado · sin sorpresas
+      </span>
+      <h1 class="text-[2.4rem] sm:text-[3rem] font-extrabold text-ink mt-4 leading-[1.04] tracking-tight">
+        Un precio claro<br />para tu certificado
+      </h1>
+      <p class="text-[15px] sm:text-[17px] text-muted mt-5 max-w-xl mx-auto leading-relaxed">
+        Visita técnica, certificado oficial en PDF y registro en la CCAA, todo incluido. Sin permanencia y con garantía de aceptación oficial.
+      </p>
+    </div>
+  </section>
+
+  <!-- Plans -->
+  <section class="max-w-6xl mx-auto px-5 sm:px-8 -mt-2 py-12 sm:py-16">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5 lg:gap-6 items-stretch">
+
+      <!-- Vivienda -->
+      <div class="plan reveal">
+        <div class="flex items-center gap-2.5 mb-4">
+          <span class="w-10 h-10 rounded-xl bg-emerald-50 text-primary flex items-center justify-center"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+          <h3 class="text-lg font-bold text-ink">Vivienda</h3>
+        </div>
+        <p class="text-[13px] text-muted leading-relaxed mb-5">Pisos, casas y chalets. El más solicitado para vender o alquilar.</p>
+        <div class="flex items-end gap-2 mb-1"><span class="text-[42px] font-extrabold text-ink leading-none tracking-tight">129 €</span><span class="text-[13px] text-muted mb-1.5">IVA incl.</span></div>
+        <p class="text-[12px] text-muted mb-6">Hasta 100 m² · +0,40 €/m² adicional</p>
+        <div class="space-y-0.5 mb-7">
+          <div class="feat-row"><svg class="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Visita técnica de un colegiado</div>
+          <div class="feat-row"><svg class="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Certificado oficial en PDF</div>
+          <div class="feat-row"><svg class="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Registro en la CCAA incluido</div>
+          <div class="feat-row"><svg class="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Etiqueta energética</div>
+        </div>
+        <a href="PublicCEEForm.html" class="btn-ghost w-full mt-auto">Solicitar</a>
+      </div>
+
+      <!-- Local / Oficina (featured) -->
+      <div class="plan featured reveal relative">
+        <span class="absolute -top-3 left-1/2 -translate-x-1/2 pill pill-green shadow-sm">Más completo</span>
+        <div class="flex items-center gap-2.5 mb-4">
+          <span class="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="14" rx="1"/><path d="M3 10h18"/></svg></span>
+          <h3 class="text-lg font-bold text-ink">Local / Oficina</h3>
+        </div>
+        <p class="text-[13px] text-muted leading-relaxed mb-5">Locales comerciales y espacios de oficina (uso terciario).</p>
+        <div class="flex items-end gap-2 mb-1"><span class="text-[42px] font-extrabold text-ink leading-none tracking-tight">169 €</span><span class="text-[13px] text-muted mb-1.5">IVA incl.</span></div>
+        <p class="text-[12px] text-muted mb-6">Hasta 150 m² · +0,50 €/m² adicional</p>
+        <div class="space-y-0.5 mb-7">
+          <div class="feat-row"><svg class="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Todo lo de Vivienda, y además:</div>
+          <div class="feat-row"><svg class="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Cálculo de instalaciones terciarias</div>
+          <div class="feat-row"><svg class="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Informe de medidas de mejora</div>
+          <div class="feat-row"><svg class="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Soporte prioritario por WhatsApp</div>
+        </div>
+        <a href="PublicCEEForm.html" class="btn-primary w-full mt-auto">Solicitar</a>
+      </div>
+
+      <!-- Edificio -->
+      <div class="plan reveal">
+        <div class="flex items-center gap-2.5 mb-4">
+          <span class="w-10 h-10 rounded-xl bg-emerald-50 text-primary flex items-center justify-center"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="1"/><line x1="9" y1="6" x2="9" y2="6"/><line x1="15" y1="6" x2="15" y2="6"/><line x1="9" y1="10" x2="9" y2="10"/><line x1="15" y1="10" x2="15" y2="10"/><line x1="9" y1="14" x2="9" y2="14"/><line x1="15" y1="14" x2="15" y2="14"/></svg></span>
+          <h3 class="text-lg font-bold text-ink">Edificio completo</h3>
+        </div>
+        <p class="text-[13px] text-muted leading-relaxed mb-5">Bloques residenciales, comunidades y promociones.</p>
+        <div class="flex items-end gap-2 mb-1"><span class="text-[42px] font-extrabold text-ink leading-none tracking-tight">A medida</span></div>
+        <p class="text-[12px] text-muted mb-6">Presupuesto según nº de viviendas y portales</p>
+        <div class="space-y-0.5 mb-7">
+          <div class="feat-row"><svg class="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Certificación de todo el edificio</div>
+          <div class="feat-row"><svg class="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Descuento por volumen</div>
+          <div class="feat-row"><svg class="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Gestor de cuenta dedicado</div>
+          <div class="feat-row"><svg class="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Facturación a comunidad/administrador</div>
+        </div>
+        <a href="PublicCEEForm.html" class="btn-ghost w-full mt-auto">Pedir presupuesto</a>
+      </div>
+    </div>
+
+    <p class="text-center text-[12.5px] text-muted mt-7 flex items-center justify-center gap-2">
+      <svg class="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      Sin pago hasta confirmar la visita · cancela gratis hasta 24 h antes
+    </p>
+  </section>
+
+  <!-- Add-ons -->
+  <section class="bg-white border-y border-gray-100">
+    <div class="max-w-6xl mx-auto px-5 sm:px-8 py-14 sm:py-16">
+      <div class="text-center mb-10">
+        <h2 class="text-[1.7rem] sm:text-[2rem] font-extrabold text-ink tracking-tight">Servicios opcionales</h2>
+        <p class="text-[15px] text-muted mt-2">Añádelos en el momento de la solicitud si los necesitas</p>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-5 max-w-4xl mx-auto">
+        <div class="border border-gray-100 rounded-2xl p-6">
+          <div class="flex items-center justify-between mb-3">
+            <span class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9z"/></svg></span>
+            <span class="text-lg font-extrabold text-ink">+29 €</span>
+          </div>
+          <p class="text-sm font-semibold text-ink">Tramitación urgente</p>
+          <p class="text-[12.5px] text-muted mt-1 leading-relaxed">Visita en 24-48 h y PDF el mismo día de la visita.</p>
+        </div>
+        <div class="border border-gray-100 rounded-2xl p-6">
+          <div class="flex items-center justify-between mb-3">
+            <span class="w-10 h-10 rounded-xl bg-emerald-50 text-primary flex items-center justify-center"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 100 20 10 10 0 000-20z"/><path d="M12 6v6l4 2"/></svg></span>
+            <span class="text-lg font-extrabold text-ink">+19 €</span>
+          </div>
+          <p class="text-sm font-semibold text-ink">Plan de mejora detallado</p>
+          <p class="text-[12.5px] text-muted mt-1 leading-relaxed">Informe con coste y ahorro estimado de cada medida.</p>
+        </div>
+        <div class="border border-gray-100 rounded-2xl p-6">
+          <div class="flex items-center justify-between mb-3">
+            <span class="w-10 h-10 rounded-xl bg-emerald-50 text-primary flex items-center justify-center"><svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+            <span class="text-lg font-extrabold text-ink">+15 €</span>
+          </div>
+          <p class="text-sm font-semibold text-ink">Copia compulsada</p>
+          <p class="text-[12.5px] text-muted mt-1 leading-relaxed">Documento sellado para notaría o trámites oficiales.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq" class="max-w-3xl mx-auto px-5 sm:px-8 py-14 sm:py-20">
+    <h2 class="text-[1.7rem] sm:text-[2rem] font-extrabold text-ink tracking-tight text-center mb-8">Preguntas frecuentes</h2>
+
+    <details class="faq" open>
+      <summary>¿El precio incluye el registro oficial?<svg class="chev w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></summary>
+      <p>Sí. Todos los planes incluyen el registro del certificado en el órgano competente de tu Comunidad Autónoma, así como la tasa autonómica correspondiente. No hay costes ocultos.</p>
+    </details>
+    <details class="faq">
+      <summary>¿Cuánto tarda en estar listo?<svg class="chev w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></summary>
+      <p>Tras la visita técnica recibes el certificado en PDF en un plazo de 2 a 5 días laborables. Con el servicio de tramitación urgente, el mismo día de la visita.</p>
+    </details>
+    <details class="faq">
+      <summary>¿Cuándo se realiza el cobro?<svg class="chev w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></summary>
+      <p>No se realiza ningún cargo hasta que confirmamos contigo la fecha y hora de la visita técnica. Puedes cancelar de forma gratuita hasta 24 horas antes de la visita.</p>
+    </details>
+    <details class="faq">
+      <summary>¿Qué pasa si mi inmueble supera los m² incluidos?<svg class="chev w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></summary>
+      <p>Verás el precio exacto antes de pagar. Sobre la superficie incluida en cada plan se aplica una tarifa por metro cuadrado adicional, que se calcula automáticamente en tu presupuesto.</p>
+    </details>
+    <details class="faq">
+      <summary>¿El certificado es válido en toda España?<svg class="chev w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></summary>
+      <p>Sí. El certificado de eficiencia energética es un documento oficial con validez de 10 años, reconocido en todo el territorio nacional y emitido por un técnico colegiado.</p>
+    </details>
+  </section>
+
+  <!-- CTA -->
+  <section class="bg-white border-t border-gray-100">
+    <div class="max-w-3xl mx-auto px-5 sm:px-8 py-14 sm:py-16 text-center">
+      <h2 class="text-[1.7rem] sm:text-[2.1rem] font-extrabold text-ink tracking-tight">¿Listo para empezar?</h2>
+      <p class="text-[15px] text-muted mt-3 max-w-md mx-auto">Solicita tu certificado en menos de un minuto. Sin compromiso y con precio cerrado.</p>
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-3 mt-7">
+        <a href="PublicCEEForm.html" class="btn-primary">Solicitar mi certificado<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+        <a href="#" class="btn-ghost">Hablar con nosotros</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="bg-white border-t border-gray-100 mt-auto">
+  <div class="max-w-6xl mx-auto px-5 sm:px-8 py-6 flex flex-wrap items-center justify-between gap-3 text-xs text-muted">
+    <div class="flex items-center gap-3">
+      <div class="w-7 h-7 rounded-md bg-primary text-white font-bold flex items-center justify-center text-xs">C</div>
+      <p>© 2026 Certifive Soluciones Energéticas S.L. · CIF B-87654321 · Madrid · COIIM 21548</p>
+    </div>
+    <div class="flex items-center gap-4"><a href="#" class="hover:text-ink">Aviso legal</a><a href="#" class="hover:text-ink">Privacidad</a><a href="#" class="hover:text-ink">Contacto</a></div>
+  </div>
+</footer>
+</body>
+</html>
