@@ -232,6 +232,8 @@ export default function Login() {
 
         {/* Decorative right panel */}
         <aside className="hidden lg:flex items-center justify-center p-12 relative overflow-hidden" style={{ background: "linear-gradient(160deg, #f0f7f3 0%, #e6f0ec 50%, #dde9e3 100%)" }}>
+          <div style={{ position: "absolute", width: 480, height: 480, top: -120, right: -120, borderRadius: "50%", background: "radial-gradient(circle at 30% 30%, hsl(142 60% 60% / 0.18), transparent 65%)", pointerEvents: "none" }} />
+          <div style={{ position: "absolute", width: 360, height: 360, bottom: -100, left: -80, borderRadius: "50%", background: "radial-gradient(circle at 50% 50%, hsl(190 70% 60% / 0.12), transparent 65%)", pointerEvents: "none" }} />
           <div className="relative max-w-md space-y-6" style={{ zIndex: 1 }}>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-semibold" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid white", color: "#0f1f2e" }}>
               <span className="w-1.5 h-1.5 rounded-full" style={{ background: "hsl(142 69% 36%)" }} />

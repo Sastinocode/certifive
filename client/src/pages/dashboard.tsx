@@ -10,7 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   IdCard, Clock, Euro, Users,
   TrendingUp, TrendingDown,
-  Plus, Eye, Edit, ExternalLink, Bell,
+  Plus, Eye, Edit, ArrowUpRight, BellRing, Bell,
   AlertTriangle, FileWarning, CreditCard, BarChart3,
 } from "lucide-react";
 
@@ -191,7 +191,7 @@ function ActivityChart({
                 <span className="text-[11px] font-semibold text-foreground">{d.total}</span>
               )}
               <div
-                className="w-full rounded-lg bg-primary/70 hover:bg-primary transition-colors cursor-default"
+                className="w-full rounded-lg bg-primary hover:bg-primary/90 transition-colors cursor-default"
                 style={{ height: h }}
                 title={`${fmtMonth(d.month)}: ${d.total} certificados`}
               />
@@ -476,7 +476,7 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
                 <div className="flex items-center justify-between mb-5 flex-shrink-0">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-red-100 dark:bg-red-950/50">
-                      <Bell size={18} className="text-red-600 dark:text-red-400" />
+                      <BellRing size={18} className="text-red-600 dark:text-red-400" />
                     </div>
                     <div>
                       <h2 className="text-base font-semibold text-foreground tracking-tight">Alertas</h2>
@@ -545,7 +545,7 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:bg-primary/5 rounded-lg px-3 py-1.5 transition-colors"
                 >
                   Ver todas
-                  <ExternalLink size={14} />
+                  <ArrowUpRight size={14} />
                 </button>
               </div>
 

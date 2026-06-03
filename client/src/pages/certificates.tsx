@@ -219,8 +219,19 @@ function initials(name: string) {
 function WorkflowBadge({ status }: { status: string | null }) {
   if (!status) return <span className="text-xs text-muted-foreground">—</span>;
   const label = status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  const s = status.toLowerCase();
+  const cls =
+    s.includes("entregado") || s.includes("finalizado")
+      ? "bg-emerald-50 text-emerald-800 border border-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/40"
+      : s.includes("pago") || s.includes("pendiente") || s.includes("cobro")
+      ? "bg-amber-50 text-amber-700 border border-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900/40"
+      : s.includes("cee") || s.includes("enviado") || s.includes("envio")
+      ? "bg-teal-50 text-teal-700 border border-teal-100 dark:bg-teal-950/40 dark:text-teal-300 dark:border-teal-900/40"
+      : s.includes("tasacion") || s.includes("presupuesto") || s.includes("nuevo")
+      ? "bg-blue-50 text-blue-700 border border-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-900/40"
+      : "bg-muted/60 text-muted-foreground";
   return (
-    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-semibold bg-muted/60 text-muted-foreground whitespace-nowrap">
+    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-semibold whitespace-nowrap ${cls}`}>
       {label}
     </span>
   );
@@ -381,9 +392,9 @@ export default function Certificates() {
   });
 
   const STATUS_OPTIONS = [
-    { value: "nuevo",      label: "Nuevo",      dotCls: "bg-blue-500",    pillCls: "bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300"       },
-    { value: "en_proceso", label: "En Proceso", dotCls: "bg-orange-500",  pillCls: "bg-orange-50 text-orange-700 dark:bg-orange-950/50 dark:text-orange-300" },
-    { value: "finalizado", label: "Finalizado", dotCls: "bg-emerald-500", pillCls: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300" },
+    { value: "nuevo",      label: "Nuevo",      dotCls: "bg-blue-500",    pillCls: "bg-blue-50 text-blue-700 border border-blue-100 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-900/40"       },
+    { value: "en_proceso", label: "En Proceso", dotCls: "bg-orange-500",  pillCls: "bg-orange-50 text-orange-700 border border-orange-100 dark:bg-orange-950/50 dark:text-orange-300 dark:border-orange-900/40" },
+    { value: "finalizado", label: "Finalizado", dotCls: "bg-emerald-500", pillCls: "bg-emerald-50 text-emerald-700 border border-emerald-100 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-900/40" },
   ];
 
   const getStatusSelect = (cert: Certification) => {
@@ -475,7 +486,7 @@ export default function Certificates() {
   const previewLinks = previewCert ? buildPreviewLinks(previewCert) : [];
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-[#f6f8f7] dark:bg-background">
       <Sidebar selectedTab="certificados" onTabChange={() => {}} />
 
       <div className="flex-1 overflow-auto">
@@ -489,7 +500,7 @@ export default function Certificates() {
                 Gestiona y realiza el seguimiento de tus certificaciones CEE.
               </p>
             </div>
-            <div className="flex items-center gap-3 bg-card rounded-2xl border border-border shadow-sm px-5 py-3.5">
+            <div className="flex items-center gap-3 bg-card rounded-2xl border border-emerald-100/80 dark:border-border shadow-sm px-5 py-3.5">
               <div className="w-11 h-11 rounded-xl bg-primary flex items-center justify-center shadow-sm flex-shrink-0">
                 <IdCard size={20} className="text-white" />
               </div>
@@ -546,7 +557,7 @@ export default function Certificates() {
                     <thead>
                       <tr>
                         {["Propietario / Dirección", "Calificación", "Estado", "Compartido", "Acceso"].map((h) => (
-                          <th key={h} className="px-6 py-3 text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-[0.08em] bg-muted/30 whitespace-nowrap">
+                          <th key={h} className="px-6 py-3 text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-[0.08em] bg-emerald-50/40 dark:bg-emerald-950/10 whitespace-nowrap">
                             {h}
                           </th>
                         ))}
@@ -554,7 +565,7 @@ export default function Certificates() {
                     </thead>
                     <tbody>
                       {(sharedWithMe as SharedCert[]).map((s) => (
-                        <tr key={s.shareId} className="hover:bg-muted/40 transition-colors">
+                        <tr key={s.shareId} className="hover:bg-emerald-50/40 dark:hover:bg-emerald-950/10 transition-colors">
                           <td className="px-6 py-4">
                             <p className="text-sm font-semibold text-foreground">{s.ownerName || "—"}</p>
                             <p className="text-xs text-muted-foreground mt-0.5">{s.address}{s.city ? `, ${s.city}` : ""}</p>
@@ -699,7 +710,7 @@ export default function Certificates() {
           </div>
 
           {/* ── Main table card ────────────────────────────────────────────── */}
-          <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
+          <div className="bg-card rounded-2xl shadow-sm border border-emerald-100/60 dark:border-border overflow-hidden">
             {isLoading ? (
               <div className="p-6 space-y-3">
                 {Array.from({ length: 8 }).map((_, i) => (
@@ -742,7 +753,7 @@ export default function Certificates() {
                         {["Cliente", "Dirección", "Fecha", "Estado", "Flujo", "Acciones"].map((h, i) => (
                           <th
                             key={h}
-                            className={`px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground bg-muted/30 whitespace-nowrap ${
+                            className={`px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground bg-emerald-50/40 dark:bg-emerald-950/10 whitespace-nowrap ${
                               h === "Fecha" ? "hidden md:table-cell" : ""
                             }${h === "Flujo" ? "hidden lg:table-cell" : ""}${h === "Acciones" ? "text-right" : ""}`}
                           >
@@ -756,12 +767,12 @@ export default function Certificates() {
                         const ini = initials(cert.ownerName || "?");
                         const hasLinks = cert.presupuestoToken || cert.ceeToken || cert.solicitudToken;
                         return (
-                          <tr key={cert.id} className="hover:bg-muted/40 transition-colors">
+                          <tr key={cert.id} className="hover:bg-emerald-50/40 dark:hover:bg-emerald-950/10 transition-colors">
 
                             {/* Cliente */}
                             <td className="px-6 py-5">
                               <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold text-xs flex-shrink-0">
+                                <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-800 font-bold text-xs flex-shrink-0 dark:bg-emerald-900/30 dark:text-emerald-300">
                                   {ini}
                                 </div>
                                 <div className="min-w-0">
@@ -904,7 +915,7 @@ export default function Certificates() {
                 </div>
 
                 {/* ── Table footer ───────────────────────────────────────── */}
-                <div className="px-6 py-4 bg-muted/30 flex items-center justify-between gap-4 flex-wrap">
+                <div className="px-6 py-4 bg-emerald-50/40 dark:bg-emerald-950/10 flex items-center justify-between gap-4 flex-wrap">
                   <div className="flex items-center gap-4">
                     <p className="text-xs text-muted-foreground font-medium">
                       Mostrando <span className="font-semibold text-foreground">{certList.length}</span> de {totalCount} certificaciones
