@@ -96,16 +96,6 @@ export default function Landing() {
     { q: "¿Puedo usar Certifive si solo hago certificados puntualmente?", a: "Sí. El plan Pay-per-use a 3€/certificado es perfecto para técnicos que certifican de forma esporádica. Sin cuota mensual, sin compromisos, pagas solo lo que usas." },
   ];
 
-  const LogoSVG = ({ dark = false }: { dark?: boolean }) => (
-    <svg width="140" height="36" viewBox="0 0 140 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M6 17L6 28L22 28L22 17L14 9Z" fill="none" stroke="#1FA94B" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round"/>
-      <rect x="9" y="22" width="2.5" height="6" rx="0.5" fill="#1FA94B"/>
-      <rect x="13" y="19" width="2.5" height="9" rx="0.5" fill="#84CC16"/>
-      <rect x="17" y="16" width="2.5" height="12" rx="0.5" fill="#F59E0B"/>
-      <text x="30" y="26" fontFamily="Inter, system-ui, sans-serif" fontWeight="800" fontSize="19" fill={dark ? "#ffffff" : "#0F172A"}>certifive</text>
-    </svg>
-  );
-
   const CheckIcon = ({ cls = "plan-check" }: { cls?: string }) => (
     <svg className={cls} width="16" height="16" viewBox="0 0 16 16" fill="none">
       <path d="M3 8l3.5 3.5L13 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -845,7 +835,7 @@ export default function Landing() {
       </section>
 
       {/* ── PROCESO — 5 PASOS ── */}
-      <section className="section" id="proceso">
+      <section className="section alt" id="proceso">
         <div className="container">
           <div className="section-head reveal">
             <span className="section-eyebrow">Cómo funciona</span>
