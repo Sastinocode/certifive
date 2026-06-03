@@ -138,6 +138,7 @@ export default function ViewCertificationRequest() {
 
   return (
     <div className="min-h-screen bg-background">
+      <style>{`@keyframes cert-glow { 0%, 100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.4); } 50% { box-shadow: 0 0 0 8px hsl(var(--primary) / 0); } }`}</style>
       {/* Breadcrumb */}
       <div className="px-4 sm:px-8 pt-5 max-w-[1400px] mx-auto">
         <nav className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -195,7 +196,7 @@ export default function ViewCertificationRequest() {
               <div className="rounded-2xl border-2 border-primary/40 bg-primary/[0.04] dark:bg-primary/10 p-5 sm:p-6 shadow-sm">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center text-primary flex-shrink-0 animate-pulse">
+                    <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center text-primary flex-shrink-0" style={{ animation: 'cert-glow 2s ease-in-out infinite' }}>
                       <AlertTriangle className="w-5 h-5" />
                     </div>
                     <div className="min-w-0">
