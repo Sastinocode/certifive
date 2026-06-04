@@ -55,6 +55,7 @@ import SolicitudPago from "@/pages/SolicitudPago";
 import SolicitudConfirmacion from "@/pages/SolicitudConfirmacion";
 import SolicitudSeguimiento from "@/pages/SolicitudSeguimiento";
 import SolicitudPagoRechazado from "@/pages/SolicitudPagoRechazado";
+import AdminPanel from "@/pages/admin";
 
 function RecogidaMovilWrapper() {
   const { token } = useParams<{ token: string }>();
@@ -213,6 +214,7 @@ function Router() {
         <Route path="/automatizaciones" component={isAuthenticated ? Automations : Login} />
         <Route path="/stripe" component={isAuthenticated ? StripeIntegration : Login} />
         <Route path="/configuracion" component={isAuthenticated ? Settings : Login} />
+        <Route path="/admin" component={isAuthenticated ? AdminPanel : Login} />
         <Route path="/revision-tecnica/:id" component={isAuthenticated ? TecnicoFormReview : Login} />
         <Route path="/visita/:id" component={isAuthenticated ? VisitForm : Login} />
 
