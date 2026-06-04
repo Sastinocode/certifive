@@ -9,18 +9,6 @@ import { sendBetaLeadConfirmation } from "../email";
 export function registerMiscRoutes(app: Express) {
 // ─── WAITLIST ────────────────────────────────────────────────────────────────
 
-// Ensure waitlist table exists (auto-create on first run)
-db.execute(`
-  CREATE TABLE IF NOT EXISTS waitlist (
-    id SERIAL PRIMARY KEY,
-    email TEXT,
-    phone TEXT,
-    module TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW() NOT NULL
-  );
-  CREATE INDEX IF NOT EXISTS waitlist_module_idx ON waitlist (module);
-`).catch(() => {});
-
 app.post("/api/waitlist", async (req: Request, res: Response) => {
   try {
     const { email, phone, module: mod } = req.body;
