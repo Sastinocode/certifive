@@ -32,6 +32,9 @@ function buildDbMock() {
     set:       vi.fn(chain),
     leftJoin:  vi.fn(chain),
     orderBy:   vi.fn(() => Promise.resolve([])),
+    groupBy:   vi.fn(() => Promise.resolve([])),
+    offset:    vi.fn(chain),
+    delete:    vi.fn(chain),
   };
   return proxy;
 }
