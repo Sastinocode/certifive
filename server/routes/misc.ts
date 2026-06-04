@@ -170,6 +170,34 @@ app.get("/api/c/:slug", async (req: Request, res: Response) => {
 // PRICING CALCULATE  POST /api/pricing/calculate
 // ─────────────────────────────────────────────────────────────────────────
 
+app.post("/api/pricing/calculate", async (req: Request, res: Response) => {
+  try {
+    const { propertyType, area, province } = req.body;
+    if (!propertyType || !area) {
+      return res.status(400).json({ message: "Tipo de inmueble y superficie requeridos" });
+    }
+
+    const [rate] = await db.select()
+      .from(pricingRates)
+      .where(and(
+        eq(pricingRates.propertyType, propertyType),
+        eq(pricingRates.province, province || "default")
+      ))
+      .limit(1);
+
+    if (!rate) {
+      return res.status(404).json({ message: "No se encontró tarifa para estos parámetros" });
+    }
+
+    const basePrice = rate.basePrice || 0;
+    const pricePerSqm = rate.pricePerSqm || 0;
+    const total = basePrice + (area * pricePerSqm);
+
+    res.json({ basePrice, pricePerSqm, area, total: Math.round(total * 100) / 100 });
+  } catch {
+    res.status(500).json({ message: "Error al calcular precio" });
+  }
+});
 
 // ─────────────────────────────────────────────────────────────────────────
 // PUBLIC ORDER TRACKING  GET /api/solicitudes/seguimiento/:token

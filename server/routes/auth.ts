@@ -39,15 +39,6 @@ const registerRateLimiter = rateLimit({
 });
 // ─────────────────────────────────────────────────────────────────────────────
 
-const avatarUpload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 2 * 1024 * 1024 },
-  fileFilter: (_req, file, cb) => {
-    const ok = [".jpg", ".jpeg", ".png"].includes(path.extname(file.originalname).toLowerCase());
-    cb(null, ok);
-  },
-});
-
 export function registerAuthRoutes(app: Express) {
 // --- AUTH ---
 

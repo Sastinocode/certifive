@@ -38,7 +38,7 @@ const MOCK_USER = {
   name: "Test User",
   firstName: "Test",
   lastName: "User",
-  emailVerified: true,
+  emailVerifiedAt: new Date(),
   isActive: true,
   subscriptionStatus: "active",
   subscriptionCurrentPeriodEnd: null,
