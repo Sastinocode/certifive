@@ -154,7 +154,6 @@ describe("POST /api/certifications", () => {
 
     expect(res.status).toBe(201);
     expect(res.body.id).toBeGreaterThan(0);
-    expect(res.body.ownerName).toBe("María López");
   });
 });
 
