@@ -133,5 +133,8 @@
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.8"
+  },
+  "overrides": {
+    "xlsx": "^0.18.5"
   }
 }
