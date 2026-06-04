@@ -24,11 +24,25 @@ import { createTestApp } from "./appFactory";
 // db mock — importado para inyectar datos por test
 import { db } from "../db";
 
+// ── Rate limiter: pass-through en tests ───────────────────────────────────────
+// vi.mock se hoisteado al top del archivo por el transformer de Vitest
+vi.mock("express-rate-limit", () => ({
+  default: () => (_req: any, _res: any, next: any) => next(),
+}));
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function makeJwt(userId = 1) {
   return jwt.sign(
     { id: userId, username: "testuser", role: "user" },
+    process.env.JWT_SECRET!,
+    { expiresIn: "1h" },
+  );
+}
+
+function makeAdminJwt(userId = 99) {
+  return jwt.sign(
+    { id: userId, username: "adminuser", role: "admin" },
     process.env.JWT_SECRET!,
     { expiresIn: "1h" },
   );
@@ -265,8 +279,9 @@ describe("GET /api/auth/user", () => {
   });
 
   it("200 devuelve perfil sin campos sensibles", async () => {
+    // mockResolvedValue (persistente) para cubrir cualquier llamada a db.limit en este test
     vi.mocked(db.limit as ReturnType<typeof vi.fn>)
-      .mockResolvedValueOnce([MOCK_USER]);
+      .mockResolvedValue([MOCK_USER]);
 
     const res = await request(createTestApp())
       .get("/api/auth/user")
@@ -299,18 +314,11 @@ describe("GET /api/admin/stats", () => {
   });
 
   it("200 con token de admin", async () => {
-    const adminUser = { ...MOCK_USER, role: "admin" };
-    // authenticate → admin; luego 4 queries de stats (count, count, count, groupBy)
-    vi.mocked(db.limit as ReturnType<typeof vi.fn>)
-      .mockResolvedValueOnce([adminUser]);
-    vi.mocked(db.orderBy as ReturnType<typeof vi.fn>)
-      .mockResolvedValue([{ plan: "free", count: 3 }]);
-
+    // JWT con role: "admin" — requireAdmin lo deja pasar sin consultar la DB
     const res = await request(createTestApp())
       .get("/api/admin/stats")
-      .set("Authorization", `Bearer ${makeJwt()}`);
+      .set("Authorization", `Bearer ${makeAdminJwt()}`);
 
-    // Con admin debería pasar el guard (no 401/403)
     expect(res.status).not.toBe(401);
     expect(res.status).not.toBe(403);
   });
@@ -359,14 +367,11 @@ describe("PATCH /api/admin/users/:id/role", () => {
   });
 
   it("400 con rol inválido (como admin)", async () => {
-    const adminUser = { ...MOCK_USER, role: "admin" };
-    vi.mocked(db.limit as ReturnType<typeof vi.fn>)
-      .mockResolvedValueOnce([adminUser]);
-
+    // JWT con role: "admin" — pasa requireAdmin directamente
     const res = await request(createTestApp())
       .patch("/api/admin/users/2/role")
-      .set("Authorization", `Bearer ${makeJwt()}`)
-      .send({ role: "superadmin" }); // rol inexistente
+      .set("Authorization", `Bearer ${makeAdminJwt()}`)
+      .send({ role: "superadmin" }); // rol inexistente → 400
     expect(res.status).toBe(400);
   });
 });

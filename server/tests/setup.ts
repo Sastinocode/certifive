@@ -50,6 +50,12 @@ vi.mock("../email", () => ({
   sendSolicitudRecibidaEmail:   vi.fn(),
 }));
 
+// ── Mock: rate limiters — pass-through en tests ───────────────────────────────
+vi.mock("express-rate-limit", () => ({
+  default: () => (_req: any, _res: any, next: any) => next(),
+  rateLimit: () => (_req: any, _res: any, next: any) => next(),
+}));
+
 // ── Mock: crons y helpers ─────────────────────────────────────────────────────
 vi.mock("../notifications",       () => ({ startReminderCron: vi.fn(), createNotification: vi.fn() }));
 vi.mock("../digest",              () => ({ startDigestCron: vi.fn() }));
