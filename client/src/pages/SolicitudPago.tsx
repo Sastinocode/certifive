@@ -52,9 +52,9 @@ function calcularPrecio(tipo: string): { base: number; subtotal: number; iva: nu
 
 const DESCUENTO = 20;
 
-// Resolves to null when VITE_STRIPE_PUBLISHABLE_KEY is not set (dev / mock mode).
-const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
-  ? loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string)
+// Resolves to null when VITE_STRIPE_PUBLIC_KEY is not set (dev / mock mode).
+const stripePromise = import.meta.env.VITE_STRIPE_PUBLIC_KEY
+  ? loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY as string)
   : Promise.resolve(null);
 
 function SolicitudPagoInner() {
@@ -100,7 +100,7 @@ function SolicitudPagoInner() {
           });
           if (error) throw new Error(error.message);
         } else {
-          // Stripe not configured (VITE_STRIPE_PUBLISHABLE_KEY absent) — dev/mock mode.
+          // Stripe not configured (VITE_STRIPE_PUBLIC_KEY absent) — dev/mock mode.
           const confirmRes = await fetch("/api/solicitudes/checkout/confirm", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
