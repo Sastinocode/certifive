@@ -5,6 +5,8 @@ import connectPg from "connect-pg-simple";
 import helmet from "helmet";
 import path from "path";
 import { fileURLToPath } from "url";
+import pinoHttp from "pino-http";
+import { logger } from "./logger";
 import { registerRoutes } from "./routes/index";
 import { initEmail } from "./email";
 import { startReminderCron } from "./notifications";
@@ -24,7 +26,7 @@ if (config.SENTRY_DSN) {
     environment: process.env.NODE_ENV ?? "development",
     tracesSampleRate: process.env.NODE_ENV === "production" ? 0.2 : 0,
   });
-  console.log("[sentry] Inicializado correctamente");
+  logger.info("Sentry inicializado correctamente");
 }
 
 const PgStore = connectPg(session);
@@ -34,6 +36,24 @@ const app = express();
 
 // Railway (y cualquier cloud) usa reverse proxies — necesario para rate-limit e IPs reales
 app.set("trust proxy", 1);
+
+// ── HTTP request logging (Pino) ───────────────────────────────────────────────
+// Loguea método, url, statusCode y tiempo de respuesta en cada petición.
+// Los assets estáticos y health checks se omiten para no saturar los logs.
+app.use(pinoHttp({
+  logger,
+  autoLogging: {
+    ignore: (req) => {
+      const url = req.url ?? "";
+      return url.startsWith("/assets/") || url === "/api/health" || url.startsWith("/@");
+    },
+  },
+  customLogLevel: (_req, res) => {
+    if (res.statusCode >= 500) return "error";
+    if (res.statusCode >= 400) return "warn";
+    return "info";
+  },
+}));
 
 // ── Security headers ──────────────────────────────────────────────────────────
 app.use(helmet({
@@ -128,7 +148,7 @@ if (config.SENTRY_DSN) {
 
 const PORT = parseInt(process.env.PORT || "5000");
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`CERTIFIVE server running on port ${PORT}`);
+  logger.info({ port: PORT }, `CERTIFIVE server running on port ${PORT}`);
 });
 
 export default app;
