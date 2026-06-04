@@ -1,10 +1,14 @@
+import React from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePlanFeatures } from "@/hooks/usePlanFeatures";
 import { useLocation } from "wouter";
 import {
   LayoutDashboard, FileText, Users, Award, ClipboardList,
   MessageCircle, Receipt, BarChart2, Settings, LogOut,
   HelpCircle, Plus, Search, Crown, Sparkles,
 } from "lucide-react";
+
+type Feature = "whatsapp" | "reports" | "invoicing" | "multi_user";
 
 interface SidebarProps {
   selectedTab: string;
@@ -19,15 +23,15 @@ const BORDER  = "rgba(255,255,255,0.07)";
 const TEXT    = "rgba(255,255,255,0.82)";
 const DIM     = "rgba(255,255,255,0.38)";
 
-const allItems = [
+const allItems: { id: string; label: string; icon: React.ElementType; path: string; requiredFeature?: Feature; requiredBadge?: string }[] = [
   { id: "dashboard",     label: "Dashboard",     icon: LayoutDashboard, path: "/" },
   { id: "expedientes",   label: "Expedientes",   icon: FileText,        path: "/certificados" },
   { id: "clientes",      label: "Clientes",      icon: Users,           path: "/propiedades" },
   { id: "certificados",  label: "Certificados",  icon: Award,           path: "/certificados" },
   { id: "cuestionarios", label: "Cuestionarios", icon: ClipboardList,   path: "/formulario-cee" },
-  { id: "whatsapp",      label: "WhatsApp",       icon: MessageCircle,   path: "/whatsapp" },
-  { id: "facturacion",   label: "Facturación",   icon: Receipt,         path: "/tarifas" },
-  { id: "informes",      label: "Informes",      icon: BarChart2,       path: "/informes" },
+  { id: "whatsapp",      label: "WhatsApp",       icon: MessageCircle,   path: "/whatsapp",  requiredFeature: "whatsapp",  requiredBadge: "Pro" },
+  { id: "facturacion",   label: "Facturación",   icon: Receipt,         path: "/tarifas",   requiredFeature: "invoicing", requiredBadge: "Pro" },
+  { id: "informes",      label: "Informes",      icon: BarChart2,       path: "/informes",  requiredFeature: "reports",   requiredBadge: "Pro" },
   { id: "settings",      label: "Configuración", icon: Settings,        path: "/configuracion" },
 ];
 
@@ -38,8 +42,19 @@ const sections = [
   { label: "Sistema",      ids: ["settings"] },
 ];
 
+const PLAN_LABELS: Record<string, string> = {
+  free: "Plan Gratuito",
+  basico: "Plan Básico",
+  pay_per_use: "Pay per use",
+  profesional: "Plan Pro",
+  pro: "Plan Pro",
+  empresa: "Plan Empresa",
+  enterprise: "Plan Enterprise",
+};
+
 export default function Sidebar({ selectedTab, onTabChange }: SidebarProps) {
   const { user } = useAuth();
+  const { canUse, plan } = usePlanFeatures();
   const [location, setLocation] = useLocation();
 
   const handleLogout = () => { window.location.href = "/api/logout"; };
@@ -52,13 +67,18 @@ export default function Sidebar({ selectedTab, onTabChange }: SidebarProps) {
     ? `${user.firstName} ${user.lastName}`
     : (user as any)?.email || "Usuario";
 
-  // Graceful fallback — shows "Gratuito" until a plan field is confirmed
-  const isPro = !!(user as any)?.isPro || (user as any)?.plan === "pro";
+  const planLabel = PLAN_LABELS[plan] ?? "Plan Gratuito";
+  const showUpgrade = plan === "free" || plan === "basico";
+  const isPaidPlan = !showUpgrade;
+
+  const isLocked = (item: (typeof allItems)[0]) =>
+    !!item.requiredFeature && !canUse(item.requiredFeature);
 
   const isActive = (item: (typeof allItems)[0]) =>
     location === item.path || selectedTab === item.id;
 
   const navigate = (item: (typeof allItems)[0]) => {
+    if (isLocked(item)) return;
     setLocation(item.path);
     onTabChange(item.id);
   };
@@ -152,7 +172,8 @@ export default function Sidebar({ selectedTab, onTabChange }: SidebarProps) {
             {allItems
               .filter(item => section.ids.includes(item.id))
               .map(item => {
-                const active = isActive(item);
+                const locked = isLocked(item);
+                const active = !locked && isActive(item);
                 const Icon = item.icon;
                 return (
                   <button
@@ -162,17 +183,18 @@ export default function Sidebar({ selectedTab, onTabChange }: SidebarProps) {
                       width: "100%", position: "relative",
                       display: "flex", alignItems: "center", gap: 10,
                       padding: "9px 12px 9px 14px",
-                      borderRadius: 8, border: "none", cursor: "pointer",
+                      borderRadius: 8, border: "none",
+                      cursor: locked ? "default" : "pointer",
                       fontSize: 13, fontWeight: active ? 600 : 400,
                       textAlign: "left", marginBottom: 1,
                       background: active ? "rgba(31,169,75,0.14)" : "transparent",
                       color: active ? "#1FA94B" : TEXT,
+                      opacity: locked ? 0.5 : 1,
                       transition: "background .12s, color .12s",
                     }}
-                    onMouseOver={e => { if (!active) e.currentTarget.style.background = HOVER; }}
-                    onMouseOut={e => { if (!active) e.currentTarget.style.background = "transparent"; }}
+                    onMouseOver={e => { if (!active && !locked) e.currentTarget.style.background = HOVER; }}
+                    onMouseOut={e => { if (!active && !locked) e.currentTarget.style.background = "transparent"; }}
                   >
-                    {/* Left accent bar for active item */}
                     {active && (
                       <span style={{
                         position: "absolute", left: 0,
@@ -190,7 +212,19 @@ export default function Sidebar({ selectedTab, onTabChange }: SidebarProps) {
                         opacity: active ? 1 : 0.55,
                       }}
                     />
-                    <span>{item.label}</span>
+                    <span style={{ flex: 1 }}>{item.label}</span>
+                    {locked && item.requiredBadge && (
+                      <span style={{
+                        fontSize: 9, fontWeight: 700,
+                        color: "#F59E0B",
+                        background: "rgba(245,158,11,0.15)",
+                        border: "1px solid rgba(245,158,11,0.30)",
+                        borderRadius: 4, padding: "1px 5px",
+                        letterSpacing: ".04em", flexShrink: 0,
+                      }}>
+                        {item.requiredBadge}
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -202,7 +236,7 @@ export default function Sidebar({ selectedTab, onTabChange }: SidebarProps) {
       <div style={{ borderTop: `1px solid ${BORDER}`, padding: "10px 10px 14px", flexShrink: 0 }}>
 
         {/* Plan indicator */}
-        {isPro ? (
+        {isPaidPlan ? (
           <div style={{
             display: "flex", alignItems: "center", gap: 7,
             padding: "7px 10px", borderRadius: 8, marginBottom: 8,
@@ -210,7 +244,7 @@ export default function Sidebar({ selectedTab, onTabChange }: SidebarProps) {
             border: "1px solid rgba(31,169,75,0.22)",
           }}>
             <Crown size={12} color="#1FA94B" />
-            <span style={{ fontSize: 11, fontWeight: 600, color: "#1FA94B" }}>Plan Pro</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: "#1FA94B" }}>{planLabel}</span>
             <span style={{ fontSize: 10, color: DIM, marginLeft: "auto" }}>Activo</span>
           </div>
         ) : (
@@ -221,8 +255,9 @@ export default function Sidebar({ selectedTab, onTabChange }: SidebarProps) {
             border: "1px solid rgba(255,255,255,0.08)",
           }}>
             <Sparkles size={12} color={DIM} />
-            <span style={{ fontSize: 11, fontWeight: 500, color: DIM }}>Plan Gratuito</span>
+            <span style={{ fontSize: 11, fontWeight: 500, color: DIM }}>{planLabel}</span>
             <button
+              onClick={() => setLocation("/configuracion#planes")}
               style={{
                 marginLeft: "auto", fontSize: 10, color: ACTIVE,
                 background: "none", border: "none", cursor: "pointer",
