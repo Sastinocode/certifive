@@ -88,4 +88,5 @@ export const config = {
   JWT_SECRET:      requireSecret("JWT_SECRET",      "certifive-dev-secret-2024"),
   SESSION_SECRET:  requireSecret("SESSION_SECRET",  "certifive-session-secret-2024"),
   ENCRYPTION_KEY:  requireSecret("ENCRYPTION_KEY",  "certifive-default-key-change-me!!"),
+  SENTRY_DSN:      warnIfDefault("SENTRY_DSN",      ""),
 } as const;

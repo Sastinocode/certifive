@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/node";
 import express from "express";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
@@ -14,6 +15,17 @@ import { runStartupMigrations } from "./startup-migration";
 
 // Mostrar warnings de configuración agrupados antes de cualquier otro log
 printConfigWarnings();
+
+// ── Sentry (monitorización de errores) ────────────────────────────────────────
+// Solo se activa si SENTRY_DSN está configurado; en dev/CI es un no-op.
+if (config.SENTRY_DSN) {
+  Sentry.init({
+    dsn: config.SENTRY_DSN,
+    environment: process.env.NODE_ENV ?? "development",
+    tracesSampleRate: process.env.NODE_ENV === "production" ? 0.2 : 0,
+  });
+  console.log("[sentry] Inicializado correctamente");
+}
 
 const PgStore = connectPg(session);
 
@@ -107,6 +119,11 @@ if (isDev) {
   app.get("*", (_req, res) => {
     res.sendFile(path.join(distPath, "index.html"));
   });
+}
+
+// ── Sentry error handler — debe ir DESPUÉS de todas las rutas ─────────────────
+if (config.SENTRY_DSN) {
+  Sentry.setupExpressErrorHandler(app);
 }
 
 const PORT = parseInt(process.env.PORT || "5000");
