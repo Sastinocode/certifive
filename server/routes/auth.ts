@@ -120,10 +120,10 @@ app.post("/api/auth/register", registerRateLimiter, async (req: Request, res: Re
       licenseNumber,
       role: "user",
       emailVerificationToken: verificationToken,
-      // BETA: todos los nuevos usuarios entran con acceso completo.
-      // Cambiar a "trialing" cuando Stripe esté configurado.
-      subscriptionStatus: "active",
-      subscriptionCurrentPeriodEnd: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 año beta
+      // Prueba gratuita de 14 días. Tras expirar, subscription-guard bloquea
+      // el acceso hasta que el usuario seleccione un plan de pago.
+      subscriptionStatus: "trialing",
+      subscriptionCurrentPeriodEnd: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 días
     }).returning();
 
     const authUser = { id: user.id, username: user.username, email: user.email, role: user.role, name: user.name, firstName: user.firstName, lastName: user.lastName };

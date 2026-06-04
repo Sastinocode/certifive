@@ -40,19 +40,36 @@ async function enforceSubscription(
 
   try {
     const [row] = await db
-      .select({ subscriptionStatus: users.subscriptionStatus })
+      .select({
+        subscriptionStatus:         users.subscriptionStatus,
+        subscriptionCurrentPeriodEnd: users.subscriptionCurrentPeriodEnd,
+      })
       .from(users)
       .where(eq(users.id, req.user.id))
       .limit(1);
 
-    const status = row?.subscriptionStatus;
+    const status  = row?.subscriptionStatus;
+    const periodEnd = row?.subscriptionCurrentPeriodEnd;
 
-    if (status === "active" || status === "trialing") {
+    // Siempre permitir suscripciones activas de pago
+    if (status === "active") {
       return next();
     }
 
+    // Permitir trial solo si aún no ha expirado
+    if (status === "trialing") {
+      const trialAlive = !periodEnd || periodEnd > new Date();
+      if (trialAlive) return next();
+      // Trial expirado → bloquear con código específico
+      return res.status(403).json({
+        message: "Tu período de prueba ha finalizado. Elige un plan para continuar.",
+        code: "TRIAL_EXPIRED",
+        trialEndedAt: periodEnd,
+      });
+    }
+
     res.status(403).json({
-      message: "Suscripción requerida",
+      message: "Suscripción requerida. Elige un plan para acceder.",
       code: "SUBSCRIPTION_REQUIRED",
     });
   } catch {

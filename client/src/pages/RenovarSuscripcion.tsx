@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { useLocation } from "wouter";
-import { AlertTriangle, CreditCard, ArrowRight } from "lucide-react";
+import { AlertTriangle, CreditCard, ArrowRight, Clock } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -10,11 +9,20 @@ const PLANS = [
   { id: "empresa",     label: "Empresa",      price: "99€/mes",  desc: "Certificados ilimitados" },
 ];
 
+// Detecta el motivo del bloqueo desde la URL (?reason=trial_expired)
+function getBlockReason(): "trial_expired" | "subscription_required" {
+  const params = new URLSearchParams(window.location.search);
+  const reason = params.get("reason");
+  if (reason === "trial_expired") return "trial_expired";
+  return "subscription_required";
+}
+
 export default function RenovarSuscripcion() {
-  const [, navigate] = useLocation();
   const { logout } = useAuth();
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const reason = getBlockReason();
+  const isTrialExpired = reason === "trial_expired";
 
   const startCheckout = async (plan: string) => {
     setLoading(plan);
@@ -35,14 +43,25 @@ export default function RenovarSuscripcion() {
 
         {/* Header */}
         <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <div style={{ width: 64, height: 64, borderRadius: "50%", background: "#fef9c3", display: "inline-flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
-            <AlertTriangle size={28} color="#854d0e" />
+          <div style={{
+            width: 64, height: 64, borderRadius: "50%",
+            background: isTrialExpired ? "#f0fdf4" : "#fef9c3",
+            display: "inline-flex", alignItems: "center", justifyContent: "center", marginBottom: 20,
+          }}>
+            {isTrialExpired
+              ? <Clock size={28} color="#166534" />
+              : <AlertTriangle size={28} color="#854d0e" />}
           </div>
+
           <h1 style={{ fontSize: 26, fontWeight: 700, color: "#0F1923", letterSpacing: "-.02em", marginBottom: 10 }}>
-            Tu suscripción necesita atención
+            {isTrialExpired
+              ? "Tu período de prueba ha terminado"
+              : "Activa tu suscripción para continuar"}
           </h1>
-          <p style={{ fontSize: 15, color: "#6B7280", lineHeight: 1.6, maxWidth: 400, margin: "0 auto" }}>
-            Tu plan ha expirado o tiene un pago pendiente. Elige un plan para recuperar el acceso a tu dashboard.
+          <p style={{ fontSize: 15, color: "#6B7280", lineHeight: 1.6, maxWidth: 420, margin: "0 auto" }}>
+            {isTrialExpired
+              ? "Has utilizado tus 14 días de prueba gratuita. Elige el plan que mejor se adapte a tu volumen de trabajo para seguir gestionando tus expedientes."
+              : "Tu suscripción ha expirado o tiene un pago pendiente. Elige un plan para recuperar el acceso completo."}
           </p>
         </div>
 
@@ -59,14 +78,15 @@ export default function RenovarSuscripcion() {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
               }}
             >
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                   <span style={{ fontSize: 15, fontWeight: 600, color: "#0F1923" }}>{plan.label}</span>
                   {plan.popular && (
-                    <span style={{ fontSize: 11, background: "#dcfce7", color: "#166534", padding: "2px 8px", borderRadius: 10, fontWeight: 600 }}>Más popular</span>
+                    <span style={{ fontSize: 11, background: "#dcfce7", color: "#166534", padding: "2px 8px", borderRadius: 10, fontWeight: 600 }}>
+                      Más popular
+                    </span>
                   )}
                 </div>
                 <span style={{ fontSize: 13, color: "#6B7280" }}>{plan.desc}</span>
@@ -84,13 +104,12 @@ export default function RenovarSuscripcion() {
                     cursor: loading ? "not-allowed" : "pointer",
                     opacity: loading && loading !== plan.id ? .5 : 1,
                     display: "inline-flex", alignItems: "center", gap: 6,
-                    transition: "background .15s",
                   }}
                   onMouseOver={e => { if (!loading && plan.popular) e.currentTarget.style.background = "#178A3C"; }}
                   onMouseOut={e => { if (plan.popular) e.currentTarget.style.background = "#1FA94B"; }}
                 >
                   <CreditCard size={14} />
-                  {loading === plan.id ? "Redirigiendo…" : "Reactivar"}
+                  {loading === plan.id ? "Redirigiendo…" : "Elegir plan"}
                   {loading !== plan.id && <ArrowRight size={13} />}
                 </button>
               </div>
@@ -105,7 +124,7 @@ export default function RenovarSuscripcion() {
         )}
 
         <p style={{ textAlign: "center", fontSize: 12, color: "#94A3B8", marginBottom: 20 }}>
-          7 días de prueba gratuita · Sin permanencia · Cancela cuando quieras
+          Sin permanencia · Cancela cuando quieras · Soporte incluido
         </p>
 
         <div style={{ textAlign: "center" }}>

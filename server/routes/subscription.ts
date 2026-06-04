@@ -148,9 +148,9 @@ async function createCheckout(req: Request, res: Response) {
       mode: "subscription",
       payment_method_types: ["card"],
       line_items: [{ price: priceId, quantity: 1 }],
-      // 7-day free trial for all plans except pay-per-use
+      // 14-day free trial for all plans except pay-per-use
       ...(isPayPerUse ? {} : {
-        subscription_data: { trial_period_days: 7 },
+        subscription_data: { trial_period_days: 14 },
       }),
       success_url: `${base}/success?subscription=success&plan=${plan}`,
       cancel_url:  `${base}/cancel?subscription=canceled`,

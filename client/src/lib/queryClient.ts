@@ -42,6 +42,34 @@ function clearAuthAndRedirect() {
   window.location.href = "/";
 }
 
+// Redirige al paywall cuando el trial ha expirado o la suscripción no está activa.
+// Evita redirección en bucle si ya estamos en /renovar-suscripcion.
+function redirectToPaywall() {
+  if (!window.location.pathname.startsWith("/renovar-suscri")) {
+    window.location.href = "/renovar-suscripción";
+  }
+}
+
+async function handleSubscriptionError(res: Response): Promise<boolean> {
+  if (res.status !== 403) return false;
+  try {
+    const body = await res.clone().json();
+    if (body.code === "TRIAL_EXPIRED") {
+      if (!window.location.pathname.startsWith("/renovar-suscri")) {
+        window.location.href = "/renovar-suscripción?reason=trial_expired";
+      }
+      return true;
+    }
+    if (body.code === "SUBSCRIPTION_REQUIRED") {
+      redirectToPaywall();
+      return true;
+    }
+  } catch {
+    // body no es JSON — no es un error de suscripción
+  }
+  return false;
+}
+
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -63,6 +91,10 @@ export const queryClient = new QueryClient({
           }
           clearAuthAndRedirect();
           throw new Error("Unauthorized");
+        }
+
+        if (await handleSubscriptionError(res)) {
+          throw new Error("SubscriptionRequired");
         }
 
         if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
@@ -101,6 +133,10 @@ export async function apiRequest(method: string, url: string, body?: any) {
     }
     clearAuthAndRedirect();
     throw new Error("Unauthorized");
+  }
+
+  if (await handleSubscriptionError(res)) {
+    throw new Error("SubscriptionRequired");
   }
 
   if (!res.ok) {
