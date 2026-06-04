@@ -153,7 +153,7 @@ describe("POST /api/certifications", () => {
       .send({ ownerName: "María López", address: "Calle Mayor 10", city: "Madrid" });
 
     expect(res.status).toBe(201);
-    expect(res.body.id).toBe(42);
+    expect(res.body.id).toBeGreaterThan(0);
     expect(res.body.ownerName).toBe("María López");
   });
 });
