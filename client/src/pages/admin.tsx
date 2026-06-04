@@ -25,18 +25,22 @@ interface AdminUser {
   subscriptionPlan: string | null;
   subscriptionStatus: string | null;
   emailVerifiedAt: string | null;
-  isActive: boolean | null;
   createdAt: string | null;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+function authHeaders(): HeadersInit {
+  const token = localStorage.getItem("token");
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 function planBadge(plan: string | null) {
   const colors: Record<string, string> = {
-    free:         "bg-gray-100 text-gray-600",
-    basico:       "bg-blue-100 text-blue-700",
-    profesional:  "bg-purple-100 text-purple-700",
-    empresa:      "bg-amber-100 text-amber-700",
+    free:        "bg-gray-100 text-gray-600",
+    basico:      "bg-blue-100 text-blue-700",
+    profesional: "bg-purple-100 text-purple-700",
+    empresa:     "bg-amber-100 text-amber-700",
   };
   const p = plan ?? "free";
   return (
@@ -46,10 +50,10 @@ function planBadge(plan: string | null) {
   );
 }
 
-function statusDot(status: string | null, isActive: boolean | null) {
-  if (isActive === false) return <span className="w-2 h-2 rounded-full bg-red-400 inline-block" title="Desactivado" />;
-  if (status === "active") return <span className="w-2 h-2 rounded-full bg-green-400 inline-block" title="Activo" />;
+function statusDot(status: string | null) {
+  if (status === "active")   return <span className="w-2 h-2 rounded-full bg-green-400 inline-block" title="Activo" />;
   if (status === "trialing") return <span className="w-2 h-2 rounded-full bg-blue-400 inline-block" title="Trial" />;
+  if (status === "canceled") return <span className="w-2 h-2 rounded-full bg-red-400 inline-block" title="Cancelado" />;
   return <span className="w-2 h-2 rounded-full bg-gray-300 inline-block" title={status ?? "—"} />;
 }
 
@@ -60,11 +64,11 @@ export default function AdminPanel() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
 
-  const [stats, setStats]       = useState<AdminStats | null>(null);
-  const [users, setUsers]       = useState<AdminUser[]>([]);
+  const [stats, setStats]           = useState<AdminStats | null>(null);
+  const [users, setUsers]           = useState<AdminUser[]>([]);
   const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
-  const [search, setSearch]     = useState("");
-  const [loading, setLoading]   = useState(true);
+  const [search, setSearch]         = useState("");
+  const [loading, setLoading]       = useState(true);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
 
   // Guard: redirige si no es admin
@@ -81,26 +85,19 @@ export default function AdminPanel() {
       .catch(console.error);
   }, []);
 
-  // Carga usuarios
-  useEffect(() => {
-    loadUsers(1, search);
-  }, []);
-
-  function authHeaders() {
-    const token = localStorage.getItem("token");
-    return token ? { Authorization: `Bearer ${token}` } : {};
-  }
+  // Carga usuarios al montar
+  useEffect(() => { loadUsers(1, ""); }, []);
 
   async function loadUsers(page: number, q: string) {
     setLoading(true);
     try {
       const params = new URLSearchParams({ page: String(page), limit: "20" });
       if (q) params.set("search", q);
-      const res = await fetch(`/api/admin/users?${params}`, { headers: authHeaders() });
+      const res  = await fetch(`/api/admin/users?${params}`, { headers: authHeaders() });
       const data = await res.json();
       setUsers(data.users ?? []);
       setPagination(data.pagination ?? { page: 1, pages: 1, total: 0 });
-    } catch (e) {
+    } catch {
       toast({ title: "Error", description: "No se pudieron cargar los usuarios", variant: "destructive" });
     } finally {
       setLoading(false);
@@ -113,39 +110,14 @@ export default function AdminPanel() {
     try {
       const res = await fetch(`/api/admin/users/${userId}/role`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", ...authHeaders() },
+        headers: { "Content-Type": "application/json", ...authHeaders() } as HeadersInit,
         body: JSON.stringify({ role: newRole }),
       });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.message);
-      }
+      if (!res.ok) { const e = await res.json(); throw new Error(e.message); }
       toast({ title: "Rol actualizado", description: `Usuario ahora es ${newRole}` });
       loadUsers(pagination.page, search);
-    } catch (e: any) {
-      toast({ title: "Error", description: e.message, variant: "destructive" });
-    } finally {
-      setActionLoading(null);
-    }
-  }
-
-  async function toggleStatus(userId: number, isActive: boolean | null) {
-    const newStatus = isActive === false ? true : false;
-    setActionLoading(userId);
-    try {
-      const res = await fetch(`/api/admin/users/${userId}/status`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json", ...authHeaders() },
-        body: JSON.stringify({ isActive: newStatus }),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.message);
-      }
-      toast({ title: "Estado actualizado" });
-      loadUsers(pagination.page, search);
-    } catch (e: any) {
-      toast({ title: "Error", description: e.message, variant: "destructive" });
+    } catch (e: unknown) {
+      toast({ title: "Error", description: e instanceof Error ? e.message : "Error desconocido", variant: "destructive" });
     } finally {
       setActionLoading(null);
     }
@@ -163,10 +135,7 @@ export default function AdminPanel() {
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Panel de Administración</h1>
             <p className="text-sm text-gray-500 mt-0.5">Gestión de usuarios y métricas del sistema</p>
           </div>
-          <button
-            onClick={() => navigate("/")}
-            className="text-sm text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
-          >
+          <button onClick={() => navigate("/")} className="text-sm text-gray-500 hover:text-gray-800 dark:hover:text-gray-200">
             ← Volver al dashboard
           </button>
         </div>
@@ -174,9 +143,9 @@ export default function AdminPanel() {
         {/* Stats cards */}
         {stats && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <StatCard label="Usuarios totales" value={stats.totalUsers} color="blue" />
+            <StatCard label="Usuarios totales"      value={stats.totalUsers}  color="blue" />
             <StatCard label="Suscripciones activas" value={stats.activeUsers} color="green" />
-            <StatCard label="Certificaciones" value={stats.totalCerts} color="purple" />
+            <StatCard label="Certificaciones"       value={stats.totalCerts}  color="purple" />
             <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
               <p className="text-xs text-gray-500 mb-2">Por plan</p>
               <div className="space-y-1">
@@ -193,7 +162,6 @@ export default function AdminPanel() {
 
         {/* Users table */}
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
-          {/* Table toolbar */}
           <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-800">
             <h2 className="font-semibold text-gray-800 dark:text-gray-100">
               Usuarios <span className="text-gray-400 font-normal text-sm">({pagination.total})</span>
@@ -207,16 +175,12 @@ export default function AdminPanel() {
                 onKeyDown={e => e.key === "Enter" && loadUsers(1, search)}
                 className="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-200 w-56 focus:outline-none focus:ring-2 focus:ring-green-500"
               />
-              <button
-                onClick={() => loadUsers(1, search)}
-                className="text-sm px-3 py-1.5 rounded-lg bg-green-600 text-white hover:bg-green-700"
-              >
+              <button onClick={() => loadUsers(1, search)} className="text-sm px-3 py-1.5 rounded-lg bg-green-600 text-white hover:bg-green-700">
                 Buscar
               </button>
             </div>
           </div>
 
-          {/* Table */}
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -227,7 +191,7 @@ export default function AdminPanel() {
                   <th className="px-4 py-3 font-medium">Estado</th>
                   <th className="px-4 py-3 font-medium">Verificado</th>
                   <th className="px-4 py-3 font-medium">Rol</th>
-                  <th className="px-4 py-3 font-medium">Acciones</th>
+                  <th className="px-4 py-3 font-medium">Acción</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
@@ -245,7 +209,7 @@ export default function AdminPanel() {
                     <td className="px-4 py-3">{planBadge(u.subscriptionPlan)}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1.5">
-                        {statusDot(u.subscriptionStatus, u.isActive)}
+                        {statusDot(u.subscriptionStatus)}
                         <span className="text-gray-600 dark:text-gray-400 capitalize">{u.subscriptionStatus ?? "—"}</span>
                       </div>
                     </td>
@@ -260,22 +224,13 @@ export default function AdminPanel() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => toggleRole(u.id, u.role)}
-                          disabled={actionLoading === u.id}
-                          className="text-xs px-2 py-1 rounded border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
-                        >
-                          {u.role === "admin" ? "→ user" : "→ admin"}
-                        </button>
-                        <button
-                          onClick={() => toggleStatus(u.id, u.isActive)}
-                          disabled={actionLoading === u.id}
-                          className={`text-xs px-2 py-1 rounded border disabled:opacity-50 ${u.isActive === false ? "border-green-300 text-green-700 hover:bg-green-50" : "border-red-200 text-red-600 hover:bg-red-50"}`}
-                        >
-                          {u.isActive === false ? "Activar" : "Desactivar"}
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => toggleRole(u.id, u.role)}
+                        disabled={actionLoading === u.id}
+                        className="text-xs px-2 py-1 rounded border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
+                      >
+                        {u.role === "admin" ? "→ user" : "→ admin"}
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -283,24 +238,15 @@ export default function AdminPanel() {
             </table>
           </div>
 
-          {/* Pagination */}
           {pagination.pages > 1 && (
             <div className="flex items-center justify-end gap-2 p-4 border-t border-gray-100 dark:border-gray-800">
-              <button
-                onClick={() => loadUsers(pagination.page - 1, search)}
-                disabled={pagination.page <= 1}
-                className="text-sm px-3 py-1 rounded border border-gray-200 disabled:opacity-40 hover:bg-gray-50"
-              >
+              <button onClick={() => loadUsers(pagination.page - 1, search)} disabled={pagination.page <= 1}
+                className="text-sm px-3 py-1 rounded border border-gray-200 disabled:opacity-40 hover:bg-gray-50">
                 ← Anterior
               </button>
-              <span className="text-sm text-gray-500">
-                Página {pagination.page} de {pagination.pages}
-              </span>
-              <button
-                onClick={() => loadUsers(pagination.page + 1, search)}
-                disabled={pagination.page >= pagination.pages}
-                className="text-sm px-3 py-1 rounded border border-gray-200 disabled:opacity-40 hover:bg-gray-50"
-              >
+              <span className="text-sm text-gray-500">Página {pagination.page} de {pagination.pages}</span>
+              <button onClick={() => loadUsers(pagination.page + 1, search)} disabled={pagination.page >= pagination.pages}
+                className="text-sm px-3 py-1 rounded border border-gray-200 disabled:opacity-40 hover:bg-gray-50">
                 Siguiente →
               </button>
             </div>
@@ -311,14 +257,10 @@ export default function AdminPanel() {
   );
 }
 
-// ── Stat card helper ──────────────────────────────────────────────────────────
+// ── Stat card ─────────────────────────────────────────────────────────────────
 
 function StatCard({ label, value, color }: { label: string; value: number; color: string }) {
-  const colors: Record<string, string> = {
-    blue:   "text-blue-600",
-    green:  "text-green-600",
-    purple: "text-purple-600",
-  };
+  const colors: Record<string, string> = { blue: "text-blue-600", green: "text-green-600", purple: "text-purple-600" };
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
       <p className="text-xs text-gray-500">{label}</p>
