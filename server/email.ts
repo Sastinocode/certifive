@@ -853,3 +853,26 @@ export async function sendTestEmail(to: string): Promise<void> {
     html: htmlWrap(body, "Verificación de la integración con SendGrid."),
   });
 }
+
+// ──────────────────────────────────────────────────────────────────────────────
+// TWO-FACTOR AUTHENTICATION — Email OTP
+// ──────────────────────────────────────────────────────────────────────────────
+export async function sendTwoFactorCodeEmail(to: string, code: string): Promise<void> {
+  const body = `
+    ${h1("Tu código de verificación")}
+    ${p("Usa este código para completar tu inicio de sesión en Certifive. Caduca en <strong>10 minutos</strong>.")}
+    <div style="text-align:center;margin:32px 0">
+      <span style="display:inline-block;font-size:36px;font-weight:800;letter-spacing:10px;color:#0f172a;background:#f1f5f9;padding:16px 32px;border-radius:12px;font-family:monospace">${code}</span>
+    </div>
+    ${p("Si no has solicitado este código, ignora este email. Nadie ha accedido a tu cuenta.", { color: "#6b7280", size: "13px" })}
+    ${divider()}
+    ${p("Por seguridad, nunca compartas este código con nadie.", { color: "#9ca3af", size: "12px" })}
+  `;
+
+  await send({
+    to,
+    from: { email: FROM_EMAIL, name: FROM_NAME },
+    subject: `${code} es tu código de verificación de Certifive`,
+    html: htmlWrap(body, "Verifica tu identidad para acceder a Certifive."),
+  });
+}

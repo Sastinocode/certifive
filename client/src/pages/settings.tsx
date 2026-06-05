@@ -48,6 +48,97 @@ import {
   HelpCircle
 } from "lucide-react";
 
+// ── Two-Factor Authentication Section ────────────────────────────────────────
+function TwoFactorSection() {
+  const { toast } = useToast();
+  const [enabled, setEnabled]   = useState<boolean | null>(null);
+  const [password, setPassword] = useState("");
+  const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading]   = useState(false);
+  const [fetching, setFetching] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/auth/2fa/status", {
+      headers: { Authorization: `Bearer ${localStorage.getItem("authToken")}` },
+    })
+      .then((r) => r.json())
+      .then((d) => setEnabled(d.enabled ?? false))
+      .catch(() => setEnabled(false))
+      .finally(() => setFetching(false));
+  }, []);
+
+  const toggle = async () => {
+    if (!password) return;
+    setLoading(true);
+    try {
+      const endpoint = enabled ? "/api/auth/2fa/disable" : "/api/auth/2fa/enable";
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("authToken")}` },
+        body: JSON.stringify({ password }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+      setEnabled(!enabled);
+      setShowForm(false);
+      setPassword("");
+      toast({
+        title: !enabled ? "2FA activado" : "2FA desactivado",
+        description: !enabled
+          ? "A partir de ahora necesitarás un código al iniciar sesión."
+          : "La verificación en dos pasos ha sido desactivada.",
+      });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (fetching) return null;
+
+  return (
+    <div className="px-6 py-5">
+      <div className="flex items-center gap-4">
+        <div className="flex-1">
+          <p className="text-sm font-semibold text-foreground">Autenticación de dos factores</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {enabled
+              ? "Activa — se envía un código por email en cada inicio de sesión."
+              : "Desactivada — añade una capa extra de seguridad a tu cuenta."}
+          </p>
+        </div>
+        <Button
+          variant={enabled ? "destructive" : "outline"}
+          className="rounded-full h-9 px-4 text-xs"
+          onClick={() => setShowForm((v) => !v)}
+        >
+          {enabled ? "Desactivar 2FA" : "Activar 2FA"}
+        </Button>
+      </div>
+      {showForm && (
+        <div className="mt-4 flex gap-2 items-center">
+          <Input
+            type="password"
+            placeholder="Confirma tu contraseña"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="h-9 text-sm max-w-xs"
+            onKeyDown={(e) => e.key === "Enter" && toggle()}
+          />
+          <Button size="sm" onClick={toggle} disabled={!password || loading} className="h-9">
+            {loading ? "..." : "Confirmar"}
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => { setShowForm(false); setPassword(""); }} className="h-9">
+            Cancelar
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 export default function Settings() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -1079,15 +1170,7 @@ export default function Settings() {
                     </div>
                   </header>
                   <div className="divide-y divide-border">
-                    <div className="px-6 py-5 flex items-center gap-4">
-                      <div className="flex-1">
-                        <p className="text-sm font-semibold text-foreground">Autenticación de dos factores</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">Añade una capa extra de seguridad a tu cuenta</p>
-                      </div>
-                      <Button variant="outline" disabled className="rounded-full h-9 px-4 text-xs">
-                        Configurar 2FA (Próximamente)
-                      </Button>
-                    </div>
+                    <TwoFactorSection />
                     <div className="px-6 py-5 flex items-center gap-4">
                       <div className="flex-1">
                         <p className="text-sm font-semibold text-foreground">Sesiones activas</p>

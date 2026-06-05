@@ -98,6 +98,11 @@ export const users = pgTable("users", {
   whatsappPhone: text("whatsapp_phone"),           // verified number e.g. +34600000000
   whatsappConnectedAt: timestamp("whatsapp_connected_at"),
 
+  // ── Two-factor authentication (Email OTP) ───────────────────
+  twoFactorEnabled:   boolean("two_factor_enabled").default(false).notNull(),
+  twoFactorOtpHash:   text("two_factor_otp_hash"),
+  twoFactorOtpExpiry: timestamp("two_factor_otp_expiry"),
+
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

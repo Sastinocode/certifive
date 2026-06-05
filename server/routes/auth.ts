@@ -10,6 +10,7 @@ import {
 } from "../auth";
 import {
   sendWelcomeEmail, sendEmailVerification, sendPasswordResetEmail,
+  sendTwoFactorCodeEmail,
 } from "../email";
 import { securityLog } from "../security-logger";
 import multer from "multer";
@@ -77,6 +78,17 @@ app.post("/api/auth/login", loginRateLimiter, async (req: Request, res: Response
         message: "Debes verificar tu email antes de acceder. Revisa tu bandeja de entrada.",
         code: "EMAIL_NOT_VERIFIED",
       });
+    }
+
+    // 2FA check
+    if ((user as any).twoFactorEnabled) {
+      const code = String(Math.floor(100000 + Math.random() * 900000));
+      const bcrypt = await import("bcryptjs");
+      const hash = await bcrypt.hash(code, 10);
+      const expiry = new Date(Date.now() + 10 * 60 * 1000);
+      await db.update(users).set({ twoFactorOtpHash: hash, twoFactorOtpExpiry: expiry } as any).where(eq(users.id, user.id));
+      await sendTwoFactorCodeEmail(user.email, code).catch(() => {});
+      return res.json({ requires2fa: true, userId: user.id });
     }
 
     const authUser = { id: user.id, username: user.username, email: user.email, role: user.role, name: user.name, firstName: user.firstName, lastName: user.lastName };
@@ -439,5 +451,78 @@ app.get("/api/auth/user/export", authenticate, async (req: any, res) => {
     res.json({ exportedAt: new Date().toISOString(), user: safeUser, certifications: certs, folders: fldrs });
   } catch { res.status(500).json({ message: "Error" }); }
 });
+
+// ──────────────────────────────────────────────────────────────────────────────
+// TWO-FACTOR AUTHENTICATION
+// ──────────────────────────────────────────────────────────────────────────────
+
+  // POST /api/auth/2fa/verify — validate OTP code and return JWT
+  app.post("/api/auth/2fa/verify", async (req: Request, res: Response) => {
+    const { userId, code } = req.body;
+    if (!userId || !code) return res.status(400).json({ message: "userId y code requeridos" });
+    try {
+      const [user] = await db.select().from(users).where(eq(users.id, Number(userId))).limit(1);
+      if (!user) return res.status(401).json({ message: "Usuario no encontrado" });
+
+      const otpHash   = (user as any).twoFactorOtpHash;
+      const otpExpiry = (user as any).twoFactorOtpExpiry as Date | null;
+
+      if (!otpHash || !otpExpiry) return res.status(400).json({ message: "No hay código pendiente" });
+      if (new Date() > otpExpiry)  return res.status(401).json({ message: "El código ha caducado" });
+
+      const bcrypt = await import("bcryptjs");
+      const valid  = await bcrypt.compare(String(code), otpHash);
+      if (!valid) return res.status(401).json({ message: "Código incorrecto" });
+
+      // Clear OTP
+      await db.update(users)
+        .set({ twoFactorOtpHash: null, twoFactorOtpExpiry: null } as any)
+        .where(eq(users.id, user.id));
+
+      const authUser = { id: user.id, username: user.username, email: user.email, role: user.role, name: user.name, firstName: user.firstName, lastName: user.lastName };
+      const token = generateToken(authUser);
+      const refreshToken = await generateRefreshToken(user.id);
+      res.json({ token, refreshToken, user: { id: user.id, username: user.username, email: user.email, role: user.role, name: user.name } });
+    } catch { res.status(500).json({ message: "Error" }); }
+  });
+
+  // POST /api/auth/2fa/enable — enable 2FA (requires current password)
+  app.post("/api/auth/2fa/enable", authenticate, async (req: any, res: Response) => {
+    const { password } = req.body;
+    if (!password) return res.status(400).json({ message: "Contraseña requerida" });
+    try {
+      const [user] = await db.select().from(users).where(eq(users.id, req.userId)).limit(1);
+      if (!user?.password) return res.status(401).json({ message: "Usuario no encontrado" });
+      const valid = await comparePasswords(password, user.password);
+      if (!valid) return res.status(401).json({ message: "Contraseña incorrecta" });
+      await db.update(users).set({ twoFactorEnabled: true } as any).where(eq(users.id, user.id));
+      res.json({ ok: true });
+    } catch { res.status(500).json({ message: "Error" }); }
+  });
+
+  // POST /api/auth/2fa/disable — disable 2FA (requires current password)
+  app.post("/api/auth/2fa/disable", authenticate, async (req: any, res: Response) => {
+    const { password } = req.body;
+    if (!password) return res.status(400).json({ message: "Contraseña requerida" });
+    try {
+      const [user] = await db.select().from(users).where(eq(users.id, req.userId)).limit(1);
+      if (!user?.password) return res.status(401).json({ message: "Usuario no encontrado" });
+      const valid = await comparePasswords(password, user.password);
+      if (!valid) return res.status(401).json({ message: "Contraseña incorrecta" });
+      await db.update(users)
+        .set({ twoFactorEnabled: false, twoFactorOtpHash: null, twoFactorOtpExpiry: null } as any)
+        .where(eq(users.id, user.id));
+      res.json({ ok: true });
+    } catch { res.status(500).json({ message: "Error" }); }
+  });
+
+  // GET /api/auth/2fa/status — check if 2FA is enabled for current user
+  app.get("/api/auth/2fa/status", authenticate, async (req: any, res: Response) => {
+    try {
+      const [user] = await db.select().from(users).where(eq(users.id, req.userId)).limit(1);
+      res.json({ enabled: !!(user as any)?.twoFactorEnabled });
+    } catch { res.status(500).json({ message: "Error" }); }
+  });
+
 
 }

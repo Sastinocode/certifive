@@ -14,6 +14,10 @@ export default function Login() {
   const [rememberMe, setRememberMe] = useState(true);
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
   const [resendLoading, setResendLoading] = useState(false);
+  const [requires2fa, setRequires2fa]     = useState(false);
+  const [userId2fa, setUserId2fa]         = useState<number | null>(null);
+  const [otpCode, setOtpCode]             = useState("");
+  const [otpLoading, setOtpLoading]       = useState(false);
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((prev) => ({ ...prev, [k]: e.target.value }));
@@ -23,6 +27,21 @@ export default function Login() {
     setUnverifiedEmail(null);
     setIsLoading(true);
     try {
+      const res  = await fetch("/api/auth/login", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: form.email, password: form.password, rememberMe }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        if (res.status === 403) { setUnverifiedEmail(form.email); return; }
+        throw new Error(data.message || "Error al iniciar sesión");
+      }
+      if (data.requires2fa) {
+        setUserId2fa(data.userId);
+        setRequires2fa(true);
+        return;
+      }
+      // Login normal sin 2FA
       await login(form.email, form.password);
       toast({ title: "¡Bienvenido de vuelta!", description: "Has iniciado sesión correctamente." });
       navigate("/");
@@ -35,6 +54,26 @@ export default function Login() {
       }
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleOtpSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setOtpLoading(true);
+    try {
+      const res  = await fetch("/api/auth/2fa/verify", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: userId2fa, code: otpCode }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Código incorrecto");
+      localStorage.setItem("authToken", data.token);
+      if (data.refreshToken) localStorage.setItem("refreshToken", data.refreshToken);
+      window.location.href = "/";
+    } catch (error: any) {
+      toast({ title: "Código incorrecto", description: error.message, variant: "destructive" });
+    } finally {
+      setOtpLoading(false);
     }
   };
 
@@ -55,6 +94,50 @@ export default function Login() {
       setResendLoading(false);
     }
   };
+
+  // Pantalla 2FA
+  if (requires2fa) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "#fafbfc" }}>
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 w-full max-w-sm mx-4">
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-emerald-50 mb-4">
+              <ShieldCheck className="w-7 h-7 text-emerald-600" />
+            </div>
+            <h2 className="text-xl font-bold text-gray-900">Verificación en dos pasos</h2>
+            <p className="text-sm text-gray-500 mt-2">Hemos enviado un código de 6 díígitos a tu email. Caduca en 10 minutos.</p>
+          </div>
+          <form onSubmit={handleOtpSubmit} className="space-y-4">
+            <input
+              type="text"
+              inputMode="numeric"
+              maxLength={6}
+              value={otpCode}
+              onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
+              placeholder="000000"
+              className="w-full text-center text-3xl font-mono tracking-widest border-2 border-gray-200 rounded-xl py-4 focus:border-emerald-500 focus:outline-none"
+              autoFocus
+            />
+            <button
+              type="submit"
+              disabled={otpCode.length !== 6 || otpLoading}
+              className="w-full py-3 rounded-xl font-semibold text-white text-sm disabled:opacity-50 transition-colors"
+              style={{ background: "#059669" }}
+            >
+              {otpLoading ? "Verificando..." : "Verificar código →"}
+            </button>
+            <button
+              type="button"
+              onClick={() => { setRequires2fa(false); setOtpCode(""); }}
+              className="w-full py-2 text-sm text-gray-500 hover:text-gray-700"
+            >
+              ← Volver al login
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col" style={{ fontFamily: "'Inter', system-ui, sans-serif", background: "#fafbfc", color: "#0f1f2e" }}>
