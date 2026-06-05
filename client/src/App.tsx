@@ -11,8 +11,19 @@ import { GlobalSearch } from "@/components/GlobalSearch";
 import Dashboard from "@/pages/dashboard";
 import CertificationWizard from "@/pages/certification-wizard";
 import CertificationForm from "@/pages/certification-form";
-import WhatsAppManagement from "@/pages/whatsapp-management";
-import WhatsAppFlowEditor from "@/pages/whatsapp-flow-editor";
+// WhatsApp API — disponible en plan Pro (próximamente)
+function WhatsAppProximo() {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center px-4">
+      <span className="text-5xl">📲</span>
+      <h2 className="text-xl font-semibold text-gray-800">WhatsApp Business — Próximamente</h2>
+      <p className="text-gray-500 max-w-sm text-sm">
+        La integración con WhatsApp API estará disponible en el plan Pro.<br />
+        Por ahora puedes enviar mensajes manualmente desde cada certificación.
+      </p>
+    </div>
+  );
+}
 import WorkflowDemo from "@/pages/workflow-demo";
 import Certificates from "@/pages/certificates";
 import ViewCertificationRequest from "@/pages/view-certification-request";
@@ -203,8 +214,7 @@ function Router() {
         <Route path="/certificados/nuevo" component={isAuthenticated ? EnhancedCertificationForm : Login} />
         <Route path="/certificacion-request/:id" component={isAuthenticated ? ViewCertificationRequest : Login} />
         <Route path="/formulario-cee" component={isAuthenticated ? EnhancedCertificationForm : Login} />
-        <Route path="/whatsapp" component={isAuthenticated ? WhatsAppManagement : Login} />
-        <Route path="/whatsapp-flow-editor" component={isAuthenticated ? WhatsAppFlowEditor : Login} />
+        <Route path="/whatsapp" component={isAuthenticated ? WhatsAppProximo : Login} />
         <Route path="/demo-flujo" component={isAuthenticated ? WorkflowDemo : Login} />
         <Route path="/certificados" component={isAuthenticated ? Certificates : Login} />
         <Route path="/propiedades" component={isAuthenticated ? Properties : Login} />
