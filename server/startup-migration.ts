@@ -67,6 +67,11 @@ const MIGRATIONS = [
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS whatsapp_connected_at timestamp`,
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at timestamp DEFAULT now()`,
 
+  // ── Two-factor authentication (Email OTP) ──────────────────────────
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS two_factor_enabled boolean NOT NULL DEFAULT false`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS two_factor_otp_hash text`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS two_factor_otp_expiry timestamptz`,
+
   // ── Unique constraint en username ──────────────────────────────────────────
   `DO $$ BEGIN
      IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'users_username_unique')
