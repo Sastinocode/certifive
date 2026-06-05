@@ -23,6 +23,7 @@ import { registerCollaborationRoutes } from "./collaboration";
 import { registerSearchRoutes } from "./search";
 import { registerSolicitudesRoutes } from "./solicitudes";
 import { registerAdminRoutes } from "./admin";
+import { registerPortalRoutes } from "./portal";
 
 const apiRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -71,4 +72,5 @@ export function registerRoutes(app: Express) {
   registerSearchRoutes(app);
   registerSolicitudesRoutes(app);
   registerAdminRoutes(app);
+  registerPortalRoutes(app);
 }

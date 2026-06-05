@@ -1385,6 +1385,24 @@ export default function Certifications() {
                             <span className="material-symbols-outlined text-[18px]">chat</span>
                             Ver comunicaciones
                           </button>
+                          <button
+                            onClick={async () => {
+                              try {
+                                const r = await fetch(`/api/portal/${cert.id}/generate`, {
+                                  method: "POST",
+                                  headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+                                });
+                                const { token } = await r.json();
+                                const url = `${window.location.origin}/portal/${token}`;
+                                navigator.clipboard.writeText(url);
+                              } catch {}
+                              setOpenMenu(null);
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-blue-700 hover:bg-blue-50 transition-colors"
+                          >
+                            <span className="material-symbols-outlined text-[18px]">link</span>
+                            Copiar enlace del portal
+                          </button>
                           {cert.status === "Finalizado" && !cert.isArchived && (
                             <button
                               data-testid={`btn-archive-${cert.id}`}

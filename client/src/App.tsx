@@ -49,6 +49,7 @@ import FormularioTecnicoPublico from "@/pages/FormularioTecnicoPublico";
 import TecnicoFormReview from "@/pages/TecnicoFormReview";
 import VisitForm from "@/pages/VisitForm";
 import NotFound from "@/pages/not-found";
+import ClientPortal from "@/pages/ClientPortal";
 import PaymentSuccess from "@/pages/PaymentSuccess";
 import PaymentCancel from "@/pages/PaymentCancel";
 import RenovarSuscripcion from "@/pages/RenovarSuscripcion";
@@ -214,6 +215,7 @@ function Router() {
         <Route path="/certificados/nuevo" component={isAuthenticated ? EnhancedCertificationForm : Login} />
         <Route path="/certificacion-request/:id" component={isAuthenticated ? ViewCertificationRequest : Login} />
         <Route path="/formulario-cee" component={isAuthenticated ? EnhancedCertificationForm : Login} />
+        <Route path="/portal/:token" component={ClientPortal} />
         <Route path="/whatsapp" component={isAuthenticated ? WhatsAppProximo : Login} />
         <Route path="/demo-flujo" component={isAuthenticated ? WorkflowDemo : Login} />
         <Route path="/certificados" component={isAuthenticated ? Certificates : Login} />
@@ -263,21 +265,4 @@ function AppWithSearch() {
     <>
       <Router />
       {isAuthenticated && searchOpen && (
-        <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
-      )}
-    </>
-  );
-}
-
-export default function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <AppWithSearch />
-          <Toaster />
-        </TooltipProvider>
-      </AuthProvider>
-    </QueryClientProvider>
-  );
-}
+        <GlobalSearc

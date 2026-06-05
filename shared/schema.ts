@@ -276,6 +276,7 @@ export const certifications = pgTable("certifications", {
    * El técnico lo activa (normalmente) tras aceptar el propietario el presupuesto.
    */
   ceeToken: text("cee_token").unique(),
+  clientPortalToken: text("client_portal_token").unique(),
   ceeFormStatus: text("cee_form_status"),   // "enviado"|"abierto"|"completado"
   ceeFormSentAt: timestamp("cee_form_sent_at"),
   ceeFormOpenedAt: timestamp("cee_form_opened_at"),

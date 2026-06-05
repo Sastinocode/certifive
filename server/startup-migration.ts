@@ -72,6 +72,10 @@ const MIGRATIONS = [
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS two_factor_otp_hash text`,
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS two_factor_otp_expiry timestamptz`,
 
+  // ── Client portal token ───────────────────────────────────────────
+  `ALTER TABLE certifications ADD COLUMN IF NOT EXISTS client_portal_token text`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS certifications_client_portal_token_idx ON certifications(client_portal_token) WHERE client_portal_token IS NOT NULL`,
+
   // ── Unique constraint en username ──────────────────────────────────────────
   `DO $$ BEGIN
      IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'users_username_unique')
