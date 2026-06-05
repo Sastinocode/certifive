@@ -196,31 +196,7 @@ export default function Login() {
                 )}
               </button>
 
-              <div className="flex items-center gap-3 text-[11px] font-semibold" style={{ color: "#8a939e" }}>
-                <div className="flex-1 h-px" style={{ background: "#ececef" }} />
-                o continúa con
-                <div className="flex-1 h-px" style={{ background: "#ececef" }} />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <button type="button" className="h-11 rounded-full font-semibold text-[13px] flex items-center justify-center gap-2.5" style={{ border: "1.5px solid #e4e6ea", background: "white", color: "#0f1f2e", cursor: "pointer" }}>
-                  <svg className="w-4 h-4" viewBox="0 0 24 24">
-                    <path fill="#EA4335" d="M12 5c1.6 0 3 .55 4.1 1.45L19.05 3.5C17.15 1.75 14.7.75 12 .75 7.4.75 3.45 3.4 1.5 7.25L4.85 9.85C5.85 7 8.7 5 12 5z"/>
-                    <path fill="#34A853" d="M23.25 12.27c0-.83-.08-1.62-.22-2.4H12v4.55h6.3c-.27 1.43-1.1 2.65-2.35 3.45l3.6 2.8c2.1-1.95 3.3-4.83 3.3-8.4z"/>
-                    <path fill="#4A90E2" d="M4.85 14.15A7.16 7.16 0 014.5 12c0-.75.12-1.47.34-2.15L1.5 7.25A11.21 11.21 0 00.75 12c0 1.8.42 3.5 1.18 5.02l2.92-2.87z"/>
-                    <path fill="#FBBC05" d="M12 23.25c3.05 0 5.6-1 7.45-2.73l-3.6-2.8c-1 .67-2.3 1.05-3.85 1.05-3.3 0-6.15-2-7.15-4.87L1.5 16.75C3.45 20.6 7.4 23.25 12 23.25z"/>
-                  </svg>
-                  Google
-                </button>
-                <button type="button" className="h-11 rounded-full font-semibold text-[13px] flex items-center justify-center gap-2.5" style={{ border: "1.5px solid #e4e6ea", background: "white", color: "#0f1f2e", cursor: "pointer" }}>
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M17.05 20.28c-.98.95-2.05.94-3.08.49-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.49C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
-                  </svg>
-                  Apple
-                </button>
-              </div>
-
-              <p className="text-center text-[13px] pt-3" style={{ color: "#5e6772" }}>
+  <p className="text-center text-[13px] pt-3" style={{ color: "#5e6772" }}>
                 ¿Aún no tienes cuenta?{" "}
                 <button onClick={() => navigate("/register")} className="font-semibold bg-transparent border-none cursor-pointer p-0 text-[13px]" style={{ color: "hsl(142 60% 32%)" }}>
                   Crear cuenta
