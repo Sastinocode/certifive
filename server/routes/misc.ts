@@ -1,7 +1,7 @@
 import { Express, Request, Response } from "express";
 import { db } from "../db";
 import { eq, and, desc, count } from "drizzle-orm";
-import { users, waitlist, betaLeads, certifications, pricingRates } from "../../shared/schema";
+import { users, waitlist, betaLeads, certifications, pricingRates, invoices, payments, folders } from "../../shared/schema";
 import { authenticate } from "../auth";
 import { sendBetaLeadConfirmation } from "../email";
 
@@ -41,11 +41,7 @@ app.get("/api/manager/financial-records", authenticate, async (req: Request, res
     const userId = req.user!.id;
     const allInvoices = await db.select().from(invoices).where(eq(invoices.userId, userId)).orderBy(desc(invoices.createdAt));
     const allPayments = await db.select().from(payments).where(eq(payments.userId, userId)).orderBy(desc(payments.createdAt));
-    const records = [
-      ...allInvoices.map(i => ({ type: "invoice", ...mapInvoice(i), paymentDate: i.paidAt ? new Date(i.paidAt).toISOString().split("T")[0] : undefined, collectionDate: i.issuedAt ? new Date(i.issuedAt).toISOString().split("T")[0] : new Date().toISOString().split("T")[0] })),
-      ...allPayments.map(p => ({ type: "collection", ...mapPaymentToCollection(p) })),
-    ].sort((a, b) => new Date(b.createdAt ?? b.updatedAt ?? 0).getTime() - new Date(a.createdAt ?? a.updatedAt ?? 0).getTime());
-    res.json(records);
+    res.json({ invoices: allInvoices, payments: allPayments });
   } catch {
     res.status(500).json({ message: "Error al obtener registros financieros" });
   }
@@ -174,21 +170,17 @@ app.post("/api/pricing/calculate", async (req: Request, res: Response) => {
 
     const [rate] = await db.select()
       .from(pricingRates)
-      .where(and(
-        eq(pricingRates.propertyType, propertyType),
-        eq(pricingRates.province, province || "default")
-      ))
+      .where(eq(pricingRates.propertyType, propertyType))
       .limit(1);
 
     if (!rate) {
       return res.status(404).json({ message: "No se encontró tarifa para estos parámetros" });
     }
 
-    const basePrice = rate.basePrice || 0;
-    const pricePerSqm = rate.pricePerSqm || 0;
-    const total = basePrice + (area * pricePerSqm);
+    const basePrice = parseFloat(String(rate.basePrice ?? 0));
+    const total = Math.round(basePrice * 100) / 100;
 
-    res.json({ basePrice, pricePerSqm, area, total: Math.round(total * 100) / 100 });
+    res.json({ basePrice, area, total });
   } catch {
     res.status(500).json({ message: "Error al calcular precio" });
   }

@@ -1,6 +1,6 @@
 import { Express, Request, Response } from "express";
 import { db } from "../db";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { pricingRates, insertPricingRateSchema } from "../../shared/schema";
 import { authenticate } from "../auth";
 

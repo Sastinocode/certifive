@@ -1,5 +1,12 @@
-// @ts-nocheck
 import { useQuery } from "@tanstack/react-query";
+import {
+  AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer,
+} from "recharts";
+import {
+  AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer,
+} from "recharts";
 import { useState } from "react";
 import Sidebar from "@/components/layout/sidebar";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -54,6 +61,8 @@ interface DashboardStats {
   newClientsPrevMonth: number;
   monthlyTrend: Array<{ month: string; total: number }>;
   expiringSoon: number;
+  revenueByMonth: Array<{ month: string; tramo1: number; tramo2: number; total: number }>;
+  conversion: { enviados: number; aceptados: number; rate: number };
 }
 
 type AlertType = "deadline_overdue" | "deadline_soon" | "payment_pending" | "form_pending";
@@ -213,6 +222,96 @@ function ActivityChart({
 }
 
 // ─── Alert config ─────────────────────────────────────────────────────────────
+
+
+// ─── RevenueChart (Recharts AreaChart) ────────────────────────────
+
+function RevenueChart({ data }: { data: Array<{ month: string; tramo1: number; tramo2: number; total: number }> }) {
+  if (!data.length) return <p className="text-sm text-muted-foreground py-8 text-center">Sin datos de ingresos</p>;
+  const hasTrustData = data.some(d => d.total > 0);
+  if (!hasTrustData) return <p className="text-sm text-muted-foreground py-8 text-center">Sin ingresos registrados aún</p>;
+  const fmt = (v: number) => new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(v);
+  const fmtM = (m: string) => { const [y, mo] = m.split("-"); return new Date(Number(y), Number(mo)-1).toLocaleDateString("es-ES", { month: "short" }); };
+  return (
+    <ResponsiveContainer width="100%" height={200}>
+      <AreaChart data={data} margin={{ top: 5, right: 5, left: 0, bottom: 0 }}>
+        <defs>
+          <linearGradient id="gradTotal" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor="hsl(142 60% 32%)" stopOpacity={0.3}/>
+            <stop offset="95%" stopColor="hsl(142 60% 32%)" stopOpacity={0}/>
+          </linearGradient>
+        </defs>
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+        <XAxis dataKey="month" tickFormatter={fmtM} tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+        <YAxis tickFormatter={(v) => `€${v >= 1000 ? (v/1000).toFixed(0)+"k" : v}`} tick={{ fontSize: 11 }} axisLine={false} tickLine={false} width={45} />
+        <Tooltip formatter={(v: number) => [fmt(v), ""]} labelFormatter={fmtM} />
+        <Area type="monotone" dataKey="total" stroke="hsl(142 60% 32%)" fill="url(#gradTotal)" strokeWidth={2} dot={false} />
+      </AreaChart>
+    </ResponsiveContainer>
+  );
+}
+
+// ─── StatusChart (Recharts BarChart horizontal) ─────────────────────
+
+const STATUS_COLORS: Record<string, string> = {
+  "Nuevo":        "#6366f1",
+  "En Proceso":   "#059669",
+  "Pendiente":    "#f59e0b",
+  "Finalizado":   "#10b981",
+  "Archivado":    "#94a3b8",
+};
+
+function StatusChart({ byStatus }: { byStatus: Record<string, number> }) {
+  const data = Object.entries(byStatus)
+    .filter(([, v]) => v > 0)
+    .map(([name, value]) => ({ name, value }))
+    .sort((a, b) => b.value - a.value);
+
+  if (!data.length) return <p className="text-sm text-muted-foreground py-4 text-center">Sin expedientes</p>;
+
+  return (
+    <ResponsiveContainer width="100%" height={Math.max(160, data.length * 38)}>
+      <BarChart data={data} layout="vertical" margin={{ top: 0, right: 20, left: 0, bottom: 0 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
+        <XAxis type="number" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
+        <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} width={90} />
+        <Tooltip cursor={{ fill: "var(--muted)" }} />
+        <Bar dataKey="value" name="Expedientes" radius={[0, 6, 6, 0]}>
+          {data.map((entry) => (
+            <Cell key={entry.name} fill={STATUS_COLORS[entry.name] ?? "#94a3b8"} />
+          ))}
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
+  );
+}
+
+// ─── ConversionCard ────────────────────────────────────────
+
+function ConversionCard({ conversion }: { conversion: { enviados: number; aceptados: number; rate: number } }) {
+  const { enviados, aceptados, rate } = conversion;
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-muted-foreground">Tasa de conversión</span>
+        <span className="text-2xl font-bold text-foreground">{rate}%</span>
+      </div>
+      <div className="w-full bg-muted rounded-full h-2.5">
+        <div
+          className="bg-emerald-500 h-2.5 rounded-full transition-all duration-500"
+          style={{ width: `${Math.min(rate, 100)}%` }}
+        />
+      </div>
+      <div className="flex justify-between text-xs text-muted-foreground">
+        <span>{enviados} presupuestos enviados</span>
+        <span>{aceptados} aceptados</span>
+      </div>
+    </div>
+  );
+}
+
+
+// ─── RevenueChart (Recharts AreaChart) ────────────────────────────
 
 const ALERT_CFG = {
   deadline_overdue: {
@@ -522,6 +621,38 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
                   </div>
                 )}
               </div>
+            </div>
+
+
+            {/* ── Gráficos de negocio ──────────────────────────────── */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+              {/* Ingresos 12 meses */}
+              <div className="lg:col-span-2 bg-card rounded-2xl border border-border shadow-sm p-6">
+                <div className="mb-5">
+                  <h2 className="text-base font-semibold text-foreground tracking-tight">Ingresos mensuales</h2>
+                  <p className="text-xs text-muted-foreground mt-0.5">Cobros registrados — últimos 12 meses</p>
+                </div>
+                <RevenueChart data={stats?.revenueByMonth ?? []} />
+              </div>
+
+              {/* Conversión presupuesto */}
+              <div className="bg-card rounded-2xl border border-border shadow-sm p-6 flex flex-col justify-center">
+                <div className="mb-5">
+                  <h2 className="text-base font-semibold text-foreground tracking-tight">Conversión</h2>
+                  <p className="text-xs text-muted-foreground mt-0.5">Presupuestos enviados → aceptados</p>
+                </div>
+                <ConversionCard conversion={stats?.conversion ?? { enviados: 0, aceptados: 0, rate: 0 }} />
+              </div>
+            </div>
+
+            {/* Expedientes por estado */}
+            <div className="bg-card rounded-2xl border border-border shadow-sm p-6">
+              <div className="mb-5">
+                <h2 className="text-base font-semibold text-foreground tracking-tight">Expedientes por estado</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">Distribución actual del pipeline</p>
+              </div>
+              <StatusChart byStatus={stats?.byStatus ?? {}} />
             </div>
 
             {/* ── Certificaciones recientes ───────────────────────────────────── */}

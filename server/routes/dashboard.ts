@@ -96,6 +96,48 @@ export function registerDashboardRoutes(app: Express) {
         total: Number(r.total),
       }));
 
+
+      // ── 6. Ingresos por mes (12 meses) ───────────────────────────────
+      const revenueResult = await db.execute(sql`
+        SELECT
+          TO_CHAR(m.month, 'YYYY-MM') AS month,
+          COALESCE(SUM(CASE WHEN c.tramo1_paid_at >= m.month AND c.tramo1_paid_at < m.month + INTERVAL '1 month'
+            THEN CAST(c.tramo1_amount AS NUMERIC) ELSE 0 END), 0) AS tramo1,
+          COALESCE(SUM(CASE WHEN c.tramo2_paid_at >= m.month AND c.tramo2_paid_at < m.month + INTERVAL '1 month'
+            THEN CAST(c.tramo2_amount AS NUMERIC) ELSE 0 END), 0) AS tramo2
+        FROM generate_series(
+          date_trunc('month', NOW() - INTERVAL '11 months'),
+          date_trunc('month', NOW()),
+          '1 month'::interval
+        ) AS m(month)
+        LEFT JOIN certifications c ON c.user_id = ${userId}
+        GROUP BY m.month
+        ORDER BY m.month ASC
+      `);
+      const revenueByMonth = (revenueResult.rows as any[]).map(r => ({
+        month:  r.month as string,
+        tramo1: Number(r.tramo1),
+        tramo2: Number(r.tramo2),
+        total:  Number(r.tramo1) + Number(r.tramo2),
+      }));
+
+      // ── 7. Conversión presupuesto → aceptado ─────────────────────────
+      const convResult = await db.execute(sql`
+        SELECT
+          COUNT(*) FILTER (WHERE presupuesto_token IS NOT NULL)       AS enviados,
+          COUNT(*) FILTER (WHERE presupuesto_status = 'aceptado')     AS aceptados
+        FROM certifications
+        WHERE user_id = ${userId}
+      `);
+      const conversion = {
+        enviados:  Number((convResult.rows[0] as any)?.enviados  ?? 0),
+        aceptados: Number((convResult.rows[0] as any)?.aceptados ?? 0),
+        rate: 0,
+      };
+      conversion.rate = conversion.enviados > 0
+        ? Math.round((conversion.aceptados / conversion.enviados) * 100)
+        : 0;
+
       // ── Respuesta ────────────────────────────────────────────────────────────
       res.json({
         // Por estado
@@ -115,6 +157,9 @@ export function registerDashboardRoutes(app: Express) {
         newClientsPrevMonth,
         // Tendencia
         monthlyTrend,
+        // Charts
+        revenueByMonth,
+        conversion,
         // Legacy (backward compat con la card "Ingresos del Mes" existente)
         expiringSoon: 0,
         monthlyIncome_legacy: monthlyIncomeCurrent,
