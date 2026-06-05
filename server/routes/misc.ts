@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Express, Request, Response } from "express";
 import { db } from "../db";
 import { eq, and, desc, count } from "drizzle-orm";
@@ -96,11 +95,7 @@ app.put("/api/auth/user/settings", authenticate, async (req: Request, res: Respo
 
     // Validate slug uniqueness if provided
     if (publicSlug) {
-      const [existing] = await db.select({ id: users.id })
-        .from(users)
-        .where(and(eq(users.publicSlug, publicSlug), eq(users.id, userId).not ? undefined as any : undefined))
-        .limit(1);
-      // Simple check: if another user has this slug, reject
+      // Check: if another user has this slug, reject
       const [conflicting] = await db.select({ id: users.id })
         .from(users)
         .where(eq(users.publicSlug, publicSlug))

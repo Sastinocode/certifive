@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Express, Request, Response } from "express";
 import { db } from "../db";
 import { eq } from "drizzle-orm";
@@ -108,7 +107,7 @@ app.post("/api/pricing/calculate", async (req: Request, res: Response) => {
     }
 
     const pricing = calcularPrecio(
-      parseFloat(rate.basePrice as any),
+      parseFloat(String(rate.basePrice ?? 0)),
       totalArea ? parseFloat(totalArea) : null,
       province ?? null,
       rate.areaTiers,

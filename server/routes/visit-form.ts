@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Express, Request, Response } from "express";
 import { db } from "../db";
 import { eq, and } from "drizzle-orm";

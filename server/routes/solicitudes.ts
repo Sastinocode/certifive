@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Express, Request, Response } from "express";
 import Stripe from "stripe";
 import rateLimit from "express-rate-limit";
