@@ -1,11 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer,
-} from "recharts";
-import {
-  AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer,
+  Tooltip, ResponsiveContainer, Cell,
 } from "recharts";
 import { useState } from "react";
 import Sidebar from "@/components/layout/sidebar";
