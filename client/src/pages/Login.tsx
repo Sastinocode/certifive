@@ -41,10 +41,10 @@ export default function Login() {
         setRequires2fa(true);
         return;
       }
-      // Login normal sin 2FA
-      await login(form.email, form.password);
-      toast({ title: "¡Bienvenido de vuelta!", description: "Has iniciado sesión correctamente." });
-      navigate("/");
+      // Login normal sin 2FA — usar datos de la primera llamada directamente
+      localStorage.setItem("authToken", data.token);
+      if (data.refreshToken) localStorage.setItem("refreshToken", data.refreshToken);
+      window.location.href = "/";
     } catch (error: any) {
       const msg: string = error.message || "";
       if (msg.startsWith("403:")) {
