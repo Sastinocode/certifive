@@ -266,7 +266,7 @@ function AppWithSearch() {
       <Router />
       {isAuthenticated && searchOpen && (
         <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
-      }
+      )}
     </>
   );
 }
