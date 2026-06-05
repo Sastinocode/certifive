@@ -265,4 +265,21 @@ function AppWithSearch() {
     <>
       <Router />
       {isAuthenticated && searchOpen && (
-        <GlobalSearc
+        <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
+      }
+    </>
+  );
+}
+
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <TooltipProvider>
+          <AppWithSearch />
+          <Toaster />
+        </TooltipProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+}
