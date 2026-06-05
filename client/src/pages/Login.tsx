@@ -42,7 +42,7 @@ export default function Login() {
         return;
       }
       // Login normal sin 2FA — usar datos de la primera llamada directamente
-      localStorage.setItem("authToken", data.token);
+      localStorage.setItem("token", data.token);
       if (data.refreshToken) localStorage.setItem("refreshToken", data.refreshToken);
       window.location.href = "/";
     } catch (error: any) {
@@ -67,7 +67,7 @@ export default function Login() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Código incorrecto");
-      localStorage.setItem("authToken", data.token);
+      localStorage.setItem("token", data.token);
       if (data.refreshToken) localStorage.setItem("refreshToken", data.refreshToken);
       window.location.href = "/";
     } catch (error: any) {
