@@ -87,7 +87,7 @@ app.post("/api/auth/login", loginRateLimiter, async (req: Request, res: Response
       const hash = await bcrypt.hash(code, 10);
       const expiry = new Date(Date.now() + 10 * 60 * 1000);
       await db.update(users).set({ twoFactorOtpHash: hash, twoFactorOtpExpiry: expiry } as any).where(eq(users.id, user.id));
-      await sendTwoFactorCodeEmail(user.email, code).catch(() => {});
+      if (user.email) await sendTwoFactorCodeEmail(user.email, code).catch(() => {});
       return res.json({ requires2fa: true, userId: user.id });
     }
 
