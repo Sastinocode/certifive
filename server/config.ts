@@ -89,4 +89,9 @@ export const config = {
   SESSION_SECRET:  requireSecret("SESSION_SECRET",  "certifive-session-secret-2024"),
   ENCRYPTION_KEY:  requireSecret("ENCRYPTION_KEY",  "certifive-default-key-change-me!!"),
   SENTRY_DSN:      warnIfDefault("SENTRY_DSN",      ""),
+  // Cuenta compartida de Certifive (360dialog).
+  // Fallback cuando el certificador no tiene su propio WABA.
+  // Si no está configurada, el sistema cae a email como siempre.
+  PLATFORM_WA_API_KEY: warnIfDefault("PLATFORM_WA_API_KEY", ""),
+  PLATFORM_WA_PHONE:   warnIfDefault("PLATFORM_WA_PHONE",   ""),
 } as const;

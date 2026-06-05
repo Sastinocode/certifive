@@ -27,6 +27,7 @@ import {
   DEFAULT_TEMPLATES,
   fillTemplate,
 } from "./whatsapp";
+import { config } from "./config";
 import {
   sendSolicitudLinkEmail,
   sendPresupuestoEmail,
@@ -124,8 +125,23 @@ export async function sendNotification(opts: NotificationOpts): Promise<void> {
   }
 
   // ── Choose channel ────────────────────────────────────────────────────────
-  const hasWA =
-    !!(certifier as any).whatsappApiKey && !!(cert.ownerPhone);
+  // Priority: 1) certifier's own WABA  2) Certifive shared WABA (Pro/Business only)  3) email
+  const ownWaKey = (certifier as any).whatsappApiKey
+    ? decryptApiKey((certifier as any).whatsappApiKey)
+    : null;
+
+  // Platform WABA only available to Pro/Business plans
+  const certifierPlan = (certifier as any).subscriptionPlan ?? "free";
+  const planAllowsPlatformWA = ["profesional", "pro", "empresa", "enterprise"].includes(
+    certifierPlan.toLowerCase()
+  );
+  const platformWaKey =
+    planAllowsPlatformWA && config.PLATFORM_WA_API_KEY
+      ? config.PLATFORM_WA_API_KEY
+      : null;
+
+  const waApiKey = ownWaKey ?? platformWaKey;
+  const hasWA    = !!waApiKey && !!cert.ownerPhone;
   const canal: "whatsapp" | "email" = hasWA ? "whatsapp" : "email";
 
   let estado: "enviado" | "fallido" = "enviado";
@@ -133,19 +149,18 @@ export async function sendNotification(opts: NotificationOpts): Promise<void> {
 
   // ── Send ──────────────────────────────────────────────────────────────────
   if (canal === "whatsapp") {
-    const apiKey = decryptApiKey((certifier as any).whatsappApiKey);
     let result: { ok: boolean; error?: string };
 
     if (tipo === 8 && documentUrl) {
       result = await sendWhatsAppDocument(
-        apiKey,
+        waApiKey!,
         cert.ownerPhone!,
         documentUrl,
         "certificado-energetico.pdf",
         text
       );
     } else {
-      result = await sendWhatsAppText(apiKey, cert.ownerPhone!, text);
+      result = await sendWhatsAppText(waApiKey!, cert.ownerPhone!, text);
     }
 
     if (!result.ok) {
@@ -154,7 +169,7 @@ export async function sendNotification(opts: NotificationOpts): Promise<void> {
       console.error("[notify] WhatsApp failed:", errorDetalle);
     }
   } else {
-    // Email fallback
+    // Email fallback (no WABA configured at all)
     await _emailFallback(tipo, cert, certifier, vars);
   }
 

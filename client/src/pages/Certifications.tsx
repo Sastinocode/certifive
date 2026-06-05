@@ -1350,6 +1350,22 @@ export default function Certifications() {
                             <span className="material-symbols-outlined text-[18px]">energy_program_saving</span>
                             Enviar formulario CEE
                           </button>
+                          {cert.ceeToken && (
+                            <button
+                              onClick={() => {
+                                const url = `${window.location.origin}/formulario-cee/${cert.ceeToken}`;
+                                const msg = encodeURIComponent(
+                                  `Hola ${cert.ownerName ?? ""}! Para continuar con tu certificaci\xc3\xb3n necesito los datos del inmueble. Rellena este formulario en unos minutos:\n\n${url}\n\n\xc2\xa1Gracias!`
+                                );
+                                window.open(`https://wa.me/?text=${msg}`, "_blank");
+                                setOpenMenu(null);
+                              }}
+                              className="w-full flex items-center gap-3 px-4 py-3 text-sm text-green-700 hover:bg-green-50 transition-colors"
+                            >
+                              <span className="text-base">\xf0\x9f\x93\xb2</span>
+                              Copiar formulario CEE para WhatsApp
+                            </button>
+                          )}
                           {(cert.workflowStatus === "formulario_cee_completado" || cert.formData?.ceeDetallado) && (
                             <button
                               onClick={() => { setDataCert(cert); setOpenMenu(null); }}
