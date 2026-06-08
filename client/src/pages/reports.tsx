@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -6,6 +6,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import Sidebar from "@/components/layout/sidebar";
 import { EmptyState } from "@/components/ui/empty-state";
+import { KpiCard, SectionCard, SearchInput } from "@/components/ui";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -45,7 +46,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart as RechartsPieChart, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell } from 'recharts';
 
 interface Invoice {
   id: number;
@@ -272,6 +273,53 @@ export default function Reports() {
     (collection.paymentReference?.toLowerCase() || "").includes(searchTerm.toLowerCase())
   );
 
+  const monthlyData = useMemo(() => {
+    const year = new Date().getFullYear();
+    const months = Array.from({ length: 12 }, (_, i) => ({
+      month: new Date(year, i, 1).toLocaleString("es-ES", { month: "short" }),
+      facturado: 0,
+      cobrado: 0,
+    }));
+    (invoices as Invoice[]).forEach((inv) => {
+      const d = new Date(inv.issueDate);
+      if (d.getFullYear() !== year) return;
+      const m = d.getMonth();
+      months[m].facturado += parseFloat(inv.total) || 0;
+      if (inv.paymentStatus === "paid") months[m].cobrado += parseFloat(inv.total) || 0;
+    });
+    return months;
+  }, [invoices]);
+
+  const statusData = useMemo(() => {
+    const inv = invoices as Invoice[];
+    const paid    = inv.filter((i) => i.paymentStatus === "paid").length;
+    const pending = inv.filter((i) => i.paymentStatus === "pending").length;
+    const overdue = inv.filter((i) => i.paymentStatus === "overdue").length;
+    return [
+      { name: "Pagadas",    value: paid,    color: "#10b981" },
+      { name: "Pendientes", value: pending, color: "#f59e0b" },
+      { name: "Vencidas",   value: overdue, color: "#ef4444" },
+    ].filter((s) => s.value > 0);
+  }, [invoices]);
+
+  const propertyTypeData = useMemo(() => {
+    const counts: Record<string, number> = {};
+    (invoices as Invoice[]).forEach((inv) => {
+      const desc = (inv.description || "").toLowerCase();
+      let type = "Otros";
+      if (/piso|vivienda|apartamento/.test(desc))     type = "Vivienda";
+      else if (/chalet|casa|unifamiliar/.test(desc))  type = "Casa unifamiliar";
+      else if (/local|comercial/.test(desc))          type = "Local comercial";
+      else if (/oficina/.test(desc))                  type = "Oficina";
+      else if (/nave|industrial/.test(desc))          type = "Industrial";
+      counts[type] = (counts[type] || 0) + 1;
+    });
+    const palette = ["#6366f1", "#8b5cf6", "#a78bfa", "#818cf8", "#c4b5fd", "#ddd6fe"];
+    return Object.entries(counts).map(([name, value], i) => ({
+      name, value, color: palette[i % palette.length],
+    }));
+  }, [invoices]);
+
   if (isLoading) {
     return (
       <div className="h-screen flex items-center justify-center">
@@ -288,83 +336,13 @@ export default function Reports() {
         <div className="px-4 py-5 sm:px-8 sm:py-8 max-w-[1400px] mx-auto space-y-6">
 
           {/* ── Header ───────────────────────────────────────────────────── */}
-          <div>
-            <h1 className="text-2xl font-bold text-foreground tracking-tight">Informes financieros</h1>
-            <p className="text-sm text-muted-foreground mt-1">Gestión completa de facturas, pagos y cobros</p>
-          </div>
-
-          {/* ── KPI Cards ────────────────────────────────────────────────── */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-
-            <div className="bg-card rounded-2xl border border-border shadow-sm p-6 flex flex-col gap-4 hover:shadow-md transition-shadow">
-              <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-primary shadow-sm">
-                <FileText size={20} className="text-white" />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground leading-tight">Total facturado</p>
-                <p className="text-[2.25rem] font-bold text-foreground tracking-tight leading-none">{fmtEur(summary.totalInvoiced)}</p>
-              </div>
-            </div>
-
-            <div className="bg-card rounded-2xl border border-border shadow-sm p-6 flex flex-col gap-4 hover:shadow-md transition-shadow">
-              <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-blue-500 shadow-sm">
-                <CheckCircle size={20} className="text-white" />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground leading-tight">Total cobrado</p>
-                <p className="text-[2.25rem] font-bold text-foreground tracking-tight leading-none">{fmtEur(summary.totalPaid)}</p>
-              </div>
-            </div>
-
-            <div className="bg-card rounded-2xl border border-border shadow-sm p-6 flex flex-col gap-4 hover:shadow-md transition-shadow">
-              <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-amber-500 shadow-sm">
-                <Clock size={20} className="text-white" />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground leading-tight">Pendiente</p>
-                <p className="text-[2.25rem] font-bold text-foreground tracking-tight leading-none">{fmtEur(summary.totalPending)}</p>
-              </div>
-            </div>
-
-            <div className="bg-card rounded-2xl border border-border shadow-sm p-6 flex flex-col gap-4 hover:shadow-md transition-shadow">
-              <div className="flex items-start justify-between gap-3">
-                <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-violet-500 shadow-sm">
-                  {summary.revenueGrowth >= 0
-                    ? <TrendingUp size={20} className="text-white" />
-                    : <TrendingDown size={20} className="text-white" />}
-                </div>
-                {summary.revenueGrowth !== 0 && (
-                  <span className={`inline-flex items-center text-[11px] font-semibold rounded-full px-2 py-0.5 ${
-                    summary.revenueGrowth > 0
-                      ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40"
-                      : "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40"
-                  }`}>
-                    {summary.revenueGrowth > 0 ? "↑" : "↓"} vs anterior
-                  </span>
-                )}
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground leading-tight">Crecimiento</p>
-                <p className="text-[2.25rem] font-bold text-foreground tracking-tight leading-none">
-                  {summary.revenueGrowth > 0 ? "+" : ""}{summary.revenueGrowth.toFixed(1)}%
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* ── Filters ──────────────────────────────────────────────────── */}
-          <div className="bg-card rounded-2xl border border-border shadow-sm p-3 flex flex-col sm:flex-row gap-3">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-              <Input
-                placeholder="Buscar facturas, cobros…"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="h-11 pl-10 bg-muted/40 border-transparent rounded-xl text-sm font-medium placeholder:text-muted-foreground focus:bg-card focus:border-border"
-              />
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+            <div>
+              <h1 className="text-2xl font-bold text-foreground tracking-tight">Informes financieros</h1>
+              <p className="text-sm text-muted-foreground mt-1">Gestión completa de facturas, pagos y cobros</p>
             </div>
             <Select value={dateRange} onValueChange={setDateRange}>
-              <SelectTrigger className="h-11 bg-muted/40 border-transparent rounded-xl text-sm font-medium sm:w-[180px]">
+              <SelectTrigger className="h-10 bg-muted/40 border-transparent rounded-xl text-sm font-medium sm:w-[180px]">
                 <SelectValue placeholder="Período" />
               </SelectTrigger>
               <SelectContent>
@@ -376,8 +354,142 @@ export default function Reports() {
                 <SelectItem value="all">Todos</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          {/* ── KPI Cards ────────────────────────────────────────────────── */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <KpiCard
+              icon={<FileText size={20} />}
+              iconBg="bg-primary"
+              label="Total facturado"
+              value={fmtEur(summary.totalInvoiced)}
+            />
+            <KpiCard
+              icon={<CheckCircle size={20} />}
+              iconBg="bg-blue-500"
+              label="Total cobrado"
+              value={fmtEur(summary.totalPaid)}
+            />
+            <KpiCard
+              icon={<Clock size={20} />}
+              iconBg="bg-amber-500"
+              label="Pendiente"
+              value={fmtEur(summary.totalPending)}
+            />
+            <KpiCard
+              icon={summary.revenueGrowth >= 0 ? <TrendingUp size={20} /> : <TrendingDown size={20} />}
+              iconBg="bg-violet-500"
+              label="Variación"
+              value={`${summary.revenueGrowth > 0 ? "+" : ""}${summary.revenueGrowth.toFixed(1)}%`}
+              delta={summary.revenueGrowth !== 0
+                ? { value: "vs anterior", positive: summary.revenueGrowth > 0 }
+                : undefined}
+            />
+          </div>
+
+          {/* ── Evolución mensual ─────────────────────────────────────────── */}
+          <SectionCard title="Evolución mensual" icon={<BarChart3 size={18} />}>
+            <div className="h-[280px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={monthlyData} barCategoryGap="30%">
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                  <XAxis
+                    dataKey="month"
+                    tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tickFormatter={(v) => `${v.toLocaleString("es-ES")}€`}
+                    tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                    axisLine={false}
+                    tickLine={false}
+                    width={70}
+                  />
+                  <Tooltip
+                    formatter={(v: number) => [fmtEur(v), ""]}
+                    contentStyle={{ borderRadius: "0.75rem", border: "1px solid hsl(var(--border))", background: "hsl(var(--card))", color: "hsl(var(--foreground))" }}
+                  />
+                  <Legend iconType="circle" iconSize={8} />
+                  <Bar dataKey="facturado" name="Facturado" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="cobrado"   name="Cobrado"   fill="hsl(var(--primary))" fillOpacity={0.35} radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </SectionCard>
+
+          {/* ── Por estado + Por tipo de inmueble ───────────────────────── */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+            <SectionCard title="Por estado" icon={<PieChart size={18} />}>
+              {statusData.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-8 text-center">Sin datos en el período</p>
+              ) : (
+                <div className="flex flex-col gap-4">
+                  <div className="h-[200px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RechartsPieChart>
+                        <Pie data={statusData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} paddingAngle={3}>
+                          {statusData.map((s) => (
+                            <Cell key={s.name} fill={s.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          formatter={(v: number, name: string) => [`${v} facturas`, name]}
+                          contentStyle={{ borderRadius: "0.75rem", border: "1px solid hsl(var(--border))", background: "hsl(var(--card))", color: "hsl(var(--foreground))" }}
+                        />
+                      </RechartsPieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="flex flex-wrap justify-center gap-4 pb-1">
+                    {statusData.map((s) => (
+                      <div key={s.name} className="flex items-center gap-2 text-sm">
+                        <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: s.color }} />
+                        <span className="text-muted-foreground">{s.name}</span>
+                        <span className="font-semibold text-foreground">{s.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </SectionCard>
+
+            <SectionCard title="Por tipo de inmueble" icon={<Building2 size={18} />}>
+              {propertyTypeData.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-8 text-center">Sin datos en el período</p>
+              ) : (
+                <div className="flex flex-col gap-3 py-1">
+                  {propertyTypeData.map((p) => {
+                    const max = Math.max(...propertyTypeData.map((d) => d.value));
+                    return (
+                      <div key={p.name} className="flex items-center gap-3">
+                        <span className="w-28 text-xs text-muted-foreground shrink-0 text-right">{p.name}</span>
+                        <div className="flex-1 h-6 bg-muted/40 rounded-full overflow-hidden">
+                          <div
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{ width: `${(p.value / max) * 100}%`, background: p.color }}
+                          />
+                        </div>
+                        <span className="w-8 text-xs font-semibold text-foreground text-right">{p.value}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </SectionCard>
+
+          </div>
+
+          {/* ── Filters ──────────────────────────────────────────────────── */}
+          <div className="bg-card rounded-2xl border border-border shadow-sm p-3 flex flex-col sm:flex-row gap-3">
+            <SearchInput
+              placeholder="Buscar facturas, cobros…"
+              value={searchTerm}
+              onChange={setSearchTerm}
+              className="flex-1"
+            />
             <Select value={paymentStatusFilter} onValueChange={setPaymentStatusFilter}>
-              <SelectTrigger className="h-11 bg-muted/40 border-transparent rounded-xl text-sm font-medium sm:w-[160px]">
+              <SelectTrigger className="h-9 bg-muted/40 border-transparent rounded-xl text-sm font-medium sm:w-[160px]">
                 <SelectValue placeholder="Estado de pago" />
               </SelectTrigger>
               <SelectContent>
@@ -391,14 +503,14 @@ export default function Reports() {
 
           {/* ── Tabs ─────────────────────────────────────────────────────── */}
           <Tabs defaultValue="invoices" className="space-y-5">
-            <TabsList className="grid w-full grid-cols-5 bg-card border border-border rounded-xl p-1 h-auto gap-1">
-              {["invoices", "payments", "collections", "manager", "analytics"].map((v, i) => (
+            <TabsList className="grid w-full grid-cols-4 bg-card border border-border rounded-xl p-1 h-auto gap-1">
+              {["invoices", "payments", "collections", "manager"].map((v, i) => (
                 <TabsTrigger
                   key={v}
                   value={v}
                   className="rounded-lg text-sm font-medium py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm text-muted-foreground transition-colors"
                 >
-                  {["Facturas", "Pagos", "Cobros", "Gestor", "Analíticas"][i]}
+                  {["Facturas", "Pagos", "Cobros", "Gestor"][i]}
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -625,49 +737,6 @@ export default function Reports() {
               </div>
             </TabsContent>
 
-            {/* ── Analytics ─────────────────────────────────────────────── */}
-            <TabsContent value="analytics">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
-                  <div className="px-6 py-5 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-950/50 flex items-center justify-center flex-shrink-0">
-                      <BarChart3 size={18} className="text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <div>
-                      <h2 className="text-base font-semibold text-foreground tracking-tight">Ingresos mensuales</h2>
-                      <p className="text-xs text-muted-foreground mt-0.5">Evolución de ingresos</p>
-                    </div>
-                  </div>
-                  <div className="px-6 pb-6 h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={[]}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="month" />
-                        <YAxis />
-                        <Tooltip />
-                        <Legend />
-                        <Bar dataKey="income" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-
-                <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
-                  <div className="px-6 py-5 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-950/50 flex items-center justify-center flex-shrink-0">
-                      <PieChart size={18} className="text-emerald-600 dark:text-emerald-400" />
-                    </div>
-                    <div>
-                      <h2 className="text-base font-semibold text-foreground tracking-tight">Métodos de pago</h2>
-                      <p className="text-xs text-muted-foreground mt-0.5">Distribución por método</p>
-                    </div>
-                  </div>
-                  <div className="px-6 pb-6 h-[300px] flex items-center justify-center">
-                    <p className="text-sm text-muted-foreground">Datos de análisis disponibles próximamente</p>
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
           </Tabs>
 
           {/* ── Invoice dialog ──────────────────────────────────────────── */}
