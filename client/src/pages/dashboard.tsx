@@ -5,14 +5,15 @@ import {
 } from "recharts";
 import { useState } from "react";
 import Sidebar from "@/components/layout/sidebar";
+import { AppTopbar } from "@/components/layout/AppTopbar";
 import { EmptyState } from "@/components/ui/empty-state";
-import { NotificationModal } from "@/components/notifications/NotificationModal";
-import { ProfileMenu } from "@/components/layout/ProfileMenu";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { KpiCard } from "@/components/ui/kpi-card";
+import { SectionCard } from "@/components/ui/section-card";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { EnergyChip } from "@/components/ui/energy-chip";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   IdCard, Clock, Euro, Users,
-  TrendingUp, TrendingDown,
   Plus, Eye, Edit, ArrowUpRight, BellRing, Bell,
   AlertTriangle, FileWarning, CreditCard, BarChart3,
 } from "lucide-react";
@@ -43,6 +44,15 @@ const todayLabel = () =>
     month: "long",
     year: "numeric",
   });
+
+function makeDelta(
+  curr: number,
+  prev: number,
+): { value: string; positive: boolean } | undefined {
+  const d = pct(curr, prev);
+  if (d === null || d === 0) return undefined;
+  return { value: `${d > 0 ? "+" : ""}${d}%`, positive: d > 0 };
+}
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
 
@@ -81,62 +91,6 @@ interface RecentCert {
   energyRating: string | null;
   status: string;
   createdAt: string;
-}
-
-// ─── TrendBadge ──────────────────────────────────────────────────────────────
-
-function TrendBadge({ current, previous }: { current: number; previous: number }) {
-  const diff = pct(current, previous);
-  if (diff === null || diff === 0) return null;
-  const isUp = diff > 0;
-  const cls = isUp
-    ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40"
-    : "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40";
-  const Icon = isUp ? TrendingUp : TrendingDown;
-  return (
-    <span className={`inline-flex items-center gap-1 text-[11px] font-semibold rounded-full px-2 py-0.5 ${cls}`}>
-      <Icon size={11} />
-      {`${diff > 0 ? "+" : ""}${diff}%`}
-    </span>
-  );
-}
-
-// ─── KpiCard ─────────────────────────────────────────────────────────────────
-
-function KpiCard({
-  label,
-  value,
-  sub,
-  icon: Icon,
-  iconBg,
-  trend,
-}: {
-  label: string;
-  value: string;
-  sub?: string;
-  icon: any;
-  iconBg: string;
-  trend?: React.ReactNode;
-}) {
-  return (
-    <div className="bg-card rounded-2xl border border-border shadow-sm p-5 sm:p-6 flex flex-col gap-4 hover:shadow-md transition-shadow">
-      <div className="flex items-start justify-between gap-3">
-        <div className={`w-11 h-11 rounded-xl flex items-center justify-center shadow-sm ${iconBg}`}>
-          <Icon size={20} className="text-white" />
-        </div>
-        {trend}
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground leading-tight">
-          {label}
-        </p>
-        <p className="text-[2.25rem] sm:text-[2.5rem] font-bold text-foreground tracking-tight leading-none">
-          {value}
-        </p>
-        {sub && <p className="text-xs text-muted-foreground mt-1">{sub}</p>}
-      </div>
-    </div>
-  );
 }
 
 // ─── ActivityChart ────────────────────────────────────────────────────────────
@@ -217,29 +171,26 @@ function ActivityChart({
   );
 }
 
-// ─── Alert config ─────────────────────────────────────────────────────────────
-
-
-// ─── RevenueChart (Recharts AreaChart) ────────────────────────────
+// ─── RevenueChart ─────────────────────────────────────────────────────────────
 
 function RevenueChart({ data }: { data: Array<{ month: string; tramo1: number; tramo2: number; total: number }> }) {
   if (!data.length) return <p className="text-sm text-muted-foreground py-8 text-center">Sin datos de ingresos</p>;
   const hasTrustData = data.some(d => d.total > 0);
   if (!hasTrustData) return <p className="text-sm text-muted-foreground py-8 text-center">Sin ingresos registrados aún</p>;
   const fmt = (v: number) => new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(v);
-  const fmtM = (m: string) => { const [y, mo] = m.split("-"); return new Date(Number(y), Number(mo)-1).toLocaleDateString("es-ES", { month: "short" }); };
+  const fmtM = (m: string) => { const [y, mo] = m.split("-"); return new Date(Number(y), Number(mo) - 1).toLocaleDateString("es-ES", { month: "short" }); };
   return (
     <ResponsiveContainer width="100%" height={200}>
       <AreaChart data={data} margin={{ top: 5, right: 5, left: 0, bottom: 0 }}>
         <defs>
           <linearGradient id="gradTotal" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="hsl(142 60% 32%)" stopOpacity={0.3}/>
-            <stop offset="95%" stopColor="hsl(142 60% 32%)" stopOpacity={0}/>
+            <stop offset="5%" stopColor="hsl(142 60% 32%)" stopOpacity={0.3} />
+            <stop offset="95%" stopColor="hsl(142 60% 32%)" stopOpacity={0} />
           </linearGradient>
         </defs>
         <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
         <XAxis dataKey="month" tickFormatter={fmtM} tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-        <YAxis tickFormatter={(v) => `€${v >= 1000 ? (v/1000).toFixed(0)+"k" : v}`} tick={{ fontSize: 11 }} axisLine={false} tickLine={false} width={45} />
+        <YAxis tickFormatter={(v) => `€${v >= 1000 ? (v / 1000).toFixed(0) + "k" : v}`} tick={{ fontSize: 11 }} axisLine={false} tickLine={false} width={45} />
         <Tooltip formatter={(v: number) => [fmt(v), ""]} labelFormatter={fmtM} />
         <Area type="monotone" dataKey="total" stroke="hsl(142 60% 32%)" fill="url(#gradTotal)" strokeWidth={2} dot={false} />
       </AreaChart>
@@ -247,14 +198,14 @@ function RevenueChart({ data }: { data: Array<{ month: string; tramo1: number; t
   );
 }
 
-// ─── StatusChart (Recharts BarChart horizontal) ─────────────────────
+// ─── StatusChart ──────────────────────────────────────────────────────────────
 
 const STATUS_COLORS: Record<string, string> = {
-  "Nuevo":        "#6366f1",
-  "En Proceso":   "#059669",
-  "Pendiente":    "#f59e0b",
-  "Finalizado":   "#10b981",
-  "Archivado":    "#94a3b8",
+  "Nuevo":      "#6366f1",
+  "En Proceso": "#059669",
+  "Pendiente":  "#f59e0b",
+  "Finalizado": "#10b981",
+  "Archivado":  "#94a3b8",
 };
 
 function StatusChart({ byStatus }: { byStatus: Record<string, number> }) {
@@ -282,7 +233,7 @@ function StatusChart({ byStatus }: { byStatus: Record<string, number> }) {
   );
 }
 
-// ─── ConversionCard ────────────────────────────────────────
+// ─── ConversionCard ───────────────────────────────────────────────────────────
 
 function ConversionCard({ conversion }: { conversion: { enviados: number; aceptados: number; rate: number } }) {
   const { enviados, aceptados, rate } = conversion;
@@ -306,8 +257,7 @@ function ConversionCard({ conversion }: { conversion: { enviados: number; acepta
   );
 }
 
-
-// ─── RevenueChart (Recharts AreaChart) ────────────────────────────
+// ─── Alert config ─────────────────────────────────────────────────────────────
 
 const ALERT_CFG = {
   deadline_overdue: {
@@ -367,45 +317,6 @@ function AlertItem({
   );
 }
 
-// ─── EnergyBadge ─────────────────────────────────────────────────────────────
-
-function EnergyBadge({ rating }: { rating: string | null }) {
-  if (!rating) return <span className="text-xs text-muted-foreground">—</span>;
-  const colors: Record<string, string> = {
-    A: "#166534", B: "#15803d", C: "#65a30d",
-    D: "#ca8a04", E: "#ea580c", F: "#dc2626", G: "#7f1d1d",
-  };
-  return (
-    <span
-      className="inline-flex items-center justify-center min-w-[26px] px-2 py-0.5 rounded-md text-xs font-bold text-white shadow-sm"
-      style={{ background: colors[rating.toUpperCase()] ?? "#94A3B8" }}
-    >
-      {rating.toUpperCase()}
-    </span>
-  );
-}
-
-// ─── StatusBadge ─────────────────────────────────────────────────────────────
-
-function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, string> = {
-    "Nuevo":      "bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300",
-    "En Proceso": "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300",
-    "Finalizado": "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300",
-    "Archivado":  "bg-muted text-muted-foreground",
-  };
-  return (
-    <span
-      className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold ${
-        map[status] ?? "bg-muted text-muted-foreground"
-      }`}
-    >
-      <span className="w-1.5 h-1.5 rounded-full bg-current mr-1.5 opacity-70" />
-      {status}
-    </span>
-  );
-}
-
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
 export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) => void }) {
@@ -439,72 +350,45 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
   const nuevo       = stats?.byStatus?.["Nuevo"]      ?? 0;
   const enProceso   = stats?.byStatus?.["En Proceso"] ?? 0;
 
+  void displayName;
+
   return (
     <div className="flex h-screen bg-background">
       <Sidebar selectedTab={selectedTab} onTabChange={setSelectedTab} />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <AppTopbar
+          title={`Hola, ${firstName} 👋`}
+          subtitle={todayLabel()}
+        />
 
-        {/* ── Mobile header ──────────────────────────────────────────────────── */}
-        <div className="lg:hidden flex items-center justify-between px-4 py-3 bg-card border-b border-border flex-shrink-0">
-          <span className="text-sm font-semibold text-foreground">Dashboard</span>
-          <div className="flex items-center gap-1.5">
-            <ThemeToggle />
-            <NotificationModal />
-            <ProfileMenu />
-          </div>
-        </div>
-
-        {/* ── Scrollable body ────────────────────────────────────────────────── */}
         <div className="flex-1 overflow-auto">
           <div className="px-4 py-5 sm:px-8 sm:py-8 max-w-[1400px] mx-auto space-y-6">
 
-            {/* ── Desktop header ─────────────────────────────────────────────── */}
-            <div className="hidden lg:flex items-end justify-between">
-              <div>
-                <h1 className="text-2xl font-bold text-foreground tracking-tight">
-                  Hola, {firstName} 👋
-                </h1>
-                <p className="text-sm text-muted-foreground mt-1 capitalize">{todayLabel()}</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="text-right">
-                  <p className="text-sm font-semibold text-foreground">{displayName}</p>
-                  <p className="text-xs text-muted-foreground">Certificador energético</p>
-                </div>
-                <div className="flex items-center gap-1">
-                  <ThemeToggle />
-                  <NotificationModal />
-                  <ProfileMenu />
-                </div>
-              </div>
-            </div>
-
-            {/* ── KPI cards — 2×2 móvil, 4 cols desktop ──────────────────────── */}
+            {/* ── 4 KPI cards ─────────────────────────────────────────────────── */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <KpiCard
-                label="Certificados activos"
-                value={statsLoading ? "…" : String(totalActive)}
-                sub={`${nuevo} nuevo · ${enProceso} en proceso`}
-                icon={IdCard}
+                icon={<IdCard size={20} />}
                 iconBg="bg-primary"
+                label="Certificados activos"
+                value={statsLoading ? "…" : totalActive}
+                sub={`${nuevo} nuevo · ${enProceso} en proceso`}
               />
               <KpiCard
+                icon={<Euro size={20} />}
+                iconBg="bg-blue-500"
                 label="Ingresos del mes"
                 value={statsLoading ? "…" : fmtEur(stats?.monthlyIncome?.current ?? 0)}
                 sub={`Anterior: ${fmtEur(stats?.monthlyIncome?.previous ?? 0)}`}
-                icon={Euro}
-                iconBg="bg-blue-500"
-                trend={
-                  !statsLoading && stats ? (
-                    <TrendBadge
-                      current={stats.monthlyIncome.current}
-                      previous={stats.monthlyIncome.previous}
-                    />
-                  ) : undefined
+                delta={
+                  !statsLoading && stats
+                    ? makeDelta(stats.monthlyIncome.current, stats.monthlyIncome.previous)
+                    : undefined
                 }
               />
               <KpiCard
+                icon={<Clock size={20} />}
+                iconBg="bg-amber-500"
                 label="Días medio CEE"
                 value={
                   statsLoading
@@ -514,71 +398,52 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
                       : "—"
                 }
                 sub="Desde apertura hasta cierre"
-                icon={Clock}
-                iconBg="bg-amber-500"
               />
               <KpiCard
-                label="Clientes nuevos"
-                value={statsLoading ? "…" : String(stats?.newClientsThisMonth ?? 0)}
-                sub={`Anterior: ${stats?.newClientsPrevMonth ?? 0}`}
-                icon={Users}
+                icon={<Users size={20} />}
                 iconBg="bg-violet-500"
-                trend={
-                  !statsLoading && stats ? (
-                    <TrendBadge
-                      current={stats.newClientsThisMonth}
-                      previous={stats.newClientsPrevMonth}
-                    />
-                  ) : undefined
+                label="Clientes nuevos"
+                value={statsLoading ? "…" : stats?.newClientsThisMonth ?? 0}
+                sub={`Anterior: ${stats?.newClientsPrevMonth ?? 0}`}
+                delta={
+                  !statsLoading && stats
+                    ? makeDelta(stats.newClientsThisMonth, stats.newClientsPrevMonth)
+                    : undefined
                 }
               />
             </div>
 
-            {/* ── Gráfico + Alertas ──────────────────────────────────────────── */}
+            {/* ── Actividad + Alertas ──────────────────────────────────────────── */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
-              {/* Gráfico de actividad */}
-              <div className="lg:col-span-2 bg-card rounded-2xl border border-border shadow-sm p-6">
-                <div className="flex items-start justify-between mb-6">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <BarChart3 size={18} className="text-primary" />
-                    </div>
-                    <div>
-                      <h2 className="text-base font-semibold text-foreground tracking-tight">
-                        Actividad mensual
-                      </h2>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        Certificados creados — últimos 6 meses
-                      </p>
-                    </div>
-                  </div>
+              <SectionCard
+                className="lg:col-span-2"
+                title="Actividad mensual"
+                description="Certificados creados — últimos 6 meses"
+                icon={<BarChart3 size={18} />}
+                action={
                   <span className="text-xs font-medium text-muted-foreground capitalize bg-muted/60 rounded-full px-3 py-1">
-                    {new Date().toLocaleDateString("es-ES", {
-                      month: "long",
-                      year: "numeric",
-                    })}
+                    {new Date().toLocaleDateString("es-ES", { month: "long", year: "numeric" })}
                   </span>
+                }
+              >
+                <div className="pt-4">
+                  <ActivityChart data={stats?.monthlyTrend ?? []} loading={statsLoading} />
                 </div>
-                <ActivityChart
-                  data={stats?.monthlyTrend ?? []}
-                  loading={statsLoading}
-                />
-              </div>
+                <div className="mt-6 pt-5 border-t border-border">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground mb-3">
+                    Expedientes por estado
+                  </p>
+                  <StatusChart byStatus={stats?.byStatus ?? {}} />
+                </div>
+              </SectionCard>
 
-              {/* Panel de alertas */}
-              <div className="bg-card rounded-2xl border border-border shadow-sm p-6 flex flex-col">
-                <div className="flex items-center justify-between mb-5 flex-shrink-0">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-red-100 dark:bg-red-950/50">
-                      <BellRing size={18} className="text-red-600 dark:text-red-400" />
-                    </div>
-                    <div>
-                      <h2 className="text-base font-semibold text-foreground tracking-tight">Alertas</h2>
-                      <p className="text-xs text-muted-foreground mt-0.5">{alerts.length} activas</p>
-                    </div>
-                  </div>
-                  {alerts.length > 0 && (
+              <SectionCard
+                title="Alertas"
+                description={`${alerts.length} activas`}
+                icon={<BellRing size={18} />}
+                action={
+                  alerts.length > 0 ? (
                     <span
                       className={`text-xs font-bold text-white rounded-full min-w-[26px] h-[26px] inline-flex items-center justify-center px-1.5 ${
                         highAlerts > 0 ? "bg-red-500" : "bg-amber-500"
@@ -586,11 +451,11 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
                     >
                       {alerts.length}
                     </span>
-                  )}
-                </div>
-
+                  ) : undefined
+                }
+              >
                 {alerts.length === 0 ? (
-                  <div className="flex-1 flex flex-col items-center justify-center py-8 text-center">
+                  <div className="pt-4 flex flex-col items-center justify-center py-8 text-center">
                     <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center mb-2.5">
                       <Bell size={17} className="text-muted-foreground" />
                     </div>
@@ -598,7 +463,7 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
                     <p className="text-xs text-muted-foreground mt-1">Todo al día</p>
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-1 -mx-2 overflow-auto flex-1">
+                  <div className="flex flex-col gap-1 -mx-2 pt-2">
                     {alerts.slice(0, 6).map((alert) => (
                       <AlertItem
                         key={`${alert.certId}-${alert.type}`}
@@ -616,57 +481,38 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
                     )}
                   </div>
                 )}
-              </div>
+              </SectionCard>
             </div>
 
-
-            {/* ── Gráficos de negocio ──────────────────────────────── */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-
-              {/* Ingresos 12 meses */}
-              <div className="lg:col-span-2 bg-card rounded-2xl border border-border shadow-sm p-6">
-                <div className="mb-5">
-                  <h2 className="text-base font-semibold text-foreground tracking-tight">Ingresos mensuales</h2>
-                  <p className="text-xs text-muted-foreground mt-0.5">Cobros registrados — últimos 12 meses</p>
+            {/* ── Ingresos ─────────────────────────────────────────────────────── */}
+            <SectionCard
+              title="Ingresos mensuales"
+              description="Cobros registrados — últimos 12 meses"
+              icon={<Euro size={18} />}
+            >
+              <div className="pt-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2">
+                  <RevenueChart data={stats?.revenueByMonth ?? []} />
                 </div>
-                <RevenueChart data={stats?.revenueByMonth ?? []} />
-              </div>
-
-              {/* Conversión presupuesto */}
-              <div className="bg-card rounded-2xl border border-border shadow-sm p-6 flex flex-col justify-center">
-                <div className="mb-5">
-                  <h2 className="text-base font-semibold text-foreground tracking-tight">Conversión</h2>
-                  <p className="text-xs text-muted-foreground mt-0.5">Presupuestos enviados → aceptados</p>
+                <div className="pt-4 lg:pt-0 lg:border-l lg:border-border lg:pl-6 flex flex-col justify-center">
+                  <p className="text-sm font-semibold text-foreground mb-1">Conversión</p>
+                  <p className="text-xs text-muted-foreground mb-4">
+                    Presupuestos enviados → aceptados
+                  </p>
+                  <ConversionCard
+                    conversion={stats?.conversion ?? { enviados: 0, aceptados: 0, rate: 0 }}
+                  />
                 </div>
-                <ConversionCard conversion={stats?.conversion ?? { enviados: 0, aceptados: 0, rate: 0 }} />
               </div>
-            </div>
+            </SectionCard>
 
-            {/* Expedientes por estado */}
-            <div className="bg-card rounded-2xl border border-border shadow-sm p-6">
-              <div className="mb-5">
-                <h2 className="text-base font-semibold text-foreground tracking-tight">Expedientes por estado</h2>
-                <p className="text-xs text-muted-foreground mt-0.5">Distribución actual del pipeline</p>
-              </div>
-              <StatusChart byStatus={stats?.byStatus ?? {}} />
-            </div>
-
-            {/* ── Certificaciones recientes ───────────────────────────────────── */}
-            <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
-              <div className="px-6 py-5 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <IdCard size={18} className="text-primary" />
-                  </div>
-                  <div>
-                    <h2 className="text-base font-semibold text-foreground tracking-tight">
-                      Certificaciones recientes
-                    </h2>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Los últimos expedientes registrados
-                    </p>
-                  </div>
-                </div>
+            {/* ── Expedientes recientes ────────────────────────────────────────── */}
+            <SectionCard
+              title="Expedientes recientes"
+              description="Los últimos expedientes registrados"
+              icon={<IdCard size={18} />}
+              bodyPadding="none"
+              action={
                 <button
                   onClick={() => onNavigate?.("certifications")}
                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:bg-primary/5 rounded-lg px-3 py-1.5 transition-colors"
@@ -674,8 +520,8 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
                   Ver todas
                   <ArrowUpRight size={14} />
                 </button>
-              </div>
-
+              }
+            >
               {certsLoading ? (
                 <div className="p-5 space-y-3">
                   {Array.from({ length: 4 }).map((_, i) => (
@@ -732,7 +578,10 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
                             </p>
                           </td>
                           <td className="px-6 py-4">
-                            <EnergyBadge rating={cert.energyRating} />
+                            {cert.energyRating
+                              ? <EnergyChip rating={cert.energyRating} />
+                              : <span className="text-xs text-muted-foreground">—</span>
+                            }
                           </td>
                           <td className="px-6 py-4">
                             <StatusBadge status={cert.status} />
@@ -764,7 +613,7 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
                   </table>
                 </div>
               )}
-            </div>
+            </SectionCard>
 
           </div>
         </div>

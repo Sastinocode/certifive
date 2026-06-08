@@ -16,7 +16,7 @@ interface SidebarProps {
 }
 
 // Fixed dark palette — sidebar stays dark regardless of light/dark mode toggle
-const BG      = "#0F1923";
+const BG      = "#0f1f2e";
 const HOVER   = "#1a2632";
 const ACTIVE  = "#1FA94B";
 const BORDER  = "rgba(255,255,255,0.07)";
