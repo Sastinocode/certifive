@@ -876,3 +876,42 @@ export async function sendTwoFactorCodeEmail(to: string, code: string): Promise<
     html: htmlWrap(body, "Verifica tu identidad para acceder a Certifive."),
   });
 }
+
+// ──────────────────────────────────────────────────────────────────────────────
+// CERTIFICADO ENERGÉTICO → PROPIETARIO  (certificador envía el PDF final)
+// ──────────────────────────────────────────────────────────────────────────────
+export async function sendCertificadoEmail(params: {
+  to: string;
+  ownerName: string;
+  certifierName: string;
+  propertyAddress: string | null;
+  documentUrl: string;
+  fileName: string;
+}): Promise<void> {
+  if (!params.to) return;
+  const { to, ownerName, certifierName, propertyAddress, documentUrl, fileName } = params;
+
+  const rows: Array<{ label: string; value: string }> = [
+    { label: "Certificador", value: certifierName },
+    { label: "Documento", value: fileName },
+  ];
+  if (propertyAddress) rows.push({ label: "Inmueble", value: propertyAddress });
+
+  const body = `
+    ${h1("🏠 Tu certificado energético está listo")}
+    ${p("Hola <strong>" + (ownerName || "propietario") + "</strong>,")}
+    ${p("<strong>" + certifierName + "</strong> ha finalizado tu certificado de eficiencia energética y ya puedes descargarlo.")}
+    ${infoBlock(rows)}
+    ${btn("Descargar certificado →", documentUrl, "#1FA94B")}
+    ${divider()}
+    ${p("Guarda este documento en un lugar seguro. El certificado energético tiene validez de 10 años.", { color: "#6b7280", size: "13px" })}
+    ${p("Si tienes alguna pregunta, contacta directamente con tu certificador.", { color: "#9ca3af", size: "12px" })}
+  `;
+
+  await send({
+    to,
+    from: { email: FROM_EMAIL, name: FROM_NAME },
+    subject: "🏠 Tu certificado de eficiencia energética está listo — " + (propertyAddress ?? ""),
+    html: htmlWrap(body, "Tu certificado energético ya está disponible para descargar."),
+  });
+}

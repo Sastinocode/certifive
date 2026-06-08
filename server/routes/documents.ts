@@ -3,7 +3,8 @@ import { db } from "../db";
 import { eq, and } from "drizzle-orm";
 import { documentos, certifications, users } from "../../shared/schema";
 import { authenticate } from "../auth";
-import { sendDocumentoRechazadoEmail } from "../email";
+import { sendDocumentoRechazadoEmail, sendCertificadoEmail } from "../email";
+import { sendWhatsAppDocument, decryptApiKey } from "../whatsapp";
 import { uploadToCloudinary, deleteFromCloudinary } from "../cloudinary";
 import multer from "multer";
 import path from "path";
@@ -180,6 +181,82 @@ export function registerDocumentRoutes(app: Express) {
     }
   });
 
+  // ── POST /api/certifications/:id/documentos/:docId/send ──────────────────
+  // Envía el certificado al propietario por email o WhatsApp.
+  // Body: { channel: "email" | "whatsapp", recipient: string }
+  app.post("/api/certifications/:id/documentos/:docId/send", authenticate, async (req: Request, res: Response) => {
+    try {
+      const userId  = req.user!.id;
+      const certId  = parseInt(req.params.id);
+      const docId   = parseInt(req.params.docId);
+      const { channel, recipient } = req.body as { channel: "email" | "whatsapp"; recipient: string };
+
+      if (!channel || !recipient) {
+        return res.status(400).json({ message: "Faltan channel o recipient" });
+      }
+
+      // Verificar que el expediente pertenece al usuario
+      const [cert] = await db
+        .select({
+          id: certifications.id,
+          userId: certifications.userId,
+          ownerName: certifications.ownerName,
+          address: certifications.address,
+        })
+        .from(certifications)
+        .where(and(eq(certifications.id, certId), eq(certifications.userId, userId)))
+        .limit(1);
+      if (!cert) return res.status(403).json({ message: "No autorizado" });
+
+      // Obtener el documento
+      const [doc] = await db
+        .select()
+        .from(documentos)
+        .where(and(eq(documentos.id, docId), eq(documentos.certificationId, certId)))
+        .limit(1);
+      if (!doc || !doc.path) return res.status(404).json({ message: "Documento no encontrado" });
+
+      // Obtener datos del certificador
+      const [certifier] = await db
+        .select({ name: users.name, username: users.username, whatsappApiKey: users.whatsappApiKey })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+
+      const certifierName = certifier?.name ?? certifier?.username ?? "Tu certificador";
+
+      if (channel === "email") {
+        await sendCertificadoEmail({
+          to:              recipient,
+          ownerName:       cert.ownerName ?? "",
+          certifierName,
+          propertyAddress: cert.address,
+          documentUrl:     doc.path,
+          fileName:        doc.nombreOriginal,
+        });
+        return res.json({ ok: true, message: "Email enviado correctamente" });
+      }
+
+      if (channel === "whatsapp") {
+        if (!certifier?.whatsappApiKey) {
+          return res.status(400).json({ message: "WhatsApp no configurado. Conéctalo en Configuración." });
+        }
+        const apiKey = decryptApiKey(certifier.whatsappApiKey);
+        const caption = `Hola, te envío tu certificado de eficiencia energética${cert.address ? ` de ${cert.address}` : ""}. — ${certifierName}`;
+        const result = await sendWhatsAppDocument(apiKey, recipient, doc.path, doc.nombreOriginal, caption);
+        if (!result.ok) {
+          return res.status(502).json({ message: `Error WhatsApp: ${result.error}` });
+        }
+        return res.json({ ok: true, message: "WhatsApp enviado correctamente" });
+      }
+
+      return res.status(400).json({ message: "Canal no válido. Usa 'email' o 'whatsapp'." });
+    } catch (err) {
+      console.error("[documents] send error:", err);
+      res.status(500).json({ message: "Error al enviar el documento" });
+    }
+  });
+
   // ── GET /api/uploads/:certId/:filename — redirige a URL de Cloudinary ─────
   // La URL pública ya está en doc.path. Este endpoint mantiene compatibilidad
   // con cualquier frontend que use la ruta antigua.
@@ -195,7 +272,6 @@ export function registerDocumentRoutes(app: Express) {
         .limit(1);
       if (!cert || cert.userId !== userId) return res.status(403).json({ message: "No autorizado" });
 
-      // Find the doc by public_id (stored in nombreArchivo) or by original filename
       const docs = await db
         .select()
         .from(documentos)

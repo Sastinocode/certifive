@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -9,6 +9,7 @@ import {
   Wind, Building2, Calendar, Ruler, Euro,
   CheckCircle, Clock, XCircle, ChevronRight,
   FileText, Phone, Mail, IdCard, Layers,
+  UploadCloud, Trash2, MessageCircle,
 } from "lucide-react";
 
 // ── Paleta ────────────────────────────────────────────────────────────────────
@@ -77,6 +78,16 @@ interface CertDetail {
   deliveryStatus: string | null;
 }
 
+interface Documento {
+  id: number;
+  nombreOriginal: string;
+  path: string;
+  tipoDoc: string;
+  mimeType: string;
+  tamano: number;
+  fechaSubida: string | null;
+}
+
 interface Props {
   certId: number | null;
   onClose: () => void;
@@ -121,10 +132,17 @@ function fmtDate(val: string | null | undefined): string {
 }
 
 export function CertDetailPanel({ certId, onClose, onDownload, onSend, onArchive, onStatusChange }: Props) {
-  const [tab, setTab] = useState<"resumen" | "técnico" | "pagos">("resumen");
+  const [tab, setTab] = useState<"resumen" | "técnico" | "pagos" | "certificado">("resumen");
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [exportingCE3X, setExportingCE3X] = useState(false);
+
+  // ── Estado del tab Certificado ────────────────────────────────────────────
+  const [uploading, setUploading]         = useState(false);
+  const [sendDialog, setSendDialog]       = useState<{ open: boolean; docId: number | null }>({ open: false, docId: null });
+  const [sendChannel, setSendChannel]     = useState<"email" | "whatsapp">("email");
+  const [sendRecipient, setSendRecipient] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function handleExportCE3X() {
     if (!certId) return;
@@ -158,6 +176,66 @@ export function CertDetailPanel({ certId, onClose, onDownload, onSend, onArchive
     enabled: certId !== null,
     staleTime: 30_000,
   });
+
+  // ── Query: documentos tipo "certificado" ─────────────────────────────────
+  const { data: docsData = [], refetch: refetchDocs } = useQuery<Documento[]>({
+    queryKey: ["/api/certifications", certId, "documentos"],
+    queryFn: async () => {
+      const res = await fetch(`/api/certifications/${certId}/documentos`, { credentials: "include" });
+      if (!res.ok) return [];
+      const all: Documento[] = await res.json();
+      return all.filter(d => d.tipoDoc === "certificado");
+    },
+    enabled: certId !== null && tab === "certificado",
+    staleTime: 0,
+  });
+
+  // ── Mutación: subir certificado ───────────────────────────────────────────
+  async function handleUpload(file: File) {
+    if (!certId) return;
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("tipoDoc", "certificado");
+      const res = await fetch(`/api/certifications/${certId}/documentos`, {
+        method: "POST", body: fd, credentials: "include",
+      });
+      if (!res.ok) throw new Error((await res.json()).message ?? "Error al subir");
+      toast({ title: "Certificado subido", description: file.name });
+      refetchDocs();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
+  // ── Mutación: eliminar documento ──────────────────────────────────────────
+  const deleteMut = useMutation({
+    mutationFn: (docId: number) => apiRequest("DELETE", `/api/documentos/${docId}`),
+    onSuccess: () => { toast({ title: "Eliminado" }); refetchDocs(); },
+    onError:   () => toast({ title: "Error al eliminar", variant: "destructive" } as any),
+  });
+
+  // ── Mutación: enviar al propietario ───────────────────────────────────────
+  const sendMut = useMutation({
+    mutationFn: ({ docId, channel, recipient }: { docId: number; channel: string; recipient: string }) =>
+      apiRequest("POST", `/api/certifications/${certId}/documentos/${docId}/send`, { channel, recipient }),
+    onSuccess: () => {
+      toast({ title: "Enviado correctamente" });
+      setSendDialog({ open: false, docId: null });
+      setSendRecipient("");
+    },
+    onError: (err: any) => toast({ title: "Error al enviar", description: err.message, variant: "destructive" }),
+  });
+
+  function openSendDialog(docId: number) {
+    setSendDialog({ open: true, docId });
+    setSendChannel("email");
+    setSendRecipient(cert?.ownerEmail ?? "");
+  }
 
   // ── Cerrar con Escape ─────────────────────────────────────────────────────
   useEffect(() => {
@@ -276,19 +354,19 @@ export function CertDetailPanel({ certId, onClose, onDownload, onSend, onArchive
 
         {/* ── Tabs ────────────────────────────────────────────────────────── */}
         <div style={{ display: "flex", borderBottom: "1px solid var(--border)", flexShrink: 0, background: PANEL_BG }}>
-          {(["resumen", "técnico", "pagos"] as const).map(t => (
+          {(["resumen", "técnico", "pagos", "certificado"] as const).map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
               style={{
                 flex: 1, padding: "11px 0", border: "none", background: "transparent",
-                cursor: "pointer", fontSize: 13, fontWeight: tab === t ? 600 : 400,
+                cursor: "pointer", fontSize: 12, fontWeight: tab === t ? 600 : 400,
                 color: tab === t ? ACTIVE : "var(--muted-foreground)",
                 borderBottom: tab === t ? `2px solid ${ACTIVE}` : "2px solid transparent",
                 textTransform: "capitalize", transition: "color .15s",
               }}
             >
-              {t === "resumen" ? "Resumen" : t === "técnico" ? "Técnico" : "Pagos"}
+              {t === "resumen" ? "Resumen" : t === "técnico" ? "Técnico" : t === "pagos" ? "Pagos" : "Certificado"}
             </button>
           ))}
         </div>
@@ -299,9 +377,19 @@ export function CertDetailPanel({ certId, onClose, onDownload, onSend, onArchive
             <LoadingSkeleton />
           ) : cert ? (
             <>
-              {tab === "resumen"  && <TabResumen cert={cert} />}
-              {tab === "técnico"  && <TabTécnico cert={cert} />}
-              {tab === "pagos"    && <TabPagos cert={cert} />}
+              {tab === "resumen"      && <TabResumen cert={cert} />}
+              {tab === "técnico"      && <TabTécnico cert={cert} />}
+              {tab === "pagos"        && <TabPagos cert={cert} />}
+              {tab === "certificado"  && (
+                <TabCertificado
+                  docs={docsData}
+                  uploading={uploading}
+                  fileInputRef={fileInputRef}
+                  onUpload={handleUpload}
+                  onDelete={(id) => deleteMut.mutate(id)}
+                  onSend={openSendDialog}
+                />
+              )}
             </>
           ) : (
             <div style={{ textAlign: "center", padding: 40, color: "var(--muted-foreground)" }}>
@@ -309,6 +397,85 @@ export function CertDetailPanel({ certId, onClose, onDownload, onSend, onArchive
             </div>
           )}
         </div>
+
+        {/* ── Dialog: enviar certificado ──────────────────────────────────── */}
+        {sendDialog.open && (
+          <>
+            <div
+              onClick={() => setSendDialog({ open: false, docId: null })}
+              style={{ position: "fixed", inset: 0, zIndex: 9000, background: "rgba(0,0,0,0.4)" }}
+            />
+            <div style={{
+              position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)",
+              zIndex: 9001, background: "var(--background)", borderRadius: 14,
+              padding: "24px 24px 20px", width: 360, boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+            }}>
+              <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 16 }}>Enviar certificado</div>
+
+              {/* Canal */}
+              <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+                {(["email", "whatsapp"] as const).map(ch => (
+                  <button
+                    key={ch}
+                    onClick={() => {
+                      setSendChannel(ch);
+                      setSendRecipient(ch === "email" ? (cert?.ownerEmail ?? "") : (cert?.ownerPhone ?? ""));
+                    }}
+                    style={{
+                      flex: 1, padding: "9px 0", borderRadius: 8, border: "1px solid",
+                      borderColor: sendChannel === ch ? ACTIVE : "var(--border)",
+                      background: sendChannel === ch ? `${ACTIVE}15` : "transparent",
+                      color: sendChannel === ch ? ACTIVE : "var(--muted-foreground)",
+                      fontWeight: 600, fontSize: 13, cursor: "pointer",
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                    }}
+                  >
+                    {ch === "email" ? <><Mail size={13} /> Email</> : <><MessageCircle size={13} /> WhatsApp</>}
+                  </button>
+                ))}
+              </div>
+
+              {/* Destinatario */}
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ fontSize: 12, fontWeight: 600, color: "var(--muted-foreground)", display: "block", marginBottom: 6 }}>
+                  {sendChannel === "email" ? "Email del propietario" : "Teléfono (con prefijo, ej: +34600000000)"}
+                </label>
+                <input
+                  type={sendChannel === "email" ? "email" : "tel"}
+                  value={sendRecipient}
+                  onChange={e => setSendRecipient(e.target.value)}
+                  placeholder={sendChannel === "email" ? "propietario@email.com" : "+34600000000"}
+                  style={{
+                    width: "100%", padding: "9px 12px", borderRadius: 8,
+                    border: "1px solid var(--border)", fontSize: 13,
+                    background: "var(--background)", color: "var(--foreground)", boxSizing: "border-box",
+                  }}
+                />
+              </div>
+
+              <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                <button
+                  onClick={() => setSendDialog({ open: false, docId: null })}
+                  style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid var(--border)", background: "transparent", cursor: "pointer", fontSize: 13 }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  disabled={!sendRecipient || sendMut.isPending}
+                  onClick={() => sendMut.mutate({ docId: sendDialog.docId!, channel: sendChannel, recipient: sendRecipient })}
+                  style={{
+                    padding: "8px 16px", borderRadius: 8, border: "none",
+                    background: !sendRecipient ? "var(--muted)" : ACTIVE,
+                    color: !sendRecipient ? "var(--muted-foreground)" : "#fff",
+                    fontWeight: 600, fontSize: 13, cursor: sendRecipient ? "pointer" : "default",
+                  }}
+                >
+                  {sendMut.isPending ? "Enviando..." : "Enviar"}
+                </button>
+              </div>
+            </div>
+          </>
+        )}
 
         {/* ── Footer actions ───────────────────────────────────────────────── */}
         {cert && (
@@ -413,7 +580,6 @@ function TabPagos({ cert }: { cert: CertDetail }) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-      {/* Resumen de cobro */}
       <div style={{
         background: cert.isPaid ? "#f0fdf4" : "var(--muted)",
         borderRadius: 10, padding: "14px 16px",
@@ -428,7 +594,6 @@ function TabPagos({ cert }: { cert: CertDetail }) {
             : <Clock size={18} style={{ color: "#d97706" }} />
           }
         </div>
-        {/* Barra de progreso */}
         <div style={{ height: 6, background: "var(--border)", borderRadius: 3, overflow: "hidden", marginBottom: 6 }}>
           <div style={{ height: "100%", width: `${pct}%`, background: pct === 100 ? "#16a34a" : "#f59e0b", borderRadius: 3, transition: "width .4s" }} />
         </div>
@@ -540,6 +705,151 @@ function LoadingSkeleton() {
       {[120, 80, 100, 60, 90].map((w, i) => (
         <div key={i} style={{ height: 14, width: `${w}%`, maxWidth: `${w * 3}px`, background: "var(--muted)", borderRadius: 4, animation: "pulse 1.5s infinite" }} />
       ))}
+    </div>
+  );
+}
+
+// ── Tab: Certificado ─────────────────────────────────────────────────────────
+function TabCertificado({
+  docs, uploading, fileInputRef, onUpload, onDelete, onSend,
+}: {
+  docs: Documento[];
+  uploading: boolean;
+  fileInputRef: React.RefObject<HTMLInputElement>;
+  onUpload: (f: File) => void;
+  onDelete: (id: number) => void;
+  onSend: (id: number) => void;
+}) {
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) onUpload(file);
+  }
+
+  function fmtSize(bytes: number) {
+    return bytes < 1_000_000
+      ? (bytes / 1024).toFixed(0) + " KB"
+      : (bytes / 1_048_576).toFixed(1) + " MB";
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+
+      {/* Zona de subida */}
+      <div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
+          <span style={{ color: ACTIVE }}><UploadCloud size={14} /></span>
+          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: "var(--muted-foreground)" }}>
+            Subir certificado CEE
+          </span>
+        </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".pdf"
+          style={{ display: "none" }}
+          onChange={handleChange}
+        />
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploading}
+          style={{
+            width: "100%", padding: "20px 16px", borderRadius: 10,
+            border: `2px dashed ${ACTIVE}55`,
+            background: `${ACTIVE}08`,
+            cursor: uploading ? "default" : "pointer",
+            display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
+            transition: "background .15s",
+          }}
+        >
+          <UploadCloud size={24} style={{ color: ACTIVE, opacity: uploading ? .5 : 1 }} />
+          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)" }}>
+            {uploading ? "Subiendo..." : "Seleccionar PDF del certificado"}
+          </span>
+          <span style={{ fontSize: 11, color: "var(--muted-foreground)" }}>
+            Solo PDF · Máximo 25 MB
+          </span>
+        </button>
+      </div>
+
+      {/* Lista de certificados subidos */}
+      {docs.length > 0 && (
+        <div>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+            <span style={{ color: ACTIVE }}><FileText size={14} /></span>
+            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", color: "var(--muted-foreground)" }}>
+              Certificados subidos ({docs.length})
+            </span>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {docs.map(doc => (
+              <div
+                key={doc.id}
+                style={{
+                  border: "1px solid var(--border)", borderRadius: 10,
+                  padding: "12px 14px", display: "flex", alignItems: "center", gap: 10,
+                }}
+              >
+                <FileText size={20} style={{ color: ACTIVE, flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {doc.nombreOriginal}
+                  </div>
+                  <div style={{ fontSize: 11, color: "var(--muted-foreground)" }}>
+                    {fmtSize(doc.tamano)}
+                    {doc.fechaSubida && ` · ${new Date(doc.fechaSubida).toLocaleDateString("es-ES")}`}
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+                  <a
+                    href={doc.path}
+                    target="_blank"
+                    rel="noreferrer"
+                    title="Descargar"
+                    style={{
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      width: 30, height: 30, borderRadius: 7,
+                      border: "1px solid var(--border)", color: "var(--foreground)",
+                      textDecoration: "none",
+                    }}
+                  >
+                    <Download size={13} />
+                  </a>
+                  <button
+                    title="Enviar al propietario"
+                    onClick={() => onSend(doc.id)}
+                    style={{
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      width: 30, height: 30, borderRadius: 7,
+                      border: `1px solid ${ACTIVE}`, background: `${ACTIVE}15`,
+                      color: ACTIVE, cursor: "pointer",
+                    }}
+                  >
+                    <Send size={13} />
+                  </button>
+                  <button
+                    title="Eliminar"
+                    onClick={() => onDelete(doc.id)}
+                    style={{
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      width: 30, height: 30, borderRadius: 7,
+                      border: "1px solid #fecaca", background: "#fef2f2",
+                      color: "#dc2626", cursor: "pointer",
+                    }}
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {docs.length === 0 && !uploading && (
+        <p style={{ fontSize: 12, color: "var(--muted-foreground)", textAlign: "center" }}>
+          Sube el PDF generado por CE3X y podrás enviárselo al propietario directamente desde aquí.
+        </p>
+      )}
     </div>
   );
 }
