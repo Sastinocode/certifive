@@ -4,7 +4,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Variables de tema ────────────────────────────────────────────────────────── */
+/* -- Variables de tema ---------------------------------------------------------- */
 @layer base {
   :root {
     /* LIGHT — Tonos fríos con tinte azulado, limpio y profesional */
@@ -54,7 +54,7 @@
   }
 }
 
-/* ── Base ─────────────────────────────────────────────────────────────────────── */
+/* -- Base ----------------------------------------------------------------------- */
 @layer base {
   *, *::before, *::after { @apply border-border; }
 
@@ -87,7 +87,7 @@
   ::-webkit-scrollbar-thumb:hover{ background: hsl(var(--muted-foreground) / 0.4); }
 }
 
-/* ── Popovers, Dropdowns, Tooltips — NUNCA transparentes ───────────────────── */
+/* -- Popovers, Dropdowns, Tooltips — NUNCA transparentes --------------------- */
 [data-radix-popper-content-wrapper] > * {
   background-color: hsl(var(--popover)) !important;
   color:            hsl(var(--popover-foreground)) !important;
@@ -116,7 +116,7 @@
   padding: 4px;
 }
 
-/* ── Tabs — fondo sólido, sin transparencias ─────────────────────────────────── */
+/* -- Tabs — fondo sólido, sin transparencias ----------------------------------- */
 [role="tablist"] {
   background-color: hsl(var(--muted));
   border: 1px solid hsl(var(--border));
@@ -142,13 +142,13 @@
   color: hsl(var(--foreground));
 }
 
-/* ── Cards en dark mode ────────────────────────────────────────────────────────── */
+/* -- Cards en dark mode ---------------------------------------------------------- */
 .dark .bg-card,
 .dark [class*="bg-card"] {
   box-shadow: 0 1px 3px rgba(0,0,0,0.4), 0 0 0 1px hsl(var(--border));
 }
 
-/* ── Transición suave de tema ─────────────────────────────────────────────────── */
+/* -- Transición suave de tema --------------------------------------------------- */
 *, *::before, *::after {
   transition: background-color 0.2s ease, border-color 0.18s ease;
 }
@@ -157,7 +157,7 @@ button, a, [role="button"], input, textarea {
               box-shadow 0.12s ease, opacity 0.12s ease, transform 0.1s ease;
 }
 
-/* ── Utilidades ───────────────────────────────────────────────────────────────── */
+/* -- Utilidades ----------------------------------------------------------------- */
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
@@ -171,12 +171,12 @@ button, a, [role="button"], input, textarea {
   vertical-align: middle; display: inline-block;
 }
 
-/* ══════════════════════════════════════════════════════════════════════════════
+/* ------------------------------------------------------------------------------
    DARK MODE — Overrides globales para páginas con colores hardcodeados
    Arregla automáticamente todas las páginas sin modificar cada archivo.
-══════════════════════════════════════════════════════════════════════════════ */
+------------------------------------------------------------------------------ */
 
-/* -- Fondos blancos y claros → fondo de card en dark ── */
+/* -- Fondos blancos y claros → fondo de card en dark -- */
 .dark .bg-white        { background-color: hsl(var(--card)) !important; color: hsl(var(--card-foreground)); }
 .dark .bg-stone-50     { background-color: hsl(var(--muted)) !important; }
 .dark .bg-slate-50     { background-color: hsl(var(--muted)) !important; }
@@ -195,7 +195,7 @@ button, a, [role="button"], input, textarea {
 .dark .bg-stone-100    { background-color: hsl(var(--muted)) !important; }
 .dark .bg-gray-100     { background-color: hsl(var(--muted)) !important; }
 
-/* -- Textos oscuros → foreground adaptado ── */
+/* -- Textos oscuros → foreground adaptado -- */
 .dark .text-emerald-900 { color: hsl(var(--foreground)) !important; }
 .dark .text-stone-900   { color: hsl(var(--foreground)) !important; }
 .dark .text-gray-900    { color: hsl(var(--foreground)) !important; }
@@ -205,7 +205,7 @@ button, a, [role="button"], input, textarea {
 .dark .text-gray-800    { color: hsl(var(--foreground) / 0.9) !important; }
 .dark .text-emerald-800 { color: hsl(var(--accent-foreground)) !important; }
 
-/* -- Textos medios → muted-foreground ── */
+/* -- Textos medios → muted-foreground -- */
 .dark .text-stone-600   { color: hsl(var(--muted-foreground)) !important; }
 .dark .text-stone-500   { color: hsl(var(--muted-foreground)) !important; }
 .dark .text-stone-400   { color: hsl(var(--muted-foreground) / 0.7) !important; }
@@ -215,12 +215,12 @@ button, a, [role="button"], input, textarea {
 .dark .text-slate-500   { color: hsl(var(--muted-foreground)) !important; }
 .dark .text-slate-400   { color: hsl(var(--muted-foreground) / 0.7) !important; }
 
-/* -- Textos accent ── */
+/* -- Textos accent -- */
 .dark .text-emerald-700 { color: hsl(var(--accent-foreground)) !important; }
 .dark .text-teal-700    { color: hsl(var(--accent-foreground)) !important; }
 .dark .text-teal-200    { color: hsl(var(--muted-foreground)) !important; }
 
-/* -- Bordes claros → border del tema ── */
+/* -- Bordes claros → border del tema -- */
 .dark .border-emerald-100 { border-color: hsl(var(--border)) !important; }
 .dark .border-stone-200   { border-color: hsl(var(--border)) !important; }
 .dark .border-stone-100   { border-color: hsl(var(--border)) !important; }
@@ -235,7 +235,7 @@ button, a, [role="button"], input, textarea {
 .dark .border-emerald-200 { border-color: hsl(var(--border)) !important; }
 .dark .border-teal-200    { border-color: hsl(var(--border)) !important; }
 
-/* -- Inputs y formularios ── */
+/* -- Inputs y formularios -- */
 .dark input:not([type="range"]), .dark textarea, .dark select {
   background-color: hsl(var(--input)) !important;
   color: hsl(var(--foreground)) !important;
@@ -246,12 +246,12 @@ button, a, [role="button"], input, textarea {
   color: hsl(var(--muted-foreground)) !important;
 }
 
-/* -- Cabeceras tipo bg-emerald-50 dentro de modales ── */
+/* -- Cabeceras tipo bg-emerald-50 dentro de modales -- */
 .dark .bg-teal-700 {
   background-color: hsl(var(--secondary)) !important;
 }
 
-/* -- Badges de estado — colores semánticos pero adaptados al dark ── */
+/* -- Badges de estado — colores semánticos pero adaptados al dark -- */
 .dark .bg-blue-50   { background-color: hsl(210 35% 14%) !important; }
 .dark .bg-amber-50  { background-color: hsl(35 30% 14%) !important; }
 .dark .bg-orange-50 { background-color: hsl(25 30% 14%) !important; }
@@ -271,20 +271,20 @@ button, a, [role="button"], input, textarea {
 .dark .text-red-700    { color: hsl(0 70% 65%) !important; }
 .dark .text-red-500    { color: hsl(0 70% 60%) !important; }
 
-/* -- Hover states en dark ── */
+/* -- Hover states en dark -- */
 .dark .hover\:bg-stone-200:hover { background-color: hsl(var(--muted)) !important; }
 .dark .hover\:bg-slate-100:hover { background-color: hsl(var(--muted)) !important; }
 
-/* -- Divide (separadores de tabla) ── */
+/* -- Divide (separadores de tabla) -- */
 .dark .divide-stone-100 > * + *   { border-color: hsl(var(--border)) !important; }
 .dark .divide-emerald-100 > * + * { border-color: hsl(var(--border)) !important; }
 .dark .divide-gray-100 > * + *    { border-color: hsl(var(--border)) !important; }
 
-/* -- Overlays ── */
+/* -- Overlays -- */
 .dark .bg-black\/40         { background-color: rgba(0,0,0,0.72) !important; }
 .dark .bg-emerald-950\/60   { background-color: rgba(0,0,0,0.78) !important; }
 
-/* ── Colores adicionales — fondos claros de badges y paneles ──────────────── */
+/* -- Colores adicionales — fondos claros de badges y paneles ---------------- */
 /* Verde */
 .dark .bg-green-50   { background-color: hsl(142 30% 12%) !important; }
 .dark .bg-green-100  { background-color: hsl(142 28% 16%) !important; }
@@ -362,7 +362,7 @@ button, a, [role="button"], input, textarea {
 .dark .border-slate-700 { border-color: hsl(var(--border)) !important; }
 .dark .border-slate-300 { border-color: hsl(var(--border)) !important; }
 
-/* ── Gradientes — eliminar en dark mode, usar fondo sólido ─────────────────── */
+/* -- Gradientes — eliminar en dark mode, usar fondo sólido ------------------- */
 /* Fondos con gradiente claro que se ven fatal en dark mode */
 .dark [class*="from-green-50"],
 .dark [class*="from-blue-50"],
@@ -386,7 +386,7 @@ button, a, [role="button"], input, textarea {
 /* bg-gray con opacidad */
 .dark .bg-gray-800\/80 { background-color: hsl(var(--card)) !important; }
 
-/* ── Hover estados claros ────────────────────────────────────────────────────── */
+/* -- Hover estados claros ------------------------------------------------------ */
 .dark .hover\:bg-gray-50:hover  { background-color: hsl(var(--muted)) !important; }
 .dark .hover\:bg-gray-100:hover { background-color: hsl(var(--muted)) !important; }
 .dark .hover\:bg-green-50:hover { background-color: hsl(142 30% 14%) !important; }
