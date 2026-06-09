@@ -44,11 +44,11 @@ export function KpiCard({
       <div className="flex items-start justify-between gap-3">
         <div
           className={cn(
-            "w-11 h-11 rounded-xl flex items-center justify-center shadow-sm flex-shrink-0",
+            "w-11 h-11 rounded-xl flex items-center justify-center shadow-sm",
             iconBg,
           )}
         >
-          <span className="text-white [&>svg]:stroke-[2.2]">{icon}</span>
+          <span className="text-white">{icon}</span>
         </div>
 
         {delta !== undefined && (
@@ -72,7 +72,7 @@ export function KpiCard({
 
       {/* Text stack */}
       <div className="flex flex-col gap-1.5">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground leading-tight">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground leading-tight">
           {label}
         </p>
         <p className="text-[2.25rem] sm:text-[2.5rem] font-bold text-foreground tracking-tight leading-none">

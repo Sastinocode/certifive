@@ -7,11 +7,12 @@ import { useState } from "react";
 import Sidebar from "@/components/layout/sidebar";
 import { AppTopbar } from "@/components/layout/AppTopbar";
 import { EmptyState } from "@/components/ui/empty-state";
+import { KpiCard } from "@/components/ui/kpi-card";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   IdCard, Clock, Euro, Users, FileCheck2,
   Plus, Eye, Edit, ArrowUpRight, BellRing, Bell,
-  AlertTriangle, FileWarning, CreditCard, BarChart3, TrendingUp,
+  AlertTriangle, FileWarning, CreditCard, BarChart3,
 } from "lucide-react";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -384,90 +385,36 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
 
             {/* ── KPI cards ───────────────────────────────────────────────────── */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-
-              {/* KPI 1 — Certificados activos */}
-              <div className="bg-card rounded-2xl border border-border shadow-sm p-5 sm:p-6 flex flex-col gap-4 hover:shadow-md transition-shadow">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-primary shadow-sm">
-                    <FileCheck2 size={20} className="text-white" />
-                  </div>
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground leading-tight">Certificados activos</p>
-                  <p className="text-[2.25rem] sm:text-[2.5rem] font-bold text-foreground tracking-tight leading-none">
-                    {statsLoading ? "…" : totalActive}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">{nuevo} nuevo · {enProceso} en proceso</p>
-                </div>
-              </div>
-
-              {/* KPI 2 — Ingresos del mes */}
-              <div className="bg-card rounded-2xl border border-border shadow-sm p-5 sm:p-6 flex flex-col gap-4 hover:shadow-md transition-shadow">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-blue-500 shadow-sm">
-                    <Euro size={20} className="text-white" />
-                  </div>
-                  {incomeDelta && (
-                    <span className={`inline-flex items-center gap-1 text-[11px] font-semibold rounded-full px-2 py-0.5 ${
-                      incomeDelta.positive
-                        ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40"
-                        : "text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-950/40"
-                    }`}>
-                      <TrendingUp size={11} />
-                      {incomeDelta.value}
-                    </span>
-                  )}
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground leading-tight">Ingresos del mes</p>
-                  <p className="text-[2.25rem] sm:text-[2.5rem] font-bold text-foreground tracking-tight leading-none">
-                    {statsLoading ? "…" : fmtEur(stats?.monthlyIncome?.current ?? 0)}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">Anterior: {fmtEur(stats?.monthlyIncome?.previous ?? 0)}</p>
-                </div>
-              </div>
-
-              {/* KPI 3 — Días medio CEE */}
-              <div className="bg-card rounded-2xl border border-border shadow-sm p-5 sm:p-6 flex flex-col gap-4 hover:shadow-md transition-shadow">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-amber-500 shadow-sm">
-                    <Clock size={20} className="text-white" />
-                  </div>
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground leading-tight">Días medio CEE</p>
-                  <p className="text-[2.25rem] sm:text-[2.5rem] font-bold text-foreground tracking-tight leading-none">
-                    {statsLoading ? "…" : stats?.avgDaysToComplete ? `${stats.avgDaysToComplete}d` : "—"}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">Desde apertura hasta cierre</p>
-                </div>
-              </div>
-
-              {/* KPI 4 — Clientes nuevos */}
-              <div className="bg-card rounded-2xl border border-border shadow-sm p-5 sm:p-6 flex flex-col gap-4 hover:shadow-md transition-shadow">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-violet-500 shadow-sm">
-                    <Users size={20} className="text-white" />
-                  </div>
-                  {clientsDelta && (
-                    <span className={`inline-flex items-center gap-1 text-[11px] font-semibold rounded-full px-2 py-0.5 ${
-                      clientsDelta.positive
-                        ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40"
-                        : "text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-950/40"
-                    }`}>
-                      <TrendingUp size={11} />
-                      {clientsDelta.value}
-                    </span>
-                  )}
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground leading-tight">Clientes nuevos</p>
-                  <p className="text-[2.25rem] sm:text-[2.5rem] font-bold text-foreground tracking-tight leading-none">
-                    {statsLoading ? "…" : stats?.newClientsThisMonth ?? 0}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">Anterior: {stats?.newClientsPrevMonth ?? 0}</p>
-                </div>
-              </div>
+              <KpiCard
+                icon={<FileCheck2 size={20} />}
+                iconBg="bg-primary"
+                label="Certificados activos"
+                value={statsLoading ? "…" : totalActive}
+                sub={`${nuevo} nuevo · ${enProceso} en proceso`}
+              />
+              <KpiCard
+                icon={<Euro size={20} />}
+                iconBg="bg-blue-500"
+                label="Ingresos del mes"
+                value={statsLoading ? "…" : fmtEur(stats?.monthlyIncome?.current ?? 0)}
+                sub={`Anterior: ${fmtEur(stats?.monthlyIncome?.previous ?? 0)}`}
+                delta={incomeDelta}
+              />
+              <KpiCard
+                icon={<Clock size={20} />}
+                iconBg="bg-amber-500"
+                label="Días medio CEE"
+                value={statsLoading ? "…" : stats?.avgDaysToComplete ? `${stats.avgDaysToComplete}d` : "—"}
+                sub="Desde apertura hasta cierre"
+              />
+              <KpiCard
+                icon={<Users size={20} />}
+                iconBg="bg-violet-500"
+                label="Clientes nuevos"
+                value={statsLoading ? "…" : stats?.newClientsThisMonth ?? 0}
+                sub={`Anterior: ${stats?.newClientsPrevMonth ?? 0}`}
+                delta={clientsDelta}
+              />
             </div>
 
             {/* ── Actividad + Alertas ──────────────────────────────────────────── */}
