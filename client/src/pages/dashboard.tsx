@@ -13,7 +13,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { EnergyChip } from "@/components/ui/energy-chip";
 import { useAuth } from "@/contexts/AuthContext";
 import {
-  IdCard, Clock, Euro, Users,
+  IdCard, Clock, Euro, Users, FileCheck2,
   Plus, Eye, Edit, ArrowUpRight, BellRing, Bell,
   AlertTriangle, FileWarning, CreditCard, BarChart3,
 } from "lucide-react";
@@ -368,7 +368,7 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
             {/* ── 4 KPI cards ─────────────────────────────────────────────────── */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <KpiCard
-                icon={<IdCard size={20} />}
+                icon={<FileCheck2 size={20} />}
                 iconBg="bg-primary"
                 label="Certificados activos"
                 value={statsLoading ? "…" : totalActive}
