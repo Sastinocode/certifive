@@ -9,3 +9,5 @@ vite.config.ts.*
 .env.*.local# Scripts temporales de sesiones de desarrollo
 write_*.py
 design-previews/
+
+design_handoff_panel_interno/
