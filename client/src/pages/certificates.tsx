@@ -555,9 +555,9 @@ export default function Certificates() {
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr>
+                      <tr className="bg-emerald-50/40 dark:bg-emerald-950/10">
                         {["Propietario / Dirección", "Calificación", "Estado", "Compartido", "Acceso"].map((h) => (
-                          <th key={h} className="px-6 py-3 text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-[0.08em] bg-emerald-50/40 dark:bg-emerald-950/10 whitespace-nowrap">
+                          <th key={h} className="px-6 py-3 text-left text-[10px] font-semibold text-emerald-700/60 dark:text-muted-foreground uppercase tracking-[0.08em] whitespace-nowrap">
                             {h}
                           </th>
                         ))}
@@ -679,20 +679,20 @@ export default function Certificates() {
           {/* ── Search + filter ────────────────────────────────────────────── */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             <div className="relative flex-1 min-w-0">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4 pointer-events-none" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500/70 dark:text-muted-foreground w-4 h-4 pointer-events-none" />
               <Input
                 placeholder="Buscar por cliente, dirección o referencia catastral…"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-11 py-3 h-auto rounded-xl text-sm font-medium bg-card border-border shadow-sm"
+                className="pl-12 pr-4 py-3 h-auto rounded-xl text-sm font-medium bg-card border-emerald-100/80 dark:border-border shadow-sm placeholder:text-emerald-700/40 dark:placeholder:text-muted-foreground focus-visible:ring-emerald-300"
               />
             </div>
-            <div className="inline-flex items-center bg-card border border-border rounded-xl shadow-sm p-1 self-start sm:self-auto flex-shrink-0">
+            <div className="inline-flex items-center bg-card border border-emerald-100/80 dark:border-border rounded-xl shadow-sm p-1 self-start sm:self-auto flex-shrink-0">
               {[
-                { value: "all",       label: "Todos"      },
-                { value: "draft",     label: "Borrador"   },
-                { value: "pending",   label: "Pendiente"  },
-                { value: "completed", label: "Completado" },
+                { value: "all",        label: "Todos"      },
+                { value: "nuevo",      label: "Nuevo"      },
+                { value: "en_proceso", label: "En Proceso" },
+                { value: "finalizado", label: "Finalizado" },
               ].map(({ value, label }) => (
                 <button
                   key={value}
@@ -700,7 +700,7 @@ export default function Certificates() {
                   className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap ${
                     statusFilter === value
                       ? "bg-primary text-primary-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                      : "text-emerald-700/70 hover:text-emerald-900 hover:bg-emerald-50 dark:text-muted-foreground dark:hover:text-foreground dark:hover:bg-muted/60"
                   }`}
                 >
                   {label}
@@ -747,15 +747,15 @@ export default function Certificates() {
             ) : (
               <>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left min-w-[700px]">
+                  <table className="w-full text-left border-collapse min-w-[640px]">
                     <thead>
-                      <tr>
-                        {["Cliente", "Dirección", "Fecha", "Estado", "Flujo", "Acciones"].map((h, i) => (
+                      <tr className="bg-emerald-50/40 dark:bg-emerald-950/10">
+                        {["Cliente", "Inmueble", "Fecha", "Estado", "Flujo", "Acciones"].map((h) => (
                           <th
                             key={h}
-                            className={`px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground bg-emerald-50/40 dark:bg-emerald-950/10 whitespace-nowrap ${
-                              h === "Fecha" ? "hidden md:table-cell" : ""
-                            }${h === "Flujo" ? "hidden lg:table-cell" : ""}${h === "Acciones" ? "text-right" : ""}`}
+                            className={`px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-700/60 dark:text-muted-foreground whitespace-nowrap${
+                              h === "Fecha" ? " hidden md:table-cell" : ""
+                            }${h === "Flujo" ? " hidden lg:table-cell" : ""}${h === "Acciones" ? " text-right" : ""}`}
                           >
                             {h}
                           </th>
@@ -784,10 +784,10 @@ export default function Certificates() {
                               </div>
                             </td>
 
-                            {/* Dirección */}
+                            {/* Inmueble */}
                             <td className="px-6 py-5">
                               <p className="text-sm text-foreground font-medium truncate max-w-[200px]">{cert.propertyAddress}</p>
-                              <p className="text-xs text-muted-foreground mt-0.5 font-mono">{cert.cadastralRef}</p>
+                              <p className="text-xs text-emerald-700/55 dark:text-muted-foreground mt-0.5 font-mono">{cert.cadastralRef}</p>
                             </td>
 
                             {/* Fecha */}
@@ -915,7 +915,7 @@ export default function Certificates() {
                 </div>
 
                 {/* ── Table footer ───────────────────────────────────────── */}
-                <div className="px-6 py-4 bg-emerald-50/40 dark:bg-emerald-950/10 flex items-center justify-between gap-4 flex-wrap">
+                <div className="px-5 sm:px-6 py-4 bg-emerald-50/30 dark:bg-emerald-950/10 flex items-center justify-between gap-4 flex-wrap">
                   <div className="flex items-center gap-4">
                     <p className="text-xs text-muted-foreground font-medium">
                       Mostrando <span className="font-semibold text-foreground">{certList.length}</span> de {totalCount} certificaciones
