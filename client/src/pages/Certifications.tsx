@@ -3,6 +3,9 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "../lib/queryClient";
 import { formatDate } from "../lib/utils";
 import CertDataDrawer from "../components/CertDataDrawer";
+import { SearchInput } from "@/components/ui/search-input";
+import { FilterChip } from "@/components/ui/filter-chip";
+import { StatusBadge } from "@/components/ui/status-badge";
 
 const STATUS_OPTIONS = ["Nuevo", "En Proceso", "Finalizado"];
 
@@ -984,26 +987,8 @@ export default function Certifications() {
     return matchStatus && matchSearch;
   });
 
-  const getStatusStyle = (status: string) => {
-    switch (status) {
-      case "Nuevo": return "bg-blue-50 text-blue-700 border border-blue-100";
-      case "En Proceso": return "bg-orange-50 text-orange-700 border border-orange-100";
-      case "Finalizado": return "bg-emerald-50 text-emerald-700 border border-emerald-100";
-      default: return "bg-gray-50 text-gray-600 border border-gray-100";
-    }
-  };
-
-  const getDotColor = (status: string) => {
-    switch (status) {
-      case "Nuevo": return "bg-blue-500";
-      case "En Proceso": return "bg-orange-500";
-      case "Finalizado": return "bg-emerald-600";
-      default: return "bg-gray-400";
-    }
-  };
-
   return (
-    <div className="p-4 sm:p-8 max-w-7xl mx-auto space-y-6">
+    <div className="p-4 sm:p-8 max-w-7xl mx-auto space-y-7">
       {(showForm || editCert) && (
         <CertificationForm
           cert={editCert}
@@ -1062,54 +1047,51 @@ export default function Certifications() {
           <h1 className="text-xl sm:text-2xl font-bold text-emerald-900 tracking-tight">Visión operacional</h1>
           <p className="text-sm text-emerald-700/60 mt-1 font-medium">Gestiona y realiza el seguimiento de tus certificaciones CEE.</p>
         </div>
-        <div className="text-right flex-shrink-0">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-700/60 mb-1">Total certificados</p>
-          <p className="text-3xl font-bold text-emerald-800 tracking-tighter">{allCerts.length.toLocaleString("es-ES")}</p>
-        </div>
-      </div>
-
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-        <div className="relative flex-1 min-w-0">
-          <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-emerald-400 text-[20px]">search</span>
-          <input
-            data-testid="input-search"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Buscar por cliente, dirección o referencia catastral..."
-            className="w-full pl-12 pr-4 py-3 bg-white border border-emerald-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300"
-          />
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="space-y-1">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-emerald-700/60 px-1 block">Estado</label>
-            <select
-              data-testid="select-status-filter"
-              value={statusFilter}
-              onChange={e => setStatusFilter(e.target.value)}
-              className="bg-white border border-emerald-100 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-300"
-            >
-              <option>Todos</option>
-              {STATUS_OPTIONS.map(s => <option key={s}>{s}</option>)}
-            </select>
+        <div className="flex items-center gap-4 bg-white rounded-2xl border border-emerald-100/60 shadow-sm px-5 py-3.5 flex-shrink-0">
+          <div className="w-11 h-11 rounded-xl bg-emerald-600 flex items-center justify-center shadow-sm flex-shrink-0">
+            <span className="material-symbols-outlined text-white text-[22px]">verified</span>
+          </div>
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-700/60 leading-tight">Total certificados</p>
+            <p className="text-2xl font-bold text-emerald-900 tracking-tight leading-none mt-1">{allCerts.length.toLocaleString("es-ES")}</p>
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-[0_4px_32px_rgba(0,100,44,0.06)] border border-emerald-100/60 overflow-hidden">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder="Buscar por cliente, dirección o referencia catastral..."
+          className="flex-1 min-w-0 w-full"
+        />
+        <div className="inline-flex items-center bg-white border border-emerald-100/80 rounded-xl shadow-sm p-1 flex-shrink-0">
+          {["Todos", ...STATUS_OPTIONS].map(s => (
+            <FilterChip
+              key={s}
+              label={s}
+              active={statusFilter === s}
+              onClick={() => setStatusFilter(s)}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-sm border border-emerald-100/60 overflow-hidden">
         {/* Horizontal scroll on mobile */}
         <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse min-w-[560px]">
           <thead>
-            <tr className="bg-emerald-50/50 border-b border-emerald-100/60">
-              <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-emerald-700/60">Cliente</th>
-              <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-emerald-700/60">Inmueble</th>
-              <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-emerald-700/60 hidden md:table-cell">Fecha</th>
-              <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-emerald-700/60">Estado</th>
-              <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-emerald-700/60 hidden lg:table-cell">Flujo</th>
-              <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-emerald-700/60 text-right">Acciones</th>
+            <tr className="bg-emerald-50/40">
+              <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-700/60">Cliente</th>
+              <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-700/60">Inmueble</th>
+              <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-700/60 hidden md:table-cell">Fecha</th>
+              <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-700/60">Estado</th>
+              <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-700/60 hidden lg:table-cell">Flujo</th>
+              <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-700/60 text-right">Acciones</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-emerald-50">
+          <tbody>
             {isLoading ? (
               <tr>
                 <td colSpan={6} className="px-8 py-16 text-center">
@@ -1119,20 +1101,20 @@ export default function Certifications() {
             ) : filtered.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-8 py-16 text-center">
-                  <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <span className="material-symbols-outlined text-emerald-400 text-[32px]">verified</span>
+                  <div className="w-20 h-20 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-5">
+                    <span className="material-symbols-outlined text-emerald-600 text-[32px]">verified</span>
                   </div>
                   <p className="font-semibold text-emerald-900 mb-1">
                     {search || statusFilter !== "Todos" ? "Sin resultados" : "Sin certificaciones"}
                   </p>
-                  <p className="text-sm text-emerald-700/50">
+                  <p className="text-sm text-emerald-700/55">
                     {search || statusFilter !== "Todos" ? "Prueba otros filtros" : "Crea tu primera certificación energética"}
                   </p>
                   {!search && statusFilter === "Todos" && (
                     <button
                       data-testid="btn-create-first"
                       onClick={() => setShowForm(true)}
-                      className="mt-4 px-6 py-2.5 bg-emerald-800 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition-colors"
+                      className="mt-6 inline-flex items-center gap-1.5 px-5 py-2.5 bg-emerald-700 text-white rounded-full text-sm font-semibold hover:bg-emerald-800 transition-colors shadow-sm"
                     >
                       + Nueva certificación
                     </button>
@@ -1143,30 +1125,27 @@ export default function Certifications() {
               filtered.map((cert: any) => {
                 const initials = (cert.ownerName || "?").split(" ").map((n: string) => n[0]).slice(0, 2).join("").toUpperCase();
                 return (
-                  <tr key={cert.id} data-testid={`row-cert-${cert.id}`} className="hover:bg-emerald-50/30 transition-colors relative">
-                    <td className="px-8 py-5">
+                  <tr key={cert.id} data-testid={`row-cert-${cert.id}`} className="hover:bg-emerald-50/40 transition-colors relative">
+                    <td className="px-6 py-5">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-800 font-bold text-xs flex-shrink-0">
+                        <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-800 font-bold text-xs flex-shrink-0">
                           {initials}
                         </div>
                         <div>
                           <p className="font-semibold text-emerald-900 text-sm">{cert.ownerName || "-"}</p>
-                          {cert.ownerEmail && <p className="text-xs text-emerald-700/50">{cert.ownerEmail}</p>}
+                          {cert.ownerEmail && <p className="text-xs text-emerald-700/55 mt-0.5 truncate">{cert.ownerEmail}</p>}
                         </div>
                       </div>
                     </td>
-                    <td className="px-8 py-5">
-                      <p className="text-sm text-emerald-800 font-medium">{cert.address || "-"}</p>
-                      {cert.propertyType && <p className="text-xs text-emerald-700/50 mt-0.5">{cert.propertyType}</p>}
+                    <td className="px-6 py-5">
+                      <p className="text-sm text-emerald-900 font-medium">{cert.address || "-"}</p>
+                      {cert.propertyType && <p className="text-xs text-emerald-700/55 mt-0.5">{cert.propertyType}</p>}
                     </td>
-                    <td className="px-8 py-5 text-sm font-medium text-emerald-800 hidden md:table-cell">{formatDate(cert.createdAt)}</td>
-                    <td className="px-8 py-5">
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${getStatusStyle(cert.status)}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${getDotColor(cert.status)}`} />
-                        {cert.status}
-                      </span>
+                    <td className="px-6 py-5 text-xs font-medium text-emerald-700/70 hidden md:table-cell whitespace-nowrap">{formatDate(cert.createdAt)}</td>
+                    <td className="px-6 py-5">
+                      <StatusBadge status={cert.status} />
                     </td>
-                    <td className="px-8 py-5 hidden lg:table-cell">
+                    <td className="px-6 py-5 hidden lg:table-cell">
                       <div className="flex flex-col gap-1">
                         {cert.workflowStatus && cert.workflowStatus !== "nuevo"
                           ? <WorkflowBadge status={cert.workflowStatus} />
@@ -1176,7 +1155,7 @@ export default function Certifications() {
                         }
                       </div>
                     </td>
-                    <td className="px-8 py-5 text-right relative">
+                    <td className="px-6 py-5 text-right relative">
                       <div className="flex items-center justify-end gap-1">
                         {/* Preview: presupuesto */}
                         {cert.presupuestoToken && (
@@ -1192,7 +1171,7 @@ export default function Certifications() {
                               });
                               setOpenMenu(null);
                             }}
-                            className="flex items-center gap-1 px-2.5 py-1.5 bg-violet-50 border border-violet-100 text-violet-700 rounded-lg text-[11px] font-bold hover:bg-violet-100 transition-colors"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 bg-violet-50 text-violet-700 rounded-full text-[11px] font-semibold hover:bg-violet-100 transition-colors"
                           >
                             <span className="material-symbols-outlined text-[13px]">visibility</span>
                             <span className="hidden sm:inline">Tarifa</span>
@@ -1212,7 +1191,7 @@ export default function Certifications() {
                               });
                               setOpenMenu(null);
                             }}
-                            className="flex items-center gap-1 px-2.5 py-1.5 bg-teal-50 border border-teal-100 text-teal-700 rounded-lg text-[11px] font-bold hover:bg-teal-100 transition-colors"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 bg-teal-50 text-teal-700 rounded-full text-[11px] font-semibold hover:bg-teal-100 transition-colors"
                           >
                             <span className="material-symbols-outlined text-[13px]">visibility</span>
                             <span className="hidden sm:inline">CEE</span>
@@ -1232,7 +1211,7 @@ export default function Certifications() {
                               });
                               setOpenMenu(null);
                             }}
-                            className="flex items-center gap-1 px-2.5 py-1.5 bg-blue-50 border border-blue-100 text-blue-700 rounded-lg text-[11px] font-bold hover:bg-blue-100 transition-colors"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full text-[11px] font-semibold hover:bg-blue-100 transition-colors"
                           >
                             <span className="material-symbols-outlined text-[13px]">visibility</span>
                             <span className="hidden sm:inline">Tasación</span>
@@ -1241,7 +1220,7 @@ export default function Certifications() {
                         <button
                           data-testid={`btn-menu-${cert.id}`}
                           onClick={() => setOpenMenu(openMenu === cert.id ? null : cert.id)}
-                          className="p-2 hover:bg-emerald-100 rounded-xl transition-colors text-emerald-700/60 hover:text-emerald-900"
+                          className="w-8 h-8 inline-flex items-center justify-center hover:bg-emerald-100 rounded-full transition-colors text-emerald-700/60 hover:text-emerald-900"
                         >
                           <span className="material-symbols-outlined text-[20px]">more_vert</span>
                         </button>
@@ -1437,14 +1416,14 @@ export default function Certifications() {
         </table>
         </div>{/* /overflow-x-auto */}
         {filtered.length > 0 && (
-          <div className="px-4 sm:px-8 py-4 border-t border-emerald-50 flex items-center justify-between">
+          <div className="px-5 sm:px-6 py-4 bg-emerald-50/30 flex items-center justify-between">
             <p className="text-xs text-emerald-700/60 font-medium">
-              Mostrando {filtered.length} de {allCerts.length} certificaciones
+              Mostrando <span className="font-semibold text-emerald-900">{filtered.length}</span> de <span className="font-semibold text-emerald-900">{allCerts.length}</span> certificaciones
             </p>
             <button
               data-testid="btn-nueva-cert"
               onClick={() => setShowForm(true)}
-              className="flex items-center gap-2 px-5 py-2.5 bg-emerald-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-emerald-700 transition-colors"
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-700 text-white rounded-full text-xs font-semibold hover:bg-emerald-800 transition-colors shadow-sm"
             >
               <span className="material-symbols-outlined text-[16px]">add</span>
               Nueva
