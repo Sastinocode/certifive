@@ -7,15 +7,11 @@ import { useState } from "react";
 import Sidebar from "@/components/layout/sidebar";
 import { AppTopbar } from "@/components/layout/AppTopbar";
 import { EmptyState } from "@/components/ui/empty-state";
-import { KpiCard } from "@/components/ui/kpi-card";
-import { SectionCard } from "@/components/ui/section-card";
-import { StatusBadge } from "@/components/ui/status-badge";
-import { EnergyChip } from "@/components/ui/energy-chip";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   IdCard, Clock, Euro, Users, FileCheck2,
   Plus, Eye, Edit, ArrowUpRight, BellRing, Bell,
-  AlertTriangle, FileWarning, CreditCard, BarChart3,
+  AlertTriangle, FileWarning, CreditCard, BarChart3, TrendingUp,
 } from "lucide-react";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -53,6 +49,24 @@ function makeDelta(
   if (d === null || d === 0) return undefined;
   return { value: `${d > 0 ? "+" : ""}${d}%`, positive: d > 0 };
 }
+
+// ─── Status badge helper ──────────────────────────────────────────────────────
+
+function statusCls(status: string) {
+  switch (status) {
+    case "Finalizado": return "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300";
+    case "En Proceso": return "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300";
+    case "Nuevo":      return "bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300";
+    default:           return "bg-muted text-muted-foreground";
+  }
+}
+
+// ─── Energy rating colors ─────────────────────────────────────────────────────
+
+const ENERGY_COLORS: Record<string, string> = {
+  A: "#166534", B: "#15803d", C: "#65a30d",
+  D: "#ca8a04", E: "#ea580c", F: "#dc2626", G: "#991b1b",
+};
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
 
@@ -350,6 +364,9 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
   const nuevo       = stats?.byStatus?.["Nuevo"]      ?? 0;
   const enProceso   = stats?.byStatus?.["En Proceso"] ?? 0;
 
+  const incomeDelta  = !statsLoading && stats ? makeDelta(stats.monthlyIncome.current,  stats.monthlyIncome.previous) : undefined;
+  const clientsDelta = !statsLoading && stats ? makeDelta(stats.newClientsThisMonth,     stats.newClientsPrevMonth)   : undefined;
+
   void displayName;
 
   return (
@@ -365,97 +382,143 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
         <div className="flex-1 overflow-auto">
           <div className="px-4 py-5 sm:px-8 sm:py-8 max-w-[1400px] mx-auto space-y-6">
 
-            {/* ── 4 KPI cards ─────────────────────────────────────────────────── */}
+            {/* ── KPI cards ───────────────────────────────────────────────────── */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <KpiCard
-                icon={<FileCheck2 size={20} />}
-                iconBg="bg-primary"
-                label="Certificados activos"
-                value={statsLoading ? "…" : totalActive}
-                sub={`${nuevo} nuevo · ${enProceso} en proceso`}
-              />
-              <KpiCard
-                icon={<Euro size={20} />}
-                iconBg="bg-blue-500"
-                label="Ingresos del mes"
-                value={statsLoading ? "…" : fmtEur(stats?.monthlyIncome?.current ?? 0)}
-                sub={`Anterior: ${fmtEur(stats?.monthlyIncome?.previous ?? 0)}`}
-                delta={
-                  !statsLoading && stats
-                    ? makeDelta(stats.monthlyIncome.current, stats.monthlyIncome.previous)
-                    : undefined
-                }
-              />
-              <KpiCard
-                icon={<Clock size={20} />}
-                iconBg="bg-amber-500"
-                label="Días medio CEE"
-                value={
-                  statsLoading
-                    ? "…"
-                    : stats?.avgDaysToComplete
-                      ? `${stats.avgDaysToComplete}d`
-                      : "—"
-                }
-                sub="Desde apertura hasta cierre"
-              />
-              <KpiCard
-                icon={<Users size={20} />}
-                iconBg="bg-violet-500"
-                label="Clientes nuevos"
-                value={statsLoading ? "…" : stats?.newClientsThisMonth ?? 0}
-                sub={`Anterior: ${stats?.newClientsPrevMonth ?? 0}`}
-                delta={
-                  !statsLoading && stats
-                    ? makeDelta(stats.newClientsThisMonth, stats.newClientsPrevMonth)
-                    : undefined
-                }
-              />
+
+              {/* KPI 1 — Certificados activos */}
+              <div className="bg-card rounded-2xl border border-border shadow-sm p-5 sm:p-6 flex flex-col gap-4 hover:shadow-md transition-shadow">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-primary shadow-sm">
+                    <FileCheck2 size={20} className="text-white" />
+                  </div>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground leading-tight">Certificados activos</p>
+                  <p className="text-[2.25rem] sm:text-[2.5rem] font-bold text-foreground tracking-tight leading-none">
+                    {statsLoading ? "…" : totalActive}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">{nuevo} nuevo · {enProceso} en proceso</p>
+                </div>
+              </div>
+
+              {/* KPI 2 — Ingresos del mes */}
+              <div className="bg-card rounded-2xl border border-border shadow-sm p-5 sm:p-6 flex flex-col gap-4 hover:shadow-md transition-shadow">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-blue-500 shadow-sm">
+                    <Euro size={20} className="text-white" />
+                  </div>
+                  {incomeDelta && (
+                    <span className={`inline-flex items-center gap-1 text-[11px] font-semibold rounded-full px-2 py-0.5 ${
+                      incomeDelta.positive
+                        ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40"
+                        : "text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-950/40"
+                    }`}>
+                      <TrendingUp size={11} />
+                      {incomeDelta.value}
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground leading-tight">Ingresos del mes</p>
+                  <p className="text-[2.25rem] sm:text-[2.5rem] font-bold text-foreground tracking-tight leading-none">
+                    {statsLoading ? "…" : fmtEur(stats?.monthlyIncome?.current ?? 0)}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">Anterior: {fmtEur(stats?.monthlyIncome?.previous ?? 0)}</p>
+                </div>
+              </div>
+
+              {/* KPI 3 — Días medio CEE */}
+              <div className="bg-card rounded-2xl border border-border shadow-sm p-5 sm:p-6 flex flex-col gap-4 hover:shadow-md transition-shadow">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-amber-500 shadow-sm">
+                    <Clock size={20} className="text-white" />
+                  </div>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground leading-tight">Días medio CEE</p>
+                  <p className="text-[2.25rem] sm:text-[2.5rem] font-bold text-foreground tracking-tight leading-none">
+                    {statsLoading ? "…" : stats?.avgDaysToComplete ? `${stats.avgDaysToComplete}d` : "—"}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">Desde apertura hasta cierre</p>
+                </div>
+              </div>
+
+              {/* KPI 4 — Clientes nuevos */}
+              <div className="bg-card rounded-2xl border border-border shadow-sm p-5 sm:p-6 flex flex-col gap-4 hover:shadow-md transition-shadow">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-violet-500 shadow-sm">
+                    <Users size={20} className="text-white" />
+                  </div>
+                  {clientsDelta && (
+                    <span className={`inline-flex items-center gap-1 text-[11px] font-semibold rounded-full px-2 py-0.5 ${
+                      clientsDelta.positive
+                        ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40"
+                        : "text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-950/40"
+                    }`}>
+                      <TrendingUp size={11} />
+                      {clientsDelta.value}
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground leading-tight">Clientes nuevos</p>
+                  <p className="text-[2.25rem] sm:text-[2.5rem] font-bold text-foreground tracking-tight leading-none">
+                    {statsLoading ? "…" : stats?.newClientsThisMonth ?? 0}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">Anterior: {stats?.newClientsPrevMonth ?? 0}</p>
+                </div>
+              </div>
             </div>
 
             {/* ── Actividad + Alertas ──────────────────────────────────────────── */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
-              <SectionCard
-                className="lg:col-span-2"
-                title="Actividad mensual"
-                description="Certificados creados — últimos 6 meses"
-                icon={<BarChart3 size={18} />}
-                action={
+              {/* Chart */}
+              <div className="lg:col-span-2 bg-card rounded-2xl border border-border shadow-sm p-6">
+                <div className="flex items-start justify-between mb-6">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <BarChart3 size={18} className="text-primary" />
+                    </div>
+                    <div>
+                      <h2 className="text-base font-semibold text-foreground tracking-tight">Actividad mensual</h2>
+                      <p className="text-xs text-muted-foreground mt-0.5">Certificados creados — últimos 6 meses</p>
+                    </div>
+                  </div>
                   <span className="text-xs font-medium text-muted-foreground capitalize bg-muted/60 rounded-full px-3 py-1">
                     {new Date().toLocaleDateString("es-ES", { month: "long", year: "numeric" })}
                   </span>
-                }
-              >
-                <div className="pt-4">
-                  <ActivityChart data={stats?.monthlyTrend ?? []} loading={statsLoading} />
                 </div>
+                <ActivityChart data={stats?.monthlyTrend ?? []} loading={statsLoading} />
                 <div className="mt-6 pt-5 border-t border-border">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground mb-3">
                     Expedientes por estado
                   </p>
                   <StatusChart byStatus={stats?.byStatus ?? {}} />
                 </div>
-              </SectionCard>
+              </div>
 
-              <SectionCard
-                title="Alertas"
-                description={`${alerts.length} activas`}
-                icon={<BellRing size={18} />}
-                action={
-                  alerts.length > 0 ? (
-                    <span
-                      className={`text-xs font-bold text-white rounded-full min-w-[26px] h-[26px] inline-flex items-center justify-center px-1.5 ${
-                        highAlerts > 0 ? "bg-red-500" : "bg-amber-500"
-                      }`}
-                    >
+              {/* Alerts */}
+              <div className="bg-card rounded-2xl border border-border shadow-sm p-6 flex flex-col">
+                <div className="flex items-center justify-between mb-5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-red-100 dark:bg-red-950/50">
+                      <BellRing size={18} className="text-red-600 dark:text-red-400" />
+                    </div>
+                    <div>
+                      <h2 className="text-base font-semibold text-foreground tracking-tight">Alertas</h2>
+                      <p className="text-xs text-muted-foreground mt-0.5">{alerts.length} activas</p>
+                    </div>
+                  </div>
+                  {alerts.length > 0 && (
+                    <span className={`text-xs font-bold text-white rounded-full min-w-[26px] h-[26px] inline-flex items-center justify-center px-1.5 ${highAlerts > 0 ? "bg-red-500" : "bg-amber-500"}`}>
                       {alerts.length}
                     </span>
-                  ) : undefined
-                }
-              >
+                  )}
+                </div>
+
                 {alerts.length === 0 ? (
-                  <div className="pt-4 flex flex-col items-center justify-center py-8 text-center">
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
                     <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center mb-2.5">
                       <Bell size={17} className="text-muted-foreground" />
                     </div>
@@ -463,7 +526,7 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
                     <p className="text-xs text-muted-foreground mt-1">Todo al día</p>
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-1 -mx-2 pt-2">
+                  <div className="flex flex-col gap-1 -mx-2">
                     {alerts.slice(0, 6).map((alert) => (
                       <AlertItem
                         key={`${alert.certId}-${alert.type}`}
@@ -481,38 +544,48 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
                     )}
                   </div>
                 )}
-              </SectionCard>
+              </div>
             </div>
 
-            {/* ── Ingresos ─────────────────────────────────────────────────────── */}
-            <SectionCard
-              title="Ingresos mensuales"
-              description="Cobros registrados — últimos 12 meses"
-              icon={<Euro size={18} />}
-            >
-              <div className="pt-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* ── Ingresos mensuales ───────────────────────────────────────────── */}
+            <div className="bg-card rounded-2xl border border-border shadow-sm p-6">
+              <div className="flex items-start justify-between mb-6">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Euro size={18} className="text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-semibold text-foreground tracking-tight">Ingresos mensuales</h2>
+                    <p className="text-xs text-muted-foreground mt-0.5">Cobros registrados — últimos 12 meses</p>
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
                   <RevenueChart data={stats?.revenueByMonth ?? []} />
                 </div>
                 <div className="pt-4 lg:pt-0 lg:border-l lg:border-border lg:pl-6 flex flex-col justify-center">
                   <p className="text-sm font-semibold text-foreground mb-1">Conversión</p>
-                  <p className="text-xs text-muted-foreground mb-4">
-                    Presupuestos enviados → aceptados
-                  </p>
+                  <p className="text-xs text-muted-foreground mb-4">Presupuestos enviados → aceptados</p>
                   <ConversionCard
                     conversion={stats?.conversion ?? { enviados: 0, aceptados: 0, rate: 0 }}
                   />
                 </div>
               </div>
-            </SectionCard>
+            </div>
 
-            {/* ── Expedientes recientes ────────────────────────────────────────── */}
-            <SectionCard
-              title="Expedientes recientes"
-              description="Los últimos expedientes registrados"
-              icon={<IdCard size={18} />}
-              bodyPadding="none"
-              action={
+            {/* ── Certificaciones recientes ────────────────────────────────────── */}
+            <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+              <div className="px-6 py-5 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <FileCheck2 size={18} className="text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-semibold text-foreground tracking-tight">Certificaciones recientes</h2>
+                    <p className="text-xs text-muted-foreground mt-0.5">Los últimos expedientes registrados</p>
+                  </div>
+                </div>
                 <button
                   onClick={() => onNavigate?.("certifications")}
                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:bg-primary/5 rounded-lg px-3 py-1.5 transition-colors"
@@ -520,8 +593,8 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
                   Ver todas
                   <ArrowUpRight size={14} />
                 </button>
-              }
-            >
+              </div>
+
               {certsLoading ? (
                 <div className="p-5 space-y-3">
                   {Array.from({ length: 4 }).map((_, i) => (
@@ -547,13 +620,7 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
                   <table className="w-full">
                     <thead>
                       <tr>
-                        {[
-                          "Propietario / Dirección",
-                          "Calificación",
-                          "Estado",
-                          "Fecha",
-                          "",
-                        ].map((h, i) => (
+                        {["Propietario / Dirección", "Calificación", "Estado", "Fecha", ""].map((h, i) => (
                           <th
                             key={i}
                             className="px-6 py-3 text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-[0.08em] whitespace-nowrap bg-muted/30"
@@ -565,10 +632,7 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
                     </thead>
                     <tbody>
                       {recentCerts.map((cert) => (
-                        <tr
-                          key={cert.id}
-                          className="hover:bg-muted/40 transition-colors"
-                        >
+                        <tr key={cert.id} className="hover:bg-muted/40 transition-colors">
                           <td className="px-6 py-4">
                             <p className="text-sm font-semibold text-foreground">
                               {cert.ownerName || "—"}
@@ -578,13 +642,22 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
                             </p>
                           </td>
                           <td className="px-6 py-4">
-                            {cert.energyRating
-                              ? <EnergyChip rating={cert.energyRating} />
-                              : <span className="text-xs text-muted-foreground">—</span>
-                            }
+                            {cert.energyRating ? (
+                              <span
+                                className="inline-flex items-center justify-center min-w-[26px] px-2 py-0.5 rounded-md text-xs font-bold text-white shadow-sm"
+                                style={{ background: ENERGY_COLORS[cert.energyRating] ?? "#94a3b8" }}
+                              >
+                                {cert.energyRating}
+                              </span>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">—</span>
+                            )}
                           </td>
                           <td className="px-6 py-4">
-                            <StatusBadge status={cert.status} />
+                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold ${statusCls(cert.status)}`}>
+                              <span className="w-1.5 h-1.5 rounded-full bg-current mr-1.5 opacity-70" />
+                              {cert.status}
+                            </span>
                           </td>
                           <td className="px-6 py-4 text-xs text-muted-foreground whitespace-nowrap font-medium">
                             {new Date(cert.createdAt).toLocaleDateString("es-ES")}
@@ -613,8 +686,9 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
                   </table>
                 </div>
               )}
-            </SectionCard>
+            </div>
 
+            <div className="h-8" />
           </div>
         </div>
       </div>
