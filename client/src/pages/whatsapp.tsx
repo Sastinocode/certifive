@@ -228,10 +228,10 @@ export default function WhatsApp() {
                   <div
                     key={conv.id}
                     onClick={() => setSelectedConvId(conv.id)}
-                    className={`flex gap-3 py-3 border-b border-border cursor-pointer transition-colors ${
+                    className={`flex gap-3 px-4 py-3 border-b border-border cursor-pointer transition-all ${
                       selectedConvId === conv.id
-                        ? "bg-primary/[0.06] dark:bg-primary/[0.10] border-l-[3px] border-l-primary px-[13px]"
-                        : "hover:bg-muted/40 px-4"
+                        ? "bg-primary/[0.06] dark:bg-primary/[0.10] border-l-[3px] border-l-primary pl-[13px]"
+                        : "hover:bg-muted/40"
                     }`}
                   >
                     <div
