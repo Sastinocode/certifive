@@ -33,6 +33,7 @@ import {
   X,
   Link2,
   FileCheck,
+  FileCheck2,
   FileCode,
   CheckCircle,
   XCircle,
@@ -224,7 +225,7 @@ function WorkflowBadge({ status }: { status: string | null }) {
   const s = status.toLowerCase();
   const cls =
     s.includes("entregado") || s.includes("finalizado")
-      ? "bg-emerald-50 text-emerald-800 border border-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/40"
+      ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
       : s.includes("pago") || s.includes("pendiente") || s.includes("cobro")
       ? "bg-amber-50 text-amber-700 border border-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900/40"
       : s.includes("cee") || s.includes("enviado") || s.includes("envio")
@@ -233,8 +234,7 @@ function WorkflowBadge({ status }: { status: string | null }) {
       ? "bg-blue-50 text-blue-700 border border-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-900/40"
       : "bg-muted/60 text-muted-foreground border border-border";
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider whitespace-nowrap border ${cls}`}>
-      <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70" />
+    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-semibold whitespace-nowrap ${cls}`}>
       {label}
     </span>
   );
@@ -395,9 +395,9 @@ export default function Certificates() {
   });
 
   const STATUS_OPTIONS = [
-    { value: "nuevo",      label: "Nuevo",      dotCls: "bg-blue-500",    pillCls: "bg-blue-100 text-blue-700 border border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-900/40"       },
-    { value: "en_proceso", label: "En Proceso", dotCls: "bg-amber-500",  pillCls: "bg-amber-100 text-amber-700 border border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-900/40" },
-    { value: "finalizado", label: "Finalizado", dotCls: "bg-emerald-500", pillCls: "bg-emerald-100 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-900/40" },
+    { value: "nuevo",      label: "Nuevo",      dotCls: "bg-blue-500",    pillCls: "bg-blue-50 text-blue-700 border border-blue-100 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-900/40"             },
+    { value: "en_proceso", label: "En Proceso", dotCls: "bg-orange-500",  pillCls: "bg-orange-50 text-orange-700 border border-orange-100 dark:bg-orange-950/50 dark:text-orange-300 dark:border-orange-900/40" },
+    { value: "finalizado", label: "Finalizado", dotCls: "bg-emerald-600", pillCls: "bg-emerald-50 text-emerald-700 border border-emerald-100 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-900/40" },
   ];
 
   const getStatusSelect = (cert: Certification) => {
@@ -493,25 +493,25 @@ export default function Certificates() {
       <Sidebar selectedTab="certificados" onTabChange={() => {}} />
 
       <div className="flex-1 overflow-auto">
-        <div className="p-4 sm:p-8 max-w-7xl mx-auto space-y-6">
+        <div className="p-4 sm:p-8 max-w-7xl mx-auto space-y-7">
 
           {/* ── Header ─────────────────────────────────────────────────────── */}
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">Visión operacional</h1>
-              <p className="text-sm text-muted-foreground mt-1.5 font-medium">
+              <h1 className="text-xl sm:text-2xl font-bold text-emerald-900 dark:text-foreground tracking-tight">Visión operacional</h1>
+              <p className="text-sm text-emerald-700/60 dark:text-muted-foreground mt-1.5 font-medium">
                 Gestiona y realiza el seguimiento de tus certificaciones CEE.
               </p>
             </div>
-            <div className="flex items-center gap-3 bg-card rounded-2xl border border-emerald-100/80 dark:border-border shadow-sm px-5 py-3.5">
-              <div className="w-11 h-11 rounded-xl bg-primary flex items-center justify-center shadow-sm flex-shrink-0">
-                <IdCard size={20} className="text-white" />
+            <div className="flex items-center gap-4 bg-card rounded-2xl border border-emerald-100/60 dark:border-border shadow-sm px-5 py-3.5">
+              <div className="w-11 h-11 rounded-xl bg-emerald-600 flex items-center justify-center shadow-sm flex-shrink-0">
+                <FileCheck2 size={20} strokeWidth={2.2} className="text-white" />
               </div>
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground leading-tight">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-700/60 dark:text-muted-foreground leading-tight">
                   Total certificados
                 </p>
-                <p className="text-2xl font-bold text-foreground tracking-tight leading-none mt-1">{totalCount}</p>
+                <p className="text-2xl font-bold text-emerald-900 dark:text-foreground tracking-tight leading-none mt-1">{totalCount}</p>
               </div>
             </div>
           </div>
@@ -702,8 +702,8 @@ export default function Certificates() {
                   onClick={() => handleStatusFilter(value)}
                   className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${
                     statusFilter === value
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "text-emerald-700/70 hover:text-emerald-900 hover:bg-emerald-50/60 dark:text-muted-foreground dark:hover:text-foreground dark:hover:bg-muted/60"
+                      ? "bg-emerald-700 text-white shadow-sm"
+                      : "text-emerald-700/70 hover:text-emerald-900 hover:bg-emerald-50 dark:text-muted-foreground dark:hover:text-foreground dark:hover:bg-muted/60"
                   }`}
                 >
                   {label}
@@ -779,8 +779,8 @@ export default function Certificates() {
                                   {ini}
                                 </div>
                                 <div className="min-w-0">
-                                  <p className="font-semibold text-foreground text-sm truncate">{cert.ownerName}</p>
-                                  <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                                  <p className="font-semibold text-emerald-900 dark:text-foreground text-sm truncate">{cert.ownerName}</p>
+                                  <p className="text-xs text-emerald-700/55 dark:text-muted-foreground mt-0.5 truncate">
                                     {cert.ownerEmail || cert.ownerDni || "—"}
                                   </p>
                                 </div>
@@ -789,12 +789,12 @@ export default function Certificates() {
 
                             {/* Inmueble */}
                             <td className="px-6 py-5">
-                              <p className="text-sm text-foreground font-medium truncate max-w-[200px]">{cert.propertyAddress}</p>
+                              <p className="text-sm text-emerald-900 dark:text-foreground font-medium truncate max-w-[200px]">{cert.propertyAddress}</p>
                               <p className="text-xs text-emerald-700/55 dark:text-muted-foreground mt-0.5 font-mono">{cert.cadastralRef}</p>
                             </td>
 
                             {/* Fecha */}
-                            <td className="px-6 py-5 hidden md:table-cell text-xs font-medium text-muted-foreground whitespace-nowrap">
+                            <td className="px-6 py-5 hidden md:table-cell text-xs font-medium text-emerald-700/70 dark:text-muted-foreground whitespace-nowrap">
                               {cert.createdAt ? new Date(cert.createdAt).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" }) : "—"}
                             </td>
 
@@ -807,12 +807,12 @@ export default function Certificates() {
                             </td>
 
                             {/* Acciones */}
-                            <td className="px-6 py-5">
+                            <td className="px-6 py-5 text-right">
                               <div className="flex items-center justify-end gap-1.5">
                                 {cert.presupuestoToken && (
                                   <button
                                     onClick={() => setPreviewCert(cert)}
-                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-violet-100 text-violet-700 border border-violet-200 dark:bg-violet-950/40 dark:text-violet-400 dark:border-violet-800/40 rounded-full text-[11px] font-semibold hover:bg-violet-100/80 dark:hover:bg-violet-950/60 transition-all"
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-violet-50 text-violet-700 dark:bg-violet-950/40 dark:text-violet-400 rounded-full text-[11px] font-semibold hover:bg-violet-100 dark:hover:bg-violet-950/60 transition-colors"
                                   >
                                     <Eye className="w-3 h-3" />
                                     <span className="hidden sm:inline">Tarifa</span>
@@ -821,7 +821,7 @@ export default function Certificates() {
                                 {cert.ceeToken && (
                                   <button
                                     onClick={() => setPreviewCert(cert)}
-                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-teal-100 text-teal-700 border border-teal-200 dark:bg-teal-950/40 dark:text-teal-400 dark:border-teal-800/40 rounded-full text-[11px] font-semibold hover:bg-teal-100/80 dark:hover:bg-teal-950/60 transition-all"
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-teal-50 text-teal-700 dark:bg-teal-950/40 dark:text-teal-400 rounded-full text-[11px] font-semibold hover:bg-teal-100 dark:hover:bg-teal-950/60 transition-colors"
                                   >
                                     <Eye className="w-3 h-3" />
                                     <span className="hidden sm:inline">CEE</span>
@@ -849,15 +849,13 @@ export default function Certificates() {
 
                                 <DropdownMenu>
                                   <DropdownMenuTrigger asChild>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="w-7 h-7 p-0 rounded-full"
+                                    <button
+                                      className="w-8 h-8 inline-flex items-center justify-center hover:bg-emerald-100 dark:hover:bg-muted rounded-full transition-colors text-emerald-700/60 hover:text-emerald-900 dark:text-muted-foreground dark:hover:text-foreground disabled:opacity-50"
                                       disabled={downloadingId === cert.id}
                                       data-testid={`btn-more-${cert.id}`}
                                     >
-                                      <MoreVertical className="w-4 h-4" />
-                                    </Button>
+                                      <MoreVertical className="w-5 h-5" />
+                                    </button>
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent align="end" className="w-52">
                                     {cert.tecnicoFormStatus === "completado" && (
@@ -920,8 +918,8 @@ export default function Certificates() {
                 {/* ── Table footer ───────────────────────────────────────── */}
                 <div className="px-5 sm:px-6 py-4 bg-emerald-50/30 dark:bg-emerald-950/10 flex items-center justify-between gap-4 flex-wrap">
                   <div className="flex items-center gap-4">
-                    <p className="text-xs text-muted-foreground font-medium">
-                      Mostrando <span className="font-semibold text-foreground">{certList.length}</span> de {totalCount} certificaciones
+                    <p className="text-xs text-emerald-700/60 dark:text-muted-foreground font-medium">
+                      Mostrando <span className="font-semibold text-emerald-900 dark:text-foreground">{certList.length}</span> de {totalCount} certificaciones
                     </p>
                     {totalPages > 1 && (
                       <div className="flex items-center gap-1">
@@ -954,7 +952,7 @@ export default function Certificates() {
                     )}
                   </div>
                   <Link to="/certificados/nuevo">
-                    <button className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground rounded-full text-xs font-semibold hover:bg-primary/90 transition-all shadow-sm">
+                    <button className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-700 text-white rounded-full text-xs font-semibold hover:bg-emerald-800 transition-colors shadow-sm">
                       <Plus className="w-3.5 h-3.5" />
                       Nueva certificación
                     </button>
