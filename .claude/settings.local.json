@@ -17,7 +17,11 @@
       "Bash(DATABASE_URL=\"postgresql://postgres:XqgLVHUsuKzAHhtinivyXjUlDSzKSikB@yamabiko.proxy.rlwy.net:36942/railway\" npm run *)",
       "PowerShell(cd \"D:\\\\Users\\\\Helpia\\\\Documents\\\\Claude\\\\Projects\\\\CERTIFIVE\\\\certifive\"; $env:DATABASE_URL=\"postgresql://postgres:XqgLVHUsuKzAHhtinivyXjUlDSzKSikB@yamabiko.proxy.rlwy.net:36942/railway\"; npx drizzle-kit push 2>&1)",
       "PowerShell(cd \"D:\\\\Users\\\\Helpia\\\\Documents\\\\Claude\\\\Projects\\\\CERTIFIVE\\\\certifive\"; $env:DATABASE_URL=\"postgresql://postgres:XqgLVHUsuKzAHhtinivyXjUlDSzKSikB@yamabiko.proxy.rlwy.net:36942/railway\"; node create_tables.js)",
-      "PowerShell(cd \"D:\\\\Users\\\\Helpia\\\\Documents\\\\Claude\\\\Projects\\\\CERTIFIVE\\\\certifive\"; $env:DATABASE_URL=\"postgresql://postgres:XqgLVHUsuKzAHhtinivyXjUlDSzKSikB@yamabiko.proxy.rlwy.net:36942/railway\"; node create_tables.cjs)"
+      "PowerShell(cd \"D:\\\\Users\\\\Helpia\\\\Documents\\\\Claude\\\\Projects\\\\CERTIFIVE\\\\certifive\"; $env:DATABASE_URL=\"postgresql://postgres:XqgLVHUsuKzAHhtinivyXjUlDSzKSikB@yamabiko.proxy.rlwy.net:36942/railway\"; node create_tables.cjs)",
+      "PowerShell(claude update *)",
+      "PowerShell(npx tsc --noEmit)",
+      "PowerShell(git *)",
+      "PowerShell(npx drizzle-kit generate)"
     ]
   }
 }
