@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ import {
   ExternalLink, RefreshCw, Package, Receipt, Building2, Plug, MessageCircle,
 } from "lucide-react";
 
-// ── Two-Factor Authentication Section ────────────────────────────────────────
+// â”€â”€ Two-Factor Authentication Section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function TwoFactorSection() {
   const { toast } = useToast();
   const [enabled, setEnabled]   = useState<boolean | null>(null);
@@ -56,8 +56,8 @@ function TwoFactorSection() {
       toast({
         title: !enabled ? "2FA activado" : "2FA desactivado",
         description: !enabled
-          ? "A partir de ahora necesitarás un código al iniciar sesión."
-          : "La verificación en dos pasos ha sido desactivada.",
+          ? "A partir de ahora necesitarÃ¡s un cÃ³digo al iniciar sesiÃ³n."
+          : "La verificaciÃ³n en dos pasos ha sido desactivada.",
       });
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -71,17 +71,17 @@ function TwoFactorSection() {
   return (
     <div className="flex items-center gap-4">
       <div className="flex-1">
-        <p className="text-sm font-semibold text-foreground">Autenticación de dos factores</p>
+        <p className="text-sm font-semibold text-foreground">AutenticaciÃ³n de dos factores</p>
         <p className="text-xs text-muted-foreground mt-0.5">
           {enabled
-            ? "Activa — se envía un código por email en cada inicio de sesión."
-            : "Desactivada — añade una capa extra de seguridad a tu cuenta."}
+            ? "Activa â€” se envÃ­a un cÃ³digo por email en cada inicio de sesiÃ³n."
+            : "Desactivada â€” aÃ±ade una capa extra de seguridad a tu cuenta."}
         </p>
         {showForm && (
           <div className="mt-3 flex gap-2 items-center">
             <Input
               type="password"
-              placeholder="Confirma tu contraseña"
+              placeholder="Confirma tu contraseÃ±a"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="h-9 text-sm max-w-xs"
@@ -107,7 +107,7 @@ function TwoFactorSection() {
   );
 }
 
-// ── SaveRow — consistent save button at section bottom ────────────────────────
+// â”€â”€ SaveRow â€” consistent save button at section bottom â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function SaveRow({ onClick, loading, label = "Guardar cambios" }: { onClick: () => void; loading: boolean; label?: string }) {
   return (
     <div className="flex justify-end pt-2">
@@ -122,11 +122,11 @@ function SaveRow({ onClick, loading, label = "Guardar cambios" }: { onClick: () 
 const NAV_ITEMS = [
   { href: "#perfil",         Icon: User,       label: "Perfil" },
   { href: "#empresa",        Icon: Building2,  label: "Empresa" },
-  { href: "#facturacion",    Icon: Receipt,    label: "Facturación" },
+  { href: "#facturacion",    Icon: Receipt,    label: "FacturaciÃ³n" },
   { href: "#plantillas",     Icon: FileText,   label: "Plantillas" },
   { href: "#notificaciones", Icon: Bell,       label: "Notificaciones" },
   { href: "#integraciones",  Icon: Plug,       label: "Integraciones" },
-  { href: "#suscripcion",    Icon: CreditCard, label: "Plan & Suscripción" },
+  { href: "#suscripcion",    Icon: CreditCard, label: "Plan & SuscripciÃ³n" },
   { href: "#seguridad",      Icon: Shield,     label: "Seguridad" },
 ] as const;
 
@@ -134,8 +134,9 @@ export default function Settings() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
+  const [activeSection, setActiveSection] = useState("perfil");
 
-  // ── Profile / company shared state (one API endpoint) ────────────────────
+  // â”€â”€ Profile / company shared state (one API endpoint) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const [profileData, setProfileData] = useState({
     firstName: user?.firstName || "",
     lastName: user?.lastName || "",
@@ -152,7 +153,7 @@ export default function Settings() {
     missingFields: [] as string[],
   });
 
-  // ── Payment / cobro state ─────────────────────────────────────────────────
+  // â”€â”€ Payment / cobro state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const [paymentSettings, setPaymentSettings] = useState({
     bizumPhone: "",
     iban: "",
@@ -160,7 +161,7 @@ export default function Settings() {
   });
   const [isSavingPayment, setIsSavingPayment] = useState(false);
 
-  // ── Billing config state (fiscal, numbering, VAT) ─────────────────────────
+  // â”€â”€ Billing config state (fiscal, numbering, VAT) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const [billingConfig, setBillingConfig] = useState({
     invoicePrefix: "FAC",
     startNumber: "1",
@@ -169,7 +170,7 @@ export default function Settings() {
   });
   const [isSavingBilling, setIsSavingBilling] = useState(false);
 
-  // ── Notifications state ───────────────────────────────────────────────────
+  // â”€â”€ Notifications state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const [notifications, setNotifications] = useState({
     emailCertifications: true,
     emailReports: true,
@@ -177,7 +178,7 @@ export default function Settings() {
     pushNotifications: true,
   });
 
-  // ── Certificate / template state ──────────────────────────────────────────
+  // â”€â”€ Certificate / template state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const [certificateSettings, setCertificateSettings] = useState({
     defaultValidity: "10",
     autoBackup: true,
@@ -191,11 +192,11 @@ export default function Settings() {
   });
   const [isCreatingBackup, setIsCreatingBackup] = useState(false);
 
-  // ── Subscription state ────────────────────────────────────────────────────
+  // â”€â”€ Subscription state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const [openingPortal, setOpeningPortal] = useState(false);
   const [checkingOut, setCheckingOut]   = useState<string | null>(null);
 
-  // ── Bootstrap ─────────────────────────────────────────────────────────────
+  // â”€â”€ Bootstrap â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     const loadProfileValidation = async () => {
       try {
@@ -226,7 +227,7 @@ export default function Settings() {
     loadBackupStatus();
   }, []);
 
-  // ── Handlers ──────────────────────────────────────────────────────────────
+  // â”€â”€ Handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const handleProfileSave = async () => {
     setIsSaving(true);
     try {
@@ -254,9 +255,9 @@ export default function Settings() {
         body: JSON.stringify(billingConfig),
       });
       if (!r.ok) throw new Error();
-      toast({ title: "Configuración guardada", description: "Los datos de facturación han sido actualizados." });
+      toast({ title: "ConfiguraciÃ³n guardada", description: "Los datos de facturaciÃ³n han sido actualizados." });
     } catch {
-      toast({ title: "Error", description: "No se pudo guardar la configuración.", variant: "destructive" });
+      toast({ title: "Error", description: "No se pudo guardar la configuraciÃ³n.", variant: "destructive" });
     }
     setIsSavingBilling(false);
   };
@@ -274,9 +275,9 @@ export default function Settings() {
         }),
       });
       if (!r.ok) throw new Error();
-      toast({ title: "Métodos de cobro guardados", description: "Los datos de pago se han actualizado correctamente." });
+      toast({ title: "MÃ©todos de cobro guardados", description: "Los datos de pago se han actualizado correctamente." });
     } catch {
-      toast({ title: "Error", description: "No se pudo guardar la configuración de cobro.", variant: "destructive" });
+      toast({ title: "Error", description: "No se pudo guardar la configuraciÃ³n de cobro.", variant: "destructive" });
     }
     setIsSavingPayment(false);
   };
@@ -293,7 +294,7 @@ export default function Settings() {
   const handleNotificationsSave = async () => {
     setIsSaving(true);
     await new Promise(resolve => setTimeout(resolve, 800));
-    toast({ title: "Preferencias actualizadas", description: "La configuración de notificaciones ha sido guardada." });
+    toast({ title: "Preferencias actualizadas", description: "La configuraciÃ³n de notificaciones ha sido guardada." });
     setIsSaving(false);
   };
 
@@ -307,13 +308,13 @@ export default function Settings() {
       });
       if (!r.ok) throw new Error();
       toast({
-        title: "Configuración actualizada",
+        title: "ConfiguraciÃ³n actualizada",
         description: certificateSettings.autoBackup
-          ? "Configuración guardada y backup automático activado"
+          ? "ConfiguraciÃ³n guardada y backup automÃ¡tico activado"
           : "Los ajustes predeterminados han sido guardados",
       });
     } catch {
-      toast({ title: "Error", description: "No se pudo guardar la configuración.", variant: "destructive" });
+      toast({ title: "Error", description: "No se pudo guardar la configuraciÃ³n.", variant: "destructive" });
     }
     setIsSaving(false);
   };
@@ -339,11 +340,11 @@ export default function Settings() {
         toast({ title: "Backup creado", description: "Copia de seguridad creada exitosamente." });
         await loadBackupStatus();
       } else {
-        toast({ title: "Backup simulado", description: "Sistema de backup en modo demostración." });
+        toast({ title: "Backup simulado", description: "Sistema de backup en modo demostraciÃ³n." });
         setBackupStatus(prev => ({ ...prev, lastBackup: new Date().toISOString(), backupCount: prev.backupCount + 1, totalSize: prev.totalSize + 1024 * 1024 }));
       }
     } catch {
-      toast({ title: "Backup simulado", description: "Sistema funcionando en modo demostración." });
+      toast({ title: "Backup simulado", description: "Sistema funcionando en modo demostraciÃ³n." });
       setBackupStatus(prev => ({ ...prev, lastBackup: new Date().toISOString(), backupCount: prev.backupCount + 1, totalSize: prev.totalSize + 1024 * 1024 }));
     }
     setIsCreatingBackup(false);
@@ -357,7 +358,7 @@ export default function Settings() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
-  // ── Subscription ──────────────────────────────────────────────────────────
+  // â”€â”€ Subscription â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const { data: subData, isLoading: subLoading, refetch: refetchSub } = useQuery<{
     plan: string;
     status: string;
@@ -391,7 +392,7 @@ export default function Settings() {
       const { url } = await res.json();
       window.open(url, "_blank");
     } catch (err: any) {
-      toast({ title: "Error", description: err?.message ?? "No se pudo abrir el portal de facturación.", variant: "destructive" });
+      toast({ title: "Error", description: err?.message ?? "No se pudo abrir el portal de facturaciÃ³n.", variant: "destructive" });
     }
     setOpeningPortal(false);
   };
@@ -414,21 +415,21 @@ export default function Settings() {
       key: "free", name: "Gratuito", price: 0, period: "",
       icon: <Package className="w-5 h-5" />, color: "text-slate-600",
       bg: "bg-slate-50", border: "border-slate-200", certs: "5 certificados/mes",
-      features: ["Gestión básica de certificados", "Exportación PDF", "Soporte por email"],
-      notIncluded: ["WhatsApp automatizado", "Clientes ilimitados", "Informes avanzados", "Facturación integrada"],
+      features: ["GestiÃ³n bÃ¡sica de certificados", "ExportaciÃ³n PDF", "Soporte por email"],
+      notIncluded: ["WhatsApp automatizado", "Clientes ilimitados", "Informes avanzados", "FacturaciÃ³n integrada"],
     },
     {
-      key: "basico", name: "Básico", price: 29, period: "/mes",
+      key: "basico", name: "BÃ¡sico", price: 29, period: "/mes",
       icon: <Star className="w-5 h-5" />, color: "text-blue-600",
       bg: "bg-blue-50", border: "border-blue-200", certs: "30 certificados/mes",
-      features: ["Todo lo del plan Gratuito", "WhatsApp automatizado", "Exportación Word y Excel", "Gestión de carpetas", "Soporte prioritario"],
+      features: ["Todo lo del plan Gratuito", "WhatsApp automatizado", "ExportaciÃ³n Word y Excel", "GestiÃ³n de carpetas", "Soporte prioritario"],
       notIncluded: ["Clientes ilimitados", "API acceso"],
     },
     {
       key: "pro", name: "Pro", price: 59, period: "/mes",
       icon: <Zap className="w-5 h-5" />, color: "text-teal-600",
       bg: "bg-teal-50", border: "border-teal-200", certs: "100 certificados/mes",
-      features: ["Todo lo del plan Básico", "Flujos WhatsApp personalizados", "Facturación integrada", "Informes avanzados", "Tarifas dinámicas por zona", "Acceso API"],
+      features: ["Todo lo del plan BÃ¡sico", "Flujos WhatsApp personalizados", "FacturaciÃ³n integrada", "Informes avanzados", "Tarifas dinÃ¡micas por zona", "Acceso API"],
       notIncluded: [],
       recommended: true,
     },
@@ -452,14 +453,14 @@ export default function Settings() {
   };
 
   const fmtDate = (iso: string | null | undefined) => {
-    if (!iso) return "—";
+    if (!iso) return "â€”";
     return new Intl.DateTimeFormat("es-ES", { day: "2-digit", month: "long", year: "numeric" }).format(new Date(iso));
   };
 
   const fmtAmount = (amt: number, currency: string) =>
     new Intl.NumberFormat("es-ES", { style: "currency", currency: currency.toUpperCase() }).format(amt);
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  // â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   return (
     <div className="flex h-screen bg-background">
       <Sidebar selectedTab="settings" onTabChange={() => {}} />
@@ -473,727 +474,716 @@ export default function Settings() {
           <div className="px-4 py-5 sm:px-8 sm:py-8 max-w-[1400px] mx-auto space-y-6">
 
             {/* Header */}
-            <div>
-              <h1 className="text-2xl font-bold text-foreground tracking-tight">Ajustes</h1>
-              <p className="text-sm text-muted-foreground mt-1">Configura tu cuenta, empresa y preferencias de la aplicación</p>
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <h1 className="text-2xl font-bold text-foreground tracking-tight">Ajustes</h1>
+                <p className="text-sm text-muted-foreground mt-1">Configura tu cuenta, empresa y preferencias de la aplicaciÃ³n</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button className="h-10 px-4 rounded-full text-sm font-medium border border-border bg-card hover:bg-muted/40">Cancelar</button>
+                <button className="h-10 px-5 rounded-full text-sm font-medium bg-primary text-primary-foreground shadow-sm inline-flex items-center gap-1.5">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  Guardar cambios
+                </button>
+              </div>
             </div>
 
-            {/* Quick links */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <a href="/tarifas" className="group flex items-center gap-4 bg-card rounded-2xl border border-border px-5 py-4 hover:border-primary/50 hover:shadow-md transition-all">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
-                  <span className="text-primary text-lg font-bold">€</span>
-                </div>
-                <div className="min-w-0">
-                  <p className="font-semibold text-foreground text-sm">Tarifas y precios</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">Configura los precios para generar presupuestos automáticos</p>
-                </div>
-                <span className="ml-auto text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0">→</span>
-              </a>
-              <a href="/facturacion" className="group flex items-center gap-4 bg-card rounded-2xl border border-border px-5 py-4 hover:border-primary/50 hover:shadow-md transition-all">
-                <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center flex-shrink-0 group-hover:bg-accent transition-colors">
-                  <FileText className="w-5 h-5 text-muted-foreground" />
-                </div>
-                <div className="min-w-0">
-                  <p className="font-semibold text-foreground text-sm">Facturas</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">Gestiona y descarga tus facturas emitidas</p>
-                </div>
-                <span className="ml-auto text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0">→</span>
-              </a>
-            </div>
-
+            {/* Layout: nav + content */}
             <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
 
-              {/* Sticky nav */}
+              {/* Settings nav */}
               <nav className="bg-card rounded-2xl border border-border shadow-sm p-2 h-fit lg:sticky lg:top-6">
                 <ul className="space-y-0.5 text-sm">
-                  {NAV_ITEMS.map(({ href, Icon, label }) => (
-                    <li key={href}>
-                      <a
-                        href={href}
-                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-muted-foreground hover:bg-muted/40 hover:text-foreground transition-colors"
-                      >
-                        <span className="w-7 h-7 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-                          <Icon size={15} />
-                        </span>
-                        {label}
-                      </a>
-                    </li>
-                  ))}
+                  {NAV_ITEMS.map(({ href, Icon, label }) => {
+                    const isActive = activeSection === href.slice(1);
+                    return (
+                      <li key={href}>
+                        <a
+                          href={href}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setActiveSection(href.slice(1));
+                            document.getElementById(href.slice(1))?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                          }}
+                          className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium ${
+                            isActive
+                              ? "bg-primary/8 text-primary"
+                              : "text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+                          }`}
+                        >
+                          <span className={`w-7 h-7 rounded-lg bg-muted flex items-center justify-center ${
+                            isActive ? "bg-primary/15 text-primary" : ""
+                          }`}>
+                            <Icon size={15} />
+                          </span>
+                          {label}
+                        </a>
+                      </li>
+                    );
+                  })}
                 </ul>
               </nav>
 
               <div className="space-y-6 min-w-0">
 
-                {/* ─── 1. PERFIL ─── */}
-                <section id="perfil" className="scroll-mt-6">
-                  <SectionCard
-                    title="Perfil"
-                    description="Tus datos personales y de contacto"
-                    icon={<User size={18} />}
-                    action={
-                      profileValidation.isValid ? (
-                        <span className="flex items-center gap-1.5 text-xs font-medium text-green-600">
-                          <CheckCircle size={14} />Listo para facturación
-                        </span>
-                      ) : (
-                        <span className="flex items-center gap-1.5 text-xs font-medium text-amber-600">
-                          <AlertCircle size={14} />Completar datos
-                        </span>
-                      )
-                    }
-                  >
-                    <div className="pt-5 space-y-5">
-                      {/* Avatar */}
+                {/* â”€â”€â”€ 1. PERFIL â”€â”€â”€ */}
+                <section id="perfil" className="section bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+                  <header className="px-6 py-5 border-b border-border flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-950/50 flex items-center justify-center flex-shrink-0">
+                      <User className="w-[18px] h-[18px] text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div>
+                      <h2 className="text-base font-semibold text-foreground tracking-tight">Perfil</h2>
+                      <p className="text-xs text-muted-foreground mt-0.5">Tus datos personales y cÃ³mo te ven dentro de la app</p>
+                    </div>
+                  </header>
+
+                  <div className="px-6 py-6 space-y-6">
+                    {/* Avatar */}
+                    <div className="flex items-center gap-5">
+                      <div className="w-20 h-20 rounded-full bg-primary/15 flex items-center justify-center text-2xl font-bold text-primary flex-shrink-0">
+                        {((profileData.firstName?.[0] ?? "") + (profileData.lastName?.[0] ?? "")).toUpperCase() || "?"}
+                      </div>
+                      <div className="space-y-1.5">
+                        <div className="flex gap-2">
+                          <button className="h-9 px-3.5 rounded-full bg-card border border-border text-sm font-medium hover:bg-muted/40 inline-flex items-center gap-1.5">
+                            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                            Subir foto
+                          </button>
+                          <button className="h-9 px-3.5 rounded-full text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30">Eliminar</button>
+                        </div>
+                        <p className="text-xs text-muted-foreground">JPG o PNG Â· mÃ¡ximo 2 MB Â· recomendado 400Ã—400</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1.5">Nombre</label>
+                        <Input className="h-[42px] rounded-lg" value={profileData.firstName} onChange={(e) => setProfileData(p => ({ ...p, firstName: e.target.value }))} placeholder="Javier" />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1.5">Apellidos</label>
+                        <Input className="h-[42px] rounded-lg" value={profileData.lastName} onChange={(e) => setProfileData(p => ({ ...p, lastName: e.target.value }))} placeholder="MarÃ­n Castellanos" />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1.5">Email</label>
+                        <Input className="h-[42px] rounded-lg" type="email" value={profileData.email} onChange={(e) => setProfileData(p => ({ ...p, email: e.target.value }))} placeholder="javier@certifive.es" />
+                        <p className="text-[11px] text-muted-foreground mt-1.5">RecibirÃ¡s un correo de verificaciÃ³n si lo cambias</p>
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1.5">TelÃ©fono</label>
+                        <Input className="h-[42px] rounded-lg" type="tel" value={profileData.phone} onChange={(e) => setProfileData(p => ({ ...p, phone: e.target.value }))} placeholder="+34 612 345 678" />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1.5">Cargo</label>
+                        <Input className="h-[42px] rounded-lg" value={profileData.company} onChange={(e) => setProfileData(p => ({ ...p, company: e.target.value }))} placeholder="TÃ©cnico certificador" />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1.5">Idioma</label>
+                        <button className="h-[42px] w-full rounded-lg bg-card border border-border text-left px-3.5 text-sm flex items-center justify-between hover:bg-muted/40">
+                          EspaÃ±ol (EspaÃ±a)
+                          <svg className="w-4 h-4 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6"/></svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                {/* â”€â”€â”€ 2. EMPRESA â”€â”€â”€ */}
+                <section id="empresa" className="section bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+                  <header className="px-6 py-5 border-b border-border flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-950/50 flex items-center justify-center flex-shrink-0">
+                      <Building2 className="w-[18px] h-[18px] text-violet-600 dark:text-violet-400" />
+                    </div>
+                    <div>
+                      <h2 className="text-base font-semibold text-foreground tracking-tight">Empresa</h2>
+                      <p className="text-xs text-muted-foreground mt-0.5">Datos fiscales que aparecerÃ¡n en tus facturas y certificados</p>
+                    </div>
+                  </header>
+
+                  <div className="px-6 py-6 space-y-6">
+                    {/* Logo */}
+                    <div>
+                      <label className="text-xs font-semibold text-foreground block mb-1.5">Logo de empresa</label>
                       <div className="flex items-center gap-4">
-                        <div className="w-16 h-16 rounded-full bg-primary/15 flex items-center justify-center text-xl font-bold text-primary flex-shrink-0">
-                          {((profileData.firstName?.[0] ?? "") + (profileData.lastName?.[0] ?? "")).toUpperCase() || "?"}
+                        <div className="w-24 h-24 rounded-xl bg-muted/60 border border-dashed border-border flex flex-col items-center justify-center text-muted-foreground">
+                          <svg className="w-6 h-6 mb-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                          <span className="text-[10px] font-medium">Sin logo</span>
                         </div>
-                        <div>
-                          <p className="text-sm font-semibold text-foreground">{profileData.firstName} {profileData.lastName}</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">{profileData.email}</p>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="firstName">Nombre</Label>
-                          <Input id="firstName" value={profileData.firstName} onChange={(e) => setProfileData(p => ({ ...p, firstName: e.target.value }))} placeholder="Tu nombre" />
-                        </div>
-                        <div>
-                          <Label htmlFor="lastName">Apellidos</Label>
-                          <Input id="lastName" value={profileData.lastName} onChange={(e) => setProfileData(p => ({ ...p, lastName: e.target.value }))} placeholder="Tus apellidos" />
-                        </div>
-                        <div>
-                          <Label htmlFor="email">Email</Label>
-                          <div className="relative">
-                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                            <Input id="email" type="email" value={profileData.email} onChange={(e) => setProfileData(p => ({ ...p, email: e.target.value }))} className="pl-9" placeholder="tu@email.com" />
-                          </div>
-                        </div>
-                        <div>
-                          <Label htmlFor="phone">Teléfono</Label>
-                          <div className="relative">
-                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                            <Input id="phone" type="tel" value={profileData.phone} onChange={(e) => setProfileData(p => ({ ...p, phone: e.target.value }))} className="pl-9" placeholder="968 123 456" />
-                          </div>
+                        <div className="space-y-1.5">
+                          <button className="h-9 px-3.5 rounded-full bg-card border border-border text-sm font-medium hover:bg-muted/40">Subir logo</button>
+                          <p className="text-xs text-muted-foreground">SVG, PNG con fondo transparente Â· mÃ¡ximo 2 MB</p>
                         </div>
                       </div>
-
-                      <SaveRow onClick={handleProfileSave} loading={isSaving} />
                     </div>
-                  </SectionCard>
-                </section>
 
-                {/* ─── 2. EMPRESA ─── */}
-                <section id="empresa" className="scroll-mt-6">
-                  <SectionCard
-                    title="Empresa"
-                    description="Datos fiscales para facturación con validez legal española"
-                    icon={<Building2 size={18} />}
-                  >
-                    <div className="pt-5 space-y-5">
-                      {!profileValidation.isValid && profileValidation.missingFields.length > 0 && (
-                        <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-700/50">
-                          <p className="text-sm text-amber-800 dark:text-amber-300">
-                            <strong>Campos requeridos:</strong> {profileValidation.missingFields.join(", ")}
-                          </p>
-                          <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">Completa estos datos para emitir facturas con validez legal.</p>
-                        </div>
-                      )}
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="company">Nombre o razón social</Label>
-                          <div className="relative">
-                            <Building className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                            <Input id="company" value={profileData.company} onChange={(e) => setProfileData(p => ({ ...p, company: e.target.value }))} className="pl-9" placeholder="Nombre de tu empresa" />
-                          </div>
-                        </div>
-                        <div>
-                          <Label htmlFor="dni">DNI / NIF</Label>
-                          <Input id="dni" value={profileData.dni} onChange={(e) => setProfileData(p => ({ ...p, dni: e.target.value }))} placeholder="12345678A" maxLength={9} />
-                        </div>
-                        <div>
-                          <Label htmlFor="license">Número de colegiado</Label>
-                          <Input id="license" value={profileData.license} onChange={(e) => setProfileData(p => ({ ...p, license: e.target.value }))} placeholder="Ej: COA-1234" />
-                        </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div className="md:col-span-2">
+                        <label className="text-xs font-semibold text-foreground block mb-1.5">RazÃ³n social</label>
+                        <Input className="h-[42px] rounded-lg" value={profileData.company} onChange={(e) => setProfileData(p => ({ ...p, company: e.target.value }))} placeholder="Certifive Soluciones EnergÃ©ticas S.L." />
                       </div>
-
                       <div>
-                        <Label htmlFor="address">Dirección fiscal</Label>
-                        <Textarea id="address" value={profileData.address} onChange={(e) => setProfileData(p => ({ ...p, address: e.target.value }))} placeholder="Dirección completa" rows={3} />
+                        <label className="text-xs font-semibold text-foreground block mb-1.5">Nombre comercial</label>
+                        <Input className="h-[42px] rounded-lg" value={profileData.company} onChange={(e) => setProfileData(p => ({ ...p, company: e.target.value }))} placeholder="Certifive" />
                       </div>
-
-                      <SaveRow onClick={handleProfileSave} loading={isSaving} />
-                    </div>
-                  </SectionCard>
-                </section>
-
-                {/* ─── 3. FACTURACIÓN ─── */}
-                <section id="facturacion" className="scroll-mt-6">
-                  <SectionCard
-                    title="Facturación"
-                    description="Numeración de facturas, impuestos y métodos de cobro"
-                    icon={<Receipt size={18} />}
-                  >
-                    <div className="pt-5 space-y-6">
-                      {/* Billing config */}
                       <div>
-                        <p className="text-sm font-semibold text-foreground mb-3">Configuración fiscal</p>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div>
-                            <Label htmlFor="invoicePrefix">Prefijo de factura</Label>
-                            <Input id="invoicePrefix" value={billingConfig.invoicePrefix} onChange={(e) => setBillingConfig(p => ({ ...p, invoicePrefix: e.target.value }))} placeholder="FAC" />
-                          </div>
-                          <div>
-                            <Label htmlFor="startNumber">Número inicial</Label>
-                            <Input id="startNumber" type="number" min="1" value={billingConfig.startNumber} onChange={(e) => setBillingConfig(p => ({ ...p, startNumber: e.target.value }))} placeholder="1" />
-                          </div>
-                          <div>
-                            <Label htmlFor="vatRate">IVA (%)</Label>
-                            <Select value={billingConfig.vatRate} onValueChange={(v) => setBillingConfig(p => ({ ...p, vatRate: v }))}>
-                              <SelectTrigger id="vatRate"><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="0">0%</SelectItem>
-                                <SelectItem value="4">4% (superreducido)</SelectItem>
-                                <SelectItem value="10">10% (reducido)</SelectItem>
-                                <SelectItem value="21">21% (general)</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                        <div className="mt-3 flex items-center gap-3">
-                          <Switch id="vatExempt" checked={billingConfig.vatExempt} onCheckedChange={(v) => setBillingConfig(p => ({ ...p, vatExempt: v }))} />
-                          <div>
-                            <Label htmlFor="vatExempt" className="cursor-pointer text-sm font-medium">Exención de IVA (art. 20 LIVA)</Label>
-                            <p className="text-xs text-muted-foreground">Activar si prestas servicios exentos de IVA</p>
-                          </div>
-                        </div>
-                        <div className="flex justify-end mt-4">
-                          <Button onClick={handleBillingConfigSave} disabled={isSavingBilling} className="rounded-full h-9 px-4 text-sm gap-2">
-                            <Save className="w-4 h-4" />
-                            {isSavingBilling ? "Guardando..." : "Guardar configuración fiscal"}
-                          </Button>
-                        </div>
+                        <label className="text-xs font-semibold text-foreground block mb-1.5">NIF / CIF</label>
+                        <Input className="h-[42px] rounded-lg" value={profileData.dni} onChange={(e) => setProfileData(p => ({ ...p, dni: e.target.value }))} placeholder="B-87654321" />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1.5">NÃºmero de colegiado</label>
+                        <Input className="h-[42px] rounded-lg" value={profileData.license} onChange={(e) => setProfileData(p => ({ ...p, license: e.target.value }))} placeholder="COIIM-21548" />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1.5">Colegio profesional</label>
+                        <Input className="h-[42px] rounded-lg" placeholder="COIIM â€” Madrid" />
                       </div>
 
-                      {/* Payment methods */}
-                      <div className="border-t border-border pt-6">
-                        <p className="text-sm font-semibold text-foreground mb-3">Métodos de cobro</p>
-                        <p className="text-xs text-muted-foreground mb-4">Elige cómo pueden pagarte tus clientes al aceptar un presupuesto</p>
-                        <div className="grid grid-cols-2 gap-3">
-                          {[
-                            { key: "stripe",       icon: <CreditCard className="w-4 h-4" />,  label: "Tarjeta bancaria",   desc: "Pago online con Stripe" },
-                            { key: "bizum",        icon: <Smartphone className="w-4 h-4" />,  label: "Bizum",             desc: "Transferencia instantánea" },
-                            { key: "transferencia",icon: <Banknote className="w-4 h-4" />,    label: "Transferencia SEPA", desc: "Banco a banco" },
-                            { key: "efectivo",     icon: <Wallet className="w-4 h-4" />,      label: "Efectivo",          desc: "Pago en mano" },
-                          ].map(({ key, icon, label, desc }) => {
-                            const active = paymentSettings.enabledPaymentMethods.includes(key);
-                            return (
-                              <button
-                                key={key}
-                                type="button"
-                                onClick={() => togglePaymentMethod(key)}
-                                data-testid={`toggle-method-${key}`}
-                                className={`flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all ${
-                                  active
-                                    ? "border-teal-500 bg-teal-50 dark:bg-teal-900/20 dark:border-teal-500/70"
-                                    : "border-border bg-card hover:border-muted-foreground/30"
-                                }`}
-                              >
-                                <div className={`mt-0.5 flex-shrink-0 ${active ? "text-teal-700 dark:text-teal-400" : "text-muted-foreground"}`}>{icon}</div>
-                                <div className="min-w-0">
-                                  <p className={`text-sm font-semibold ${active ? "text-teal-800 dark:text-teal-300" : "text-foreground"}`}>{label}</p>
-                                  <p className="text-xs text-muted-foreground">{desc}</p>
-                                </div>
-                                <div className={`ml-auto flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                                  active ? "border-teal-500 bg-teal-500" : "border-muted-foreground/30"
-                                }`}>
-                                  {active && <Check className="w-3 h-3 text-white" />}
-                                </div>
-                              </button>
-                            );
-                          })}
-                        </div>
-
-                        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <Label htmlFor="bizumPhone" className="flex items-center gap-2 mb-1">
-                              <Smartphone className="w-4 h-4 text-violet-600" />Número Bizum
-                            </Label>
-                            <Input id="bizumPhone" type="tel" value={paymentSettings.bizumPhone} onChange={(e) => setPaymentSettings(p => ({ ...p, bizumPhone: e.target.value }))} placeholder="612 345 678" data-testid="input-bizum-phone" />
-                            {paymentSettings.enabledPaymentMethods.includes("bizum") && !paymentSettings.bizumPhone && (
-                              <p className="text-xs text-amber-600 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />Bizum activo sin número configurado.</p>
-                            )}
-                          </div>
-                          <div>
-                            <Label htmlFor="iban" className="flex items-center gap-2 mb-1">
-                              <Banknote className="w-4 h-4 text-blue-600" />IBAN para transferencias
-                            </Label>
-                            <Input id="iban" value={paymentSettings.iban} onChange={(e) => setPaymentSettings(p => ({ ...p, iban: e.target.value.toUpperCase() }))} placeholder="ES12 1234 5678 9012 3456 7890" className="font-mono" data-testid="input-iban" />
-                            {paymentSettings.enabledPaymentMethods.includes("transferencia") && !paymentSettings.iban && (
-                              <p className="text-xs text-amber-600 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />Transferencia activa sin IBAN configurado.</p>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="flex justify-end mt-4">
-                          <Button onClick={handlePaymentSettingsSave} disabled={isSavingPayment} data-testid="btn-save-payment-settings" className="rounded-full h-9 px-4 text-sm gap-2">
-                            <Save className="w-4 h-4" />
-                            {isSavingPayment ? "Guardando..." : "Guardar métodos de cobro"}
-                          </Button>
-                        </div>
+                      <div className="md:col-span-2">
+                        <label className="text-xs font-semibold text-foreground block mb-1.5">DirecciÃ³n</label>
+                        <Input className="h-[42px] rounded-lg" value={profileData.address} onChange={(e) => setProfileData(p => ({ ...p, address: e.target.value }))} placeholder="C/ VelÃ¡zquez 87, 3Âº B" />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1.5">CÃ³digo postal</label>
+                        <Input className="h-[42px] rounded-lg" placeholder="28006" />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1.5">Ciudad</label>
+                        <Input className="h-[42px] rounded-lg" placeholder="Madrid" />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1.5">Provincia</label>
+                        <Input className="h-[42px] rounded-lg" placeholder="Madrid" />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1.5">PaÃ­s</label>
+                        <button className="h-[42px] w-full rounded-lg bg-card border border-border text-left px-3.5 text-sm flex items-center justify-between hover:bg-muted/40">
+                          EspaÃ±a
+                          <svg className="w-4 h-4 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6"/></svg>
+                        </button>
                       </div>
                     </div>
-                  </SectionCard>
+                  </div>
                 </section>
 
-                {/* ─── 4. PLANTILLAS ─── */}
-                <section id="plantillas" className="scroll-mt-6">
-                  <SectionCard
-                    title="Plantillas"
-                    description="Formato y ajustes predeterminados de los documentos generados"
-                    icon={<FileText size={18} />}
-                  >
-                    <div className="pt-5 space-y-5">
-                      <div className="max-w-xs">
-                        <Label htmlFor="validity">Validez predeterminada de certificados</Label>
-                        <p className="text-xs text-muted-foreground mb-2">Duración estándar al emitir un certificado energético</p>
-                        <Select value={certificateSettings.defaultValidity} onValueChange={(v) => setCertificateSettings(p => ({ ...p, defaultValidity: v }))}>
-                          <SelectTrigger id="validity"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="1">1 año</SelectItem>
-                            <SelectItem value="2">2 años</SelectItem>
-                            <SelectItem value="3">3 años</SelectItem>
-                            <SelectItem value="5">5 años</SelectItem>
-                            <SelectItem value="7">7 años</SelectItem>
-                            <SelectItem value="10">10 años</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="flex items-center gap-4 py-4 border-t border-border">
-                        <div className="flex-1">
-                          <p className="text-sm font-semibold text-foreground">Backup automático</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">Crear copias de seguridad automáticas de certificados y documentos</p>
-                        </div>
-                        <Switch checked={certificateSettings.autoBackup} onCheckedChange={(v) => setCertificateSettings(p => ({ ...p, autoBackup: v }))} />
-                      </div>
-
-                      <div className="bg-muted/30 p-4 rounded-xl border border-border space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Database className="w-4 h-4 text-blue-600" />
-                            <span className="text-sm font-semibold text-foreground">Estado del sistema de backup</span>
-                          </div>
-                          <Button onClick={handleCreateBackup} disabled={isCreatingBackup} size="sm" variant="outline" className="rounded-full h-8 px-3 text-xs gap-1.5">
-                            <Download className="w-3.5 h-3.5" />
-                            {isCreatingBackup ? "Creando..." : "Crear backup"}
-                          </Button>
-                        </div>
-                        <div className="grid grid-cols-3 gap-4">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4 text-muted-foreground" />
-                            <div>
-                              <p className="text-xs text-muted-foreground">Último backup</p>
-                              <p className="text-sm font-semibold text-foreground">{backupStatus.lastBackup ? new Date(backupStatus.lastBackup).toLocaleDateString("es-ES") : "Nunca"}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <HardDrive className="w-4 h-4 text-muted-foreground" />
-                            <div>
-                              <p className="text-xs text-muted-foreground">Total</p>
-                              <p className="text-sm font-semibold text-foreground">{backupStatus.backupCount}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Database className="w-4 h-4 text-muted-foreground" />
-                            <div>
-                              <p className="text-xs text-muted-foreground">Tamaño</p>
-                              <p className="text-sm font-semibold text-foreground">{formatFileSize(backupStatus.totalSize)}</p>
-                            </div>
-                          </div>
-                        </div>
-                        {certificateSettings.autoBackup && (
-                          <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700/50 rounded-lg">
-                            <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0" />
-                            <span className="text-xs text-green-800 dark:text-green-400">Backup automático activado — se crean copias diarias</span>
-                          </div>
-                        )}
-                      </div>
-
-                      <SaveRow onClick={handleCertificateSettingsSave} loading={isSaving} label="Guardar configuración" />
+                {/* â”€â”€â”€ 3. FACTURACIÃ“N â”€â”€â”€ */}
+                <section id="facturacion" className="section bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+                  <header className="px-6 py-5 border-b border-border flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-green-100 dark:bg-green-950/50 flex items-center justify-center flex-shrink-0">
+                      <Receipt className="w-[18px] h-[18px] text-green-600 dark:text-green-400" />
                     </div>
-                  </SectionCard>
+                    <div>
+                      <h2 className="text-base font-semibold text-foreground tracking-tight">FacturaciÃ³n</h2>
+                      <p className="text-xs text-muted-foreground mt-0.5">ConfiguraciÃ³n fiscal, numeraciÃ³n e impuestos por defecto</p>
+                    </div>
+                  </header>
+
+                  <div className="px-6 py-6 space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1.5">Serie de factura</label>
+                        <Input className="h-[42px] rounded-lg" value={billingConfig.invoicePrefix} onChange={(e) => setBillingConfig(p => ({ ...p, invoicePrefix: e.target.value }))} placeholder="CERT-2026-" />
+                        <p className="text-[11px] text-muted-foreground mt-1.5">Prefijo que se aÃ±ade automÃ¡ticamente al nÃºmero</p>
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1.5">Siguiente nÃºmero</label>
+                        <Input className="h-[42px] rounded-lg" type="number" value={billingConfig.startNumber} onChange={(e) => setBillingConfig(p => ({ ...p, startNumber: e.target.value }))} placeholder="0025" />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1.5">IVA por defecto</label>
+                        <button className="h-[42px] w-full rounded-lg bg-card border border-border text-left px-3.5 text-sm flex items-center justify-between hover:bg-muted/40">
+                          21 % â€” General
+                          <svg className="w-4 h-4 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6"/></svg>
+                        </button>
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1.5">RetenciÃ³n IRPF</label>
+                        <button className="h-[42px] w-full rounded-lg bg-card border border-border text-left px-3.5 text-sm flex items-center justify-between hover:bg-muted/40">
+                          7 % â€” Reducida (primeros 2 aÃ±os)
+                          <svg className="w-4 h-4 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6"/></svg>
+                        </button>
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1.5">Moneda</label>
+                        <button className="h-[42px] w-full rounded-lg bg-card border border-border text-left px-3.5 text-sm flex items-center justify-between hover:bg-muted/40">
+                          EUR â€” â‚¬
+                          <svg className="w-4 h-4 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6"/></svg>
+                        </button>
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-foreground block mb-1.5">Vencimiento por defecto</label>
+                        <button className="h-[42px] w-full rounded-lg bg-card border border-border text-left px-3.5 text-sm flex items-center justify-between hover:bg-muted/40">
+                          30 dÃ­as
+                          <svg className="w-4 h-4 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6"/></svg>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold text-foreground block mb-1.5">Notas al pie de factura</label>
+                      <Textarea className="rounded-lg resize-vertical min-h-[88px]" placeholder="Conforme al Real Decreto 235/2013, este certificado tiene una validez de 10 aÃ±os desde la fecha de emisiÃ³n." />
+                    </div>
+
+                    {/* IBAN block */}
+                    <div className="rounded-xl border border-border bg-muted/30 p-4 flex flex-wrap items-center gap-4">
+                      <div className="w-11 h-11 rounded-xl bg-card border border-border flex items-center justify-center flex-shrink-0">
+                        <svg className="w-5 h-5 text-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M2 10h20"/><path d="M6 14h.01M10 14h2"/></svg>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground">Cuenta bancaria</p>
+                        <p className="text-xs text-muted-foreground font-mono mt-0.5">{paymentSettings.iban || "ES76 **** **** **** **** 4521"}</p>
+                      </div>
+                      <button className="h-9 px-3.5 rounded-full bg-card border border-border text-sm font-medium hover:bg-muted/40">Cambiar IBAN</button>
+                    </div>
+                  </div>
                 </section>
 
-                {/* ─── 5. NOTIFICACIONES ─── */}
-                <section id="notificaciones" className="scroll-mt-6">
-                  <SectionCard
-                    title="Notificaciones"
-                    description="Decide qué avisos quieres recibir y por qué canal"
-                    icon={<Bell size={18} />}
-                    bodyPadding="none"
-                  >
-                    <div className="px-6 pt-5 pb-2">
-                      <NotificationStatus />
+                {/* â”€â”€â”€ 4. PLANTILLAS â”€â”€â”€ */}
+                <section id="plantillas" className="section bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+                  <header className="px-6 py-5 border-b border-border flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-950/50 flex items-center justify-center flex-shrink-0">
+                        <FileText className="w-[18px] h-[18px] text-amber-600 dark:text-amber-400" />
+                      </div>
+                      <div>
+                        <h2 className="text-base font-semibold text-foreground tracking-tight">Plantillas de documentos</h2>
+                        <p className="text-xs text-muted-foreground mt-0.5">Formato y plantillas que se aplican a tus PDFs</p>
+                      </div>
                     </div>
+                    <button className="h-10 px-4 rounded-full bg-card border border-border text-sm font-medium hover:bg-muted/40 inline-flex items-center gap-1.5">
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                      Nueva plantilla
+                    </button>
+                  </header>
 
-                    <div className="divide-y divide-border border-t border-border">
-                      {[
-                        { key: "emailCertifications", label: "Certificaciones completadas", desc: "Confirmación cuando se complete una certificación" },
-                        { key: "emailReports",         label: "Informes mensuales",          desc: "Resumen mensual de actividad y estadísticas" },
-                        { key: "emailReminders",       label: "Recordatorios de vencimiento",desc: "Alertas sobre certificados próximos a vencer" },
-                        { key: "pushNotifications",    label: "Notificaciones push",          desc: "Notificaciones en tiempo real en el navegador" },
-                      ].map(({ key, label, desc }) => (
-                        <div key={key} className="px-6 py-4 flex items-center gap-4">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-foreground">{label}</p>
-                            <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>
-                          </div>
-                          <Switch
-                            checked={notifications[key as keyof typeof notifications]}
-                            onCheckedChange={(v) => setNotifications(p => ({ ...p, [key]: v }))}
-                          />
+                  <div className="px-6 py-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    {/* Template card Â· active */}
+                    <div className="rounded-2xl border-2 border-primary bg-primary/[0.04] dark:bg-primary/[0.08] p-4 relative">
+                      <span className="absolute top-3 right-3 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary text-primary-foreground">En uso</span>
+                      <div className="aspect-[3/4] rounded-lg bg-card border border-border mb-3 overflow-hidden">
+                        <div className="h-1.5 bg-primary"></div>
+                        <div className="p-3 space-y-1.5">
+                          <div className="h-2 bg-muted rounded w-2/3"></div>
+                          <div className="h-1.5 bg-muted rounded w-1/2"></div>
+                          <div className="h-px bg-border my-2"></div>
+                          <div className="h-1 bg-muted rounded w-full"></div>
+                          <div className="h-1 bg-muted rounded w-5/6"></div>
+                          <div className="h-1 bg-muted rounded w-4/6"></div>
                         </div>
-                      ))}
+                      </div>
+                      <p className="text-sm font-semibold text-foreground">Certifive EstÃ¡ndar</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">Plantilla por defecto Â· verde corporativo</p>
                     </div>
 
-                    <div className="px-6 py-4 border-t border-border flex justify-end">
-                      <Button onClick={handleNotificationsSave} disabled={isSaving} className="rounded-full h-9 px-4 text-sm gap-2">
-                        <Save className="w-4 h-4" />
-                        {isSaving ? "Guardando..." : "Guardar preferencias"}
-                      </Button>
+                    <div className="rounded-2xl border border-border bg-card p-4 hover:shadow-md transition-shadow cursor-pointer">
+                      <div className="aspect-[3/4] rounded-lg bg-card border border-border mb-3 overflow-hidden">
+                        <div className="h-8 bg-[#0f1f2e] dark:bg-[#0a1620]"></div>
+                        <div className="p-3 space-y-1.5">
+                          <div className="h-2 bg-muted rounded w-2/3"></div>
+                          <div className="h-1.5 bg-muted rounded w-1/2"></div>
+                          <div className="h-px bg-border my-2"></div>
+                          <div className="h-1 bg-muted rounded w-full"></div>
+                          <div className="h-1 bg-muted rounded w-5/6"></div>
+                        </div>
+                      </div>
+                      <p className="text-sm font-semibold text-foreground">Cabecera oscura</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">Estilo profesional Â· alto contraste</p>
                     </div>
-                  </SectionCard>
+
+                    <div className="rounded-2xl border border-border bg-card p-4 hover:shadow-md transition-shadow cursor-pointer">
+                      <div className="aspect-[3/4] rounded-lg bg-card border border-border mb-3 overflow-hidden">
+                        <div className="grid grid-cols-2 h-full">
+                          <div className="bg-muted/60 border-r border-border"></div>
+                          <div className="p-2 space-y-1">
+                            <div className="h-1.5 bg-muted rounded w-3/4"></div>
+                            <div className="h-1 bg-muted rounded w-2/3"></div>
+                            <div className="h-1 bg-muted rounded w-1/2"></div>
+                          </div>
+                        </div>
+                      </div>
+                      <p className="text-sm font-semibold text-foreground">Lateral con logo</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">Para certificados con foto del inmueble</p>
+                    </div>
+                  </div>
                 </section>
 
-                {/* ─── 6. INTEGRACIONES ─── */}
-                <section id="integraciones" className="scroll-mt-6">
-                  <SectionCard
-                    title="Integraciones"
-                    description="Conecta herramientas externas a tu cuenta"
-                    icon={<Plug size={18} />}
-                  >
-                    <div className="pt-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {/* Stripe */}
-                      <div className="flex items-start gap-4 p-4 rounded-xl border border-border bg-card">
-                        <div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center flex-shrink-0">
-                          <CreditCard className="w-5 h-5 text-violet-600" />
+                {/* â”€â”€â”€ 5. NOTIFICACIONES â”€â”€â”€ */}
+                <section id="notificaciones" className="section bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+                  <header className="px-6 py-5 border-b border-border flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-rose-100 dark:bg-rose-950/50 flex items-center justify-center flex-shrink-0">
+                      <Bell className="w-[18px] h-[18px] text-rose-600 dark:text-rose-400" />
+                    </div>
+                    <div>
+                      <h2 className="text-base font-semibold text-foreground tracking-tight">Notificaciones</h2>
+                      <p className="text-xs text-muted-foreground mt-0.5">Decide quÃ© avisos quieres recibir y por quÃ© canal</p>
+                    </div>
+                  </header>
+
+                  <div className="divide-y divide-border">
+                    <div className="px-6 py-4 flex items-center gap-4">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground">Nueva factura pagada</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Cuando un cliente confirma el pago de una factura</p>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Switch checked={notifications.emailCertifications} onCheckedChange={(v) => setNotifications(p => ({ ...p, emailCertifications: v }))} />
+                          Email
+                        </label>
+                        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Switch checked={notifications.pushNotifications} onCheckedChange={(v) => setNotifications(p => ({ ...p, pushNotifications: v }))} />
+                          Push
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="px-6 py-4 flex items-center gap-4">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground">Factura vencida</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Te recordamos cuando una factura supera la fecha de pago</p>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Switch checked={notifications.emailReports} onCheckedChange={(v) => setNotifications(p => ({ ...p, emailReports: v }))} />
+                          Email
+                        </label>
+                        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Switch checked={false} />
+                          Push
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="px-6 py-4 flex items-center gap-4">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground">Expediente registrado</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">ConfirmaciÃ³n del registro oficial del certificado</p>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Switch checked={true} />
+                          Email
+                        </label>
+                        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Switch checked={true} />
+                          Push
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="px-6 py-4 flex items-center gap-4">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground">Resumen semanal</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Cada lunes recibirÃ¡s un resumen de tu actividad</p>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Switch checked={notifications.emailReminders} onCheckedChange={(v) => setNotifications(p => ({ ...p, emailReminders: v }))} />
+                          Email
+                        </label>
+                        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Switch checked={false} />
+                          Push
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="px-6 py-4 flex items-center gap-4">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground">Novedades del producto</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Funciones nuevas, mejoras y consejos de uso</p>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Switch checked={true} />
+                          Email
+                        </label>
+                        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Switch checked={false} />
+                          Push
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                {/* â”€â”€â”€ 6. INTEGRACIONES â”€â”€â”€ */}
+                <section id="integraciones" className="section bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+                  <header className="px-6 py-5 border-b border-border flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-cyan-100 dark:bg-cyan-950/50 flex items-center justify-center flex-shrink-0">
+                      <Plug className="w-[18px] h-[18px] text-cyan-600 dark:text-cyan-400" />
+                    </div>
+                    <div>
+                      <h2 className="text-base font-semibold text-foreground tracking-tight">Integraciones</h2>
+                      <p className="text-xs text-muted-foreground mt-0.5">Conecta Certifive con tus herramientas habituales</p>
+                    </div>
+                  </header>
+
+                  <div className="divide-y divide-border">
+                    <div className="px-6 py-4 flex items-center gap-4">
+                      <div className="w-11 h-11 rounded-xl bg-[#fef3c7] dark:bg-amber-950/40 flex items-center justify-center flex-shrink-0">
+                        <span className="text-xl">ðŸ“®</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-sm font-semibold text-foreground">Registro IDAE / CCAA</p>
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary text-primary-foreground">Conectado</span>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2">
-                            <p className="text-sm font-semibold text-foreground">Stripe</p>
-                            {subData?.stripeConfigured ? (
-                              <span className="text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded-full">Conectado</span>
-                            ) : (
-                              <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-full">No configurado</span>
-                            )}
+                        <p className="text-xs text-muted-foreground mt-0.5">Registro automÃ¡tico de certificados energÃ©ticos en la CCAA</p>
+                      </div>
+                      <button className="h-9 px-3.5 rounded-full bg-card border border-border text-sm font-medium hover:bg-muted/40">Configurar</button>
+                    </div>
+
+                    <div className="px-6 py-4 flex items-center gap-4">
+                      <div className="w-11 h-11 rounded-xl bg-[#e0f2fe] dark:bg-blue-950/40 flex items-center justify-center flex-shrink-0">
+                        <span className="text-xl">ðŸ¦</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-sm font-semibold text-foreground">Stripe</p>
+                          {subData?.stripeConfigured ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary text-primary-foreground">Conectado</span>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-muted text-muted-foreground">No configurado</span>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">Cobra facturas con tarjeta o Bizum directamente desde el PDF</p>
+                      </div>
+                      <button className="h-9 px-3.5 rounded-full bg-card border border-border text-sm font-medium hover:bg-muted/40">Configurar</button>
+                    </div>
+
+                    <div className="px-6 py-4 flex items-center gap-4">
+                      <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
+                        <span className="text-xl">ðŸ“…</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground">Google Calendar</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Sincroniza las visitas tÃ©cnicas con tu calendario</p>
+                      </div>
+                      <button className="h-9 px-3.5 rounded-full bg-primary text-primary-foreground text-sm font-medium hover:opacity-90">Conectar</button>
+                    </div>
+
+                    <div className="px-6 py-4 flex items-center gap-4">
+                      <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
+                        <span className="text-xl">ðŸ“Š</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground">Holded Â· Contabilidad</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Exporta automÃ¡ticamente facturas a tu gestor contable</p>
+                      </div>
+                      <button className="h-9 px-3.5 rounded-full bg-primary text-primary-foreground text-sm font-medium hover:opacity-90">Conectar</button>
+                    </div>
+
+                    <div className="px-6 py-4 flex items-center gap-4">
+                      <div className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
+                        <span className="text-xl">ðŸ”—</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground">API & Webhooks</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Integra Certifive con sistemas a medida vÃ­a REST</p>
+                      </div>
+                      <button className="h-9 px-3.5 rounded-full bg-card border border-border text-sm font-medium hover:bg-muted/40">Ver claves API</button>
+                    </div>
+                  </div>
+                </section>
+
+                {/* â”€â”€â”€ 7. PLAN & SUSCRIPCIÃ“N â”€â”€â”€ (keep existing subscription section but update header) */}
+                <section id="suscripcion" className="section bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+                  <header className="px-6 py-5 border-b border-border flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-yellow-100 dark:bg-yellow-950/40 flex items-center justify-center flex-shrink-0">
+                      <Star className="w-[18px] h-[18px] text-yellow-600 dark:text-yellow-400" />
+                    </div>
+                    <div>
+                      <h2 className="text-base font-semibold text-foreground tracking-tight">Plan & SuscripciÃ³n</h2>
+                      <p className="text-xs text-muted-foreground mt-0.5">Tu plan actual, consumo y mÃ©todo de pago</p>
+                    </div>
+                  </header>
+
+                  <div className="px-6 py-6 space-y-6">
+                    {/* Current plan */}
+                    <div className="rounded-2xl bg-gradient-to-br from-[#0f1f2e] to-[#1a3247] dark:from-[#0a1620] dark:to-[#0f2235] p-6 text-white">
+                      <div className="flex flex-wrap items-start justify-between gap-4">
+                        <div>
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-white/60">Plan actual</p>
+                          <div className="flex items-end gap-3 mt-1.5">
+                            <p className="text-3xl font-bold tracking-tight">{currentPlan.name}</p>
+                            <p className="text-sm text-white/70 pb-1">{currentPlan.price} â‚¬ / mes Â· facturaciÃ³n anual</p>
                           </div>
-                          <p className="text-xs text-muted-foreground mt-1">Pagos online con tarjeta y gestión de suscripciones</p>
-                          {!subData?.stripeConfigured && (
-                            <p className="text-xs text-amber-600 mt-2">Añade <code className="bg-amber-50 px-1 rounded font-mono">STRIPE_SECRET_KEY</code> en las variables de entorno.</p>
+                          {subData?.currentPeriodEnd && (
+                            <p className="text-xs text-white/60 mt-2">RenovaciÃ³n automÃ¡tica el {fmtDate(subData.currentPeriodEnd)}</p>
+                          )}
+                        </div>
+                        <div className="flex gap-2">
+                          <button className="h-9 px-4 rounded-full bg-white/10 border border-white/15 text-sm font-medium text-white hover:bg-white/15">Comparar planes</button>
+                          {subData?.plan !== "pro" && subData?.plan !== "enterprise" && (
+                            <button onClick={() => startCheckout("pro")} className="h-9 px-4 rounded-full bg-primary text-primary-foreground text-sm font-medium">
+                              Subir a Pro
+                            </button>
                           )}
                         </div>
                       </div>
 
-                      {/* WhatsApp */}
-                      <div className="flex items-start gap-4 p-4 rounded-xl border border-border bg-card">
-                        <div className="w-10 h-10 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
-                          <MessageCircle className="w-5 h-5 text-green-600" />
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-6 pt-6 border-t border-white/10">
+                        <div>
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-white/50">Certificados / mes</p>
+                          <p className="text-lg font-bold mt-1">87 <span className="text-sm text-white/50 font-medium">/ 200</span></p>
+                          <div className="mt-1.5 h-1.5 rounded-full bg-white/10 overflow-hidden"><div className="h-full bg-primary" style={{width: "43%"}}></div></div>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2">
-                            <p className="text-sm font-semibold text-foreground">WhatsApp Business</p>
-                            <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-full">Próximamente</span>
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-1">Envía presupuestos y certificados directamente por WhatsApp</p>
-                          <Button size="sm" variant="outline" disabled className="mt-2 rounded-full h-7 px-3 text-xs opacity-50">Conectar</Button>
+                        <div>
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-white/50">Almacenamiento</p>
+                          <p className="text-lg font-bold mt-1">3,2 GB <span className="text-sm text-white/50 font-medium">/ 50 GB</span></p>
+                          <div className="mt-1.5 h-1.5 rounded-full bg-white/10 overflow-hidden"><div className="h-full bg-primary" style={{width: "6%"}}></div></div>
                         </div>
-                      </div>
-
-                      {/* SendGrid */}
-                      <div className="flex items-start gap-4 p-4 rounded-xl border border-border bg-card">
-                        <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
-                          <Mail className="w-5 h-5 text-blue-600" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2">
-                            <p className="text-sm font-semibold text-foreground">SendGrid</p>
-                            <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-full">Próximamente</span>
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-1">Envío de emails transaccionales con dominio propio</p>
-                          <Button size="sm" variant="outline" disabled className="mt-2 rounded-full h-7 px-3 text-xs opacity-50">Conectar</Button>
-                        </div>
-                      </div>
-
-                      {/* SEPA */}
-                      <div className="flex items-start gap-4 p-4 rounded-xl border border-border bg-card">
-                        <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0">
-                          <Banknote className="w-5 h-5 text-indigo-600" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2">
-                            <p className="text-sm font-semibold text-foreground">Domiciliación SEPA</p>
-                            <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-full">Próximamente</span>
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-1">Cobros recurrentes por transferencia bancaria SEPA</p>
-                          <Button size="sm" variant="outline" disabled className="mt-2 rounded-full h-7 px-3 text-xs opacity-50">Conectar</Button>
+                        <div>
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-white/50">Usuarios</p>
+                          <p className="text-lg font-bold mt-1">2 <span className="text-sm text-white/50 font-medium">/ 5</span></p>
+                          <div className="mt-1.5 h-1.5 rounded-full bg-white/10 overflow-hidden"><div className="h-full bg-primary" style={{width: "40%"}}></div></div>
                         </div>
                       </div>
                     </div>
-                  </SectionCard>
-                </section>
 
-                {/* ─── 7. PLAN & SUSCRIPCIÓN ─── */}
-                <section id="suscripcion" data-testid="card-subscription" className="scroll-mt-6">
-                  <SectionCard
-                    title="Plan & Suscripción"
-                    description="Tu plan actual, historial de facturas y gestión de suscripción"
-                    icon={<CreditCard size={18} />}
-                    action={
-                      <button onClick={() => refetchSub()} className="text-muted-foreground hover:text-foreground transition-colors" data-testid="btn-refresh-subscription">
-                        <RefreshCw className="w-4 h-4" />
-                      </button>
-                    }
-                  >
-                    <div className="pt-5 space-y-8">
-                      {/* Current plan banner */}
-                      {subLoading ? (
-                        <div className="h-20 bg-muted/60 animate-pulse rounded-xl" />
-                      ) : (
-                        <div className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-xl border-2 p-5 ${currentPlan.border} ${currentPlan.bg}`} data-testid="panel-current-plan">
-                          <div className="flex items-center gap-3">
-                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center bg-white border ${currentPlan.border} ${currentPlan.color}`}>
-                              {currentPlan.icon}
-                            </div>
-                            <div>
-                              <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">Plan actual</p>
-                              <p className="text-lg font-bold text-slate-800">{currentPlan.name}</p>
-                              <p className="text-xs text-slate-500">{currentPlan.certs}</p>
-                            </div>
+                    {/* Payment method + billing history */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="rounded-xl border border-border bg-muted/30 p-4">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground mb-3">MÃ©todo de pago</p>
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-8 rounded-md bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center text-white text-[10px] font-bold tracking-wider">VISA</div>
+                          <div className="flex-1">
+                            <p className="text-sm font-semibold text-foreground">â€¢â€¢â€¢â€¢ â€¢â€¢â€¢â€¢ â€¢â€¢â€¢â€¢ 4242</p>
+                            <p className="text-xs text-muted-foreground">Caduca 09 / 2028</p>
                           </div>
-                          <div className="flex flex-col items-start sm:items-end gap-1.5">
-                            {subData && (
-                              <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${statusLabel(subData.status).cls}`} data-testid="badge-sub-status">
-                                {statusLabel(subData.status).text}
+                          <button className="h-8 px-3 rounded-full text-xs font-medium border border-border bg-card hover:bg-muted/40">Cambiar</button>
+                        </div>
+                      </div>
+
+                      <div className="rounded-xl border border-border bg-muted/30 p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Facturas recientes</p>
+                          <button onClick={openBillingPortal} className="text-xs font-medium text-primary hover:underline">Ver todas</button>
+                        </div>
+                        <ul className="space-y-1.5 text-sm">
+                          {invoiceData?.invoices?.slice(0, 3).map((inv, idx) => (
+                            <li key={inv.id} className="flex items-center justify-between">
+                              <span className="text-foreground">{fmtDate(inv.created)}</span>
+                              <span className="flex items-center gap-2">
+                                <span className="font-semibold">{fmtAmount(inv.amount, inv.currency)}</span>
+                                {inv.pdfUrl && (
+                                  <a href={inv.pdfUrl} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground">â¬‡</a>
+                                )}
                               </span>
-                            )}
-                            {subData?.currentPeriodEnd && (
-                              <p className="text-xs text-slate-500">
-                                {subData.cancelAtPeriodEnd
-                                  ? `Cancela el ${fmtDate(subData.currentPeriodEnd)}`
-                                  : `Renueva el ${fmtDate(subData.currentPeriodEnd)}`}
-                              </p>
-                            )}
-                            {subData?.plan !== "free" && (
-                              <Button size="sm" variant="outline" onClick={openBillingPortal} disabled={openingPortal} className="text-xs mt-1 rounded-full" data-testid="btn-billing-portal">
-                                {openingPortal ? <RefreshCw className="w-3 h-3 mr-1.5 animate-spin" /> : <ExternalLink className="w-3 h-3 mr-1.5" />}
-                                Gestionar suscripción
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {subData && !subData.stripeConfigured && (
-                        <div className="flex items-start gap-3 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 rounded-xl text-sm" data-testid="alert-stripe-missing">
-                          <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
-                          <div>
-                            <p className="font-medium text-amber-800 dark:text-amber-300">Stripe no configurado</p>
-                            <p className="text-amber-700 dark:text-amber-400 mt-0.5">
-                              Añade <code className="bg-amber-100 px-1 rounded font-mono text-xs">STRIPE_SECRET_KEY</code> en las variables de entorno.
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Plan grid */}
-                      <div>
-                        <p className="text-sm font-semibold text-foreground mb-4">Planes disponibles</p>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                          {PLANS.map(plan => {
-                            const isCurrent = plan.key === (subData?.plan ?? "free");
-                            return (
-                              <div
-                                key={plan.key}
-                                className={`relative rounded-xl border-2 p-4 flex flex-col gap-3 transition-all ${
-                                  isCurrent
-                                    ? `${plan.border} ${plan.bg}`
-                                    : "border-slate-200 bg-white hover:border-slate-300 dark:hover:border-slate-500"
-                                }`}
-                                data-testid={`card-plan-${plan.key}`}
-                              >
-                                {(plan as any).recommended && !isCurrent && (
-                                  <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-teal-600 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wide">
-                                    Recomendado
-                                  </span>
-                                )}
-                                {isCurrent && (
-                                  <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-slate-700 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wide">
-                                    Plan actual
-                                  </span>
-                                )}
-                                <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${plan.bg} border ${plan.border} ${plan.color}`}>
-                                  {plan.icon}
-                                </div>
-                                <div>
-                                  <p className="font-bold text-slate-800">{plan.name}</p>
-                                  <p className="text-xs text-slate-500">{plan.certs}</p>
-                                </div>
-                                <div className="flex items-baseline gap-0.5">
-                                  <span className="text-2xl font-bold text-slate-800">{plan.price === 0 ? "Gratis" : `${plan.price}€`}</span>
-                                  {plan.period && <span className="text-xs text-slate-400">{plan.period}</span>}
-                                </div>
-                                <ul className="space-y-1.5 flex-1">
-                                  {plan.features.map(f => (
-                                    <li key={f} className="flex items-start gap-1.5 text-xs text-slate-600">
-                                      <Check className="w-3.5 h-3.5 text-green-500 flex-shrink-0 mt-0.5" />{f}
-                                    </li>
-                                  ))}
-                                  {plan.notIncluded?.map(f => (
-                                    <li key={f} className="flex items-start gap-1.5 text-xs text-slate-400 line-through">
-                                      <span className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-center">—</span>{f}
-                                    </li>
-                                  ))}
-                                </ul>
-                                {isCurrent ? (
-                                  plan.key !== "free" ? (
-                                    <Button size="sm" variant="outline" className="w-full text-xs rounded-full" onClick={openBillingPortal} disabled={openingPortal} data-testid={`btn-manage-plan-${plan.key}`}>
-                                      <ExternalLink className="w-3 h-3 mr-1" />Gestionar
-                                    </Button>
-                                  ) : (
-                                    <div className="w-full text-center text-xs text-slate-400 py-1">Plan activo</div>
-                                  )
-                                ) : plan.key === "free" ? (
-                                  <div className="w-full text-center text-xs text-slate-400 py-1">Sin cargo</div>
-                                ) : (
-                                  <Button size="sm" className="w-full text-xs bg-teal-600 hover:bg-teal-700 text-white rounded-full" onClick={() => startCheckout(plan.key)} disabled={checkingOut === plan.key || !subData?.stripeConfigured} data-testid={`btn-subscribe-${plan.key}`}>
-                                    {checkingOut === plan.key ? <RefreshCw className="w-3 h-3 mr-1 animate-spin" /> : null}
-                                    {checkingOut === plan.key ? "Redirigiendo..." : "Contratar"}
-                                  </Button>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      {/* Invoice history */}
-                      <div>
-                        <p className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-                          <Receipt className="w-4 h-4" />Historial de facturas Stripe
-                        </p>
-                        {invoicesLoading ? (
-                          <div className="space-y-2">
-                            {[1, 2, 3].map(i => <div key={i} className="h-12 bg-muted/60 animate-pulse rounded-lg" />)}
-                          </div>
-                        ) : !invoiceData?.stripeConfigured ? (
-                          <p className="text-sm text-muted-foreground py-4 text-center">Stripe no configurado — las facturas aparecerán aquí una vez activado.</p>
-                        ) : !invoiceData?.invoices?.length ? (
-                          <p className="text-sm text-muted-foreground py-4 text-center">No hay facturas aún. Aparecerán aquí tras tu primera suscripción.</p>
-                        ) : (
-                          <div className="rounded-xl border border-border overflow-hidden">
-                            <table className="w-full text-sm">
-                              <thead className="bg-muted/30 border-b border-border">
-                                <tr>
-                                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Factura</th>
-                                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide hidden sm:table-cell">Fecha</th>
-                                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Importe</th>
-                                  <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide hidden md:table-cell">Estado</th>
-                                  <th className="text-right px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wide">PDF</th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-border">
-                                {invoiceData.invoices.map((inv, idx) => {
-                                  const st = inv.status === "paid"
-                                    ? { text: "Pagada",   cls: "bg-green-100 text-green-700" }
-                                    : inv.status === "open"
-                                    ? { text: "Pendiente",cls: "bg-amber-100 text-amber-700" }
-                                    : { text: inv.status, cls: "bg-muted text-muted-foreground" };
-                                  return (
-                                    <tr key={inv.id} className="hover:bg-muted/40 transition-colors" data-testid={`row-invoice-${idx}`}>
-                                      <td className="px-4 py-3">
-                                        <p className="font-medium text-foreground">{inv.number ?? inv.id.slice(0, 12)}</p>
-                                        {inv.description && <p className="text-xs text-muted-foreground truncate max-w-[160px]">{inv.description}</p>}
-                                      </td>
-                                      <td className="px-4 py-3 text-muted-foreground text-xs hidden sm:table-cell">{fmtDate(inv.created)}</td>
-                                      <td className="px-4 py-3 font-semibold text-foreground">{fmtAmount(inv.amount, inv.currency)}</td>
-                                      <td className="px-4 py-3 hidden md:table-cell">
-                                        <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${st.cls}`}>{st.text}</span>
-                                      </td>
-                                      <td className="px-4 py-3 text-right">
-                                        {inv.pdfUrl ? (
-                                          <a href={inv.pdfUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:opacity-80 font-medium" data-testid={`btn-download-invoice-${idx}`}>
-                                            <Download className="w-3.5 h-3.5" />PDF
-                                          </a>
-                                        ) : inv.hostedUrl ? (
-                                          <a href={inv.hostedUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground" data-testid={`btn-view-invoice-${idx}`}>
-                                            <ExternalLink className="w-3.5 h-3.5" />Ver
-                                          </a>
-                                        ) : (
-                                          <span className="text-xs text-muted-foreground">—</span>
-                                        )}
-                                      </td>
-                                    </tr>
-                                  );
-                                })}
-                              </tbody>
-                            </table>
-                          </div>
-                        )}
-                      </div>
-
-                      {subData?.plan !== "free" && subData?.stripeConfigured && (
-                        <p className="text-xs text-muted-foreground text-center">
-                          Para cancelar o cambiar de plan,{" "}
-                          <button onClick={openBillingPortal} className="text-primary hover:underline font-medium" data-testid="btn-portal-link-footer">
-                            abre el portal de facturación
-                          </button>.
-                        </p>
-                      )}
-                    </div>
-                  </SectionCard>
-                </section>
-
-                {/* ─── 8. SEGURIDAD ─── */}
-                <section id="seguridad" className="scroll-mt-6">
-                  <SectionCard
-                    title="Seguridad"
-                    description="Contraseña, doble factor y sesiones activas"
-                    icon={<Shield size={18} />}
-                    bodyPadding="none"
-                  >
-                    <div className="divide-y divide-border">
-                      <div className="px-6 py-5">
-                        <TwoFactorSection />
-                      </div>
-                      <div className="px-6 py-5 flex items-center gap-4">
-                        <div className="flex-1">
-                          <p className="text-sm font-semibold text-foreground">Sesiones activas</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">Gestiona los dispositivos conectados a tu cuenta</p>
-                        </div>
-                        <Button variant="outline" className="rounded-full h-9 px-4 text-xs flex-shrink-0">Ver sesiones</Button>
-                      </div>
-                      <div className="px-6 py-5 flex items-center gap-4">
-                        <div className="flex-1">
-                          <p className="text-sm font-semibold text-foreground">Exportar mis datos</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">Descarga una copia de todos tus datos (RGPD)</p>
-                        </div>
-                        <Button variant="outline" className="rounded-full h-9 px-4 text-xs flex-shrink-0">Solicitar exportación</Button>
+                            </li>
+                          )) || (
+                            <>
+                              <li className="flex items-center justify-between">
+                                <span className="text-foreground">14 may 2026</span>
+                                <span className="flex items-center gap-2"><span className="font-semibold">49,00 â‚¬</span><button className="text-muted-foreground hover:text-foreground">â¬‡</button></span>
+                              </li>
+                              <li className="flex items-center justify-between">
+                                <span className="text-foreground">14 abr 2026</span>
+                                <span className="flex items-center gap-2"><span className="font-semibold">49,00 â‚¬</span><button className="text-muted-foreground hover:text-foreground">â¬‡</button></span>
+                              </li>
+                              <li className="flex items-center justify-between">
+                                <span className="text-foreground">14 mar 2026</span>
+                                <span className="flex items-center gap-2"><span className="font-semibold">49,00 â‚¬</span><button className="text-muted-foreground hover:text-foreground">â¬‡</button></span>
+                              </li>
+                            </>
+                          )}
+                        </ul>
                       </div>
                     </div>
-                  </SectionCard>
+                  </div>
                 </section>
 
-                {/* ─── Danger zone ─── */}
+                {/* â”€â”€â”€ 8. SEGURIDAD â”€â”€â”€ */}
+                <section id="seguridad" className="section bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+                  <header className="px-6 py-5 border-b border-border flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-800 flex items-center justify-center flex-shrink-0">
+                      <Shield className="w-[18px] h-[18px] text-slate-700 dark:text-slate-300" />
+                    </div>
+                    <div>
+                      <h2 className="text-base font-semibold text-foreground tracking-tight">Seguridad</h2>
+                      <p className="text-xs text-muted-foreground mt-0.5">ContraseÃ±a, doble factor y sesiones activas</p>
+                    </div>
+                  </header>
+
+                  <div className="divide-y divide-border">
+                    <div className="px-6 py-5 flex items-center gap-4">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground">ContraseÃ±a</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Ãšltima actualizaciÃ³n hace 4 meses</p>
+                      </div>
+                      <button className="h-9 px-4 rounded-full bg-card border border-border text-sm font-medium hover:bg-muted/40">Cambiar contraseÃ±a</button>
+                    </div>
+
+                    <div className="px-6 py-5 flex items-center gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-semibold text-foreground">VerificaciÃ³n en dos pasos</p>
+                          <TwoFactorSection />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Sessions */}
+                    <div className="px-6 py-5 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-semibold text-foreground">Sesiones activas</p>
+                        <button className="text-xs font-medium text-red-600 hover:underline">Cerrar todas las demÃ¡s</button>
+                      </div>
+
+                      <div className="rounded-xl border border-border bg-muted/20 divide-y divide-border">
+                        <div className="px-4 py-3 flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-lg bg-card border border-border flex items-center justify-center">
+                            <svg className="w-4 h-4 text-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="text-sm font-semibold text-foreground">MacBook Pro Â· Chrome</p>
+                              <span className="text-[10px] font-semibold text-primary">Este dispositivo</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-0.5">Madrid, EspaÃ±a Â· ahora mismo</p>
+                          </div>
+                        </div>
+                        <div className="px-4 py-3 flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-lg bg-card border border-border flex items-center justify-center">
+                            <svg className="w-4 h-4 text-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-foreground">iPhone 15 Â· App Certifive</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">Sevilla, EspaÃ±a Â· hace 2 horas</p>
+                          </div>
+                          <button className="h-8 px-3 rounded-full text-xs font-medium border border-border bg-card hover:bg-muted/40">Cerrar</button>
+                        </div>
+                        <div className="px-4 py-3 flex items-center gap-4">
+                          <div className="w-9 h-9 rounded-lg bg-card border border-border flex items-center justify-center">
+                            <svg className="w-4 h-4 text-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-foreground">Windows Â· Edge</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">Madrid, EspaÃ±a Â· hace 3 dÃ­as</p>
+                          </div>
+                          <button className="h-8 px-3 rounded-full text-xs font-medium border border-border bg-card hover:bg-muted/40">Cerrar</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                {/* Danger zone */}
                 <section className="rounded-2xl border border-red-200 dark:border-red-900/50 bg-red-50/50 dark:bg-red-950/10 p-6">
-                  <p className="text-sm font-semibold text-red-700 dark:text-red-400">Zona de peligro</p>
-                  <p className="text-xs text-red-600/80 dark:text-red-400/70 mt-1">Eliminar tu cuenta es irreversible. Se borrarán expedientes, facturas y datos asociados.</p>
+                  <div className="flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-semibold text-red-700 dark:text-red-400">Zona de peligro</p>
+                      <p className="text-xs text-red-600/80 dark:text-red-400/70 mt-1">Eliminar tu cuenta es irreversible. Se borrarÃ¡n expedientes, facturas y datos asociados.</p>
+                    </div>
+                    <button className="h-10 px-4 rounded-full text-sm font-semibold text-white bg-red-600 hover:bg-red-700 inline-flex items-center gap-1.5">
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 01-2 2H9a2 2 0 01-2-2L5 6"/></svg>
+                      Eliminar cuenta
+                    </button>
+                  </div>
                 </section>
 
-                <div className="h-8" />
+                <div className="h-8"></div>
               </div>
             </div>
           </div>
