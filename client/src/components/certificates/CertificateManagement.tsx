@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -42,23 +41,39 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { 
-  MoreHorizontal, 
-  Mail, 
-  MessageCircle, 
-  Download, 
-  Trash2, 
+import {
+  MoreHorizontal,
+  Mail,
+  MessageCircle,
+  Download,
+  Trash2,
   FileText,
   CheckCircle2,
-  Clock
+  Clock,
+  Upload
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import type { UploadedCertificate, Folder } from "@shared/schema";
+import type { Folder } from "@shared/schema";
 import CertificateUploadDialog from "./CertificateUploadDialog";
+
+interface UploadedCertificate {
+  id: number;
+  originalFileName: string;
+  mimeType: string;
+  fileSize: number;
+  clientName: string;
+  clientEmail: string | null;
+  clientPhone: string | null;
+  description: string | null;
+  tags: string[] | null;
+  sentViaEmail: boolean;
+  sentViaWhatsapp: boolean;
+  createdAt: string | null;
+}
 
 const sendEmailSchema = z.object({
   recipientEmail: z.string().email("Email inválido"),
@@ -76,18 +91,22 @@ interface CertificateManagementProps {
   selectedFolderId?: number;
 }
 
-export default function CertificateManagement({ 
-  folders, 
-  selectedFolderId 
+export default function CertificateManagement({
+  folders,
+  selectedFolderId
 }: CertificateManagementProps) {
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [sendEmailDialog, setSendEmailDialog] = useState<{ open: boolean; certificate: UploadedCertificate | null }>({ open: false, certificate: null });
   const [sendWhatsAppDialog, setSendWhatsAppDialog] = useState<{ open: boolean; certificate: UploadedCertificate | null }>({ open: false, certificate: null });
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: certificates, isLoading } = useQuery({
+  const { data: certificates, isLoading } = useQuery<UploadedCertificate[]>({
     queryKey: ["/api/uploaded-certificates", selectedFolderId],
-    queryFn: () => apiRequest("GET", `/api/uploaded-certificates${selectedFolderId ? `?folderId=${selectedFolderId}` : ""}`),
+    queryFn: async () => {
+      const result = await apiRequest("GET", `/api/uploaded-certificates${selectedFolderId ? `?folderId=${selectedFolderId}` : ""}`);
+      return result as UploadedCertificate[];
+    },
   });
 
   const emailForm = useForm<SendEmailData>({
@@ -233,11 +252,10 @@ export default function CertificateManagement({
                 )}
               </CardDescription>
             </div>
-            <CertificateUploadDialog 
-              folders={folders}
-              preselectedFolderId={selectedFolderId}
-              onSuccess={() => queryClient.invalidateQueries({ queryKey: ["/api/uploaded-certificates"] })}
-            />
+            <Button onClick={() => setUploadDialogOpen(true)}>
+              <Upload className="h-4 w-4 mr-2" />
+              Subir certificado
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -456,6 +474,16 @@ export default function CertificateManagement({
           </Form>
         </DialogContent>
       </Dialog>
+
+      {/* Upload Dialog */}
+      {selectedFolderId && (
+        <CertificateUploadDialog
+          open={uploadDialogOpen}
+          onOpenChange={setUploadDialogOpen}
+          folderId={selectedFolderId}
+          folderName={folders.find((f) => f.id === selectedFolderId)?.name || ""}
+        />
+      )}
     </>
   );
 }
