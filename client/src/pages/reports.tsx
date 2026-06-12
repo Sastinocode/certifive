@@ -335,8 +335,8 @@ export default function Reports() {
       <div className="flex-1 overflow-auto">
         <div className="px-4 py-5 sm:px-8 sm:py-8 max-w-[1400px] mx-auto space-y-6">
 
-          {/* ── Header ───────────────────────────────────────────────────── */}
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+          {/* Header */}
+          <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <h1 className="text-2xl font-bold text-foreground tracking-tight">Informes financieros</h1>
               <p className="text-sm text-muted-foreground mt-1">Gestión completa de facturas, pagos y cobros</p>
@@ -356,35 +356,60 @@ export default function Reports() {
             </Select>
           </div>
 
-          {/* ── KPI Cards ────────────────────────────────────────────────── */}
+          {/* KPIs */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <KpiCard
-              icon={<FileText size={20} />}
-              iconBg="bg-primary"
-              label="Total facturado"
-              value={fmtEur(summary.totalInvoiced)}
-            />
-            <KpiCard
-              icon={<CheckCircle size={20} />}
-              iconBg="bg-blue-500"
-              label="Total cobrado"
-              value={fmtEur(summary.totalPaid)}
-            />
-            <KpiCard
-              icon={<Clock size={20} />}
-              iconBg="bg-amber-500"
-              label="Pendiente"
-              value={fmtEur(summary.totalPending)}
-            />
-            <KpiCard
-              icon={summary.revenueGrowth >= 0 ? <TrendingUp size={20} /> : <TrendingDown size={20} />}
-              iconBg="bg-violet-500"
-              label="Variación"
-              value={`${summary.revenueGrowth > 0 ? "+" : ""}${summary.revenueGrowth.toFixed(1)}%`}
-              delta={summary.revenueGrowth !== 0
-                ? { value: "vs anterior", positive: summary.revenueGrowth > 0 }
-                : undefined}
-            />
+            <div className="bg-card rounded-2xl border border-border shadow-sm p-6 flex flex-col gap-4 hover:shadow-md transition-shadow">
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-primary shadow-sm">
+                <FileText className="w-5 h-5 text-white" strokeWidth={2.2} />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground leading-tight">Total facturado</p>
+                <p className="text-[2.25rem] font-bold text-foreground tracking-tight leading-none">{fmtEur(summary.totalInvoiced)}</p>
+              </div>
+            </div>
+
+            <div className="bg-card rounded-2xl border border-border shadow-sm p-6 flex flex-col gap-4 hover:shadow-md transition-shadow">
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-blue-500 shadow-sm">
+                <CheckCircle className="w-5 h-5 text-white" strokeWidth={2.2} />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground leading-tight">Total cobrado</p>
+                <p className="text-[2.25rem] font-bold text-foreground tracking-tight leading-none">{fmtEur(summary.totalPaid)}</p>
+              </div>
+            </div>
+
+            <div className="bg-card rounded-2xl border border-border shadow-sm p-6 flex flex-col gap-4 hover:shadow-md transition-shadow">
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-amber-500 shadow-sm">
+                <Clock className="w-5 h-5 text-white" strokeWidth={2.2} />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground leading-tight">Pendiente</p>
+                <p className="text-[2.25rem] font-bold text-foreground tracking-tight leading-none">{fmtEur(summary.totalPending)}</p>
+              </div>
+            </div>
+
+            <div className="bg-card rounded-2xl border border-border shadow-sm p-6 flex flex-col gap-4 hover:shadow-md transition-shadow">
+              <div className="flex items-start justify-between gap-3">
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-violet-500 shadow-sm">
+                  {summary.revenueGrowth >= 0 ? <TrendingUp className="w-5 h-5 text-white" strokeWidth={2.2} /> : <TrendingDown className="w-5 h-5 text-white" strokeWidth={2.2} />}
+                </div>
+                {summary.revenueGrowth !== 0 && (
+                  <span className={`inline-flex items-center text-[11px] font-semibold rounded-full px-2 py-0.5 ${
+                    summary.revenueGrowth > 0
+                      ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40"
+                      : "text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-950/40"
+                  }`}>
+                    {summary.revenueGrowth > 0 ? "↑" : "↓"} vs anterior
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground leading-tight">Crecimiento</p>
+                <p className="text-[2.25rem] font-bold text-foreground tracking-tight leading-none">
+                  {summary.revenueGrowth > 0 ? "+" : ""}{summary.revenueGrowth.toFixed(1)}%
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* ── Evolución mensual ─────────────────────────────────────────── */}
