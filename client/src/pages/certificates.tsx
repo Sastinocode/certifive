@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { EnergyChip } from "@/components/ui/energy-chip";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -229,9 +231,10 @@ function WorkflowBadge({ status }: { status: string | null }) {
       ? "bg-teal-50 text-teal-700 border border-teal-100 dark:bg-teal-950/40 dark:text-teal-300 dark:border-teal-900/40"
       : s.includes("tasacion") || s.includes("presupuesto") || s.includes("nuevo")
       ? "bg-blue-50 text-blue-700 border border-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-900/40"
-      : "bg-muted/60 text-muted-foreground";
+      : "bg-muted/60 text-muted-foreground border border-border";
   return (
-    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-semibold whitespace-nowrap ${cls}`}>
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider whitespace-nowrap border ${cls}`}>
+      <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70" />
       {label}
     </span>
   );
@@ -392,9 +395,9 @@ export default function Certificates() {
   });
 
   const STATUS_OPTIONS = [
-    { value: "nuevo",      label: "Nuevo",      dotCls: "bg-blue-500",    pillCls: "bg-blue-50 text-blue-700 border border-blue-100 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-900/40"       },
-    { value: "en_proceso", label: "En Proceso", dotCls: "bg-orange-500",  pillCls: "bg-orange-50 text-orange-700 border border-orange-100 dark:bg-orange-950/50 dark:text-orange-300 dark:border-orange-900/40" },
-    { value: "finalizado", label: "Finalizado", dotCls: "bg-emerald-500", pillCls: "bg-emerald-50 text-emerald-700 border border-emerald-100 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-900/40" },
+    { value: "nuevo",      label: "Nuevo",      dotCls: "bg-blue-500",    pillCls: "bg-blue-100 text-blue-700 border border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-900/40"       },
+    { value: "en_proceso", label: "En Proceso", dotCls: "bg-amber-500",  pillCls: "bg-amber-100 text-amber-700 border border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-900/40" },
+    { value: "finalizado", label: "Finalizado", dotCls: "bg-emerald-500", pillCls: "bg-emerald-100 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-900/40" },
   ];
 
   const getStatusSelect = (cert: Certification) => {
@@ -417,7 +420,7 @@ export default function Certificates() {
         >
           {STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
-        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold cursor-pointer select-none ${currentOption.pillCls}`}>
+        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold cursor-pointer select-none border ${currentOption.pillCls}`}>
           <span className={`w-1.5 h-1.5 rounded-full ${currentOption.dotCls}`} />
           {currentOption.label}
         </span>
@@ -572,7 +575,7 @@ export default function Certificates() {
                           </td>
                           <td className="px-6 py-4">
                             {s.energyRating
-                              ? <Badge className="font-bold">{s.energyRating.toUpperCase()}</Badge>
+                              ? <EnergyChip rating={s.energyRating} />
                               : <span className="text-xs text-muted-foreground">—</span>}
                           </td>
                           <td className="px-6 py-4"><Badge variant="outline">{s.status}</Badge></td>
@@ -697,10 +700,10 @@ export default function Certificates() {
                 <button
                   key={value}
                   onClick={() => handleStatusFilter(value)}
-                  className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap ${
+                  className={`px-3.5 py-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${
                     statusFilter === value
                       ? "bg-primary text-primary-foreground shadow-sm"
-                      : "text-emerald-700/70 hover:text-emerald-900 hover:bg-emerald-50 dark:text-muted-foreground dark:hover:text-foreground dark:hover:bg-muted/60"
+                      : "text-emerald-700/70 hover:text-emerald-900 hover:bg-emerald-50/60 dark:text-muted-foreground dark:hover:text-foreground dark:hover:bg-muted/60"
                   }`}
                 >
                   {label}
@@ -809,7 +812,7 @@ export default function Certificates() {
                                 {cert.presupuestoToken && (
                                   <button
                                     onClick={() => setPreviewCert(cert)}
-                                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-violet-50 text-violet-700 dark:bg-violet-950/40 dark:text-violet-400 rounded-full text-[11px] font-semibold hover:bg-violet-100 dark:hover:bg-violet-950/60 transition-colors"
+                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-violet-100 text-violet-700 border border-violet-200 dark:bg-violet-950/40 dark:text-violet-400 dark:border-violet-800/40 rounded-full text-[11px] font-semibold hover:bg-violet-100/80 dark:hover:bg-violet-950/60 transition-all"
                                   >
                                     <Eye className="w-3 h-3" />
                                     <span className="hidden sm:inline">Tarifa</span>
@@ -818,7 +821,7 @@ export default function Certificates() {
                                 {cert.ceeToken && (
                                   <button
                                     onClick={() => setPreviewCert(cert)}
-                                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-teal-50 text-teal-700 dark:bg-teal-950/40 dark:text-teal-400 rounded-full text-[11px] font-semibold hover:bg-teal-100 dark:hover:bg-teal-950/60 transition-colors"
+                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-teal-100 text-teal-700 border border-teal-200 dark:bg-teal-950/40 dark:text-teal-400 dark:border-teal-800/40 rounded-full text-[11px] font-semibold hover:bg-teal-100/80 dark:hover:bg-teal-950/60 transition-all"
                                   >
                                     <Eye className="w-3 h-3" />
                                     <span className="hidden sm:inline">CEE</span>
@@ -827,7 +830,7 @@ export default function Certificates() {
 
                                 <Button
                                   size="sm"
-                                  className="bg-primary hover:bg-primary/90 text-primary-foreground gap-1.5 rounded-full text-[11px] px-3 h-7"
+                                  className="bg-primary hover:bg-primary/90 text-primary-foreground gap-1.5 rounded-full text-[11px] font-semibold px-3 h-7 shadow-sm"
                                   onClick={() => setWizardCertId(cert.id)}
                                   data-testid={`btn-enviar-cliente-${cert.id}`}
                                 >
@@ -837,7 +840,7 @@ export default function Certificates() {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="rounded-full text-[11px] px-3 h-7 gap-1"
+                                  className="rounded-full text-[11px] font-medium px-3 h-7 gap-1 border-border hover:bg-muted/40"
                                   onClick={() => setDetailCertId(cert.id)}
                                   data-testid={`btn-ver-${cert.id}`}
                                 >
@@ -951,7 +954,7 @@ export default function Certificates() {
                     )}
                   </div>
                   <Link to="/certificados/nuevo">
-                    <button className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground rounded-full text-xs font-semibold hover:bg-primary/90 transition-colors shadow-sm">
+                    <button className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground rounded-full text-xs font-semibold hover:bg-primary/90 transition-all shadow-sm">
                       <Plus className="w-3.5 h-3.5" />
                       Nueva certificación
                     </button>
