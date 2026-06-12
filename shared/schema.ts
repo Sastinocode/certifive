@@ -154,6 +154,8 @@ export const certifications = pgTable("certifications", {
   archivedAt: timestamp("archived_at"),
   /** Estado de entrega del certificado final: "pendiente"|"entregado"|"enviado_registro". */
   deliveryStatus: text("delivery_status"),
+  /** Fecha de caducidad del certificado energético (para enviar recordatorios 30d y 10d antes). */
+  caducidadAt: timestamp("caducidad_at"),
 
   // Owner (propietario del inmueble)
   ownerName: text("owner_name"),

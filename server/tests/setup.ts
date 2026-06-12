@@ -59,5 +59,6 @@ vi.mock("express-rate-limit", () => ({
 // ── Mock: crons y helpers ─────────────────────────────────────────────────────
 vi.mock("../notifications",       () => ({ startReminderCron: vi.fn(), createNotification: vi.fn() }));
 vi.mock("../digest",              () => ({ startDigestCron: vi.fn() }));
+vi.mock("../expiry-cron",         () => ({ startExpiryCron: vi.fn() }));
 vi.mock("../createNotification",  () => ({ createNotification: vi.fn().mockResolvedValue(undefined) }));
 vi.mock("../startup-migration",   () => ({ runStartupMigrations: vi.fn().mockResolvedValue(undefined) }));

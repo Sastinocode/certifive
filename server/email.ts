@@ -915,3 +915,50 @@ export async function sendCertificadoEmail(params: {
     html: htmlWrap(body, "Tu certificado energético ya está disponible para descargar."),
   });
 }
+
+// ──────────────────────────────────────────────────────────────────────────────
+// RECORDATORIO DE CADUCIDAD  (30 días y 10 días antes de expirar)
+// ──────────────────────────────────────────────────────────────────────────────
+export async function sendCertificadoExpiryEmail(params: {
+  to: string;
+  ownerName: string;
+  certifierName: string;
+  propertyAddress: string | null;
+  caducidadAt: Date;
+  diasRestantes: number;
+}): Promise<void> {
+  if (!params.to) return;
+  const { to, ownerName, certifierName, propertyAddress, caducidadAt, diasRestantes } = params;
+
+  const urgencyColor = diasRestantes <= 10 ? "#dc2626" : "#f59e0b";
+  const urgencyIcon = diasRestantes <= 10 ? "⚠️" : "⏰";
+  const urgencyText = diasRestantes <= 10
+    ? "Tu certificado está a punto de caducar"
+    : "Tu certificado caducará pronto";
+
+  const rows: Array<{ label: string; value: string }> = [
+    { label: "Certificador", value: certifierName },
+    { label: "Fecha de caducidad", value: caducidadAt.toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" }) },
+    { label: "Días restantes", value: String(diasRestantes) },
+  ];
+  if (propertyAddress) rows.unshift({ label: "Inmueble", value: propertyAddress });
+
+  const body = `
+    ${h1(urgencyIcon + " " + urgencyText)}
+    ${p("Hola <strong>" + (ownerName || "propietario") + "</strong>,")}
+    ${p(`Tu certificado de eficiencia energética caduca en <strong style="color:${urgencyColor}">${diasRestantes} días</strong> (${caducidadAt.toLocaleDateString("es-ES")}).`)}
+    ${p("Es recomendable que contactes con tu certificador para renovarlo antes de que expire.")}
+    ${infoBlock(rows)}
+    ${btn("Contactar con mi certificador →", `mailto:${FROM_EMAIL}`, urgencyColor)}
+    ${divider()}
+    ${p("Los certificados energéticos tienen una validez de 10 años desde su emisión. Después de esa fecha, será necesario obtener uno nuevo.", { color: "#6b7280", size: "13px" })}
+    ${p("Si tienes alguna duda, contacta con <strong>" + certifierName + "</strong>.", { color: "#9ca3af", size: "12px" })}
+  `;
+
+  await send({
+    to,
+    from: { email: FROM_EMAIL, name: FROM_NAME },
+    subject: `${urgencyIcon} Tu certificado energético caduca en ${diasRestantes} días`,
+    html: htmlWrap(body, `Recordatorio: tu certificado expira el ${caducidadAt.toLocaleDateString("es-ES")}.`),
+  });
+}

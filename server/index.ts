@@ -11,6 +11,7 @@ import { registerRoutes } from "./routes/index";
 import { initEmail } from "./email";
 import { startReminderCron } from "./notifications";
 import { startDigestCron } from "./digest";
+import { startExpiryCron } from "./expiry-cron";
 import catastroRouter from "./routes/catastro";
 import { config, printConfigWarnings } from "./config";
 import { runStartupMigrations } from "./startup-migration";
@@ -114,6 +115,9 @@ startReminderCron();
 
 // Start daily digest cron (08:00 Europe/Madrid)
 startDigestCron();
+
+// Start certificate expiry reminder cron (09:00 Europe/Madrid)
+startExpiryCron();
 
 // Catastro proxy (avoids CORS — browser can't call ovc.catastro.meh.es directly)
 app.use("/api/catastro", catastroRouter);
