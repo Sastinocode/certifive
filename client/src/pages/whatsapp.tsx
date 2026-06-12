@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import Sidebar from "@/components/layout/sidebar";
 import { SearchInput, FilterChip } from "@/components/ui";
 import {
@@ -18,7 +20,14 @@ interface Conversation {
   time: string;
   unread: number;
   isRead?: boolean;
+  closed?: boolean;
   tag?: { label: string; cls: string };
+}
+
+interface WaStatus {
+  connected: boolean;
+  phone: string | null;
+  connectedAt: string | null;
 }
 
 interface Message {
@@ -72,6 +81,19 @@ const DEMO_CONVS: Conversation[] = [
     lastMessage: "Buenos días Javier, me llegó tu mensa…",
     time: "2 días", unread: 0,
   },
+  {
+    id: "conv-7", name: "Pablo Ruiz", initials: "PR",
+    gradFrom: "#94a3b8", gradTo: "#475569",
+    lastMessage: "Conversación cerrada",
+    time: "3 días", unread: 0, closed: true,
+  },
+  {
+    id: "conv-8", name: "+34 685 39 11 24", initials: "RT",
+    gradFrom: "#a78bfa", gradTo: "#6d28d9",
+    lastMessage: "Hola, quería saber el precio para un piso de…",
+    time: "3 días", unread: 0,
+    tag: { label: "✨ Nuevo lead", cls: "bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400" },
+  },
 ];
 
 const DEMO_MESSAGES: Message[] = [
@@ -122,13 +144,50 @@ function WaIcon({ className }: { className?: string }) {
 // ── Component ────────────────────────────────────────────────────────────────
 
 export default function WhatsApp() {
-  // Hardcoded as false — connect via Ajustes when WhatsApp API is configured
-  const connected = false;
+  // 360dialog connection state — comes from the server (/api/whatsapp/status)
+  const { data: waStatus } = useQuery<WaStatus>({
+    queryKey: ["/api/whatsapp/status"],
+  });
+  const connected = waStatus?.connected ?? false;
 
   const [convFilter, setConvFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [selectedConvId, setSelectedConvId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
+
+  // Connect form (API key is validated server-side against 360dialog)
+  const [showConnect, setShowConnect] = useState(false);
+  const [apiKey, setApiKey] = useState("");
+  const [phone, setPhone] = useState("");
+  const [connectError, setConnectError] = useState<string | null>(null);
+
+  const connectMutation = useMutation({
+    mutationFn: async () =>
+      apiRequest("POST", "/api/whatsapp/connect", {
+        apiKey: apiKey.trim(),
+        phone: phone.trim() || null,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/whatsapp/status"] });
+      setShowConnect(false);
+      setApiKey("");
+      setPhone("");
+      setConnectError(null);
+    },
+    onError: (err: any) => {
+      setConnectError(err?.message || "API key inválida o error de conexión con 360dialog");
+    },
+  });
+
+  const handleConnect = () => {
+    if (!showConnect) { setShowConnect(true); return; }
+    if (!apiKey.trim()) {
+      setConnectError("Introduce tu API key de 360dialog");
+      return;
+    }
+    setConnectError(null);
+    connectMutation.mutate();
+  };
 
   const selectedConv = DEMO_CONVS.find(c => c.id === selectedConvId) ?? null;
   const unreadTotal  = DEMO_CONVS.reduce((s, c) => s + c.unread, 0);
@@ -136,6 +195,7 @@ export default function WhatsApp() {
   const filteredConvs = !connected ? [] : DEMO_CONVS.filter(c => {
     if (search && !c.name.toLowerCase().includes(search.toLowerCase())) return false;
     if (convFilter === "unread") return c.unread > 0;
+    if (convFilter === "closed") return !!c.closed;
     return true;
   });
 
@@ -159,7 +219,7 @@ export default function WhatsApp() {
               <p className="text-[11px] text-muted-foreground flex items-center gap-1.5">
                 <span className={`w-1.5 h-1.5 rounded-full ${connected ? "bg-primary" : "bg-muted-foreground"}`} />
                 {connected
-                  ? `+34 612 345 678 · conectado · ${unreadTotal} sin leer`
+                  ? `${waStatus?.phone ?? "Número conectado"} · conectado · ${unreadTotal} sin leer`
                   : "Sin conexión · disponible en el plan Pro"}
               </p>
             </div>
@@ -242,12 +302,12 @@ export default function WhatsApp() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="text-sm font-semibold text-foreground truncate">{conv.name}</p>
+                        <p className={`text-sm font-semibold truncate ${conv.closed ? "text-muted-foreground" : "text-foreground"}`}>{conv.name}</p>
                         <p className={`text-[10px] flex-shrink-0 ${conv.unread > 0 ? "text-primary font-semibold" : "text-muted-foreground"}`}>
                           {conv.time}
                         </p>
                       </div>
-                      <p className="text-[11.5px] text-muted-foreground truncate mt-0.5">
+                      <p className={`text-[11.5px] text-muted-foreground truncate mt-0.5 ${conv.closed ? "italic" : ""}`}>
                         {conv.lastMessage}
                       </p>
                       {(conv.tag || conv.unread > 0) && (
@@ -258,7 +318,7 @@ export default function WhatsApp() {
                             </span>
                           )}
                           {conv.unread > 0 && (
-                            <span className="ml-auto bg-primary text-primary-foreground min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold inline-flex items-center justify-center">
+                            <span className="ml-auto bg-primary text-white min-w-[18px] h-[18px] px-[5px] rounded-full text-[10px] font-bold inline-flex items-center justify-center">
                               {conv.unread}
                             </span>
                           )}
@@ -286,9 +346,49 @@ export default function WhatsApp() {
                     Conecta tu número para recibir y enviar mensajes directamente desde Certifive.
                     Por ahora puedes enviar mensajes manualmente desde cada expediente.
                   </p>
-                  <button className="h-10 px-6 rounded-full bg-primary text-primary-foreground text-sm font-semibold shadow-sm hover:bg-primary/90 inline-flex items-center gap-2">
+                  {showConnect && (
+                    <div className="text-left space-y-3 mb-5">
+                      <div>
+                        <label className="block text-xs font-semibold text-foreground mb-[5px]">
+                          API key de 360dialog<span className="text-primary ml-0.5 font-bold">*</span>
+                        </label>
+                        <input
+                          type="password"
+                          value={apiKey}
+                          onChange={e => { setApiKey(e.target.value); setConnectError(null); }}
+                          placeholder="D360-XXXX…"
+                          className="w-full min-h-[40px] px-3 py-2 bg-card border border-border rounded-lg text-[13.5px] text-foreground font-mono placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-[3px] focus:ring-primary/[0.12] transition-all"
+                        />
+                        <p className="text-[11.5px] text-muted-foreground mt-1 leading-snug">
+                          La encontrarás en tu panel de 360dialog. Se valida antes de guardarse.
+                        </p>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-foreground mb-[5px]">
+                          Número de WhatsApp
+                        </label>
+                        <input
+                          type="tel"
+                          value={phone}
+                          onChange={e => setPhone(e.target.value)}
+                          placeholder="+34 612 345 678"
+                          className="w-full min-h-[40px] px-3 py-2 bg-card border border-border rounded-lg text-[13.5px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-[3px] focus:ring-primary/[0.12] transition-all"
+                        />
+                      </div>
+                      {connectError && (
+                        <p className="text-xs font-semibold text-red-600 dark:text-red-400">{connectError}</p>
+                      )}
+                    </div>
+                  )}
+                  <button
+                    onClick={handleConnect}
+                    disabled={connectMutation.isPending}
+                    className="h-10 px-6 rounded-full bg-primary text-primary-foreground text-sm font-semibold shadow-sm hover:bg-primary/90 inline-flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
                     <WaIcon className="w-4 h-4" />
-                    Conectar WhatsApp
+                    {connectMutation.isPending
+                      ? "Validando API key…"
+                      : showConnect ? "Validar y conectar" : "Conectar WhatsApp"}
                   </button>
                 </div>
               </div>
@@ -312,7 +412,7 @@ export default function WhatsApp() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-0.5">
+                  <div className="flex items-center gap-1">
                     <button className="w-9 h-9 rounded-full hover:bg-muted/40 inline-flex items-center justify-center text-muted-foreground">
                       <Search size={16} />
                     </button>
@@ -326,7 +426,7 @@ export default function WhatsApp() {
                 </header>
 
                 {/* Pinned cert context bar */}
-                <div className="px-4 py-2 bg-primary/[0.04] dark:bg-primary/[0.08] border-b border-border flex items-center justify-between gap-3 text-xs flex-shrink-0">
+                <div className="px-4 py-2 bg-primary/[0.04] dark:bg-primary/10 border-b border-border flex items-center justify-between gap-3 text-xs flex-shrink-0">
                   <div className="flex items-center gap-2 min-w-0">
                     <FileText size={14} className="text-primary flex-shrink-0" />
                     <p className="truncate">
@@ -340,9 +440,8 @@ export default function WhatsApp() {
 
                 {/* Messages */}
                 <div
-                  className="flex-1 overflow-y-auto px-4 py-5"
+                  className="flex-1 overflow-y-auto px-4 py-5 bg-[hsl(215_20%_96%)] dark:bg-[hsl(210_35%_10%)]"
                   style={{
-                    backgroundColor: "hsl(var(--muted) / 0.35)",
                     backgroundImage:
                       "radial-gradient(circle at 15% 25%, hsl(var(--primary) / 0.04) 1.5px, transparent 2px)," +
                       "radial-gradient(circle at 65% 75%, hsl(var(--primary) / 0.04) 1.5px, transparent 2px)," +
@@ -362,9 +461,9 @@ export default function WhatsApp() {
                         )}
                         <div className={`flex ${msg.mine ? "justify-end" : "justify-start"}`}>
                           <div
-                            className={`max-w-[75%] px-3 py-2 rounded-xl shadow-sm text-[13.5px] leading-relaxed whitespace-pre-line ${
+                            className={`max-w-[75%] px-3 py-2 rounded-xl shadow-sm text-[13.5px] leading-[1.45] whitespace-pre-line ${
                               msg.mine
-                                ? "bg-primary/[0.14] text-foreground rounded-br-[4px]"
+                                ? "bg-[hsl(142_60%_88%)] dark:bg-[hsl(142_50%_22%)] text-foreground rounded-br-[4px]"
                                 : "bg-card text-foreground border border-border rounded-bl-[4px]"
                             }`}
                           >
@@ -393,7 +492,7 @@ export default function WhatsApp() {
                     <button
                       key={t}
                       onClick={() => setMessage(t)}
-                      className="px-3 py-1.5 rounded-2xl bg-card border border-border text-xs font-medium text-foreground whitespace-nowrap hover:bg-primary/[0.08] hover:border-primary hover:text-primary transition-colors flex-shrink-0"
+                      className="px-3 py-1.5 rounded-[14px] bg-card border border-border text-xs font-medium text-foreground whitespace-nowrap hover:bg-primary/[0.08] hover:border-primary hover:text-primary transition-colors flex-shrink-0"
                     >
                       {t}
                     </button>
@@ -415,7 +514,7 @@ export default function WhatsApp() {
                     placeholder="Escribe un mensaje…"
                     className="flex-1 max-h-32 px-4 py-2.5 bg-muted/40 border border-border rounded-2xl text-sm placeholder:text-muted-foreground focus:outline-none focus:bg-card focus:border-primary resize-none"
                   />
-                  <button className="w-10 h-10 rounded-full bg-primary text-primary-foreground inline-flex items-center justify-center flex-shrink-0 hover:bg-primary/90 shadow-sm">
+                  <button className="w-10 h-10 rounded-full bg-primary text-primary-foreground inline-flex items-center justify-center flex-shrink-0 hover:opacity-90 shadow-sm">
                     <Send size={16} />
                   </button>
                 </div>
