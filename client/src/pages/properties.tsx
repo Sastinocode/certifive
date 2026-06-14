@@ -2,7 +2,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
 import Sidebar from "@/components/layout/sidebar";
-import { SearchInput, FilterChip } from "@/components/ui";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Certification {
@@ -124,6 +123,7 @@ const MAP_POSITIONS = [
 // ── PropertyCard ──────────────────────────────────────────────────────────────
 function PropertyCard({ property }: { property: any }) {
   const isExpired = property.status === "expired";
+  const isDraft = property.status === "draft";
   return (
     <article
       className={[
@@ -131,6 +131,7 @@ function PropertyCard({ property }: { property: any }) {
         "hover:-translate-y-0.5 hover:shadow-[0_8px_20px_-8px_rgba(15,31,46,.18)]",
         "dark:hover:shadow-[0_8px_24px_-8px_rgba(0,0,0,.6)]",
         isExpired ? "ring-1 ring-red-200 dark:ring-red-900/50" : "",
+        isDraft ? "border-dashed" : "",
       ].join(" ")}
     >
       {/* Image placeholder — .ph-img */}
@@ -198,7 +199,7 @@ function PropertyCard({ property }: { property: any }) {
 function vbtnCls(isActive: boolean) {
   return `px-2.5 py-1.5 rounded-md transition-all duration-100 cursor-pointer ${
     isActive
-      ? "bg-card text-foreground shadow-sm"
+      ? "bg-card dark:bg-muted text-foreground shadow-sm"
       : "text-muted-foreground hover:text-foreground"
   }`;
 }
@@ -330,23 +331,40 @@ export default function Properties() {
 
           {/* ── Toolbar ────────────────────────────────────────────────────── */}
           <div className="bg-card rounded-2xl border border-border shadow-sm p-3 flex flex-wrap items-center gap-3">
-            <SearchInput
-              placeholder="Buscar por dirección, referencia catastral o propietario…"
-              value={search}
-              onChange={setSearch}
-              className="flex-1 min-w-[240px]"
-            />
+            {/* Search — HTML toolbar input */}
+            <div className="flex-1 min-w-[240px] relative">
+              <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Buscar por dirección, referencia catastral o propietario…"
+                className="w-full h-10 pl-10 pr-4 bg-muted/40 border border-transparent rounded-xl text-sm font-medium placeholder:text-muted-foreground focus:outline-none focus:bg-card focus:border-border text-foreground"
+              />
+            </div>
 
+            {/* Type filter chips — HTML .fchip */}
             <div className="flex items-center gap-1.5 flex-wrap">
-              {typeFilters.map(({ key, label }) => (
-                <FilterChip
-                  key={key}
-                  label={label}
-                  count={typeCounts[key] ?? 0}
-                  active={typeFilter === key}
-                  onClick={() => setTypeFilter(key)}
-                />
-              ))}
+              {typeFilters.map(({ key, label }) => {
+                const isActive = typeFilter === key;
+                return (
+                  <button
+                    key={key}
+                    onClick={() => setTypeFilter(key)}
+                    className={`inline-flex items-center gap-1.5 px-3 py-[6px] rounded-full border text-xs font-medium transition-all cursor-pointer ${
+                      isActive
+                        ? "bg-foreground text-background border-foreground"
+                        : "bg-card border-border text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {label}
+                    <span className={`rounded-full px-1.5 text-[10px] font-bold min-w-[18px] text-center ${
+                      isActive ? "bg-background/20 text-background" : "bg-muted text-muted-foreground"
+                    }`}>
+                      {typeCounts[key] ?? 0}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
 
             {/* View toggle — HTML .vbtn */}
