@@ -3,9 +3,6 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "../lib/queryClient";
 import { formatDate } from "../lib/utils";
 import CertDataDrawer from "../components/CertDataDrawer";
-import { SearchInput } from "@/components/ui/search-input";
-import { FilterChip } from "@/components/ui/filter-chip";
-import { StatusBadge } from "@/components/ui/status-badge";
 
 const STATUS_OPTIONS = ["Nuevo", "En Proceso", "Finalizado"];
 
@@ -34,8 +31,26 @@ function WorkflowBadge({ status }: { status: string | null }) {
   if (!status) return null;
   const meta = WORKFLOW_LABELS[status] ?? { label: status, color: "bg-stone-100 text-stone-600" };
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${meta.color}`}>
+    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-semibold ${meta.color}`}>
       {meta.label}
+    </span>
+  );
+}
+
+// ── Status pill — HTML estado column (emerald/orange/blue-50 + dot) ───────────
+
+const STATUS_PILL: Record<string, { pill: string; dot: string }> = {
+  "Nuevo":      { pill: "bg-blue-50 text-blue-700 border border-blue-100",          dot: "bg-blue-500" },
+  "En Proceso": { pill: "bg-orange-50 text-orange-700 border border-orange-100",    dot: "bg-orange-500" },
+  "Finalizado": { pill: "bg-emerald-50 text-emerald-700 border border-emerald-100", dot: "bg-emerald-600" },
+};
+
+function StatusPill({ status }: { status: string | null }) {
+  const meta = STATUS_PILL[status ?? ""] ?? { pill: "bg-stone-100 text-stone-600", dot: "bg-stone-400" };
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${meta.pill}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${meta.dot}`} />
+      {status}
     </span>
   );
 }
@@ -1042,14 +1057,14 @@ export default function Certifications() {
         />
       )}
 
-      <div className="flex flex-wrap items-start sm:items-end justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-emerald-900 tracking-tight">Visión operacional</h1>
-          <p className="text-sm text-emerald-700/60 mt-1 font-medium">Gestiona y realiza el seguimiento de tus certificaciones CEE.</p>
+          <p className="text-sm text-emerald-700/60 mt-1.5 font-medium">Gestiona y realiza el seguimiento de tus certificaciones CEE.</p>
         </div>
-        <div className="flex items-center gap-4 bg-white rounded-2xl border border-emerald-100/60 shadow-sm px-5 py-3.5 flex-shrink-0">
+        <div className="flex items-center gap-4 bg-white rounded-2xl border border-emerald-100/60 shadow-sm px-5 py-3.5">
           <div className="w-11 h-11 rounded-xl bg-emerald-600 flex items-center justify-center shadow-sm flex-shrink-0">
-            <span className="material-symbols-outlined text-white text-[22px]">verified</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 6a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M13 4v4a1 1 0 0 0 1 1h4"/><path d="m8.5 14.5 2 2 4-4"/></svg>
           </div>
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-700/60 leading-tight">Total certificados</p>
@@ -1058,21 +1073,29 @@ export default function Certifications() {
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-        <SearchInput
-          value={search}
-          onChange={setSearch}
-          placeholder="Buscar por cliente, dirección o referencia catastral..."
-          className="flex-1 min-w-0 w-full"
-        />
-        <div className="inline-flex items-center bg-white border border-emerald-100/80 rounded-xl shadow-sm p-1 flex-shrink-0">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+        <div className="relative flex-1 min-w-0">
+          <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500/70 text-[20px] pointer-events-none">search</span>
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Buscar por cliente, dirección o referencia catastral..."
+            className="w-full pl-12 pr-4 py-3 bg-white border border-emerald-100/80 rounded-xl text-sm font-medium placeholder:text-emerald-700/40 shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-emerald-300 transition"
+          />
+        </div>
+        <div className="inline-flex items-center bg-white border border-emerald-100/80 rounded-xl shadow-sm p-1 self-start sm:self-auto">
           {["Todos", ...STATUS_OPTIONS].map(s => (
-            <FilterChip
+            <button
               key={s}
-              label={s}
-              active={statusFilter === s}
               onClick={() => setStatusFilter(s)}
-            />
+              className={`px-3.5 py-2 text-xs font-semibold rounded-lg whitespace-nowrap ${
+                statusFilter === s
+                  ? "bg-emerald-700 text-white shadow-sm"
+                  : "text-emerald-700/70 hover:text-emerald-900 hover:bg-emerald-50"
+              }`}
+            >
+              {s}
+            </button>
           ))}
         </div>
       </div>
@@ -1080,7 +1103,7 @@ export default function Certifications() {
       <div className="bg-white rounded-2xl shadow-sm border border-emerald-100/60 overflow-hidden">
         {/* Horizontal scroll on mobile */}
         <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse min-w-[560px]">
+        <table className="w-full text-left border-collapse min-w-[640px]">
           <thead>
             <tr className="bg-emerald-50/40">
               <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-700/60">Cliente</th>
@@ -1102,12 +1125,12 @@ export default function Certifications() {
               <tr>
                 <td colSpan={6} className="px-8 py-16 text-center">
                   <div className="w-20 h-20 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-5">
-                    <span className="material-symbols-outlined text-emerald-600 text-[32px]">verified</span>
+                    <span className="material-symbols-outlined text-emerald-600 text-[40px]">verified</span>
                   </div>
-                  <p className="font-semibold text-emerald-900 mb-1">
+                  <p className="text-base font-semibold text-emerald-900 mb-1.5">
                     {search || statusFilter !== "Todos" ? "Sin resultados" : "Sin certificaciones"}
                   </p>
-                  <p className="text-sm text-emerald-700/55">
+                  <p className="text-sm text-emerald-700/60 max-w-sm mx-auto">
                     {search || statusFilter !== "Todos" ? "Prueba otros filtros" : "Crea tu primera certificación energética"}
                   </p>
                   {!search && statusFilter === "Todos" && (
@@ -1116,7 +1139,8 @@ export default function Certifications() {
                       onClick={() => setShowForm(true)}
                       className="mt-6 inline-flex items-center gap-1.5 px-5 py-2.5 bg-emerald-700 text-white rounded-full text-sm font-semibold hover:bg-emerald-800 transition-colors shadow-sm"
                     >
-                      + Nueva certificación
+                      <span className="material-symbols-outlined text-[16px]">add</span>
+                      Nueva certificación
                     </button>
                   )}
                 </td>
@@ -1131,8 +1155,8 @@ export default function Certifications() {
                         <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-800 font-bold text-xs flex-shrink-0">
                           {initials}
                         </div>
-                        <div>
-                          <p className="font-semibold text-emerald-900 text-sm">{cert.ownerName || "-"}</p>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-emerald-900 text-sm truncate">{cert.ownerName || "-"}</p>
                           {cert.ownerEmail && <p className="text-xs text-emerald-700/55 mt-0.5 truncate">{cert.ownerEmail}</p>}
                         </div>
                       </div>
@@ -1143,7 +1167,7 @@ export default function Certifications() {
                     </td>
                     <td className="px-6 py-5 text-xs font-medium text-emerald-700/70 hidden md:table-cell whitespace-nowrap">{formatDate(cert.createdAt)}</td>
                     <td className="px-6 py-5">
-                      <StatusBadge status={cert.status} />
+                      <StatusPill status={cert.status} />
                     </td>
                     <td className="px-6 py-5 hidden lg:table-cell">
                       <div className="flex flex-col gap-1">
@@ -1418,7 +1442,7 @@ export default function Certifications() {
         {filtered.length > 0 && (
           <div className="px-5 sm:px-6 py-4 bg-emerald-50/30 flex items-center justify-between">
             <p className="text-xs text-emerald-700/60 font-medium">
-              Mostrando <span className="font-semibold text-emerald-900">{filtered.length}</span> de <span className="font-semibold text-emerald-900">{allCerts.length}</span> certificaciones
+              Mostrando <span className="font-semibold text-emerald-900">{filtered.length}</span> de {allCerts.length} certificaciones
             </p>
             <button
               data-testid="btn-nueva-cert"
@@ -1426,7 +1450,7 @@ export default function Certifications() {
               className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-700 text-white rounded-full text-xs font-semibold hover:bg-emerald-800 transition-colors shadow-sm"
             >
               <span className="material-symbols-outlined text-[16px]">add</span>
-              Nueva
+              Nueva certificación
             </button>
           </div>
         )}
