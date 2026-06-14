@@ -4,8 +4,8 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "../lib/queryClient";
 import { formatDate, formatCurrency } from "../lib/utils";
 import Sidebar from "@/components/layout/sidebar";
-import { KpiCard, SectionCard } from "@/components/ui";
-import { FileText, Clock, AlertTriangle, Download, Plus, Search, BarChart2 } from "lucide-react";
+import { SectionCard } from "@/components/ui";
+import { FileText } from "lucide-react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface User {
@@ -176,15 +176,15 @@ export default function Invoices() {
 
           {/* ── KPI strip ──────────────────────────────────────────────────── */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* KPI 1 — Total facturado (KpiCard with delta) */}
-            <KpiCard
-              icon={<FileText size={18} />}
-              iconBg="bg-primary"
-              label="Total facturado"
-              value={formatCurrency(totalRevenue)}
-              sub={`${allInvoices.length} facturas emitidas`}
-              delta={{ value: "18%", positive: true }}
-            />
+            {/* KPI 1 — Total facturado (delta chip) */}
+            <div className="bg-card rounded-2xl border border-border shadow-sm p-5 flex flex-col gap-3 hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Total facturado</p>
+                <span className="inline-flex items-center text-[10px] font-semibold rounded-full px-1.5 py-0.5 text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40">↑ 18%</span>
+              </div>
+              <p className="text-[1.75rem] font-bold text-foreground tracking-tight leading-none">{formatCurrency(totalRevenue)}</p>
+              <p className="text-[11px] text-muted-foreground">{allInvoices.length} facturas emitidas</p>
+            </div>
 
             {/* KPI 2 — Cobrado (inline: progress bar) */}
             <div className="bg-card rounded-2xl border border-border shadow-sm p-5 flex flex-col gap-3">
@@ -198,14 +198,12 @@ export default function Invoices() {
               </div>
             </div>
 
-            {/* KPI 3 — Pendiente (KpiCard) */}
-            <KpiCard
-              icon={<Clock size={18} />}
-              iconBg="bg-amber-500"
-              label="Pendiente"
-              value={`${pendingCount}`}
-              sub="facturas · pendientes de cobro"
-            />
+            {/* KPI 3 — Pendiente */}
+            <div className="bg-card rounded-2xl border border-border shadow-sm p-5 flex flex-col gap-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Pendiente</p>
+              <p className="text-[1.75rem] font-bold text-foreground tracking-tight leading-none">{pendingCount}</p>
+              <p className="text-[11px] text-muted-foreground">facturas · pendientes de cobro</p>
+            </div>
 
             {/* KPI 4 — Vencido (inline: ring + red + button) */}
             <div className={`bg-card rounded-2xl border border-border shadow-sm p-5 flex flex-col gap-3 ${overdueCount > 0 ? "ring-1 ring-red-200 dark:ring-red-900/50" : ""}`}>
