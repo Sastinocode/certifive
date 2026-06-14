@@ -19,6 +19,12 @@ import {
   ExternalLink, RefreshCw, Package, Receipt, Building2, Plug, MessageCircle,
 } from "lucide-react";
 
+// ── Field classes — Tailwind translation of HTML .field-input / .field-textarea ──
+const FIELD_INPUT =
+  "w-full h-[42px] px-3.5 bg-card border border-border rounded-[10px] text-sm text-foreground transition-all focus:outline-none focus:border-primary focus:ring-[3px] focus:ring-primary/10";
+const FIELD_TEXTAREA =
+  "w-full px-3.5 py-3 bg-card border border-border rounded-[10px] text-sm text-foreground resize-y min-h-[88px] focus:outline-none focus:border-primary focus:ring-[3px] focus:ring-primary/10";
+
 // â”€â”€ Two-Factor Authentication Section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function TwoFactorSection() {
   const { toast } = useToast();
@@ -527,7 +533,7 @@ export default function Settings() {
               <div className="space-y-6 min-w-0">
 
                 {/* â”€â”€â”€ 1. PERFIL â”€â”€â”€ */}
-                <section id="perfil" className="section bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+                <section id="perfil" className="section scroll-mt-6 bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
                   <header className="px-6 py-5 border-b border-border flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-950/50 flex items-center justify-center flex-shrink-0">
                       <User className="w-[18px] h-[18px] text-blue-600 dark:text-blue-400" />
@@ -559,28 +565,28 @@ export default function Settings() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       <div>
                         <label className="text-xs font-semibold text-foreground block mb-1.5">Nombre</label>
-                        <Input className="h-[42px] rounded-lg" value={profileData.firstName} onChange={(e) => setProfileData(p => ({ ...p, firstName: e.target.value }))} placeholder="Javier" />
+                        <input className={FIELD_INPUT} value={profileData.firstName} onChange={(e) => setProfileData(p => ({ ...p, firstName: e.target.value }))} placeholder="Javier" />
                       </div>
                       <div>
                         <label className="text-xs font-semibold text-foreground block mb-1.5">Apellidos</label>
-                        <Input className="h-[42px] rounded-lg" value={profileData.lastName} onChange={(e) => setProfileData(p => ({ ...p, lastName: e.target.value }))} placeholder="MarÃ­n Castellanos" />
+                        <input className={FIELD_INPUT} value={profileData.lastName} onChange={(e) => setProfileData(p => ({ ...p, lastName: e.target.value }))} placeholder="MarÃ­n Castellanos" />
                       </div>
                       <div>
                         <label className="text-xs font-semibold text-foreground block mb-1.5">Email</label>
-                        <Input className="h-[42px] rounded-lg" type="email" value={profileData.email} onChange={(e) => setProfileData(p => ({ ...p, email: e.target.value }))} placeholder="javier@certifive.es" />
+                        <input className={FIELD_INPUT} type="email" value={profileData.email} onChange={(e) => setProfileData(p => ({ ...p, email: e.target.value }))} placeholder="javier@certifive.es" />
                         <p className="text-[11px] text-muted-foreground mt-1.5">RecibirÃ¡s un correo de verificaciÃ³n si lo cambias</p>
                       </div>
                       <div>
                         <label className="text-xs font-semibold text-foreground block mb-1.5">TelÃ©fono</label>
-                        <Input className="h-[42px] rounded-lg" type="tel" value={profileData.phone} onChange={(e) => setProfileData(p => ({ ...p, phone: e.target.value }))} placeholder="+34 612 345 678" />
+                        <input className={FIELD_INPUT} type="tel" value={profileData.phone} onChange={(e) => setProfileData(p => ({ ...p, phone: e.target.value }))} placeholder="+34 612 345 678" />
                       </div>
                       <div>
                         <label className="text-xs font-semibold text-foreground block mb-1.5">Cargo</label>
-                        <Input className="h-[42px] rounded-lg" value={profileData.company} onChange={(e) => setProfileData(p => ({ ...p, company: e.target.value }))} placeholder="TÃ©cnico certificador" />
+                        <input className={FIELD_INPUT} value={profileData.company} onChange={(e) => setProfileData(p => ({ ...p, company: e.target.value }))} placeholder="TÃ©cnico certificador" />
                       </div>
                       <div>
                         <label className="text-xs font-semibold text-foreground block mb-1.5">Idioma</label>
-                        <button className="h-[42px] w-full rounded-lg bg-card border border-border text-left px-3.5 text-sm flex items-center justify-between hover:bg-muted/40">
+                        <button className={`${FIELD_INPUT} text-left flex items-center justify-between hover:bg-muted/40`}>
                           EspaÃ±ol (EspaÃ±a)
                           <svg className="w-4 h-4 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6"/></svg>
                         </button>
@@ -590,7 +596,7 @@ export default function Settings() {
                 </section>
 
                 {/* â”€â”€â”€ 2. EMPRESA â”€â”€â”€ */}
-                <section id="empresa" className="section bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+                <section id="empresa" className="section scroll-mt-6 bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
                   <header className="px-6 py-5 border-b border-border flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-950/50 flex items-center justify-center flex-shrink-0">
                       <Building2 className="w-[18px] h-[18px] text-violet-600 dark:text-violet-400" />
@@ -620,44 +626,44 @@ export default function Settings() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       <div className="md:col-span-2">
                         <label className="text-xs font-semibold text-foreground block mb-1.5">RazÃ³n social</label>
-                        <Input className="h-[42px] rounded-lg" value={profileData.company} onChange={(e) => setProfileData(p => ({ ...p, company: e.target.value }))} placeholder="Certifive Soluciones EnergÃ©ticas S.L." />
+                        <input className={FIELD_INPUT} value={profileData.company} onChange={(e) => setProfileData(p => ({ ...p, company: e.target.value }))} placeholder="Certifive Soluciones EnergÃ©ticas S.L." />
                       </div>
                       <div>
                         <label className="text-xs font-semibold text-foreground block mb-1.5">Nombre comercial</label>
-                        <Input className="h-[42px] rounded-lg" value={profileData.company} onChange={(e) => setProfileData(p => ({ ...p, company: e.target.value }))} placeholder="Certifive" />
+                        <input className={FIELD_INPUT} value={profileData.company} onChange={(e) => setProfileData(p => ({ ...p, company: e.target.value }))} placeholder="Certifive" />
                       </div>
                       <div>
                         <label className="text-xs font-semibold text-foreground block mb-1.5">NIF / CIF</label>
-                        <Input className="h-[42px] rounded-lg" value={profileData.dni} onChange={(e) => setProfileData(p => ({ ...p, dni: e.target.value }))} placeholder="B-87654321" />
+                        <input className={FIELD_INPUT} value={profileData.dni} onChange={(e) => setProfileData(p => ({ ...p, dni: e.target.value }))} placeholder="B-87654321" />
                       </div>
                       <div>
                         <label className="text-xs font-semibold text-foreground block mb-1.5">NÃºmero de colegiado</label>
-                        <Input className="h-[42px] rounded-lg" value={profileData.license} onChange={(e) => setProfileData(p => ({ ...p, license: e.target.value }))} placeholder="COIIM-21548" />
+                        <input className={FIELD_INPUT} value={profileData.license} onChange={(e) => setProfileData(p => ({ ...p, license: e.target.value }))} placeholder="COIIM-21548" />
                       </div>
                       <div>
                         <label className="text-xs font-semibold text-foreground block mb-1.5">Colegio profesional</label>
-                        <Input className="h-[42px] rounded-lg" placeholder="COIIM â€” Madrid" />
+                        <input className={FIELD_INPUT} placeholder="COIIM â€” Madrid" />
                       </div>
 
                       <div className="md:col-span-2">
                         <label className="text-xs font-semibold text-foreground block mb-1.5">DirecciÃ³n</label>
-                        <Input className="h-[42px] rounded-lg" value={profileData.address} onChange={(e) => setProfileData(p => ({ ...p, address: e.target.value }))} placeholder="C/ VelÃ¡zquez 87, 3Âº B" />
+                        <input className={FIELD_INPUT} value={profileData.address} onChange={(e) => setProfileData(p => ({ ...p, address: e.target.value }))} placeholder="C/ VelÃ¡zquez 87, 3Âº B" />
                       </div>
                       <div>
                         <label className="text-xs font-semibold text-foreground block mb-1.5">CÃ³digo postal</label>
-                        <Input className="h-[42px] rounded-lg" placeholder="28006" />
+                        <input className={FIELD_INPUT} placeholder="28006" />
                       </div>
                       <div>
                         <label className="text-xs font-semibold text-foreground block mb-1.5">Ciudad</label>
-                        <Input className="h-[42px] rounded-lg" placeholder="Madrid" />
+                        <input className={FIELD_INPUT} placeholder="Madrid" />
                       </div>
                       <div>
                         <label className="text-xs font-semibold text-foreground block mb-1.5">Provincia</label>
-                        <Input className="h-[42px] rounded-lg" placeholder="Madrid" />
+                        <input className={FIELD_INPUT} placeholder="Madrid" />
                       </div>
                       <div>
                         <label className="text-xs font-semibold text-foreground block mb-1.5">PaÃ­s</label>
-                        <button className="h-[42px] w-full rounded-lg bg-card border border-border text-left px-3.5 text-sm flex items-center justify-between hover:bg-muted/40">
+                        <button className={`${FIELD_INPUT} text-left flex items-center justify-between hover:bg-muted/40`}>
                           EspaÃ±a
                           <svg className="w-4 h-4 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6"/></svg>
                         </button>
@@ -667,7 +673,7 @@ export default function Settings() {
                 </section>
 
                 {/* â”€â”€â”€ 3. FACTURACIÃ“N â”€â”€â”€ */}
-                <section id="facturacion" className="section bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+                <section id="facturacion" className="section scroll-mt-6 bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
                   <header className="px-6 py-5 border-b border-border flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-green-100 dark:bg-green-950/50 flex items-center justify-center flex-shrink-0">
                       <Receipt className="w-[18px] h-[18px] text-green-600 dark:text-green-400" />
@@ -682,37 +688,37 @@ export default function Settings() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       <div>
                         <label className="text-xs font-semibold text-foreground block mb-1.5">Serie de factura</label>
-                        <Input className="h-[42px] rounded-lg" value={billingConfig.invoicePrefix} onChange={(e) => setBillingConfig(p => ({ ...p, invoicePrefix: e.target.value }))} placeholder="CERT-2026-" />
+                        <input className={FIELD_INPUT} value={billingConfig.invoicePrefix} onChange={(e) => setBillingConfig(p => ({ ...p, invoicePrefix: e.target.value }))} placeholder="CERT-2026-" />
                         <p className="text-[11px] text-muted-foreground mt-1.5">Prefijo que se aÃ±ade automÃ¡ticamente al nÃºmero</p>
                       </div>
                       <div>
                         <label className="text-xs font-semibold text-foreground block mb-1.5">Siguiente nÃºmero</label>
-                        <Input className="h-[42px] rounded-lg" type="number" value={billingConfig.startNumber} onChange={(e) => setBillingConfig(p => ({ ...p, startNumber: e.target.value }))} placeholder="0025" />
+                        <input className={FIELD_INPUT} type="number" value={billingConfig.startNumber} onChange={(e) => setBillingConfig(p => ({ ...p, startNumber: e.target.value }))} placeholder="0025" />
                       </div>
                       <div>
                         <label className="text-xs font-semibold text-foreground block mb-1.5">IVA por defecto</label>
-                        <button className="h-[42px] w-full rounded-lg bg-card border border-border text-left px-3.5 text-sm flex items-center justify-between hover:bg-muted/40">
+                        <button className={`${FIELD_INPUT} text-left flex items-center justify-between hover:bg-muted/40`}>
                           21 % â€” General
                           <svg className="w-4 h-4 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6"/></svg>
                         </button>
                       </div>
                       <div>
                         <label className="text-xs font-semibold text-foreground block mb-1.5">RetenciÃ³n IRPF</label>
-                        <button className="h-[42px] w-full rounded-lg bg-card border border-border text-left px-3.5 text-sm flex items-center justify-between hover:bg-muted/40">
+                        <button className={`${FIELD_INPUT} text-left flex items-center justify-between hover:bg-muted/40`}>
                           7 % â€” Reducida (primeros 2 aÃ±os)
                           <svg className="w-4 h-4 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6"/></svg>
                         </button>
                       </div>
                       <div>
                         <label className="text-xs font-semibold text-foreground block mb-1.5">Moneda</label>
-                        <button className="h-[42px] w-full rounded-lg bg-card border border-border text-left px-3.5 text-sm flex items-center justify-between hover:bg-muted/40">
+                        <button className={`${FIELD_INPUT} text-left flex items-center justify-between hover:bg-muted/40`}>
                           EUR â€” â‚¬
                           <svg className="w-4 h-4 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6"/></svg>
                         </button>
                       </div>
                       <div>
                         <label className="text-xs font-semibold text-foreground block mb-1.5">Vencimiento por defecto</label>
-                        <button className="h-[42px] w-full rounded-lg bg-card border border-border text-left px-3.5 text-sm flex items-center justify-between hover:bg-muted/40">
+                        <button className={`${FIELD_INPUT} text-left flex items-center justify-between hover:bg-muted/40`}>
                           30 dÃ­as
                           <svg className="w-4 h-4 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6"/></svg>
                         </button>
@@ -721,7 +727,7 @@ export default function Settings() {
 
                     <div>
                       <label className="text-xs font-semibold text-foreground block mb-1.5">Notas al pie de factura</label>
-                      <Textarea className="rounded-lg resize-vertical min-h-[88px]" placeholder="Conforme al Real Decreto 235/2013, este certificado tiene una validez de 10 aÃ±os desde la fecha de emisiÃ³n." />
+                      <textarea className={FIELD_TEXTAREA} placeholder="Conforme al Real Decreto 235/2013, este certificado tiene una validez de 10 aÃ±os desde la fecha de emisiÃ³n." />
                     </div>
 
                     {/* IBAN block */}
@@ -739,7 +745,7 @@ export default function Settings() {
                 </section>
 
                 {/* â”€â”€â”€ 4. PLANTILLAS â”€â”€â”€ */}
-                <section id="plantillas" className="section bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+                <section id="plantillas" className="section scroll-mt-6 bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
                   <header className="px-6 py-5 border-b border-border flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-950/50 flex items-center justify-center flex-shrink-0">
@@ -808,7 +814,7 @@ export default function Settings() {
                 </section>
 
                 {/* â”€â”€â”€ 5. NOTIFICACIONES â”€â”€â”€ */}
-                <section id="notificaciones" className="section bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+                <section id="notificaciones" className="section scroll-mt-6 bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
                   <header className="px-6 py-5 border-b border-border flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-rose-100 dark:bg-rose-950/50 flex items-center justify-center flex-shrink-0">
                       <Bell className="w-[18px] h-[18px] text-rose-600 dark:text-rose-400" />
@@ -908,7 +914,7 @@ export default function Settings() {
                 </section>
 
                 {/* â”€â”€â”€ 6. INTEGRACIONES â”€â”€â”€ */}
-                <section id="integraciones" className="section bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+                <section id="integraciones" className="section scroll-mt-6 bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
                   <header className="px-6 py-5 border-b border-border flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-cyan-100 dark:bg-cyan-950/50 flex items-center justify-center flex-shrink-0">
                       <Plug className="w-[18px] h-[18px] text-cyan-600 dark:text-cyan-400" />
@@ -988,7 +994,7 @@ export default function Settings() {
                 </section>
 
                 {/* â”€â”€â”€ 7. PLAN & SUSCRIPCIÃ“N â”€â”€â”€ (keep existing subscription section but update header) */}
-                <section id="suscripcion" className="section bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+                <section id="suscripcion" className="section scroll-mt-6 bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
                   <header className="px-6 py-5 border-b border-border flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-yellow-100 dark:bg-yellow-950/40 flex items-center justify-center flex-shrink-0">
                       <Star className="w-[18px] h-[18px] text-yellow-600 dark:text-yellow-400" />
@@ -1095,7 +1101,7 @@ export default function Settings() {
                 </section>
 
                 {/* â”€â”€â”€ 8. SEGURIDAD â”€â”€â”€ */}
-                <section id="seguridad" className="section bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+                <section id="seguridad" className="section scroll-mt-6 bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
                   <header className="px-6 py-5 border-b border-border flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-800 flex items-center justify-center flex-shrink-0">
                       <Shield className="w-[18px] h-[18px] text-slate-700 dark:text-slate-300" />
