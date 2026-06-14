@@ -6,7 +6,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import Sidebar from "@/components/layout/sidebar";
 import { EmptyState } from "@/components/ui/empty-state";
-import { KpiCard, SectionCard, SearchInput } from "@/components/ui";
+import { KpiCard, SectionCard } from "@/components/ui";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -341,19 +341,6 @@ export default function Reports() {
               <h1 className="text-2xl font-bold text-foreground tracking-tight">Informes financieros</h1>
               <p className="text-sm text-muted-foreground mt-1">Gestión completa de facturas, pagos y cobros</p>
             </div>
-            <Select value={dateRange} onValueChange={setDateRange}>
-              <SelectTrigger className="h-10 bg-muted/40 border-transparent rounded-xl text-sm font-medium sm:w-[180px]">
-                <SelectValue placeholder="Período" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="current_month">Mes actual</SelectItem>
-                <SelectItem value="last_month">Mes anterior</SelectItem>
-                <SelectItem value="current_year">Año actual</SelectItem>
-                <SelectItem value="30">Últimos 30 días</SelectItem>
-                <SelectItem value="90">Últimos 90 días</SelectItem>
-                <SelectItem value="all">Todos</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
           {/* KPIs */}
@@ -507,14 +494,30 @@ export default function Reports() {
 
           {/* ── Filters ──────────────────────────────────────────────────── */}
           <div className="bg-card rounded-2xl border border-border shadow-sm p-3 flex flex-col sm:flex-row gap-3">
-            <SearchInput
-              placeholder="Buscar facturas, cobros…"
-              value={searchTerm}
-              onChange={setSearchTerm}
-              className="flex-1"
-            />
+            <div className="flex-1 relative">
+              <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                placeholder="Buscar facturas, cobros…"
+                className="w-full h-11 pl-10 pr-4 bg-muted/40 border border-transparent rounded-xl text-sm font-medium placeholder:text-muted-foreground focus:outline-none focus:bg-card focus:border-border text-foreground"
+              />
+            </div>
+            <Select value={dateRange} onValueChange={setDateRange}>
+              <SelectTrigger className="h-11 px-4 bg-muted/40 border-transparent rounded-xl text-sm font-medium w-full sm:w-[180px]">
+                <SelectValue placeholder="Período" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="current_month">Mes actual</SelectItem>
+                <SelectItem value="last_month">Mes anterior</SelectItem>
+                <SelectItem value="current_year">Año actual</SelectItem>
+                <SelectItem value="30">Últimos 30 días</SelectItem>
+                <SelectItem value="90">Últimos 90 días</SelectItem>
+                <SelectItem value="all">Todos</SelectItem>
+              </SelectContent>
+            </Select>
             <Select value={paymentStatusFilter} onValueChange={setPaymentStatusFilter}>
-              <SelectTrigger className="h-9 bg-muted/40 border-transparent rounded-xl text-sm font-medium sm:w-[160px]">
+              <SelectTrigger className="h-11 px-4 bg-muted/40 border-transparent rounded-xl text-sm font-medium w-full sm:w-[160px]">
                 <SelectValue placeholder="Estado de pago" />
               </SelectTrigger>
               <SelectContent>
@@ -977,7 +980,7 @@ function InvoicesTable({ invoices, onEdit, onRecordPayment }: {
               <td className="px-6 py-4">
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                   invoice.paymentStatus === "paid"
-                    ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
+                    ? "bg-primary text-primary-foreground"
                     : invoice.paymentStatus === "overdue"
                       ? "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300"
                       : "bg-muted text-muted-foreground"
