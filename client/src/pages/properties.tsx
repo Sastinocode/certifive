@@ -534,7 +534,7 @@ export default function Properties() {
                     <>
                       <div className="aspect-[4/3] rounded-xl mb-4 relative" style={PH_IMG_STYLE}>
                         <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-mono text-[10px] font-semibold text-muted-foreground bg-card px-2 py-1 rounded-md border border-border whitespace-nowrap">
-                          foto fachada
+                          {photoPlaceholderLabel(selectedProp.propertyType)}
                         </span>
                       </div>
                       <div className="flex items-start justify-between gap-2">
