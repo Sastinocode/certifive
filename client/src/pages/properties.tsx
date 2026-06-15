@@ -120,6 +120,15 @@ const MAP_POSITIONS = [
   { left: "30%", top: "65%" },
 ];
 
+// ── Photo placeholder label by property type ─────────────────────────────────
+function photoPlaceholderLabel(propertyType?: string | null) {
+  const t = (propertyType ?? "").toLowerCase();
+  if (!t) return "sin fotos";
+  if (t.includes("local")) return "foto local";
+  if (t.includes("oficina")) return "foto oficina";
+  return "foto fachada";
+}
+
 // ── PropertyCard ──────────────────────────────────────────────────────────────
 function PropertyCard({ property }: { property: any }) {
   const isExpired = property.status === "expired";
@@ -137,7 +146,7 @@ function PropertyCard({ property }: { property: any }) {
       {/* Image placeholder — .ph-img */}
       <div className="aspect-[4/3] relative" style={PH_IMG_STYLE}>
         <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-mono text-[10px] font-semibold text-muted-foreground bg-card px-2 py-1 rounded-md border border-border whitespace-nowrap">
-          foto fachada
+          {photoPlaceholderLabel(property.propertyType)}
         </span>
         {property.energyRating && (
           <span className="absolute top-3 left-3">
