@@ -445,7 +445,7 @@ export default function Reports() {
                   value={v}
                   className="rounded-lg text-sm font-medium py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm text-muted-foreground transition-colors"
                 >
-                  {["Facturas", "Pagos", "Cobros", "Gestor", "Analíticas"][i]}
+                  {["Facturas", "Cobros", "Informes", "Contabilidad", "Analíticas"][i]}
                 </TabsTrigger>
               ))}
             </TabsList>
