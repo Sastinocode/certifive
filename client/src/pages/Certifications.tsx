@@ -434,6 +434,30 @@ function FormStatusBadge({ status }: { status: string | null }) {
   );
 }
 
+// ── Table-only flujo pill (HTML "estilo flujo" — small dot pill) ──────────────
+// Local variant used solely in the table's Flujo column. Keep separate from
+// FormStatusBadge (which LinkModal relies on) so the table can diverge freely.
+function TableFlujoPill({ status }: { status: string | null }) {
+  if (!status) return null;
+  const styles: Record<string, { pill: string; dot: string }> = {
+    enviado:    { pill: "bg-blue-50 text-blue-700 border border-blue-100",       dot: "bg-blue-500" },
+    abierto:    { pill: "bg-orange-50 text-orange-700 border border-orange-100", dot: "bg-orange-500" },
+    completado: { pill: "bg-emerald-50 text-emerald-700 border border-emerald-100", dot: "bg-emerald-500" },
+  };
+  const labels: Record<string, string> = {
+    enviado: "Enlace enviado",
+    abierto: "Abierto",
+    completado: "Completado",
+  };
+  const s = styles[status];
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold ${s?.pill ?? ""}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${s?.dot ?? "bg-current"}`} />
+      {labels[status] ?? status}
+    </span>
+  );
+}
+
 // ── Generate link modal ──────────────────────────────────────────────────────
 
 function LinkModal({ cert, onClose }: { cert: any; onClose: () => void }) {
@@ -1174,7 +1198,7 @@ export default function Certifications() {
                         {cert.workflowStatus && cert.workflowStatus !== "nuevo"
                           ? <WorkflowBadge status={cert.workflowStatus} />
                           : cert.formStatus
-                            ? <FormStatusBadge status={cert.formStatus} />
+                            ? <TableFlujoPill status={cert.formStatus} />
                             : null
                         }
                       </div>
