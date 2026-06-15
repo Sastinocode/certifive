@@ -525,6 +525,11 @@ export default function Invoices() {
                             </td>
                             <td className="px-3 py-3.5">
                               <StatusPill status={inv.status} />
+                              {isOverdueRow && (
+                                <p className="text-[11px] text-red-500 font-medium">
+                                  {Math.floor((new Date().getTime() - new Date(inv.dueDate).getTime()) / 86400000)} días
+                                </p>
+                              )}
                             </td>
                             <td
                               className="px-3 py-3.5 text-muted-foreground hover:text-foreground"
