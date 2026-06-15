@@ -399,99 +399,6 @@ export default function Reports() {
             </div>
           </div>
 
-          {/* ── Evolución mensual ─────────────────────────────────────────── */}
-          <SectionCard title="Evolución mensual" icon={<BarChart3 size={18} />}>
-            <div className="h-[280px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={monthlyData} barCategoryGap="30%">
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                  <XAxis
-                    dataKey="month"
-                    tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    tickFormatter={(v) => `${v.toLocaleString("es-ES")}€`}
-                    tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
-                    axisLine={false}
-                    tickLine={false}
-                    width={70}
-                  />
-                  <Tooltip
-                    formatter={(v: number) => [fmtEur(v), ""]}
-                    contentStyle={{ borderRadius: "0.75rem", border: "1px solid hsl(var(--border))", background: "hsl(var(--card))", color: "hsl(var(--foreground))" }}
-                  />
-                  <Legend iconType="circle" iconSize={8} />
-                  <Bar dataKey="facturado" name="Facturado" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="cobrado"   name="Cobrado"   fill="hsl(var(--primary))" fillOpacity={0.35} radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </SectionCard>
-
-          {/* ── Por estado + Por tipo de inmueble ───────────────────────── */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-
-            <SectionCard title="Por estado" icon={<PieChart size={18} />}>
-              {statusData.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-8 text-center">Sin datos en el período</p>
-              ) : (
-                <div className="flex flex-col gap-4">
-                  <div className="h-[200px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <RechartsPieChart>
-                        <Pie data={statusData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} paddingAngle={3}>
-                          {statusData.map((s) => (
-                            <Cell key={s.name} fill={s.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip
-                          formatter={(v: number, name: string) => [`${v} facturas`, name]}
-                          contentStyle={{ borderRadius: "0.75rem", border: "1px solid hsl(var(--border))", background: "hsl(var(--card))", color: "hsl(var(--foreground))" }}
-                        />
-                      </RechartsPieChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <div className="flex flex-wrap justify-center gap-4 pb-1">
-                    {statusData.map((s) => (
-                      <div key={s.name} className="flex items-center gap-2 text-sm">
-                        <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: s.color }} />
-                        <span className="text-muted-foreground">{s.name}</span>
-                        <span className="font-semibold text-foreground">{s.value}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </SectionCard>
-
-            <SectionCard title="Por tipo de inmueble" icon={<Building2 size={18} />}>
-              {propertyTypeData.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-8 text-center">Sin datos en el período</p>
-              ) : (
-                <div className="flex flex-col gap-3 py-1">
-                  {propertyTypeData.map((p) => {
-                    const max = Math.max(...propertyTypeData.map((d) => d.value));
-                    return (
-                      <div key={p.name} className="flex items-center gap-3">
-                        <span className="w-28 text-xs text-muted-foreground shrink-0 text-right">{p.name}</span>
-                        <div className="flex-1 h-6 bg-muted/40 rounded-full overflow-hidden">
-                          <div
-                            className="h-full rounded-full transition-all duration-500"
-                            style={{ width: `${(p.value / max) * 100}%`, background: p.color }}
-                          />
-                        </div>
-                        <span className="w-8 text-xs font-semibold text-foreground text-right">{p.value}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </SectionCard>
-
-          </div>
-
           {/* ── Filters ──────────────────────────────────────────────────── */}
           <div className="bg-card rounded-2xl border border-border shadow-sm p-3 flex flex-col sm:flex-row gap-3">
             <div className="flex-1 relative">
@@ -531,14 +438,14 @@ export default function Reports() {
 
           {/* ── Tabs ─────────────────────────────────────────────────────── */}
           <Tabs defaultValue="invoices" className="space-y-5">
-            <TabsList className="grid w-full grid-cols-4 bg-card border border-border rounded-xl p-1 h-auto gap-1">
-              {["invoices", "payments", "collections", "manager"].map((v, i) => (
+            <TabsList className="grid w-full grid-cols-5 bg-card border border-border rounded-xl p-1 h-auto gap-1">
+              {["invoices", "payments", "collections", "manager", "analytics"].map((v, i) => (
                 <TabsTrigger
                   key={v}
                   value={v}
                   className="rounded-lg text-sm font-medium py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm text-muted-foreground transition-colors"
                 >
-                  {["Facturas", "Pagos", "Cobros", "Gestor"][i]}
+                  {["Facturas", "Pagos", "Cobros", "Gestor", "Analíticas"][i]}
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -762,6 +669,102 @@ export default function Reports() {
                     onDeleteCollection={deleteCollectionMutation.mutate}
                   />
                 </div>
+              </div>
+            </TabsContent>
+
+            {/* ── Analíticas ────────────────────────────────────────────── */}
+            <TabsContent value="analytics" className="space-y-4">
+              {/* ── Evolución mensual ─────────────────────────────────────────── */}
+              <SectionCard title="Evolución mensual" icon={<BarChart3 size={18} />}>
+                <div className="h-[280px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={monthlyData} barCategoryGap="30%">
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                      <XAxis
+                        dataKey="month"
+                        tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <YAxis
+                        tickFormatter={(v) => `${v.toLocaleString("es-ES")}€`}
+                        tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                        axisLine={false}
+                        tickLine={false}
+                        width={70}
+                      />
+                      <Tooltip
+                        formatter={(v: number) => [fmtEur(v), ""]}
+                        contentStyle={{ borderRadius: "0.75rem", border: "1px solid hsl(var(--border))", background: "hsl(var(--card))", color: "hsl(var(--foreground))" }}
+                      />
+                      <Legend iconType="circle" iconSize={8} />
+                      <Bar dataKey="facturado" name="Facturado" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="cobrado"   name="Cobrado"   fill="hsl(var(--primary))" fillOpacity={0.35} radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </SectionCard>
+
+              {/* ── Por estado + Por tipo de inmueble ───────────────────────── */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+                <SectionCard title="Por estado" icon={<PieChart size={18} />}>
+                  {statusData.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-8 text-center">Sin datos en el período</p>
+                  ) : (
+                    <div className="flex flex-col gap-4">
+                      <div className="h-[200px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <RechartsPieChart>
+                            <Pie data={statusData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} paddingAngle={3}>
+                              {statusData.map((s) => (
+                                <Cell key={s.name} fill={s.color} />
+                              ))}
+                            </Pie>
+                            <Tooltip
+                              formatter={(v: number, name: string) => [`${v} facturas`, name]}
+                              contentStyle={{ borderRadius: "0.75rem", border: "1px solid hsl(var(--border))", background: "hsl(var(--card))", color: "hsl(var(--foreground))" }}
+                            />
+                          </RechartsPieChart>
+                        </ResponsiveContainer>
+                      </div>
+                      <div className="flex flex-wrap justify-center gap-4 pb-1">
+                        {statusData.map((s) => (
+                          <div key={s.name} className="flex items-center gap-2 text-sm">
+                            <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: s.color }} />
+                            <span className="text-muted-foreground">{s.name}</span>
+                            <span className="font-semibold text-foreground">{s.value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </SectionCard>
+
+                <SectionCard title="Por tipo de inmueble" icon={<Building2 size={18} />}>
+                  {propertyTypeData.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-8 text-center">Sin datos en el período</p>
+                  ) : (
+                    <div className="flex flex-col gap-3 py-1">
+                      {propertyTypeData.map((p) => {
+                        const max = Math.max(...propertyTypeData.map((d) => d.value));
+                        return (
+                          <div key={p.name} className="flex items-center gap-3">
+                            <span className="w-28 text-xs text-muted-foreground shrink-0 text-right">{p.name}</span>
+                            <div className="flex-1 h-6 bg-muted/40 rounded-full overflow-hidden">
+                              <div
+                                className="h-full rounded-full transition-all duration-500"
+                                style={{ width: `${(p.value / max) * 100}%`, background: p.color }}
+                              />
+                            </div>
+                            <span className="w-8 text-xs font-semibold text-foreground text-right">{p.value}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </SectionCard>
+
               </div>
             </TabsContent>
 
