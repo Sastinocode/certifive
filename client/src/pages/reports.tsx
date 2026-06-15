@@ -567,7 +567,7 @@ export default function Reports() {
                       <CheckCircle size={18} className="text-emerald-600 dark:text-emerald-400" />
                     </div>
                     <div>
-                      <h2 className="text-base font-semibold text-foreground tracking-tight">Pagos recibidos</h2>
+                      <h2 className="text-base font-semibold text-foreground tracking-tight">Informes</h2>
                       <p className="text-xs text-muted-foreground mt-0.5">Historial de pagos</p>
                     </div>
                   </div>
