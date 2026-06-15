@@ -439,7 +439,7 @@ export default function Reports() {
           {/* ── Tabs ─────────────────────────────────────────────────────── */}
           <Tabs defaultValue="invoices" className="space-y-5">
             <TabsList className="grid w-full grid-cols-5 bg-card border border-border rounded-xl p-1 h-auto gap-1">
-              {["invoices", "payments", "collections", "manager", "analytics"].map((v, i) => (
+              {["invoices", "collections", "payments", "manager", "analytics"].map((v, i) => (
                 <TabsTrigger
                   key={v}
                   value={v}
@@ -506,30 +506,6 @@ export default function Reports() {
               </div>
             </TabsContent>
 
-            {/* ── Payments ──────────────────────────────────────────────── */}
-            <TabsContent value="payments">
-              <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
-                <div className="px-6 py-5 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-950/50 flex items-center justify-center flex-shrink-0">
-                      <CheckCircle size={18} className="text-emerald-600 dark:text-emerald-400" />
-                    </div>
-                    <div>
-                      <h2 className="text-base font-semibold text-foreground tracking-tight">Pagos recibidos</h2>
-                      <p className="text-xs text-muted-foreground mt-0.5">Historial de pagos</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => exportToExcelMutation.mutate("payments")}
-                    className="rounded-full bg-card border border-border px-4 h-10 text-sm font-medium inline-flex items-center gap-1.5 hover:bg-muted/40 transition-colors"
-                  >
-                    <Download className="w-4 h-4" />Exportar
-                  </button>
-                </div>
-                <PaymentsTable payments={payments as Payment[]} />
-              </div>
-            </TabsContent>
-
             {/* ── Collections ───────────────────────────────────────────── */}
             <TabsContent value="collections">
               <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
@@ -579,6 +555,30 @@ export default function Reports() {
                   </div>
                 </div>
                 <CollectionsTable collections={filteredCollections} />
+              </div>
+            </TabsContent>
+
+            {/* ── Payments ──────────────────────────────────────────────── */}
+            <TabsContent value="payments">
+              <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+                <div className="px-6 py-5 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-950/50 flex items-center justify-center flex-shrink-0">
+                      <CheckCircle size={18} className="text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                    <div>
+                      <h2 className="text-base font-semibold text-foreground tracking-tight">Pagos recibidos</h2>
+                      <p className="text-xs text-muted-foreground mt-0.5">Historial de pagos</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => exportToExcelMutation.mutate("payments")}
+                    className="rounded-full bg-card border border-border px-4 h-10 text-sm font-medium inline-flex items-center gap-1.5 hover:bg-muted/40 transition-colors"
+                  >
+                    <Download className="w-4 h-4" />Exportar
+                  </button>
+                </div>
+                <PaymentsTable payments={payments as Payment[]} />
               </div>
             </TabsContent>
 
