@@ -98,7 +98,7 @@ export default function StripeIntegration() {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       <Sidebar selectedTab="stripe" onTabChange={() => {}} />
-      <main className="flex-1 p-6">
+      <main className="flex-1 p-6 pb-24 lg:pb-6">
         <div className="max-w-6xl mx-auto space-y-8">
           {/* Header */}
           <div className="text-center mb-8">

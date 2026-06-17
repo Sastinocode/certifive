@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlanFeatures } from "@/hooks/usePlanFeatures";
 import { useLocation } from "wouter";
@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, Building2, FileText, Award, Receipt,
   MessageCircle, BarChart2, Settings, LogOut,
-  HelpCircle, Plus, Search, Crown, Sparkles,
+  HelpCircle, Plus, Search, Crown, Sparkles, MoreHorizontal,
 } from "lucide-react";
 
 type Feature = "whatsapp" | "reports" | "invoicing" | "multi_user";
@@ -49,6 +49,7 @@ export default function Sidebar({ selectedTab, onTabChange }: SidebarProps) {
   const { user } = useAuth();
   const { canUse, plan } = usePlanFeatures();
   const [location, setLocation] = useLocation();
+  const [moreOpen, setMoreOpen] = useState(false);
 
   const handleLogout = () => { window.location.href = "/api/logout"; };
 
@@ -87,7 +88,40 @@ export default function Sidebar({ selectedTab, onTabChange }: SidebarProps) {
     onTabChange(item.id);
   };
 
+  // ── Bottom-nav (mobile, <lg) item groups ──────────────────────────────────
+  const byId = (id: string) => allItems.find(i => i.id === id)!;
+  const nuevoItem = byId("certificados");
+  const sheetItems = ["facturacion", "whatsapp", "informes", "ajustes"].map(byId);
+  const moreActive = sheetItems.some(it => !isLocked(it) && isActive(it));
+
+  const goMobile = (item: (typeof allItems)[0]) => { navigate(item); setMoreOpen(false); };
+
+  const BarCell = ({ item }: { item: (typeof allItems)[0] }) => {
+    const active = !isLocked(item) && isActive(item);
+    const Icon = item.icon;
+    return (
+      <button
+        onClick={() => goMobile(item)}
+        className="flex-1 flex flex-col items-center justify-center gap-0.5 min-w-0"
+      >
+        <span className={cn(
+          "flex items-center justify-center rounded-full px-3.5 py-1 transition-colors",
+          active ? "bg-primary text-primary-foreground" : "text-muted-foreground",
+        )}>
+          <Icon size={19} />
+        </span>
+        <span className={cn(
+          "text-[10px] font-medium leading-none truncate max-w-full px-1",
+          active ? "text-primary" : "text-muted-foreground",
+        )}>
+          {item.label}
+        </span>
+      </button>
+    );
+  };
+
   return (
+    <>
     <aside className="hidden lg:flex w-60 flex-col flex-shrink-0 h-screen bg-sidebar text-sidebar-foreground">
       {/* ── Logo ─────────────────────────────────────────────────────────── */}
       <div className="px-5 pt-5 pb-4 border-b border-sidebar-border flex-shrink-0">
@@ -224,5 +258,99 @@ export default function Sidebar({ selectedTab, onTabChange }: SidebarProps) {
         </div>
       </div>
     </aside>
+
+      {/* ── Bottom nav (mobile, <lg) ───────────────────────────────────────── */}
+      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-card border-t border-border pb-[env(safe-area-inset-bottom)]">
+        <div className="flex items-stretch justify-around h-16">
+          <BarCell item={byId("dashboard")} />
+          <BarCell item={byId("expedientes")} />
+
+          {/* Central CTA: Nuevo certificado */}
+          <button
+            onClick={() => goMobile(nuevoItem)}
+            className="flex-1 flex flex-col items-center justify-center gap-0.5"
+            aria-label="Nuevo certificado"
+          >
+            <span className="-mt-5 flex items-center justify-center w-12 h-12 rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 active:scale-95 transition-transform">
+              <Plus size={22} />
+            </span>
+            <span className="text-[10px] font-medium leading-none text-primary -mt-0.5">Nuevo</span>
+          </button>
+
+          <BarCell item={byId("inmuebles")} />
+
+          {/* Más */}
+          <button
+            onClick={() => setMoreOpen(true)}
+            className="flex-1 flex flex-col items-center justify-center gap-0.5 min-w-0"
+            aria-label="Más opciones"
+          >
+            <span className={cn(
+              "flex items-center justify-center rounded-full px-3.5 py-1 transition-colors",
+              moreActive ? "bg-primary text-primary-foreground" : "text-muted-foreground",
+            )}>
+              <MoreHorizontal size={19} />
+            </span>
+            <span className={cn(
+              "text-[10px] font-medium leading-none",
+              moreActive ? "text-primary" : "text-muted-foreground",
+            )}>
+              Más
+            </span>
+          </button>
+        </div>
+      </nav>
+
+      {/* ── "Más" sheet (mobile) ───────────────────────────────────────────── */}
+      {moreOpen && (
+        <div className="lg:hidden fixed inset-0 z-50">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setMoreOpen(false)}
+          />
+          <div className="absolute bottom-0 inset-x-0 bg-card rounded-t-2xl border-t border-border shadow-2xl p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
+            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-muted" />
+            <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+              Más opciones
+            </p>
+            <div className="flex flex-col gap-0.5">
+              {sheetItems.map(item => {
+                const locked = isLocked(item);
+                const active = !locked && isActive(item);
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => goMobile(item)}
+                    disabled={locked}
+                    className={cn(
+                      "w-full flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-left transition-colors",
+                      active ? "bg-primary/10 text-primary font-medium" : "text-foreground hover:bg-muted",
+                      locked && "opacity-50 cursor-default hover:bg-transparent",
+                    )}
+                  >
+                    <Icon size={18} className={active ? "text-primary" : "text-muted-foreground"} />
+                    <span className="flex-1">{item.label}</span>
+                    {locked && item.requiredBadge && (
+                      <span className="text-[9px] font-bold tracking-[0.04em] rounded px-[5px] py-px text-amber-500 bg-amber-500/15 border border-amber-500/30">
+                        {item.requiredBadge}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="my-2 border-t border-border" />
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-left text-muted-foreground hover:bg-muted transition-colors"
+            >
+              <LogOut size={18} className="text-muted-foreground" />
+              <span className="flex-1">Cerrar sesión</span>
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

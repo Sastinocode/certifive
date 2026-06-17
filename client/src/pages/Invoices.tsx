@@ -174,7 +174,7 @@ export default function Invoices() {
     <div className="flex h-screen bg-background overflow-hidden">
       <Sidebar selectedTab="facturas" onTabChange={() => {}} />
 
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto pb-20 lg:pb-0">
         <div className="px-4 py-5 sm:px-8 sm:py-8 max-w-[1500px] mx-auto space-y-6">
 
           {/* ── Header ─────────────────────────────────────────────────────── */}

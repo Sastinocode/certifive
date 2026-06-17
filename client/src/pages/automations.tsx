@@ -53,7 +53,7 @@ export default function Automations() {
     <div className="flex h-screen overflow-hidden" style={{ background: "#0F172A" }}>
       <Sidebar selectedTab={selectedTab} onTabChange={setSelectedTab} />
 
-      <div className="flex-1 overflow-y-auto relative">
+      <div className="flex-1 overflow-y-auto relative pb-20 lg:pb-0">
         {/* Animated background */}
         <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
           <motion.div

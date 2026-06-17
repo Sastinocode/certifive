@@ -462,7 +462,7 @@ export default function Pricing() {
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar selectedTab="pricing" onTabChange={() => {}} />
-      <div className="flex-1 p-8 space-y-8">
+      <div className="flex-1 p-8 space-y-8 pb-24 lg:pb-8">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">

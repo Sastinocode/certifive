@@ -492,7 +492,7 @@ export default function Certificates() {
     <div className="flex h-screen bg-[#f6f8f7] dark:bg-background">
       <Sidebar selectedTab="certificados" onTabChange={() => {}} />
 
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto pb-20 lg:pb-0">
         <div className="p-4 sm:p-8 max-w-7xl mx-auto space-y-7">
 
           {/* ── Header ─────────────────────────────────────────────────────── */}
