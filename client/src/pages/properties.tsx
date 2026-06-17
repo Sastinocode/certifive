@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useQuery } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
 import Sidebar from "@/components/layout/sidebar";
@@ -15,6 +14,13 @@ interface Certification {
   energyRating: string | null;
   userId: number;
   createdAt: Date | null;
+  // Optional property metadata (not always present on every record).
+  propertyType?: string | null;
+  city?: string | null;
+  municipality?: string | null;
+  surfaceArea?: number | string | null;
+  constructionYear?: number | string | null;
+  expiryDate?: string | Date | null;
 }
 
 // ── Energy label colours — HTML .lbl-* ───────────────────────────────────────
@@ -30,7 +36,7 @@ const ENERGY_COLORS: Record<string, { bg: string; text: string }> = {
 
 // ── EnergyChip — arrow badge matching HTML .e-chip ───────────────────────────
 function EnergyChip({ letter, size = "sm" }: { letter: string; size?: "sm" | "lg" }) {
-  const colors = ENERGY_COLORS[letter?.toUpperCase()] ?? { bg: "#ccc", text: "#000" };
+  const colors = ENERGY_COLORS[(letter ?? "").toUpperCase()] ?? { bg: "#ccc", text: "#000" };
   const dim = size === "lg" ? { w: 36, h: 32, fs: 16 } : { w: 28, h: 24, fs: 13 };
   return (
     <div className="relative inline-flex items-center" style={{ marginRight: 8 }}>
@@ -130,7 +136,7 @@ function photoPlaceholderLabel(propertyType?: string | null) {
 }
 
 // ── PropertyCard ──────────────────────────────────────────────────────────────
-function PropertyCard({ property }: { property: any }) {
+function PropertyCard({ property }: { property: Certification }) {
   const isExpired = property.status === "expired";
   const isDraft = property.status === "draft";
   return (
@@ -229,11 +235,9 @@ export default function Properties() {
     },
   });
 
-  const { data: folders = [] } = useQuery({ queryKey: ["/api/folders"] });
-
   const properties = useMemo(() => {
     const seen = new Set<string>();
-    return (certifications as Certification[]).filter((c) => {
+    return certifications.filter((c) => {
       if (seen.has(c.cadastralRef)) return false;
       seen.add(c.cadastralRef);
       return true;
@@ -241,7 +245,7 @@ export default function Properties() {
   }, [certifications]);
 
   const filtered = useMemo(() => {
-    return properties.filter((p: any) => {
+    return properties.filter((p) => {
       const matchesSearch =
         !search ||
         p.propertyAddress?.toLowerCase().includes(search.toLowerCase()) ||
@@ -261,7 +265,7 @@ export default function Properties() {
 
   const typeCounts = useMemo(() => {
     const counts: Record<string, number> = { all: properties.length };
-    properties.forEach((p: any) => {
+    properties.forEach((p) => {
       const t = (p.propertyType ?? "vivienda").toLowerCase();
       counts[t] = (counts[t] ?? 0) + 1;
     });
@@ -278,7 +282,7 @@ export default function Properties() {
   // Map: show up to 5 markers; clamp selected index
   const mapProperties  = filtered.slice(0, 5);
   const selectedMapIdx = Math.min(mapSelected, Math.max(0, mapProperties.length - 1));
-  const selectedProp   = (mapProperties[selectedMapIdx] as any) ?? null;
+  const selectedProp   = mapProperties[selectedMapIdx] ?? null;
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
@@ -440,7 +444,7 @@ export default function Properties() {
                             ))}
                           </tr>
                         ))
-                      : filtered.map((p: any) => (
+                      : filtered.map((p) => (
                           <tr key={p.id} className="border-b border-border last:border-0 hover:bg-muted/40 cursor-pointer">
                             <td className="px-5 py-3">
                               <p className="font-semibold text-foreground">{p.propertyAddress}</p>
@@ -488,10 +492,10 @@ export default function Properties() {
                   </svg>
 
                   {/* Markers */}
-                  {mapProperties.map((p: any, i) => {
+                  {mapProperties.map((p, i) => {
                     const pos    = MAP_POSITIONS[i];
                     const isSel  = i === selectedMapIdx;
-                    const col    = ENERGY_COLORS[p.energyRating?.toUpperCase()] ?? { bg: "#6b7280", text: "#fff" };
+                    const col    = ENERGY_COLORS[(p.energyRating ?? "").toUpperCase()] ?? { bg: "#6b7280", text: "#fff" };
                     return (
                       <button
                         key={p.id}

@@ -438,8 +438,8 @@ export default function Settings() {
   const PLANS = [
     {
       key: "free", name: "Gratuito", price: 0, period: "",
-      icon: <Package className="w-5 h-5" />, color: "text-slate-600",
-      bg: "bg-slate-50", border: "border-slate-200", certs: "5 certificados/mes",
+      icon: <Package className="w-5 h-5" />, color: "text-muted-foreground",
+      bg: "bg-muted/40", border: "border-border", certs: "5 certificados/mes",
       features: ["Gestión básica de certificados", "Exportación PDF", "Soporte por email"],
       notIncluded: ["WhatsApp automatizado", "Clientes ilimitados", "Informes avanzados", "Facturación integrada"],
     },
@@ -474,7 +474,7 @@ export default function Settings() {
     if (s === "trialing") return { text: "Prueba",          cls: "bg-blue-100 text-blue-700" };
     if (s === "past_due") return { text: "Pago pendiente",  cls: "bg-amber-100 text-amber-700" };
     if (s === "canceled") return { text: "Cancelado",       cls: "bg-red-100 text-red-700" };
-    return { text: s, cls: "bg-slate-100 text-slate-700" };
+    return { text: s, cls: "bg-muted text-muted-foreground" };
   };
 
   const fmtDate = (iso: string | null | undefined) => {
@@ -1122,8 +1122,8 @@ export default function Settings() {
                 {/* ─── 8. SEGURIDAD ─── */}
                 <section id="seguridad" className="section scroll-mt-6 bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
                   <header className="px-6 py-5 border-b border-border flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-800 flex items-center justify-center flex-shrink-0">
-                      <Shield className="w-[18px] h-[18px] text-slate-700 dark:text-slate-300" />
+                    <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
+                      <Shield className="w-[18px] h-[18px] text-muted-foreground" />
                     </div>
                     <div>
                       <h2 className="text-base font-semibold text-foreground tracking-tight">Seguridad</h2>

@@ -21,7 +21,8 @@
       "PowerShell(claude update *)",
       "PowerShell(npx tsc --noEmit)",
       "PowerShell(git *)",
-      "PowerShell(npx drizzle-kit generate)"
+      "PowerShell(npx drizzle-kit generate)",
+      "Bash(git commit -m 'refactor\\(dashboard\\): faithful port from handoff HTML *)"
     ]
   }
 }

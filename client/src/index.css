@@ -28,6 +28,23 @@
     --input:                215 20% 88%;
     --ring:                 142 69% 36%;
     --radius:               0.5rem;
+
+    /* Charts (Recharts) */
+    --chart-1:              142 69% 36%;   /* verde primary */
+    --chart-2:              210 80% 52%;   /* azul */
+    --chart-3:              35 92% 52%;    /* naranja */
+    --chart-4:              280 60% 55%;   /* morado */
+    --chart-5:              0 72% 51%;     /* rojo */
+
+    /* Sidebar — navy profundo + verde Certifive */
+    --sidebar:                  210 38% 8%;
+    --sidebar-foreground:       0 0% 90%;
+    --sidebar-primary:          142 69% 39%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent:           210 30% 16%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border:           210 25% 18%;
+    --sidebar-ring:             142 69% 39%;
   }
 
   .dark {
@@ -51,6 +68,9 @@
     --border:               210 25% 18%;
     --input:                210 25% 16%;
     --ring:                 142 69% 39%;
+
+    /* Sidebar — navy aún más profundo en dark */
+    --sidebar:                  210 42% 6%;
   }
 }
 

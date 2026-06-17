@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState, useRef } from "react";
 import { useRoute, Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -11,6 +10,40 @@ import {
   ArrowLeft, ChevronDown, ChevronUp, Trash2, Plus, Upload, FileText,
   Home, Square, Wrench, Camera, Lightbulb, CheckCircle2, BarChart2,
 } from "lucide-react";
+
+// ─── types ──────────────────────────────────────────────────────────────────
+
+interface CertInfo {
+  ownerName?: string;
+  address?: string;
+  propertyAddress?: string;
+}
+interface EnvelopeEl {
+  id: number; tipo: string; nombre: string;
+  orientacion?: string; superficieM2?: string; transmitanciaU?: string;
+}
+interface OpeningEl {
+  id: number; tipo: string; orientacion?: string; superficieM2?: string;
+}
+interface InstallEl {
+  id: number; sistema: string; tipo: string;
+  vectorEnergetico?: string; anyoInstalacion?: number;
+}
+interface MeasureEl {
+  id: number; tipo: string; descripcion: string;
+  costeEstimadoEur?: string; ahorroEnergiaPct?: string; mejoraCalificacionEsperada?: string;
+}
+interface PhotoEl {
+  id: number; url: string; descripcion?: string; categoria?: string;
+}
+interface VisitData {
+  cert: CertInfo;
+  envelope: EnvelopeEl[];
+  openings: OpeningEl[];
+  installations: InstallEl[];
+  measures: MeasureEl[];
+  photos: PhotoEl[];
+}
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -37,16 +70,16 @@ const CALIFICACIONES = ["A", "B", "C", "D", "E", "F", "G", "No estimada"];
 function Field({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) {
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">
+      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
         {label}
-        {hint && <span className="ml-1 text-slate-400 font-normal normal-case tracking-normal">— {hint}</span>}
+        {hint && <span className="ml-1 text-muted-foreground font-normal normal-case tracking-normal">— {hint}</span>}
       </label>
       {children}
     </div>
   );
 }
 
-const inputCls = "border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white";
+const inputCls = "border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white";
 const selectCls = inputCls;
 const textareaCls = inputCls + " resize-none";
 
@@ -56,7 +89,7 @@ function Select({ options, ...props }: { options: string[] | { value: string; la
       <option value="">— Selecciona —</option>
       {options.map((o) =>
         typeof o === "string"
-          ? <option key={o} value={o.toLowerCase().replace(/\s+/g, "_").replace(/[áéíóúñ]/g, c => ({ á:"a",é:"e",í:"i",ó:"o",ú:"u",ñ:"n" }[c]||c))}>{o}</option>
+          ? <option key={o} value={o.toLowerCase().replace(/\s+/g, "_").replace(/[áéíóúñ]/g, c => (({ á:"a",é:"e",í:"i",ó:"o",ú:"u",ñ:"n" } as Record<string, string>)[c]||c))}>{o}</option>
           : <option key={o.value} value={o.value}>{o.label}</option>
       )}
     </select>
@@ -65,11 +98,11 @@ function Select({ options, ...props }: { options: string[] | { value: string; la
 
 function ItemRow({ children, onDelete }: { children: React.ReactNode; onDelete: () => void }) {
   return (
-    <div className="flex items-start gap-2 bg-white border border-slate-100 rounded-lg px-3 py-2.5 text-sm group">
+    <div className="flex items-start gap-2 bg-white border border-border rounded-lg px-3 py-2.5 text-sm group">
       <div className="flex-1 min-w-0">{children}</div>
       <button
         onClick={onDelete}
-        className="text-slate-300 hover:text-red-500 transition-colors shrink-0 mt-0.5"
+        className="text-muted-foreground hover:text-red-500 transition-colors shrink-0 mt-0.5"
         title="Eliminar"
       >
         <Trash2 className="w-4 h-4" />
@@ -85,22 +118,22 @@ function Section({
   open: boolean; onToggle: () => void; children: React.ReactNode;
 }) {
   return (
-    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+    <div className="bg-white rounded-xl border border-border overflow-hidden shadow-sm">
       <button
         onClick={onToggle}
-        className="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-slate-50 transition-colors"
+        className="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-muted transition-colors"
       >
         <span className="text-emerald-700">{icon}</span>
-        <span className="flex-1 font-semibold text-slate-800 text-sm">{title}</span>
+        <span className="flex-1 font-semibold text-foreground text-sm">{title}</span>
         {count > 0 && (
           <span className="flex items-center gap-1 text-emerald-700 text-xs font-semibold">
             <CheckCircle2 className="w-3.5 h-3.5" />
             {count} {count === 1 ? "elemento" : "elementos"}
           </span>
         )}
-        {open ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+        {open ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
       </button>
-      {open && <div className="px-5 pb-5 pt-1 border-t border-slate-100 flex flex-col gap-4">{children}</div>}
+      {open && <div className="px-5 pb-5 pt-1 border-t border-border flex flex-col gap-4">{children}</div>}
     </div>
   );
 }
@@ -114,10 +147,10 @@ export default function VisitForm() {
   const { toast } = useToast();
   const queryKey = [`/api/certifications/${certId}/visit-data`];
 
-  const { data, isLoading } = useQuery({ queryKey, enabled: !!certId });
+  const { data, isLoading } = useQuery<VisitData>({ queryKey, enabled: !!certId });
 
   const [open, setOpen] = useState({ envelope: true, openings: false, installations: false, photos: false, measures: false });
-  const toggle = (k: string) => setOpen(p => ({ ...p, [k]: !p[k] }));
+  const toggle = (k: keyof typeof open) => setOpen(p => ({ ...p, [k]: !p[k] }));
   const [exportOpen, setExportOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
 
@@ -263,7 +296,7 @@ export default function VisitForm() {
     );
   }
 
-  const cert        = data?.cert ?? {};
+  const cert        = data?.cert ?? ({} as CertInfo);
   const envelope    = data?.envelope ?? [];
   const openingList = data?.openings ?? [];
   const installList = data?.installations ?? [];
@@ -283,16 +316,16 @@ export default function VisitForm() {
   return (
     <div className="min-h-screen bg-emerald-50 pb-28">
       {/* ── Header ── */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-sm">
+      <header className="bg-white border-b border-border sticky top-0 z-20 shadow-sm">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-3">
           <Link to="/certificados">
-            <button className="p-2 rounded-lg hover:bg-slate-100 transition-colors">
-              <ArrowLeft className="w-5 h-5 text-slate-600" />
+            <button className="p-2 rounded-lg hover:bg-muted transition-colors">
+              <ArrowLeft className="w-5 h-5 text-muted-foreground" />
             </button>
           </Link>
           <div className="flex-1 min-w-0">
-            <h1 className="font-bold text-slate-800 text-sm truncate">{cert.ownerName || "Ficha de visita"}</h1>
-            <p className="text-xs text-slate-500 truncate">{cert.address || cert.propertyAddress || `Certificación #${certId}`}</p>
+            <h1 className="font-bold text-foreground text-sm truncate">{cert.ownerName || "Ficha de visita"}</h1>
+            <p className="text-xs text-muted-foreground truncate">{cert.address || cert.propertyAddress || `Certificación #${certId}`}</p>
           </div>
           <Badge className="bg-emerald-100 text-emerald-700 text-xs shrink-0">
             {completedSections}/5 secciones
@@ -309,19 +342,19 @@ export default function VisitForm() {
             <div className="flex flex-col gap-2">
               {envelope.map(el => (
                 <ItemRow key={el.id} onDelete={() => delEnvelope.mutate(el.id)}>
-                  <span className="font-medium text-slate-700">{el.nombre}</span>
-                  <span className="text-slate-400 ml-2 text-xs capitalize">{el.tipo}</span>
-                  {el.orientacion && <span className="text-slate-400 ml-2 text-xs">{el.orientacion}</span>}
-                  {el.superficieM2 && <span className="text-slate-400 ml-2 text-xs">{el.superficieM2} m²</span>}
-                  {el.transmitanciaU && <span className="text-slate-400 ml-2 text-xs">U={el.transmitanciaU}</span>}
+                  <span className="font-medium text-foreground">{el.nombre}</span>
+                  <span className="text-muted-foreground ml-2 text-xs capitalize">{el.tipo}</span>
+                  {el.orientacion && <span className="text-muted-foreground ml-2 text-xs">{el.orientacion}</span>}
+                  {el.superficieM2 && <span className="text-muted-foreground ml-2 text-xs">{el.superficieM2} m²</span>}
+                  {el.transmitanciaU && <span className="text-muted-foreground ml-2 text-xs">U={el.transmitanciaU}</span>}
                 </ItemRow>
               ))}
             </div>
           )}
 
           {/* Form */}
-          <div className="bg-slate-50 rounded-xl border border-slate-200 p-4 flex flex-col gap-3">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide flex items-center gap-1.5"><Plus className="w-3.5 h-3.5" />Nuevo elemento</p>
+          <div className="bg-muted/40 rounded-xl border border-border p-4 flex flex-col gap-3">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5"><Plus className="w-3.5 h-3.5" />Nuevo elemento</p>
             <div className="grid grid-cols-2 gap-3">
               <Field label="Tipo">
                 <Select options={TIPOS_ENVOLVENTE} value={envForm.tipo} onChange={e => setEnvForm(p => ({ ...p, tipo: e.target.value }))} />
@@ -363,16 +396,16 @@ export default function VisitForm() {
             <div className="flex flex-col gap-2">
               {openingList.map(op => (
                 <ItemRow key={op.id} onDelete={() => delOpening.mutate(op.id)}>
-                  <span className="font-medium text-slate-700 capitalize">{op.tipo}</span>
-                  {op.orientacion && <span className="text-slate-400 ml-2 text-xs">{op.orientacion}</span>}
-                  {op.superficieM2 && <span className="text-slate-400 ml-2 text-xs">{op.superficieM2} m²</span>}
+                  <span className="font-medium text-foreground capitalize">{op.tipo}</span>
+                  {op.orientacion && <span className="text-muted-foreground ml-2 text-xs">{op.orientacion}</span>}
+                  {op.superficieM2 && <span className="text-muted-foreground ml-2 text-xs">{op.superficieM2} m²</span>}
                 </ItemRow>
               ))}
             </div>
           )}
 
-          <div className="bg-slate-50 rounded-xl border border-slate-200 p-4 flex flex-col gap-3">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide flex items-center gap-1.5"><Plus className="w-3.5 h-3.5" />Nuevo hueco</p>
+          <div className="bg-muted/40 rounded-xl border border-border p-4 flex flex-col gap-3">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5"><Plus className="w-3.5 h-3.5" />Nuevo hueco</p>
             <div className="grid grid-cols-2 gap-3">
               <Field label="Tipo">
                 <Select options={TIPOS_HUECO} value={opForm.tipo} onChange={e => setOpForm(p => ({ ...p, tipo: e.target.value }))} />
@@ -414,17 +447,17 @@ export default function VisitForm() {
             <div className="flex flex-col gap-2">
               {installList.map(inst => (
                 <ItemRow key={inst.id} onDelete={() => delInstallation.mutate(inst.id)}>
-                  <span className="font-medium text-slate-700 capitalize">{inst.sistema}</span>
-                  <span className="text-slate-400 ml-2 text-xs">{inst.tipo}</span>
-                  {inst.vectorEnergetico && <span className="text-slate-400 ml-2 text-xs">{inst.vectorEnergetico}</span>}
-                  {inst.anyoInstalacion && <span className="text-slate-400 ml-2 text-xs">{inst.anyoInstalacion}</span>}
+                  <span className="font-medium text-foreground capitalize">{inst.sistema}</span>
+                  <span className="text-muted-foreground ml-2 text-xs">{inst.tipo}</span>
+                  {inst.vectorEnergetico && <span className="text-muted-foreground ml-2 text-xs">{inst.vectorEnergetico}</span>}
+                  {inst.anyoInstalacion && <span className="text-muted-foreground ml-2 text-xs">{inst.anyoInstalacion}</span>}
                 </ItemRow>
               ))}
             </div>
           )}
 
-          <div className="bg-slate-50 rounded-xl border border-slate-200 p-4 flex flex-col gap-3">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide flex items-center gap-1.5"><Plus className="w-3.5 h-3.5" />Nueva instalación</p>
+          <div className="bg-muted/40 rounded-xl border border-border p-4 flex flex-col gap-3">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5"><Plus className="w-3.5 h-3.5" />Nueva instalación</p>
             <div className="grid grid-cols-2 gap-3">
               <Field label="Sistema">
                 <Select
@@ -443,7 +476,7 @@ export default function VisitForm() {
                   <option value="">— Selecciona —</option>
                   {(TIPOS_EQUIPO[
                     SISTEMAS_INSTALACION.find(s =>
-                      s.toLowerCase().replace(/[áéíóú]/g, c => ({ á:"a",é:"e",í:"i",ó:"o",ú:"u" }[c]||c)) === instForm.sistema
+                      s.toLowerCase().replace(/[áéíóú]/g, c => (({ á:"a",é:"e",í:"i",ó:"o",ú:"u" } as Record<string, string>)[c]||c)) === instForm.sistema
                     ) ?? ""
                   ] ?? []).map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
@@ -481,7 +514,7 @@ export default function VisitForm() {
           {photos.length > 0 && (
             <div className="grid grid-cols-3 gap-2">
               {photos.map(ph => (
-                <div key={ph.id} className="relative group rounded-lg overflow-hidden border border-slate-200 bg-slate-100 aspect-square">
+                <div key={ph.id} className="relative group rounded-lg overflow-hidden border border-border bg-muted aspect-square">
                   <img src={ph.url} alt={ph.descripcion || ph.categoria} className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex flex-col justify-between p-1.5">
                     <div className="flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
@@ -504,8 +537,8 @@ export default function VisitForm() {
             </div>
           )}
 
-          <div className="bg-slate-50 rounded-xl border border-slate-200 p-4 flex flex-col gap-3">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide flex items-center gap-1.5"><Upload className="w-3.5 h-3.5" />Subir foto</p>
+          <div className="bg-muted/40 rounded-xl border border-border p-4 flex flex-col gap-3">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5"><Upload className="w-3.5 h-3.5" />Subir foto</p>
             <div className="grid grid-cols-2 gap-3">
               <Field label="Categoría">
                 <Select options={CATEGORIAS_FOTO} value={photoForm.categoria} onChange={e => setPhotoForm(p => ({ ...p, categoria: e.target.value }))} />
@@ -519,7 +552,7 @@ export default function VisitForm() {
               type="file"
               accept="image/*"
               capture="environment"
-              className="text-sm text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"
+              className="text-sm text-muted-foreground file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"
               onChange={e => {
                 const file = e.target.files?.[0];
                 if (file) uploadPhoto.mutate(file);
@@ -535,10 +568,10 @@ export default function VisitForm() {
             <div className="flex flex-col gap-2">
               {measures.map(m => (
                 <ItemRow key={m.id} onDelete={() => delMeasure.mutate(m.id)}>
-                  <span className="font-medium text-slate-700">{m.descripcion}</span>
-                  <span className="text-slate-400 ml-2 text-xs capitalize">{m.tipo}</span>
-                  {m.costeEstimadoEur && <span className="text-slate-400 ml-2 text-xs">{m.costeEstimadoEur}€</span>}
-                  {m.ahorroEnergiaPct && <span className="text-slate-400 ml-2 text-xs">-{m.ahorroEnergiaPct}%</span>}
+                  <span className="font-medium text-foreground">{m.descripcion}</span>
+                  <span className="text-muted-foreground ml-2 text-xs capitalize">{m.tipo}</span>
+                  {m.costeEstimadoEur && <span className="text-muted-foreground ml-2 text-xs">{m.costeEstimadoEur}€</span>}
+                  {m.ahorroEnergiaPct && <span className="text-muted-foreground ml-2 text-xs">-{m.ahorroEnergiaPct}%</span>}
                   {m.mejoraCalificacionEsperada && (
                     <span className="ml-2 bg-emerald-100 text-emerald-700 text-xs font-bold px-1.5 py-0.5 rounded">{m.mejoraCalificacionEsperada}</span>
                   )}
@@ -547,8 +580,8 @@ export default function VisitForm() {
             </div>
           )}
 
-          <div className="bg-slate-50 rounded-xl border border-slate-200 p-4 flex flex-col gap-3">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide flex items-center gap-1.5"><Plus className="w-3.5 h-3.5" />Nueva medida</p>
+          <div className="bg-muted/40 rounded-xl border border-border p-4 flex flex-col gap-3">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5"><Plus className="w-3.5 h-3.5" />Nueva medida</p>
             <div className="grid grid-cols-2 gap-3">
               <Field label="Tipo">
                 <Select options={TIPOS_MEDIDA} value={mForm.tipo} onChange={e => setMForm(p => ({ ...p, tipo: e.target.value }))} />
@@ -585,20 +618,20 @@ export default function VisitForm() {
       {/* ── FAB: Exportar CE3X ── */}
       <div className="fixed bottom-6 right-4 flex flex-col items-end gap-2">
         {exportOpen && (
-          <div className="bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden w-48">
+          <div className="bg-white rounded-xl shadow-xl border border-border overflow-hidden w-48">
             <button
               onClick={() => handleExport("pdf")}
               disabled={exporting}
-              className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-foreground hover:bg-muted transition-colors"
             >
               <FileText className="w-4 h-4 text-orange-600" />
               Exportar PDF
             </button>
-            <div className="border-t border-slate-100" />
+            <div className="border-t border-border" />
             <button
               onClick={() => handleExport("excel")}
               disabled={exporting}
-              className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-foreground hover:bg-muted transition-colors"
             >
               <BarChart2 className="w-4 h-4 text-green-600" />
               Exportar Excel

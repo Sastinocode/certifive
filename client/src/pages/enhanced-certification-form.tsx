@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -103,8 +102,8 @@ function FieldGroup({ icon: Icon, children }: { icon?: React.ElementType; childr
   return (
     <div className="flex gap-3">
       {Icon && (
-        <div className="mt-[30px] flex-shrink-0 w-8 h-8 rounded-lg bg-teal-50 border border-teal-100 flex items-center justify-center">
-          <Icon className="w-4 h-4 text-teal-700" />
+        <div className="mt-[30px] flex-shrink-0 w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
+          <Icon className="w-4 h-4 text-primary" />
         </div>
       )}
       <div className="flex-1 min-w-0">{children}</div>
@@ -115,8 +114,8 @@ function FieldGroup({ icon: Icon, children }: { icon?: React.ElementType; childr
 // ── Section card ─────────────────────────────────────────────────────────────
 function Section({ title, children }: { title?: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm space-y-5">
-      {title && <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{title}</p>}
+    <div className="rounded-xl border border-border bg-card p-5 shadow-sm space-y-5">
+      {title && <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{title}</p>}
       {children}
     </div>
   );
@@ -223,22 +222,22 @@ export default function EnhancedCertificationForm() {
   const progress = ((step - 1) / (STEPS.length - 1)) * 100;
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-background">
       {/* ── Header ── */}
-      <div className="bg-white border-b border-slate-100 sticky top-0 z-10">
+      <div className="bg-card border-b border-border sticky top-0 z-10">
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-3">
           <button
             type="button"
             onClick={() => navigate("/certificados")}
-            className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 transition-colors"
+            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             Volver
           </button>
-          <div className="w-px h-5 bg-slate-200" />
+          <div className="w-px h-5 bg-border" />
           <div className="flex-1">
-            <h1 className="text-base font-semibold text-slate-800">Formulario CEE</h1>
-            <p className="text-xs text-slate-500">Paso {step} de {STEPS.length} — {STEPS[step - 1].title}</p>
+            <h1 className="text-base font-semibold text-foreground">Formulario CEE</h1>
+            <p className="text-xs text-muted-foreground">Paso {step} de {STEPS.length} — {STEPS[step - 1].title}</p>
           </div>
         </div>
 
@@ -263,23 +262,23 @@ export default function EnhancedCertificationForm() {
                   >
                     <div className={[
                       "w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 text-xs font-bold",
-                      done   ? "bg-teal-600 text-white shadow-sm shadow-teal-200"
-                             : active ? "bg-teal-600 text-white ring-2 ring-teal-200"
-                             : "bg-slate-100 text-slate-400",
+                      done   ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20"
+                             : active ? "bg-primary text-primary-foreground ring-2 ring-primary/30"
+                             : "bg-muted text-muted-foreground",
                     ].join(" ")}>
                       {done ? <CheckCircle2 className="w-4 h-4" /> : <Icon className="w-4 h-4" />}
                     </div>
                     <span className={[
                       "text-[10px] font-medium hidden sm:block transition-colors",
-                      active ? "text-teal-700" : done ? "text-teal-600" : "text-slate-400",
+                      active ? "text-primary" : done ? "text-primary" : "text-muted-foreground",
                     ].join(" ")}>
                       {s.shortTitle}
                     </span>
                   </button>
                   {i < STEPS.length - 1 && (
-                    <div className="flex-1 h-0.5 mx-1 rounded-full overflow-hidden bg-slate-100">
+                    <div className="flex-1 h-0.5 mx-1 rounded-full overflow-hidden bg-muted">
                       <div
-                        className="h-full bg-teal-500 transition-all duration-500 ease-out"
+                        className="h-full bg-primary transition-all duration-500 ease-out"
                         style={{ width: step > s.id ? "100%" : "0%" }}
                       />
                     </div>
@@ -290,9 +289,9 @@ export default function EnhancedCertificationForm() {
           </div>
 
           {/* Thin progress bar */}
-          <div className="h-1 bg-slate-100 rounded-full overflow-hidden">
+          <div className="h-1 bg-muted rounded-full overflow-hidden">
             <motion.div
-              className="h-full bg-gradient-to-r from-teal-500 to-teal-600 rounded-full"
+              className="h-full bg-gradient-to-r from-primary to-primary rounded-full"
               animate={{ width: `${progress === 0 ? 8 : progress}%` }}
               transition={{ duration: 0.4, ease: "easeOut" }}
             />
@@ -353,8 +352,8 @@ export default function EnhancedCertificationForm() {
                                     variant="outline"
                                     data-testid="button-catastro-lookup"
                                     className={[
-                                      "shrink-0 gap-1.5 border-teal-200 text-teal-700 hover:bg-teal-50 transition-colors",
-                                      catastroStatus === "success" ? "border-teal-400 bg-teal-50" : "",
+                                      "shrink-0 gap-1.5 border-primary/30 text-primary hover:bg-primary/10 transition-colors",
+                                      catastroStatus === "success" ? "border-primary bg-primary/10" : "",
                                     ].join(" ")}
                                     disabled={catastroStatus === "loading" || (field.value?.length ?? 0) < 14}
                                     onClick={lookupCatastro}
@@ -362,7 +361,7 @@ export default function EnhancedCertificationForm() {
                                     {catastroStatus === "loading" ? (
                                       <Loader2 className="w-4 h-4 animate-spin" />
                                     ) : catastroStatus === "success" ? (
-                                      <CheckCircle2 className="w-4 h-4 text-teal-600" />
+                                      <CheckCircle2 className="w-4 h-4 text-primary" />
                                     ) : (
                                       <Search className="w-4 h-4" />
                                     )}
@@ -374,7 +373,7 @@ export default function EnhancedCertificationForm() {
                               </FormControl>
                               <FormMessage />
                               {(field.value?.length ?? 0) >= 14 && catastroStatus === "idle" && (
-                                <p className="text-xs text-slate-400 mt-1">Pulsa "Consultar Catastro" para autocompletar los datos del inmueble</p>
+                                <p className="text-xs text-muted-foreground mt-1">Pulsa "Consultar Catastro" para autocompletar los datos del inmueble</p>
                               )}
                             </FormItem>
                           )}
@@ -407,35 +406,35 @@ export default function EnhancedCertificationForm() {
                             data-testid="catastro-data"
                           >
                             <div className="flex items-center gap-2">
-                              <CheckCircle2 className="w-4 h-4 text-teal-600" />
-                              <p className="text-sm font-semibold text-teal-700">Datos obtenidos del Catastro</p>
+                              <CheckCircle2 className="w-4 h-4 text-primary" />
+                              <p className="text-sm font-semibold text-primary">Datos obtenidos del Catastro</p>
                             </div>
                             <div className="grid grid-cols-3 gap-2">
                               {catastroData.constructionYear && (
-                                <div className="rounded-lg border border-teal-100 bg-teal-50 px-3 py-2 text-center" data-testid="catastro-year">
-                                  <CalendarDays className="w-4 h-4 text-teal-500 mx-auto mb-1" />
-                                  <p className="text-xs text-slate-500">Año construcción</p>
-                                  <p className="text-sm font-bold text-slate-800">{catastroData.constructionYear}</p>
+                                <div className="rounded-lg border border-primary/20 bg-primary/10 px-3 py-2 text-center" data-testid="catastro-year">
+                                  <CalendarDays className="w-4 h-4 text-primary mx-auto mb-1" />
+                                  <p className="text-xs text-muted-foreground">Año construcción</p>
+                                  <p className="text-sm font-bold text-foreground">{catastroData.constructionYear}</p>
                                 </div>
                               )}
                               {catastroData.totalArea && (
-                                <div className="rounded-lg border border-teal-100 bg-teal-50 px-3 py-2 text-center" data-testid="catastro-area">
-                                  <Maximize2 className="w-4 h-4 text-teal-500 mx-auto mb-1" />
-                                  <p className="text-xs text-slate-500">Superficie</p>
-                                  <p className="text-sm font-bold text-slate-800">{catastroData.totalArea} m²</p>
+                                <div className="rounded-lg border border-primary/20 bg-primary/10 px-3 py-2 text-center" data-testid="catastro-area">
+                                  <Maximize2 className="w-4 h-4 text-primary mx-auto mb-1" />
+                                  <p className="text-xs text-muted-foreground">Superficie</p>
+                                  <p className="text-sm font-bold text-foreground">{catastroData.totalArea} m²</p>
                                 </div>
                               )}
                               {catastroData.propertyType && (
-                                <div className="rounded-lg border border-teal-100 bg-teal-50 px-3 py-2 text-center" data-testid="catastro-type">
-                                  <Tag className="w-4 h-4 text-teal-500 mx-auto mb-1" />
-                                  <p className="text-xs text-slate-500">Tipo de inmueble</p>
-                                  <p className="text-sm font-bold text-slate-800 leading-tight">{catastroData.propertyType}</p>
+                                <div className="rounded-lg border border-primary/20 bg-primary/10 px-3 py-2 text-center" data-testid="catastro-type">
+                                  <Tag className="w-4 h-4 text-primary mx-auto mb-1" />
+                                  <p className="text-xs text-muted-foreground">Tipo de inmueble</p>
+                                  <p className="text-sm font-bold text-foreground leading-tight">{catastroData.propertyType}</p>
                                 </div>
                               )}
                             </div>
                             {catastroData.city && (
-                              <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                                <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
                                 {[catastroData.city, catastroData.province, catastroData.postalCode].filter(Boolean).join(" · ")}
                               </div>
                             )}
@@ -455,7 +454,7 @@ export default function EnhancedCertificationForm() {
                               <FormLabel className="flex items-center gap-2">
                                 Dirección Completa *
                                 {autofilled && (
-                                  <span className="text-[10px] font-semibold bg-teal-100 text-teal-700 px-1.5 py-0.5 rounded-full">
+                                  <span className="text-[10px] font-semibold bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">
                                     Autocompletado ✓
                                   </span>
                                 )}
@@ -465,7 +464,7 @@ export default function EnhancedCertificationForm() {
                                   placeholder="Ej: PUERTO LATINO 1; BLOQUE 2, PUERTA 4, DÚPLEX 7; LA MANGA DEL MAR MENOR. 30380 SAN JAVIER"
                                   rows={4}
                                   data-testid="input-property-address"
-                                  className={["resize-none transition-colors", autofilled ? "border-teal-300 bg-teal-50/40" : ""].join(" ")}
+                                  className={["resize-none transition-colors", autofilled ? "border-primary/40 bg-primary/5" : ""].join(" ")}
                                   {...field}
                                   onChange={e => { field.onChange(e); setAutofilled(false); }}
                                 />
@@ -594,8 +593,8 @@ export default function EnhancedCertificationForm() {
                                 <label className={[
                                   "flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 cursor-pointer transition-all text-sm font-medium",
                                   field.value
-                                    ? "border-teal-500 bg-teal-50 text-teal-700"
-                                    : "border-slate-200 text-slate-500 hover:border-slate-300",
+                                    ? "border-primary bg-primary/10 text-primary"
+                                    : "border-border text-muted-foreground hover:border-border",
                                 ].join(" ")}>
                                   <Checkbox
                                     checked={field.value || false}
@@ -701,10 +700,10 @@ export default function EnhancedCertificationForm() {
                           <FormControl>
                             <label className={[
                               "flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all",
-                              field.value ? "border-teal-500 bg-teal-50" : "border-slate-200 hover:border-slate-300",
+                              field.value ? "border-primary bg-primary/10" : "border-border hover:border-border",
                             ].join(" ")}>
                               <Checkbox checked={field.value || false} onCheckedChange={field.onChange} />
-                              <span className="text-sm font-medium text-slate-700">El inmueble tiene persianas o contraventanas</span>
+                              <span className="text-sm font-medium text-foreground">El inmueble tiene persianas o contraventanas</span>
                             </label>
                           </FormControl>
                         </FormItem>
@@ -885,9 +884,9 @@ export default function EnhancedCertificationForm() {
                     </div>
 
                     {photos.length > 0 && (
-                      <div className="rounded-xl border border-teal-100 bg-teal-50 px-4 py-3 flex items-center gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-teal-600 flex-shrink-0" />
-                        <p className="text-sm text-teal-700">
+                      <div className="rounded-xl border border-primary/20 bg-primary/10 px-4 py-3 flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" />
+                        <p className="text-sm text-primary">
                           <span className="font-semibold">{photos.length} foto{photos.length !== 1 ? "s" : ""}</span> añadida{photos.length !== 1 ? "s" : ""} al formulario
                         </p>
                       </div>
@@ -902,7 +901,7 @@ export default function EnhancedCertificationForm() {
       </div>
 
       {/* ── Sticky footer navigation ── */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 shadow-lg z-10">
+      <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg z-10">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <Button
             type="button"
@@ -915,13 +914,13 @@ export default function EnhancedCertificationForm() {
             Anterior
           </Button>
 
-          <span className="text-xs text-slate-400 font-medium">{step} / {STEPS.length}</span>
+          <span className="text-xs text-muted-foreground font-medium">{step} / {STEPS.length}</span>
 
           {step < STEPS.length ? (
             <Button
               type="button"
               onClick={() => go(step + 1)}
-              className="flex items-center gap-1.5 bg-teal-600 hover:bg-teal-700 text-white"
+              className="flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               Siguiente
               <ChevronRight className="w-4 h-4" />
@@ -931,7 +930,7 @@ export default function EnhancedCertificationForm() {
               type="button"
               onClick={form.handleSubmit(onSubmit)}
               disabled={mutation.isPending}
-              className="flex items-center gap-1.5 bg-teal-600 hover:bg-teal-700 text-white"
+              className="flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               {mutation.isPending ? (
                 <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full" />
@@ -951,12 +950,12 @@ export default function EnhancedCertificationForm() {
 function StepHeading({ icon: Icon, title, subtitle }: { icon: React.ElementType; title: string; subtitle: string }) {
   return (
     <div className="flex items-start gap-3 mb-1">
-      <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-100 flex items-center justify-center flex-shrink-0">
-        <Icon className="w-5 h-5 text-teal-700" />
+      <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
+        <Icon className="w-5 h-5 text-primary" />
       </div>
       <div>
-        <h2 className="text-lg font-bold text-slate-800">{title}</h2>
-        <p className="text-sm text-slate-500">{subtitle}</p>
+        <h2 className="text-lg font-bold text-foreground">{title}</h2>
+        <p className="text-sm text-muted-foreground">{subtitle}</p>
       </div>
     </div>
   );
@@ -979,9 +978,9 @@ function PhotoSection({
   };
 
   return (
-    <div className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm">
-      <p className="text-sm font-semibold text-slate-700 mb-0.5">{title}</p>
-      <p className="text-xs text-slate-400 mb-4">{hint}</p>
+    <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+      <p className="text-sm font-semibold text-foreground mb-0.5">{title}</p>
+      <p className="text-xs text-muted-foreground mb-4">{hint}</p>
       <PhotoUpload
         photos={photos}
         onChange={handleChange}

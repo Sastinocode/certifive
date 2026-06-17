@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "../lib/queryClient";
@@ -17,6 +16,32 @@ interface User {
   city?: string | null;
   postalCode?: string | null;
   company?: string | null;
+}
+
+interface Invoice {
+  id: number;
+  invoiceNumber?: string | null;
+  description?: string | null;
+  clientName?: string | null;
+  clientDni?: string | null;
+  clientEmail?: string | null;
+  status: string;
+  amount?: string | null;
+  tax?: string | null;
+  totalAmount?: string | null;
+  issuedAt?: string | Date | null;
+  dueDate?: string | Date | null;
+  paidAt?: string | Date | null;
+  updatedAt?: string | Date | null;
+}
+
+interface InvoiceForm {
+  clientName: string;
+  clientDni: string;
+  clientAddress: string;
+  amount: string;
+  tax: string;
+  description: string;
 }
 
 // ── Status pill config — HTML .pp .pp-* ──────────────────────────────────────
@@ -86,16 +111,16 @@ export default function Invoices() {
   const [searchTerm, setSearchTerm]           = useState("");
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<number | null>(null);
   const [checkedIds, setCheckedIds]           = useState<Set<number>>(new Set());
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<InvoiceForm>({
     clientName: "", clientDni: "", clientAddress: "",
     amount: "", tax: "21", description: "",
   });
 
-  const { data: invoices, isLoading } = useQuery<any[]>({ queryKey: ["/api/invoices"] });
+  const { data: invoices, isLoading } = useQuery<Invoice[]>({ queryKey: ["/api/invoices"] });
   const { data: user }                = useQuery<User>({ queryKey: ["/api/auth/user"] });
 
   const createMutation = useMutation({
-    mutationFn: (data: any) => {
+    mutationFn: (data: InvoiceForm) => {
       const amount    = parseFloat(data.amount);
       const taxRate   = parseFloat(data.tax) / 100;
       const taxAmount = amount * taxRate;
@@ -127,7 +152,7 @@ export default function Invoices() {
     return matchStatus && matchSearch;
   });
 
-  const selectedInvoice: any =
+  const selectedInvoice: Invoice | null =
     (selectedInvoiceId != null ? allInvoices.find(i => i.id === selectedInvoiceId) : null)
     ?? filteredInvoices[0]
     ?? null;
@@ -468,7 +493,7 @@ export default function Invoices() {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredInvoices.map((inv: any) => {
+                      {filteredInvoices.map((inv: Invoice) => {
                         const isSel      = selectedInvoice?.id === inv.id;
                         const isCancelled = inv.status === "cancelled";
                         const isOverdueRow = inv.status === "overdue";
@@ -525,7 +550,7 @@ export default function Invoices() {
                             </td>
                             <td className="px-3 py-3.5">
                               <StatusPill status={inv.status} />
-                              {isOverdueRow && (
+                              {isOverdueRow && inv.dueDate && (
                                 <p className="text-[11px] text-red-500 font-medium">
                                   {Math.floor((new Date().getTime() - new Date(inv.dueDate).getTime()) / 86400000)} días
                                 </p>

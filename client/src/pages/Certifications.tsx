@@ -3,6 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "../lib/queryClient";
 import { formatDate } from "../lib/utils";
 import CertDataDrawer from "../components/CertDataDrawer";
+import { StatusBadge } from "@/components/ui";
 
 const STATUS_OPTIONS = ["Nuevo", "En Proceso", "Finalizado"];
 
@@ -33,24 +34,6 @@ function WorkflowBadge({ status }: { status: string | null }) {
   return (
     <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-semibold ${meta.color}`}>
       {meta.label}
-    </span>
-  );
-}
-
-// ── Status pill — HTML estado column (emerald/orange/blue-50 + dot) ───────────
-
-const STATUS_PILL: Record<string, { pill: string; dot: string }> = {
-  "Nuevo":      { pill: "bg-blue-50 text-blue-700 border border-blue-100",          dot: "bg-blue-500" },
-  "En Proceso": { pill: "bg-orange-50 text-orange-700 border border-orange-100",    dot: "bg-orange-500" },
-  "Finalizado": { pill: "bg-emerald-50 text-emerald-700 border border-emerald-100", dot: "bg-emerald-600" },
-};
-
-function StatusPill({ status }: { status: string | null }) {
-  const meta = STATUS_PILL[status ?? ""] ?? { pill: "bg-stone-100 text-stone-600", dot: "bg-stone-400" };
-  return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${meta.pill}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${meta.dot}`} />
-      {status}
     </span>
   );
 }
@@ -162,10 +145,10 @@ function ClientLinkPreviewModal({
         </div>
 
         {/* URL bar */}
-        <div className="px-4 py-3 bg-slate-50 border-b border-slate-100 flex items-center gap-2 flex-shrink-0">
-          <div className="flex-1 min-w-0 bg-white border border-slate-200 rounded-lg px-3 py-2 flex items-center gap-2">
-            <span className="material-symbols-outlined text-[14px] text-slate-400 flex-shrink-0">link</span>
-            <span className="text-xs text-slate-500 font-mono truncate flex-1">{url}</span>
+        <div className="px-4 py-3 bg-muted/40 border-b border-border flex items-center gap-2 flex-shrink-0">
+          <div className="flex-1 min-w-0 bg-white border border-border rounded-lg px-3 py-2 flex items-center gap-2">
+            <span className="material-symbols-outlined text-[14px] text-muted-foreground flex-shrink-0">link</span>
+            <span className="text-xs text-muted-foreground font-mono truncate flex-1">{url}</span>
           </div>
           <button
             onClick={copy}
@@ -173,7 +156,7 @@ function ClientLinkPreviewModal({
             className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all flex-shrink-0 ${
               copied
                 ? "bg-teal-600 text-white"
-                : "bg-white border border-slate-200 text-slate-700 hover:border-teal-400 hover:text-teal-700"
+                : "bg-white border border-border text-foreground hover:border-teal-400 hover:text-teal-700"
             }`}
           >
             <span className="material-symbols-outlined text-[14px]">{copied ? "check" : "content_copy"}</span>
@@ -193,10 +176,10 @@ function ClientLinkPreviewModal({
         {/* iframe preview */}
         <div className="flex-1 relative overflow-hidden min-h-0">
           {!iframeLoaded && (
-            <div className="absolute inset-0 flex items-center justify-center bg-slate-50">
+            <div className="absolute inset-0 flex items-center justify-center bg-muted/40">
               <div className="text-center">
                 <div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-                <p className="text-xs text-slate-400">Cargando vista del cliente…</p>
+                <p className="text-xs text-muted-foreground">Cargando vista del cliente…</p>
               </div>
             </div>
           )}
@@ -210,9 +193,9 @@ function ClientLinkPreviewModal({
         </div>
 
         {/* Footer hint */}
-        <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-100 flex items-center gap-2 flex-shrink-0">
-          <span className="material-symbols-outlined text-[14px] text-slate-400">info</span>
-          <p className="text-[10px] text-slate-400">Esta es la vista exacta que verá el cliente al abrir el enlace.</p>
+        <div className="px-4 py-2.5 bg-muted/40 border-t border-border flex items-center gap-2 flex-shrink-0">
+          <span className="material-symbols-outlined text-[14px] text-muted-foreground">info</span>
+          <p className="text-[10px] text-muted-foreground">Esta es la vista exacta que verá el cliente al abrir el enlace.</p>
         </div>
       </div>
     </div>
@@ -293,8 +276,8 @@ function PresupuestoModal({ cert, onClose }: { cert: any; onClose: () => void })
               <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-3xl">✅</span>
               </div>
-              <p className="font-bold text-slate-800 text-lg">Presupuesto enviado</p>
-              <p className="text-sm text-slate-500 mt-1">El cliente recibirá el enlace por email para aceptarlo o solicitar cambios.</p>
+              <p className="font-bold text-foreground text-lg">Presupuesto enviado</p>
+              <p className="text-sm text-muted-foreground mt-1">El cliente recibirá el enlace por email para aceptarlo o solicitar cambios.</p>
               <button onClick={onClose} className="mt-5 px-6 py-2 bg-teal-700 text-white rounded-xl text-sm font-semibold hover:bg-teal-600">
                 Cerrar
               </button>
@@ -303,9 +286,9 @@ function PresupuestoModal({ cert, onClose }: { cert: any; onClose: () => void })
             <>
               {/* Suggested price section */}
               {suggestLoading ? (
-                <div className="bg-slate-50 rounded-xl px-4 py-3 flex items-center gap-3">
+                <div className="bg-muted/40 rounded-xl px-4 py-3 flex items-center gap-3">
                   <div className="w-4 h-4 border-2 border-teal-500 border-t-transparent rounded-full animate-spin flex-shrink-0" />
-                  <p className="text-xs text-slate-500">Calculando precio sugerido…</p>
+                  <p className="text-xs text-muted-foreground">Calculando precio sugerido…</p>
                 </div>
               ) : suggestion?.hasRate ? (
                 <div className="bg-teal-50 border border-teal-100 rounded-xl p-4 space-y-3">
@@ -365,25 +348,25 @@ function PresupuestoModal({ cert, onClose }: { cert: any; onClose: () => void })
 
               {/* Price input */}
               <div>
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block mb-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground block mb-1.5">
                   Precio final (€, IVA incluido) *
-                  <span className="ml-1 text-[10px] font-normal text-slate-400 normal-case">(puedes modificarlo)</span>
+                  <span className="ml-1 text-[10px] font-normal text-muted-foreground normal-case">(puedes modificarlo)</span>
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-semibold text-sm">€</span>
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold text-sm">€</span>
                   <input
                     type="number"
                     min={0}
                     step={0.01}
                     value={finalPrice}
                     onChange={e => setFinalPrice(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-7 pr-4 py-3 text-sm font-semibold focus:ring-2 focus:ring-teal-300 focus:border-teal-300 outline-none"
+                    className="w-full bg-muted/40 border border-border rounded-xl pl-7 pr-4 py-3 text-sm font-semibold focus:ring-2 focus:ring-teal-300 focus:border-teal-300 outline-none"
                     placeholder="0.00"
                     data-testid="input-final-price"
                   />
                 </div>
                 {suggestion?.matchedRate?.deliveryDays && (
-                  <p className="text-xs text-slate-400 mt-1.5">
+                  <p className="text-xs text-muted-foreground mt-1.5">
                     Plazo de entrega según tarifa: <strong>{suggestion.matchedRate.deliveryDays} días laborables</strong>
                   </p>
                 )}
@@ -402,7 +385,7 @@ function PresupuestoModal({ cert, onClose }: { cert: any; onClose: () => void })
                 {loading ? "Enviando…" : "Enviar presupuesto al cliente →"}
               </button>
 
-              <p className="text-center text-xs text-slate-400">
+              <p className="text-center text-xs text-muted-foreground">
                 El cliente recibirá un enlace para aceptar o solicitar cambios
               </p>
             </>
@@ -1083,39 +1066,39 @@ export default function Certifications() {
 
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-emerald-900 tracking-tight">Visión operacional</h1>
-          <p className="text-sm text-emerald-700/60 mt-1.5 font-medium">Gestiona y realiza el seguimiento de tus certificaciones CEE.</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">Visión operacional</h1>
+          <p className="text-sm text-muted-foreground mt-1.5 font-medium">Gestiona y realiza el seguimiento de tus certificaciones CEE.</p>
         </div>
-        <div className="flex items-center gap-4 bg-white rounded-2xl border border-emerald-100/60 shadow-sm px-5 py-3.5">
-          <div className="w-11 h-11 rounded-xl bg-emerald-600 flex items-center justify-center shadow-sm flex-shrink-0">
+        <div className="flex items-center gap-4 bg-card rounded-2xl border border-border shadow-sm px-5 py-3.5">
+          <div className="w-11 h-11 rounded-xl bg-primary flex items-center justify-center shadow-sm flex-shrink-0">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 6a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M13 4v4a1 1 0 0 0 1 1h4"/><path d="m8.5 14.5 2 2 4-4"/></svg>
           </div>
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-700/60 leading-tight">Total certificados</p>
-            <p className="text-2xl font-bold text-emerald-900 tracking-tight leading-none mt-1">{allCerts.length.toLocaleString("es-ES")}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground leading-tight">Total certificados</p>
+            <p className="text-2xl font-bold text-foreground tracking-tight leading-none mt-1">{allCerts.length.toLocaleString("es-ES")}</p>
           </div>
         </div>
       </div>
 
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
         <div className="relative flex-1 min-w-0">
-          <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500/70 text-[20px] pointer-events-none">search</span>
+          <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground text-[20px] pointer-events-none">search</span>
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Buscar por cliente, dirección o referencia catastral..."
-            className="w-full pl-12 pr-4 py-3 bg-white border border-emerald-100/80 rounded-xl text-sm font-medium placeholder:text-emerald-700/40 shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-emerald-300 transition"
+            className="w-full pl-12 pr-4 py-3 bg-card border border-border rounded-xl text-sm font-medium text-foreground placeholder:text-muted-foreground shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 transition"
           />
         </div>
-        <div className="inline-flex items-center bg-white border border-emerald-100/80 rounded-xl shadow-sm p-1 self-start sm:self-auto">
+        <div className="inline-flex items-center bg-card border border-border rounded-xl shadow-sm p-1 self-start sm:self-auto">
           {["Todos", ...STATUS_OPTIONS].map(s => (
             <button
               key={s}
               onClick={() => setStatusFilter(s)}
               className={`px-3.5 py-2 text-xs font-semibold rounded-lg whitespace-nowrap ${
                 statusFilter === s
-                  ? "bg-emerald-700 text-white shadow-sm"
-                  : "text-emerald-700/70 hover:text-emerald-900 hover:bg-emerald-50"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
               }`}
             >
               {s}
@@ -1124,44 +1107,44 @@ export default function Certifications() {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-emerald-100/60 overflow-hidden">
+      <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
         {/* Horizontal scroll on mobile */}
         <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse min-w-[640px]">
           <thead>
-            <tr className="bg-emerald-50/40">
-              <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-700/60">Cliente</th>
-              <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-700/60">Inmueble</th>
-              <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-700/60 hidden md:table-cell">Fecha</th>
-              <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-700/60">Estado</th>
-              <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-700/60 hidden lg:table-cell">Flujo</th>
-              <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.08em] text-emerald-700/60 text-right">Acciones</th>
+            <tr className="bg-muted/30">
+              <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Cliente</th>
+              <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Inmueble</th>
+              <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground hidden md:table-cell">Fecha</th>
+              <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Estado</th>
+              <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground hidden lg:table-cell">Flujo</th>
+              <th className="px-6 py-4 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground text-right">Acciones</th>
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
               <tr>
                 <td colSpan={6} className="px-8 py-16 text-center">
-                  <div className="w-10 h-10 border-4 border-emerald-200 border-t-emerald-700 rounded-full animate-spin mx-auto" />
+                  <div className="w-10 h-10 border-4 border-muted border-t-primary rounded-full animate-spin mx-auto" />
                 </td>
               </tr>
             ) : filtered.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-8 py-16 text-center">
-                  <div className="w-20 h-20 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-5">
-                    <span className="material-symbols-outlined text-emerald-600 text-[40px]">verified</span>
+                  <div className="w-20 h-20 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-5">
+                    <span className="material-symbols-outlined text-primary text-[40px]">verified</span>
                   </div>
-                  <p className="text-base font-semibold text-emerald-900 mb-1.5">
+                  <p className="text-base font-semibold text-foreground mb-1.5">
                     {search || statusFilter !== "Todos" ? "Sin resultados" : "Sin certificaciones"}
                   </p>
-                  <p className="text-sm text-emerald-700/60 max-w-sm mx-auto">
+                  <p className="text-sm text-muted-foreground max-w-sm mx-auto">
                     {search || statusFilter !== "Todos" ? "Prueba otros filtros" : "Crea tu primera certificación energética"}
                   </p>
                   {!search && statusFilter === "Todos" && (
                     <button
                       data-testid="btn-create-first"
                       onClick={() => setShowForm(true)}
-                      className="mt-6 inline-flex items-center gap-1.5 px-5 py-2.5 bg-emerald-700 text-white rounded-full text-sm font-semibold hover:bg-emerald-800 transition-colors shadow-sm"
+                      className="mt-6 inline-flex items-center gap-1.5 px-5 py-2.5 bg-primary text-primary-foreground rounded-full text-sm font-semibold hover:bg-primary/90 transition-colors shadow-sm"
                     >
                       <span className="material-symbols-outlined text-[16px]">add</span>
                       Nueva certificación
@@ -1173,25 +1156,25 @@ export default function Certifications() {
               filtered.map((cert: any) => {
                 const initials = (cert.ownerName || "?").split(" ").map((n: string) => n[0]).slice(0, 2).join("").toUpperCase();
                 return (
-                  <tr key={cert.id} data-testid={`row-cert-${cert.id}`} className="hover:bg-emerald-50/40 transition-colors relative">
+                  <tr key={cert.id} data-testid={`row-cert-${cert.id}`} className="hover:bg-muted/40 transition-colors relative">
                     <td className="px-6 py-5">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-800 font-bold text-xs flex-shrink-0">
+                        <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold text-xs flex-shrink-0">
                           {initials}
                         </div>
                         <div className="min-w-0">
-                          <p className="font-semibold text-emerald-900 text-sm truncate">{cert.ownerName || "-"}</p>
-                          {cert.ownerEmail && <p className="text-xs text-emerald-700/55 mt-0.5 truncate">{cert.ownerEmail}</p>}
+                          <p className="font-semibold text-foreground text-sm truncate">{cert.ownerName || "-"}</p>
+                          {cert.ownerEmail && <p className="text-xs text-muted-foreground mt-0.5 truncate">{cert.ownerEmail}</p>}
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-5">
-                      <p className="text-sm text-emerald-900 font-medium">{cert.address || "-"}</p>
-                      {cert.propertyType && <p className="text-xs text-emerald-700/55 mt-0.5">{cert.propertyType}</p>}
+                      <p className="text-sm text-foreground font-medium">{cert.address || "-"}</p>
+                      {cert.propertyType && <p className="text-xs text-muted-foreground mt-0.5">{cert.propertyType}</p>}
                     </td>
-                    <td className="px-6 py-5 text-xs font-medium text-emerald-700/70 hidden md:table-cell whitespace-nowrap">{formatDate(cert.createdAt)}</td>
+                    <td className="px-6 py-5 text-xs font-medium text-muted-foreground hidden md:table-cell whitespace-nowrap">{formatDate(cert.createdAt)}</td>
                     <td className="px-6 py-5">
-                      <StatusPill status={cert.status} />
+                      <StatusBadge status={cert.status} />
                     </td>
                     <td className="px-6 py-5 hidden lg:table-cell">
                       <div className="flex flex-col gap-1">
@@ -1268,24 +1251,24 @@ export default function Certifications() {
                         <button
                           data-testid={`btn-menu-${cert.id}`}
                           onClick={() => setOpenMenu(openMenu === cert.id ? null : cert.id)}
-                          className="w-8 h-8 inline-flex items-center justify-center hover:bg-emerald-100 rounded-full transition-colors text-emerald-700/60 hover:text-emerald-900"
+                          className="w-8 h-8 inline-flex items-center justify-center hover:bg-muted rounded-full transition-colors text-muted-foreground hover:text-foreground"
                         >
                           <span className="material-symbols-outlined text-[20px]">more_vert</span>
                         </button>
                       </div>
                       {openMenu === cert.id && (
-                        <div className="absolute right-6 top-14 bg-white border border-emerald-100 rounded-xl shadow-xl z-10 min-w-[200px] overflow-hidden">
+                        <div className="absolute right-6 top-14 bg-card border border-border rounded-xl shadow-xl z-10 min-w-[200px] overflow-hidden">
                           <button
                             data-testid={`btn-edit-${cert.id}`}
                             onClick={() => { setEditCert(cert); setOpenMenu(null); }}
-                            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-emerald-800 hover:bg-emerald-50 transition-colors"
+                            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-muted transition-colors"
                           >
                             <span className="material-symbols-outlined text-[18px]">edit</span>
                             Editar
                           </button>
                           <button
                             onClick={() => { setLinkCert(cert); setOpenMenu(null); }}
-                            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-emerald-800 hover:bg-emerald-50 transition-colors"
+                            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-muted transition-colors"
                           >
                             <span className="material-symbols-outlined text-[18px]">link</span>
                             {cert.formToken ? "Ver enlace CEE clásico" : "Enlace formulario clásico"}
@@ -1293,8 +1276,8 @@ export default function Certifications() {
                           {/* Preview links section */}
                           {(cert.presupuestoToken || cert.ceeToken || cert.solicitudToken) && (
                             <>
-                              <div className="border-t border-emerald-50 px-4 py-2">
-                                <p className="text-[9px] font-bold uppercase tracking-widest text-emerald-700/40">Vista previa enlace cliente</p>
+                              <div className="border-t border-border px-4 py-2">
+                                <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Vista previa enlace cliente</p>
                               </div>
                               {cert.presupuestoToken && (
                                 <button
@@ -1352,19 +1335,19 @@ export default function Certifications() {
                               )}
                             </>
                           )}
-                          <div className="border-t border-emerald-50 px-4 py-2">
-                            <p className="text-[9px] font-bold uppercase tracking-widest text-emerald-700/40">Flujo de certificación</p>
+                          <div className="border-t border-border px-4 py-2">
+                            <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Flujo de certificación</p>
                           </div>
                           <button
                             onClick={() => { setSolicitudCert(cert); setOpenMenu(null); }}
-                            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-emerald-800 hover:bg-emerald-50 transition-colors"
+                            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-muted transition-colors"
                           >
                             <span className="material-symbols-outlined text-[18px]">assignment</span>
                             Enviar formulario de tasación
                           </button>
                           <button
                             onClick={() => { setPresupuestoCert(cert); setOpenMenu(null); }}
-                            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-emerald-800 hover:bg-emerald-50 transition-colors"
+                            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-muted transition-colors"
                           >
                             <span className="material-symbols-outlined text-[18px]">request_quote</span>
                             Enviar presupuesto
@@ -1372,7 +1355,7 @@ export default function Certifications() {
                           <button
                             onClick={() => { ceeFormMutation.mutate(cert.id); setOpenMenu(null); }}
                             disabled={ceeFormMutation.isPending}
-                            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-emerald-800 hover:bg-emerald-50 disabled:opacity-40 transition-colors"
+                            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-muted disabled:opacity-40 transition-colors"
                           >
                             <span className="material-symbols-outlined text-[18px]">energy_program_saving</span>
                             Enviar formulario CEE
@@ -1402,12 +1385,12 @@ export default function Certifications() {
                               Ver datos técnicos CEE
                             </button>
                           )}
-                          <div className="border-t border-emerald-50 px-4 py-2">
-                            <p className="text-[9px] font-bold uppercase tracking-widest text-emerald-700/40">Comunicación</p>
+                          <div className="border-t border-border px-4 py-2">
+                            <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Comunicación</p>
                           </div>
                           <button
                             onClick={() => { setCommsCert(cert); setOpenMenu(null); }}
-                            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-emerald-800 hover:bg-emerald-50 transition-colors"
+                            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-muted transition-colors"
                           >
                             <span className="material-symbols-outlined text-[18px]">chat</span>
                             Ver comunicaciones
@@ -1434,7 +1417,7 @@ export default function Certifications() {
                             <button
                               data-testid={`btn-archive-${cert.id}`}
                               onClick={() => { archiveMutation.mutate(cert.id); setOpenMenu(null); }}
-                              className="w-full flex items-center gap-3 px-4 py-3 text-sm text-emerald-800 hover:bg-emerald-50 transition-colors"
+                              className="w-full flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-muted transition-colors"
                             >
                               <span className="material-symbols-outlined text-[18px]">folder</span>
                               Archivar
@@ -1448,7 +1431,7 @@ export default function Certifications() {
                               }
                               setOpenMenu(null);
                             }}
-                            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors border-t border-emerald-50"
+                            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors border-t border-border"
                           >
                             <span className="material-symbols-outlined text-[18px]">delete</span>
                             Eliminar
@@ -1464,14 +1447,14 @@ export default function Certifications() {
         </table>
         </div>{/* /overflow-x-auto */}
         {filtered.length > 0 && (
-          <div className="px-5 sm:px-6 py-4 bg-emerald-50/30 flex items-center justify-between">
-            <p className="text-xs text-emerald-700/60 font-medium">
-              Mostrando <span className="font-semibold text-emerald-900">{filtered.length}</span> de {allCerts.length} certificaciones
+          <div className="px-5 sm:px-6 py-4 bg-muted/30 flex items-center justify-between">
+            <p className="text-xs text-muted-foreground font-medium">
+              Mostrando <span className="font-semibold text-foreground">{filtered.length}</span> de {allCerts.length} certificaciones
             </p>
             <button
               data-testid="btn-nueva-cert"
               onClick={() => setShowForm(true)}
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-700 text-white rounded-full text-xs font-semibold hover:bg-emerald-800 transition-colors shadow-sm"
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground rounded-full text-xs font-semibold hover:bg-primary/90 transition-colors shadow-sm"
             >
               <span className="material-symbols-outlined text-[16px]">add</span>
               Nueva certificación

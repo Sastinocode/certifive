@@ -6,8 +6,8 @@ import {
 import { useState } from "react";
 import Sidebar from "@/components/layout/sidebar";
 import { AppTopbar } from "@/components/layout/AppTopbar";
-import { EmptyState } from "@/components/ui/empty-state";
-import { KpiCard, StatusBadge } from "@/components/ui";
+import { KpiCard, StatusBadge, EnergyChip, DataTable } from "@/components/ui";
+import type { DataTableColumn } from "@/components/ui";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   IdCard, Euro, FileCheck2, CalendarDays, UserPlus,
@@ -50,13 +50,6 @@ function makeDelta(
   if (d === null || d === 0) return undefined;
   return { value: `${d > 0 ? "+" : ""}${d}%`, positive: d > 0 };
 }
-
-// ─── Energy rating colors ─────────────────────────────────────────────────────
-
-const ENERGY_COLORS: Record<string, string> = {
-  A: "#166534", B: "#15803d", C: "#65a30d",
-  D: "#ca8a04", E: "#ea580c", F: "#dc2626", G: "#991b1b",
-};
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
 
@@ -359,6 +352,65 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
 
   void displayName;
 
+  const recentColumns: DataTableColumn<RecentCert>[] = [
+    {
+      key: "owner",
+      header: "Propietario / Dirección",
+      cell: (cert) => (
+        <>
+          <p className="text-sm font-semibold text-foreground">{cert.ownerName || "—"}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {cert.address || cert.cadastralReference || "Sin dirección"}
+          </p>
+        </>
+      ),
+    },
+    {
+      key: "rating",
+      header: "Calificación",
+      cell: (cert) =>
+        cert.energyRating ? (
+          <EnergyChip rating={cert.energyRating} />
+        ) : (
+          <span className="text-xs text-muted-foreground">—</span>
+        ),
+    },
+    {
+      key: "status",
+      header: "Estado",
+      cell: (cert) => <StatusBadge status={cert.status} />,
+    },
+    {
+      key: "date",
+      header: "Fecha",
+      cellClassName: "text-xs text-muted-foreground whitespace-nowrap font-medium",
+      cell: (cert) => new Date(cert.createdAt).toLocaleDateString("es-ES"),
+    },
+    {
+      key: "actions",
+      header: "",
+      align: "right",
+      cell: (cert) => (
+        <div className="flex gap-1.5 justify-end">
+          <button
+            onClick={() => onNavigate?.("certifications")}
+            className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground rounded-lg px-3 py-1.5 hover:bg-muted hover:text-foreground transition-colors"
+          >
+            <Eye size={12} /> Ver
+          </button>
+          {cert.status !== "Finalizado" && (
+            <button
+              onClick={() => onNavigate?.("certifications")}
+              className="inline-flex items-center gap-1 text-xs font-semibold text-primary bg-primary/10 rounded-lg px-3 py-1.5 hover:bg-primary/15 transition-colors"
+            >
+              <Edit size={12} /> Editar
+            </button>
+          )}
+        </div>
+      ),
+    },
+  ];
+
   return (
     <div className="flex h-screen bg-background">
       <Sidebar selectedTab={selectedTab} onTabChange={setSelectedTab} />
@@ -537,87 +589,22 @@ export default function Dashboard({ onNavigate }: { onNavigate?: (page: string) 
                     <div key={i} className="h-10 bg-muted animate-pulse rounded-md" />
                   ))}
                 </div>
-              ) : recentCerts.length === 0 ? (
-                <div className="p-5">
-                  <EmptyState
-                    icon={<IdCard />}
-                    title="Sin certificaciones todavía"
-                    description="Crea tu primera certificación y aparecerá aquí junto con su estado."
-                    action={{
+              ) : (
+                <DataTable
+                  data={recentCerts}
+                  getRowKey={(cert) => cert.id}
+                  columns={recentColumns}
+                  empty={{
+                    icon: <IdCard />,
+                    title: "Sin certificaciones todavía",
+                    description: "Crea tu primera certificación y aparecerá aquí junto con su estado.",
+                    action: {
                       label: "Crear primera certificación",
                       onClick: () => onNavigate?.("certifications"),
                       icon: <Plus size={16} />,
-                    }}
-                    size="compact"
-                  />
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr>
-                        {["Propietario / Dirección", "Calificación", "Estado", "Fecha", ""].map((h, i) => (
-                          <th
-                            key={i}
-                            className="px-6 py-3 text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-[0.08em] whitespace-nowrap bg-muted/30"
-                          >
-                            {h}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {recentCerts.map((cert) => (
-                        <tr key={cert.id} className="hover:bg-muted/40 transition-colors">
-                          <td className="px-6 py-4">
-                            <p className="text-sm font-semibold text-foreground">
-                              {cert.ownerName || "—"}
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                              {cert.address || cert.cadastralReference || "Sin dirección"}
-                            </p>
-                          </td>
-                          <td className="px-6 py-4">
-                            {cert.energyRating ? (
-                              <span
-                                className="inline-flex items-center justify-center min-w-[26px] px-2 py-0.5 rounded-md text-xs font-bold text-white shadow-sm"
-                                style={{ background: ENERGY_COLORS[cert.energyRating] ?? "#94a3b8" }}
-                              >
-                                {cert.energyRating}
-                              </span>
-                            ) : (
-                              <span className="text-xs text-muted-foreground">—</span>
-                            )}
-                          </td>
-                          <td className="px-6 py-4">
-                            <StatusBadge status={cert.status} />
-                          </td>
-                          <td className="px-6 py-4 text-xs text-muted-foreground whitespace-nowrap font-medium">
-                            {new Date(cert.createdAt).toLocaleDateString("es-ES")}
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex gap-1.5 justify-end">
-                              <button
-                                onClick={() => onNavigate?.("certifications")}
-                                className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground rounded-lg px-3 py-1.5 hover:bg-muted hover:text-foreground transition-colors"
-                              >
-                                <Eye size={12} /> Ver
-                              </button>
-                              {cert.status !== "Finalizado" && (
-                                <button
-                                  onClick={() => onNavigate?.("certifications")}
-                                  className="inline-flex items-center gap-1 text-xs font-semibold text-primary bg-primary/10 rounded-lg px-3 py-1.5 hover:bg-primary/15 transition-colors"
-                                >
-                                  <Edit size={12} /> Editar
-                                </button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                    },
+                  }}
+                />
               )}
             </div>
 

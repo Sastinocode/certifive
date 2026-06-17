@@ -6,8 +6,11 @@ vite.config.ts.*
 *.tar.gz
 .env
 .env.local
-.env.*.local# Scripts temporales de sesiones de desarrollo
+.env.*.local
+
+# Scripts temporales de sesiones de desarrollo
 write_*.py
+push_fix.bat
 design-previews/
 
 design_handoff_panel_interno/

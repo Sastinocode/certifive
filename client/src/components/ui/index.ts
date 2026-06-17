@@ -3,5 +3,7 @@ export { KpiCard }       from "./kpi-card";
 export { StatusBadge }   from "./status-badge";
 export { EnergyChip }    from "./energy-chip";
 export { SectionCard }   from "./section-card";
+export { DataTable }     from "./data-table";
+export type { DataTableColumn } from "./data-table";
 export { FilterChip }    from "./filter-chip";
 export { SearchInput }   from "./search-input";

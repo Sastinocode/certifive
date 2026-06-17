@@ -22,7 +22,7 @@ export function ProfileMenu() {
 
   if (isLoading) {
     return (
-      <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse" />
+      <div className="w-8 h-8 bg-muted rounded-full animate-pulse" />
     );
   }
 
@@ -66,11 +66,11 @@ export function ProfileMenu() {
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="relative h-8 w-8 rounded-full hover:bg-teal-50 dark:hover:bg-teal-900/20"
+          className="relative h-8 w-8 rounded-full hover:bg-accent"
         >
           <Avatar className="h-8 w-8">
             <AvatarImage src="" alt={displayName} />
-            <AvatarFallback className="bg-gradient-to-r from-teal-500 to-blue-600 text-white text-xs font-medium">
+            <AvatarFallback className="bg-primary text-primary-foreground text-xs font-medium">
               {initials}
             </AvatarFallback>
           </Avatar>
@@ -85,10 +85,10 @@ export function ProfileMenu() {
       >
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none text-gray-900 dark:text-gray-100">
+            <p className="text-sm font-medium leading-none text-foreground">
               {displayName}
             </p>
-            <p className="text-xs leading-none text-gray-500 dark:text-gray-400">
+            <p className="text-xs leading-none text-muted-foreground">
               {user.email}
             </p>
           </div>
@@ -114,7 +114,7 @@ export function ProfileMenu() {
         <DropdownMenuItem 
           onClick={handleLogout}
           disabled={isLoggingOut}
-          className="cursor-pointer text-red-600 dark:text-red-400 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-900/20 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoggingOut ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />

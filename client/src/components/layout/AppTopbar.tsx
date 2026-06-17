@@ -17,6 +17,10 @@ export function AppTopbar({ title, subtitle }: AppTopbarProps) {
     ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
     : ((user as any)?.email?.[0] || "U").toUpperCase();
 
+  const displayName = (user?.firstName && user?.lastName)
+    ? `${user.firstName} ${user.lastName}`
+    : (user as any)?.email || "Usuario";
+
   return (
     <header className="h-16 bg-card/80 backdrop-blur-sm border-b border-border flex items-center justify-between px-6 flex-shrink-0 sticky top-0 z-20">
       {/* Left */}
@@ -32,7 +36,11 @@ export function AppTopbar({ title, subtitle }: AppTopbarProps) {
       </div>
 
       {/* Right */}
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-3">
+        <div className="hidden sm:block text-right">
+          <p className="text-sm font-semibold text-foreground leading-tight">{displayName}</p>
+          <p className="text-xs text-muted-foreground">Certificador energético</p>
+        </div>
         <ThemeToggle />
         <NotificationModal />
         <div
