@@ -5,7 +5,7 @@ import Sidebar from "@/components/layout/sidebar";
 import { SearchInput, FilterChip } from "@/components/ui";
 import {
   Plus, FileText, Phone, Search, MoreHorizontal, Paperclip, Smile, Send,
-  MessageCircle,
+  MessageCircle, ArrowLeft,
 } from "lucide-react";
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -243,10 +243,10 @@ export default function WhatsApp() {
         </header>
 
         {/* ── 3-column layout ── */}
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-[340px_1fr_320px] overflow-hidden">
+        <div className="flex-1 flex flex-col lg:grid lg:grid-cols-[340px_1fr_320px] overflow-hidden pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pb-0">
 
           {/* ══ Left: Conversations list ══ */}
-          <section className="bg-card border-r border-border flex flex-col overflow-hidden">
+          <section className={`${selectedConvId ? "hidden lg:flex" : "flex"} flex-1 min-h-0 bg-card border-r border-border flex-col overflow-hidden`}>
             <div className="p-3 border-b border-border space-y-2.5 flex-shrink-0">
               <SearchInput
                 value={search}
@@ -332,7 +332,7 @@ export default function WhatsApp() {
           </section>
 
           {/* ══ Center: Chat window ══ */}
-          <section className="flex flex-col overflow-hidden">
+          <section className={`${selectedConvId ? "flex" : "hidden lg:flex"} flex-1 min-h-0 flex-col overflow-hidden`}>
             {!connected ? (
               /* ── Not connected: full CTA ── */
               <div className="flex-1 flex items-center justify-center px-6 bg-background">
@@ -398,6 +398,13 @@ export default function WhatsApp() {
                 {/* Chat header */}
                 <header className="px-5 py-3 border-b border-border bg-card flex items-center justify-between gap-3 flex-shrink-0">
                   <div className="flex items-center gap-3 min-w-0">
+                    <button
+                      onClick={() => setSelectedConvId(null)}
+                      className="lg:hidden -ml-1.5 w-9 h-9 rounded-full hover:bg-muted/40 inline-flex items-center justify-center text-muted-foreground flex-shrink-0"
+                      aria-label="Volver a conversaciones"
+                    >
+                      <ArrowLeft size={18} />
+                    </button>
                     <div
                       className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white flex-shrink-0"
                       style={{ background: `linear-gradient(135deg, ${selectedConv.gradFrom}, ${selectedConv.gradTo})` }}
