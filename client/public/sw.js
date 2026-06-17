@@ -2,9 +2,15 @@
  * CERTIFIVE Service Worker
  * Strategy: Cache-first for app shell assets, network-first for API calls.
  * Provides offline access to the app UI even when connectivity is limited.
+ *
+ * CACHE_NAME is versioned per build: the `__BUILD_ID__` placeholder is replaced
+ * at build time (Vite `sw-cache-version` plugin) with $BUILD_ID or a hash of the
+ * bundle. Because this changes the bytes of sw.js on every deploy, the browser
+ * installs the new SW, and `activate` purges every previous cache automatically.
+ * In dev the placeholder stays literal (a stable constant), which is harmless.
  */
 
-const CACHE_NAME = "certifive-v1";
+const CACHE_NAME = "certifive-__BUILD_ID__";
 
 // App shell assets cached on install (served from Vite build)
 const SHELL_URLS = [
