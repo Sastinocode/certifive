@@ -123,33 +123,33 @@ app.post("/api/certifications", authenticate, async (req: Request, res: Response
     const userId = req.user!.id;
     const b = req.body as Record<string, unknown>;
 
-    // ── Mapeo explícito: campos del formulario → columnas del schema ───────────
-    // El form usa nombres distintos a los del schema de Drizzle, así que los
-    // mapeamos aquí. Los campos sin equivalente se guardan en formData (jsonb).
-    const knownFields: Partial<typeof certifications.$inferInsert> = {
-      userId,
-      // Titular
-      ownerName:   (b.ownerName   as string | undefined) ?? undefined,
-      ownerDni:    (b.ownerDni    as string | undefined) ?? undefined,
-      ownerEmail:  (b.email       as string | undefined) ?? undefined,
-      ownerPhone:  (b.phone       as string | undefined) ?? undefined,
-      // Inmueble
-      address:           (b.propertyAddress   as string | undefined) ?? undefined,
-      cadastralReference:(b.cadastralRef       as string | undefined) ?? undefined,
-      // Datos catastro pre-rellenados por la UI (si los envía)
-      provinciaCatastro: (b.provinciaCatastro as string | undefined) ?? undefined,
-      comunidadAutonomaCatastro: (b.comunidadAutonomaCatastro as string | undefined) ?? undefined,
-      zonaClimatica:    (b.zonaClimatica     as string | undefined) ?? undefined,
-    };
-
     // ── Resto de campos del formulario → formData (jsonb) ─────────────────────
-    // Preserva toda la info del form sin perder datos aunque no haya columna.
+    // Las fotos (base64 pesado) se excluyen — van a visit_photos por separado.
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { photos, ...formRest } = b;
-    knownFields.formData = formRest as Record<string, unknown>;
 
+    // ── Mapeo explícito: campos del formulario → columnas del schema ───────────
+    // El form usa nombres distintos al schema de Drizzle; se mapean aquí.
+    // Sin anotación de tipo intermedia para evitar conflicto con userId: number.
     const [cert] = await db
       .insert(certifications)
-      .values(knownFields)
+      .values({
+        userId,
+        // Titular
+        ownerName:  b.ownerName  as string ?? undefined,
+        ownerDni:   b.ownerDni   as string ?? undefined,
+        ownerEmail: b.email      as string ?? undefined,
+        ownerPhone: b.phone      as string ?? undefined,
+        // Inmueble
+        address:            b.propertyAddress as string ?? undefined,
+        cadastralReference: b.cadastralRef    as string ?? undefined,
+        // Catastro pre-rellenado por la UI (si lo envía)
+        provinciaCatastro:         b.provinciaCatastro         as string ?? undefined,
+        comunidadAutonomaCatastro: b.comunidadAutonomaCatastro as string ?? undefined,
+        zonaClimatica:             b.zonaClimatica             as string ?? undefined,
+        // Resto del formulario guardado como JSON para no perder datos
+        formData: formRest as Record<string, unknown>,
+      })
       .returning();
 
     res.status(201).json(cert);
