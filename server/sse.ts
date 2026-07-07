@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * CERTIFIVE — Server-Sent Events manager
  *

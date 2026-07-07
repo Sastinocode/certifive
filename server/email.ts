@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * CERTIFIVE — Email service
  *
@@ -665,7 +664,7 @@ export async function sendPagoManualPendienteEmail(params: {
   const body = `
     ${h1("💳 Pago pendiente de confirmación")}
     ${p("Hola <strong>" + (certifierName || "") + "</strong>,")}
-    ${p("<strong>" + ownerName + "</strong> ha notificado que va a realizar el pago del tramo " + tramo + " por <strong>" + metodosLabel[metodo] ?? metodo + "</strong>.")}
+    ${p("<strong>" + ownerName + "</strong> ha notificado que va a realizar el pago del tramo " + tramo + " por <strong>" + (metodosLabel[metodo] ?? metodo) + "</strong>.")}
     ${infoBlock([
       { label: "Propietario", value: ownerName },
       { label: "Importe", value: amount.toFixed(2) + " €" },
