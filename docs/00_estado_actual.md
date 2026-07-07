@@ -1,9 +1,10 @@
 # CERTIFIVE — Estado Actual del Proyecto
 
-> Auditoría inicial: 2026-05-16 · Última actualización: 2026-05-29  
-> Commit HEAD actual: `a7e8bd1`
+> Auditoría inicial: 2026-05-16 · Última actualización: 2026-07-07  
+> Commit HEAD actual: `2bc57f8`
 >
 > **Cambios aplicados desde la auditoría inicial** → ver sección [Historial de mejoras](#historial-de-mejoras)
+> **Sprint de julio 2026 (Bloques A/B/C de `TASKS_SONNET5.md`)** → ver [Sprint 2026-07-07 — Hardening](#sprint-2026-07-07--hardening-bloques-abc-tasks_sonnet5md)
 
 ---
 
@@ -333,8 +334,8 @@ como legacy en vez de borrarla, para no arriesgar una tabla que pudiera existir 
 | Tarifas | Funcional | Por tipo + tramos área + recargo provincia |
 | WhatsApp 360dialog | Funcional | Conexión, 8 templates, envío, historial |
 | Notificaciones in-app | Funcional | SSE real-time, unread count, bell |
-| Suscripciones Stripe | Parcial | UI completa; falta configurar Price IDs reales |
-| Pagos clientes Stripe | Parcial | Lógica completa; falta STRIPE_SECRET_KEY real |
+| Suscripciones Stripe | Parcial | Webhook (`/api/subscription/webhook`) sincroniza `subscriptionStatus`/plan/renovación; `checkSubscription` bloquea rutas de valor sin suscripción activa/trial (402 `subscription_required`); falta configurar Price IDs reales en Railway |
+| Pagos clientes Stripe | Parcial | Lógica completa (Stripe + manual bizum/transferencia/efectivo); falta STRIPE_SECRET_KEY real |
 | Email SendGrid | Parcial | 18 templates; falta SENDGRID_API_KEY real |
 | Cloudinary uploads | Parcial | Código completo; falta CLOUDINARY_URL real |
 | Informes | Funcional | Gráficos Recharts, colecciones, backup views |
@@ -345,6 +346,8 @@ como legacy en vez de borrarla, para no arriesgar una tabla que pudiera existir 
 | Página pública del certificador | Parcial | `CertifierLanding.tsx` existe pero no está en el router |
 | `/verify-email` (frontend) | ✅ Funcional | Componente `VerifyEmail` añadido al router |
 | `/reset-password` (frontend) | ✅ Funcional | Componente `ResetPassword` añadido al router |
+| Panel admin (`/admin`) | Funcional | Lista de usuarios (plan, estado, registro, nº certificaciones), KPIs, cambio de rol — protegido por `role === "admin"` |
+| Observabilidad (Sentry) | Opcional | Backend y frontend inicializan Sentry solo si `SENTRY_DSN`/`VITE_SENTRY_DSN` están configurados; sin DSN es no-op |
 
 ---
 
@@ -370,9 +373,37 @@ como legacy en vez de borrarla, para no arriesgar una tabla que pudiera existir 
 
 10. ~~**BAJO — Login no busca por email**~~ ✅ **FALSO POSITIVO**: La auditoría inicial fue incorrecta. El código ya usa `or(eq(users.username, lookup), eq(users.email, lookup))` — acepta tanto username como email desde el inicio.
 
+11. ~~**CRÍTICO — `checkSubscription` bloqueaba con 401 los flujos públicos por token**~~ ✅ **CORREGIDO (Bloque B — B2)**: la lista `EXEMPT` de `server/subscription-guard.ts` no incluía `/solicitud`, `/presupuesto`, `/formulario-cee`, `/formulario-tecnico`, `/form`, `/pay`, `/portal` ni el stream SSE de notificaciones (`?token=` en query, no header) — cualquier cliente final sin sesión recibía 401 al abrir su propio enlace de solicitud/presupuesto/pago/formulario. Corregido ampliando `EXEMPT`; cubierto por los 20 tests de `server/tests/public-flows.test.ts`.
+
+12. ~~**MEDIO — Alias `/api/stripe/webhook` de suscripciones inalcanzable**~~ ✅ **CORREGIDO (Bloque B — B1/B3)**: `payments.ts` registraba esa misma ruta primero (para `payment_intent.succeeded`); el alias de `subscription.ts` nunca se ejecutaba. Eliminado el alias muerto — los eventos de suscripción deben apuntar a `/api/subscription/webhook`.
+
+13. **ALTO (abierto) — Dos páginas públicas con endpoint backend inexistente**: `client/src/pages/certification-form.tsx` (`/certificacion-cliente/:uniqueLink`) llama a `/api/public/certification-form/:uniqueLink` y `client/src/pages/public-quote.tsx` (`/cotizacion/:uniqueLink`) llama a `/api/public/quotes/:uniqueLink` — ninguno de los dos existe en `server/`. Parecen residuo de una versión anterior del flujo público, ya reemplazada por el sistema de tokens `solicitud`/`presupuesto`/`formulario-cee`. Documentado en `docs/03_formularios_decision.md` (tarea A5) — no se ha tocado ni borrado porque son rutas activas y la decisión de eliminarlas debe tomarla Sebas.
+
 ---
 
 ## Historial de mejoras
+
+### Sprint 2026-07-07 — Hardening (Bloques A/B/C, `TASKS_SONNET5.md`)
+
+Ejecutado siguiendo `TASKS_SONNET5.md`. HEAD al cierre: `2bc57f8`.
+
+| Commit | Bloque | Descripción |
+|--------|--------|-------------|
+| `580826d` | A1 | Elimina scripts de un solo uso y artefactos timestamp de vite/vitest |
+| `7b9ce80` | A2 | Elimina `@ts-nocheck` de `email.ts`, `sse.ts`, `vite.ts` |
+| `7ba45bb` | A3 | Elimina `@ts-nocheck` de libs y componentes (`certDownload.ts`, `exportCE3X.ts`, `Layout.tsx`, notificaciones) |
+| `785179c` | A4 | Elimina `@ts-nocheck` de las 4 páginas restantes — **0 archivos con `@ts-nocheck` en todo el repo** |
+| `5343f6e` | A5 | Analiza los 3 formularios de certificación — ninguno se borra (audiencias distintas); documenta en `docs/03_formularios_decision.md` el hallazgo de dos páginas públicas con endpoint backend inexistente |
+| `3cae439` | B1 | El webhook de suscripción ya sincronizaba `subscriptionStatus`; se corrige lectura de secrets vía `config.ts` (no `process.env` directo) y se añade logging |
+| `f079ef8` | B2 | Corrige bug crítico: `checkSubscription` bloqueaba con 401 los flujos públicos por token (solicitud/presupuesto/pago/formulario-cee/formulario-tecnico/portal) y el stream SSE de notificaciones; unifica `/renovar-suscripcion` (con/sin tilde inconsistente) |
+| `0e970af` | B3 | 14 tests de pagos/suscripción; cambia la respuesta de "sin suscripción" de 403 a 402 `{ error: "subscription_required" }` (spec original); elimina alias muerto `/api/stripe/webhook` en `subscription.ts` |
+| `551f7f5` | B4 | 20 tests de flujos públicos por token (formulario, solicitud, presupuesto, pago) |
+| `9e8d006` | B5 | Sentry backend ya existía; se añade `@sentry/react` en frontend (pinned a v8 para igualar `@sentry/node`) |
+| `c29d150` | C1 | Panel admin ya existía; se añade nº de certificaciones por usuario y se adoptan `KpiCard`/`StatusBadge`/`SearchInput` del design system |
+| `b763a02` | C2 | Elimina por completo `express-session`/`connect-pg-simple`/`memorystore` (sin uso real) y `SESSION_SECRET`; mantiene la tabla Drizzle `sessions` documentada como legacy |
+| `2bc57f8` | C3 | `docs/04_smoke_test_manual.md` — checklist E2E manual del flujo completo |
+
+**Resultado**: 0 archivos con `@ts-nocheck`, 60 tests (`server/tests/*.test.ts`), `npx tsc --noEmit` sin errores.
 
 ### Sprint 2026-05-16 → 2026-05-29
 
@@ -398,5 +429,10 @@ como legacy en vez de borrarla, para no arriesgar una tabla que pudiera existir 
 | ~~MEDIO~~ | ~~Eliminar `server/routes.ts`~~ → ✅ Ya eliminado del repo |
 | ~~MEDIO~~ | ~~Eliminar páginas dead code frontend~~ → ✅ Ya eliminado del repo |
 | ~~BAJO~~ | ~~Parametrizar query SQL en `misc.ts`~~ → ✅ `c469edc` |
+| ~~MEDIO~~ | ~~`SESSION_SECRET` no seteada / express-session sin uso~~ → ✅ Eliminado por completo (Bloque C — C2) |
+| ~~ALTO~~ | ~~`checkSubscription` bloqueaba flujos públicos por token~~ → ✅ Corregido (Bloque B — B2) |
+| ALTO | Decidir con Sebas si `certification-form.tsx`/`public-quote.tsx` (endpoints backend inexistentes) se eliminan o se reconectan — ver riesgo 13 |
+| MEDIO | Configurar Stripe Price IDs reales + apuntar el webhook de Stripe Dashboard a `/api/subscription/webhook` (no `/api/stripe/webhook`) |
+| BAJO | `certification-wizard.tsx` (`/certificacion/:id?`) no carga datos existentes al editar — el parámetro `:id` no dispara ningún fetch (ver `docs/03_formularios_decision.md`) |
 | BAJO | Test CE3X real — generar XML e importar en software CE3X para validar |
 | ~~BAJO~~ | ~~Simplificar flujo de onboarding~~ → ✅ `9e36095` |

@@ -1,13 +1,36 @@
 # CERTIFIVE — Log de Cambios
 
-> Generado a partir de `git log` (271 commits totales)  
-> Rama: main | HEAD: `232daff` (2026-05-15)
+> Generado a partir de `git log` (271 commits totales originalmente; actualizado a mano el 2026-07-07)  
+> Rama: main | HEAD: `2bc57f8` (2026-07-07)
 
 ---
 
 ## Formato
 
 `Fecha | Hash | Área | Cambio | Estado`
+
+---
+
+## Julio 2026 — Sprint de hardening (Bloques A/B/C, `TASKS_SONNET5.md`)
+
+| Fecha | Hash | Área | Cambio | Estado |
+|-------|------|------|--------|--------|
+| 2026-07-07 | `2bc57f8` | Docs | Checklist manual de smoke test E2E (`docs/04_smoke_test_manual.md`) | Aplicado |
+| 2026-07-07 | `b763a02` | Auth / Infra | Elimina `express-session`/`connect-pg-simple`/`memorystore` sin uso real + `SESSION_SECRET` | Aplicado |
+| 2026-07-07 | `c29d150` | Admin | Panel admin: nº certificaciones por usuario, adopta `KpiCard`/`StatusBadge`/`SearchInput` | Aplicado |
+| 2026-07-07 | `9e8d006` | Observabilidad | Sentry frontend (`@sentry/react`, pinned a v8) — backend ya existía | Aplicado |
+| 2026-07-07 | `551f7f5` | Tests | 20 tests de flujos públicos por token (`public-flows.test.ts`) | Aplicado |
+| 2026-07-07 | `0e970af` | Tests / Stripe | 14 tests de pagos/suscripción; 403→402 `subscription_required`; elimina alias muerto `/api/stripe/webhook` en `subscription.ts` | Aplicado |
+| 2026-07-07 | `f079ef8` | Suscripción | **Fix crítico**: `checkSubscription` devolvía 401 en flujos públicos por token (solicitud/presupuesto/pago/CEE/técnico) y en el stream SSE de notificaciones | Aplicado |
+| 2026-07-07 | `3cae439` | Stripe | Webhook de suscripción: secrets vía `config.ts`, logging de eventos | Aplicado |
+| 2026-07-07 | `5343f6e` | Formularios | Decisión documentada sobre los 3 formularios de certificación (`docs/03_formularios_decision.md`) | Aplicado |
+| 2026-07-07 | `785179c` | TypeScript | Elimina `@ts-nocheck` de las últimas 4 páginas — 0 restantes en el repo | Aplicado |
+| 2026-07-07 | `7ba45bb` | TypeScript | Elimina `@ts-nocheck` de libs y componentes | Aplicado |
+| 2026-07-07 | `7b9ce80` | TypeScript | Elimina `@ts-nocheck` de `email.ts`, `sse.ts`, `vite.ts` | Aplicado |
+| 2026-07-07 | `580826d` | Limpieza | Elimina scripts de un solo uso y artefactos timestamp de vite/vitest | Aplicado |
+
+> Detalle completo de cada tarea (qué se encontró, qué se cambió y por qué) en
+> `docs/00_estado_actual.md` → sección "Sprint 2026-07-07 — Hardening".
 
 ---
 
