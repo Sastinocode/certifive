@@ -377,7 +377,7 @@ como legacy en vez de borrarla, para no arriesgar una tabla que pudiera existir 
 
 12. ~~**MEDIO — Alias `/api/stripe/webhook` de suscripciones inalcanzable**~~ ✅ **CORREGIDO (Bloque B — B1/B3)**: `payments.ts` registraba esa misma ruta primero (para `payment_intent.succeeded`); el alias de `subscription.ts` nunca se ejecutaba. Eliminado el alias muerto — los eventos de suscripción deben apuntar a `/api/subscription/webhook`.
 
-13. **ALTO (abierto) — Dos páginas públicas con endpoint backend inexistente**: `client/src/pages/certification-form.tsx` (`/certificacion-cliente/:uniqueLink`) llama a `/api/public/certification-form/:uniqueLink` y `client/src/pages/public-quote.tsx` (`/cotizacion/:uniqueLink`) llama a `/api/public/quotes/:uniqueLink` — ninguno de los dos existe en `server/`. Parecen residuo de una versión anterior del flujo público, ya reemplazada por el sistema de tokens `solicitud`/`presupuesto`/`formulario-cee`. Documentado en `docs/03_formularios_decision.md` (tarea A5) — no se ha tocado ni borrado porque son rutas activas y la decisión de eliminarlas debe tomarla Sebas.
+13. ~~**ALTO — Dos páginas públicas con endpoint backend inexistente**~~ ✅ **RESUELTO (2026-07-07)**: `client/src/pages/certification-form.tsx` (`/certificacion-cliente/:uniqueLink`) llamaba a `/api/public/certification-form/:uniqueLink` y `client/src/pages/public-quote.tsx` (`/cotizacion/:uniqueLink`) llamaba a `/api/public/quotes/:uniqueLink` — ninguno de los dos existía en `server/`, y nada en el backend generaba `uniqueLink`. Sebas confirmó y verificó personalmente que eran residuo de una versión anterior del flujo público (ya reemplazada por el sistema de tokens `solicitud`/`presupuesto`/`formulario-cee`) y pidió eliminarlos: se borraron ambos archivos y sus rutas/imports en `App.tsx`. Detalle en `docs/03_formularios_decision.md`.
 
 ---
 
@@ -431,7 +431,7 @@ Ejecutado siguiendo `TASKS_SONNET5.md`. HEAD al cierre: `2bc57f8`.
 | ~~BAJO~~ | ~~Parametrizar query SQL en `misc.ts`~~ → ✅ `c469edc` |
 | ~~MEDIO~~ | ~~`SESSION_SECRET` no seteada / express-session sin uso~~ → ✅ Eliminado por completo (Bloque C — C2) |
 | ~~ALTO~~ | ~~`checkSubscription` bloqueaba flujos públicos por token~~ → ✅ Corregido (Bloque B — B2) |
-| ALTO | Decidir con Sebas si `certification-form.tsx`/`public-quote.tsx` (endpoints backend inexistentes) se eliminan o se reconectan — ver riesgo 13 |
+| ~~ALTO~~ | ~~Decidir si `certification-form.tsx`/`public-quote.tsx` se eliminan o se reconectan~~ → ✅ Eliminados (2026-07-07), ver riesgo 13 |
 | MEDIO | Configurar Stripe Price IDs reales + apuntar el webhook de Stripe Dashboard a `/api/subscription/webhook` (no `/api/stripe/webhook`) |
 | BAJO | `certification-wizard.tsx` (`/certificacion/:id?`) no carga datos existentes al editar — el parámetro `:id` no dispara ningún fetch (ver `docs/03_formularios_decision.md`) |
 | BAJO | Test CE3X real — generar XML e importar en software CE3X para validar |

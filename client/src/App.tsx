@@ -10,7 +10,6 @@ import OnboardingFlow from "@/components/OnboardingFlow";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import Dashboard from "@/pages/dashboard";
 import CertificationWizard from "@/pages/certification-wizard";
-import CertificationForm from "@/pages/certification-form";
 import WhatsApp from "@/pages/whatsapp";
 import WorkflowDemo from "@/pages/workflow-demo";
 import Certificates from "@/pages/certificates";
@@ -28,7 +27,6 @@ import Landing from "@/pages/Landing";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import DemoRequest from "@/pages/demo-request";
-import PublicQuote from "@/pages/public-quote";
 import PublicPresupuesto from "@/pages/PublicPresupuesto";
 import PublicSolicitud from "@/pages/PublicSolicitud";
 import PublicCEEForm from "@/pages/PublicCEEForm";
@@ -96,8 +94,8 @@ const SUBSCRIPTION_FREE_PATHS = [
 
 // Route prefixes where the setup wizard should NOT appear
 const SETUP_SKIP_PREFIXES = [
-  "/presupuesto/", "/cotizacion/", "/solicitud/", "/formulario-",
-  "/pay/", "/certificacion-cliente/", "/generador-tarifas", "/recogida/",
+  "/presupuesto/", "/solicitud/", "/formulario-",
+  "/pay/", "/generador-tarifas", "/recogida/",
   "/login", "/register", "/verify-email", "/reset-password", "/solicitar-demo",
   "/privacy", "/terms", "/success", "/cancel", "/renovar-suscripcion",
   "/precios", "/solicitud-cee",
@@ -171,12 +169,10 @@ function Router() {
       <Switch>
         {/* Public client-facing routes */}
         <Route path="/presupuesto/:token" component={PresupuestoWrapper} />
-        <Route path="/cotizacion/:uniqueLink" component={PublicQuote} />
         <Route path="/solicitud/:token" component={SolicitudWrapper} />
         <Route path="/formulario-cee/:token" component={CEEFormWrapper} />
         <Route path="/formulario-tecnico/:token" component={FormularioTecnicoWrapper} />
         <Route path="/pay/:token" component={PaymentWrapper} />
-        <Route path="/certificacion-cliente/:uniqueLink" component={CertificationForm} />
         <Route path="/generador-tarifas" component={PublicTariffGenerator} />
         <Route path="/recogida/:token" component={RecogidaMovilWrapper} />
         {/* ── Flujo público de captación CEE ──────────────────────────────── */}
