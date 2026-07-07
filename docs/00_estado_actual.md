@@ -30,7 +30,6 @@
 | Build tool servidor | esbuild | 0.25.x |
 | Dev transpiler | tsx | 4.x |
 | Notificaciones RT | SSE (Server-Sent Events) | nativo |
-| Gestor sesiones | express-session + MemoryStore | 1.x |
 
 ---
 
@@ -72,7 +71,7 @@ certifive/
 | `quote_requests` | Presupuestos enviados a clientes | Funcional |
 | `invoices` | Facturas emitidas | Funcional |
 | `payments` | Transacciones Stripe + manuales (bizum/transferencia/efectivo) | Funcional |
-| `sessions` | Tabla express-session (PostgreSQL store) | Presente en schema pero el store usa MemoryStore |
+| `sessions` | Legacy — pensada para un store de express-session que nunca se llegó a usar | Sin uso (C2): mantenida en schema solo por seguridad, no se lee/escribe |
 | `plantillas_whatsapp` | 8 plantillas de mensaje personalizadas por certificador | Funcional |
 | `mensajes_comunicacion` | Audit log de todos los mensajes enviados | Funcional |
 | `notificaciones` | Notificaciones in-app para el certificador | Funcional |
@@ -269,7 +268,14 @@ El sistema usa **JWT sin estado** (no express-session para proteger rutas API):
 - Email verification: obligatoria para acceder (bloquea en login)
 - Password reset: JWT stateless de 1h (no almacenado en BD)
 
-**Nota**: `express-session` está configurado en `server/index.ts` pero no se usa para autenticación de API — es residuo de una implementación anterior con Replit Auth (`replitAuth.ts` existe pero no está registrado).
+**Actualizado (Bloque C — C2, julio 2026)**: `express-session`, `connect-pg-simple` y `memorystore`
+eran residuo sin uso real (ningún handler leía/escribía `req.session`) y se han eliminado por
+completo: import y `app.use(session(...))` en `server/index.ts`, la dependencia de `package.json`,
+la creación de la tabla `session` (singular) en `startup-migration.ts`, y `SESSION_SECRET` de
+`config.ts`/`.env.example`. No existía `replitAuth.ts` en el repo (ya se había retirado antes).
+La tabla Drizzle `sessions` (plural, en `shared/schema.ts`) se mantiene intacta — nunca se
+creó ni se usó realmente (nombre distinto al de connect-pg-simple), pero se deja documentada
+como legacy en vez de borrarla, para no arriesgar una tabla que pudiera existir en producción.
 
 ---
 
@@ -293,7 +299,6 @@ El sistema usa **JWT sin estado** (no express-session para proteger rutas API):
 |----------|-------------|----------------|-------------|
 | `DATABASE_URL` | SÍ | Configurada (Railway) | Conexión PostgreSQL |
 | `JWT_SECRET` | SÍ | Placeholder genérico | **Cambiar en producción** |
-| `SESSION_SECRET` | SÍ | No presente | Express session secret |
 | `STRIPE_SECRET_KEY` | Para pagos | Placeholder | Secret key Stripe |
 | `STRIPE_WEBHOOK_SECRET` | Para webhooks | Placeholder | Signing secret webhook |
 | `STRIPE_PRICE_BASICO` | Para suscripciones | Placeholder | Price ID plan básico |
@@ -357,7 +362,7 @@ El sistema usa **JWT sin estado** (no express-session para proteger rutas API):
 
 6. ✅ **CORREGIDO (`c469edc`) — SQL injection en misc.ts**: Reemplazadas queries SQL con interpolación de strings por `db.select({ value: count() }).from(waitlist).where(eq(...))` — completamente parametrizado con Drizzle ORM.
 
-7. **MEDIO — SESSION_SECRET no seteada**: express-session usa el fallback `certifive-session-secret-2024`.
+7. ~~**MEDIO — SESSION_SECRET no seteada**~~ ✅ **CORREGIDO (Bloque C — C2)**: `express-session` no tenía ningún uso real (auth es JWT vía `Authorization: Bearer`) y se eliminó por completo junto con `SESSION_SECRET`. Ya no aplica.
 
 8. ✅ **YA ELIMINADO — `server/routes.ts` (monolítico)**: Archivo de 2000+ líneas ya no existe en el repositorio.
 

@@ -1,7 +1,5 @@
 import * as Sentry from "@sentry/node";
 import express from "express";
-import session from "express-session";
-import connectPg from "connect-pg-simple";
 import helmet from "helmet";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -29,8 +27,6 @@ if (config.SENTRY_DSN) {
   });
   logger.info("Sentry inicializado correctamente");
 }
-
-const PgStore = connectPg(session);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -84,23 +80,6 @@ app.use((_req, res, next) => {
 
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
-
-app.use(session({
-  store: new PgStore({
-    conString: process.env.DATABASE_URL,
-    tableName: "session",
-    createTableIfMissing: true,
-  }),
-  secret: config.SESSION_SECRET,
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: process.env.NODE_ENV === "production",
-    httpOnly: true,
-    sameSite: "lax",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  },
-}));
 
 // ── Startup migration (idempotent — safe to run on every deploy) ─────────────
 runStartupMigrations().catch(err =>

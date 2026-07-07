@@ -92,15 +92,6 @@ const MIGRATIONS = [
   )`,
   `CREATE INDEX IF NOT EXISTS refresh_tokens_user_id_idx ON refresh_tokens(user_id)`,
 
-  // ── session table (connect-pg-simple) ──────────────────────────────────────
-  `CREATE TABLE IF NOT EXISTS session (
-    sid varchar NOT NULL COLLATE "default",
-    sess json NOT NULL,
-    expire timestamp(6) NOT NULL,
-    CONSTRAINT session_pkey PRIMARY KEY (sid)
-  )`,
-  `CREATE INDEX IF NOT EXISTS IDX_session_expire ON session (expire)`,
-
   // ── certification_shares (Sprint 3.2 — colaboración entre técnicos) ─────────
   `CREATE TABLE IF NOT EXISTS certification_shares (
     id                   SERIAL PRIMARY KEY,

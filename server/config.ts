@@ -6,7 +6,6 @@
  *
  * Añade en Railway (Variables del servicio certifive):
  *   JWT_SECRET      — 64 bytes hex aleatorio
- *   SESSION_SECRET  — 64 bytes hex aleatorio
  *   ENCRYPTION_KEY  — exactamente 32 caracteres (AES-256)
  */
 
@@ -86,7 +85,6 @@ export function printConfigWarnings(): void {
 
 export const config = {
   JWT_SECRET:      requireSecret("JWT_SECRET",      "certifive-dev-secret-2024"),
-  SESSION_SECRET:  requireSecret("SESSION_SECRET",  "certifive-session-secret-2024"),
   ENCRYPTION_KEY:  requireSecret("ENCRYPTION_KEY",  "certifive-default-key-change-me!!"),
   SENTRY_DSN:      warnIfDefault("SENTRY_DSN",      ""),
   // Cuenta compartida de Certifive (360dialog).

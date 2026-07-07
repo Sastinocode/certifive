@@ -68,7 +68,10 @@ Archivos: `ajustes.html`, `certificados.html`, `dashboard.html`, `expedientes.ht
 - Un commit por tarea, mensaje en formato `type(scope): descripción`
 
 ## Variables de entorno disponibles
-`DATABASE_URL`, `JWT_SECRET`, `SESSION_SECRET`, `ENCRYPTION_KEY`,
+`DATABASE_URL`, `JWT_SECRET`, `ENCRYPTION_KEY`,
 `SENDGRID_API_KEY`, `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`,
 `CLOUDINARY_API_SECRET`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`,
 `APP_URL`, `PORT`, `LOG_LEVEL`
+
+Nota: `SESSION_SECRET` / `express-session` fueron retirados (auth real es JWT
+vía `Authorization: Bearer`, no cookies de sesión) — ver `docs/00_estado_actual.md`.

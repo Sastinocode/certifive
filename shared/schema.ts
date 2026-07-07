@@ -559,7 +559,9 @@ export const payments = pgTable("payments", {
 ]);
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SESSIONS  (express-session store — do not modify structure)
+// SESSIONS  (LEGACY — express-session was removed; auth is JWT-only now.
+// Kept so we never drop a table that might still exist in production.
+// Do not modify structure, do not add new usages.)
 // ─────────────────────────────────────────────────────────────────────────────
 export const sessions = pgTable("sessions", {
   sid: text("sid").primaryKey(),

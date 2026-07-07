@@ -9,7 +9,6 @@ import { vi } from "vitest";
 process.env.JWT_SECRET     = "test-secret-vitest-certifive";
 process.env.DATABASE_URL   = "postgresql://mock:mock@localhost/mock";
 process.env.NODE_ENV       = "test";
-process.env.SESSION_SECRET = "test-session-secret";
 process.env.SENDGRID_API_KEY = "";
 
 // ── Mock: base de datos (drizzle + neon) ──────────────────────────────────────
