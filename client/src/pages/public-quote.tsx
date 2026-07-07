@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState, useEffect } from "react";
 import { useParams } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -125,7 +124,7 @@ export default function PublicQuote() {
   });
   const [clientSecret, setClientSecret] = useState("");
 
-  const { data: quoteData, isLoading: quoteLoading } = useQuery({
+  const { data: quoteData, isLoading: quoteLoading } = useQuery<QuoteData>({
     queryKey: [`/api/public/quotes/${uniqueLink}`],
     enabled: !!uniqueLink,
   });

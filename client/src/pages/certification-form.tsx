@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useParams } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
@@ -94,7 +93,7 @@ export default function CertificationForm() {
   const [uploadedPhotos, setUploadedPhotos] = useState<{ [key: string]: string[] }>({});
   const [formData, setFormData] = useState<Partial<CertificationFormData>>({});
 
-  const { data: quoteData, isLoading } = useQuery({
+  const { data: quoteData, isLoading } = useQuery<{ deliveryDays?: number }>({
     queryKey: [`/api/public/certification-form/${uniqueLink}`],
     enabled: !!uniqueLink,
   });

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
@@ -292,7 +291,7 @@ export default function TecnicoFormReview() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex bg-emerald-50">
-        <Sidebar />
+        <Sidebar selectedTab="expedientes" onTabChange={() => {}} />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-700 mx-auto mb-3" />
@@ -306,7 +305,7 @@ export default function TecnicoFormReview() {
   if (isError || !data) {
     return (
       <div className="min-h-screen flex bg-emerald-50">
-        <Sidebar />
+        <Sidebar selectedTab="expedientes" onTabChange={() => {}} />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <XCircle className="w-10 h-10 text-red-400 mx-auto mb-3" />
@@ -324,7 +323,7 @@ export default function TecnicoFormReview() {
   if (data.tecnicoFormStatus !== "completado") {
     return (
       <div className="min-h-screen flex bg-emerald-50">
-        <Sidebar />
+        <Sidebar selectedTab="expedientes" onTabChange={() => {}} />
         <div className="flex-1 flex items-center justify-center p-6">
           <Card className="max-w-md w-full text-center p-8">
             <Clock className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
@@ -348,7 +347,7 @@ export default function TecnicoFormReview() {
 
   return (
     <div className="min-h-screen flex bg-emerald-50">
-      <Sidebar />
+      <Sidebar selectedTab="expedientes" onTabChange={() => {}} />
 
       <div className="flex-1 overflow-y-auto pb-20 lg:pb-0">
         <div className="max-w-5xl mx-auto p-6 space-y-6">
@@ -585,7 +584,7 @@ export default function TecnicoFormReview() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {fd?.fotosGeneralesIds?.length > 0 ? (
+                  {fd && fd.fotosGeneralesIds.length > 0 ? (
                     <div className="flex flex-wrap gap-3">
                       {fd.fotosGeneralesIds.map((id) => (
                         <PhotoThumb key={id} photoId={id} photos={photos} caption="General" />

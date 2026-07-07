@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -128,13 +127,13 @@ const demoSteps = [
   }
 ];
 
-const statusColors = {
+const statusColors: Record<string, string> = {
   completed: "bg-cyan-100 text-cyan-800",
   in_progress: "bg-blue-100 text-blue-800",
   pending: "bg-gray-100 text-gray-600"
 };
 
-const statusLabels = {
+const statusLabels: Record<string, string> = {
   completed: "Completado",
   in_progress: "En Proceso",
   pending: "Pendiente"
@@ -354,7 +353,7 @@ export default function WorkflowDemo() {
                         <div>
                           <span className="text-sm text-gray-500">Secciones del formulario:</span>
                           <ul className="mt-1 text-sm space-y-1">
-                            {currentStep.details.sections.map((section, idx) => (
+                            {currentStep.details.sections?.map((section, idx) => (
                               <li key={idx} className="flex items-center">
                                 <div className="w-2 h-2 bg-blue-300 rounded-full mr-2"></div>
                                 {section}
@@ -370,7 +369,7 @@ export default function WorkflowDemo() {
                         <div>
                           <span className="text-sm text-gray-500">Fotos requeridas:</span>
                           <ul className="mt-2 space-y-2">
-                            {currentStep.details.requiredPhotos.map((photo, idx) => (
+                            {currentStep.details.requiredPhotos?.map((photo, idx) => (
                               <li key={idx} className="flex items-center text-sm">
                                 <Camera className="w-4 h-4 text-gray-400 mr-2" />
                                 {photo}
@@ -414,7 +413,7 @@ export default function WorkflowDemo() {
                         <div>
                           <span className="text-sm text-gray-500">Entregables:</span>
                           <ul className="mt-1 text-sm space-y-1">
-                            {currentStep.details.deliverables.map((item, idx) => (
+                            {currentStep.details.deliverables?.map((item, idx) => (
                               <li key={idx} className="flex items-center">
                                 <CheckCircle className="w-3 h-3 text-green-500 mr-2" />
                                 {item}
