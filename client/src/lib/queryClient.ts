@@ -46,7 +46,7 @@ function clearAuthAndRedirect() {
 // Evita redirección en bucle si ya estamos en /renovar-suscripcion.
 function redirectToPaywall() {
   if (!window.location.pathname.startsWith("/renovar-suscri")) {
-    window.location.href = "/renovar-suscripción";
+    window.location.href = "/renovar-suscripcion";
   }
 }
 
@@ -56,7 +56,7 @@ async function handleSubscriptionError(res: Response): Promise<boolean> {
     const body = await res.clone().json();
     if (body.code === "TRIAL_EXPIRED") {
       if (!window.location.pathname.startsWith("/renovar-suscri")) {
-        window.location.href = "/renovar-suscripción?reason=trial_expired";
+        window.location.href = "/renovar-suscripcion?reason=trial_expired";
       }
       return true;
     }

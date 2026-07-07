@@ -227,7 +227,7 @@ function Router() {
         {/* Stripe payment result pages */}
         <Route path="/success" component={PaymentSuccess} />
         <Route path="/cancel" component={PaymentCancel} />
-        <Route path="/renovar-suscripción" component={RenovarSuscripcion} />
+        <Route path="/renovar-suscripcion" component={RenovarSuscripcion} />
 
         <Route component={NotFound} />
       </Switch>

@@ -8,14 +8,27 @@ import { authenticate } from "./auth";
 // Webhooks, public forms, auth and pricing must always be accessible.
 const EXEMPT: Array<string | RegExp> = [
   /^\/auth(\/|$)/,
-  /^\/solicitudes(\/|$)/,
-  /^\/waitlist$/,
-  /^\/beta-leads$/,
-  /^\/c\//,
-  /^\/pricing(\/|$)/,
   /^\/health$/,
   /^\/subscription\/webhook$/,
   /^\/stripe\/webhook$/,
+  /^\/beta-leads$/,
+  /^\/c\//,
+  /^\/pricing(\/|$)/,
+  /^\/waitlist(\/|$)/,
+  /^\/notify-waitlist$/,
+  // Rutas públicas por token — el cliente final no tiene sesión ni suscripción.
+  /^\/solicitudes(\/|$)/,   // /solicitudes/checkout, /solicitudes/seguimiento/:token
+  /^\/solicitud(\/|$)/,     // /solicitud/nueva, /solicitud/:token, /solicitud/:token/...
+  /^\/presupuesto(\/|$)/,   // /presupuesto/:token, /presupuesto/:token/aceptar|modificar
+  /^\/formulario-cee(\/|$)/,
+  /^\/formulario-tecnico(\/|$)/,
+  /^\/form(\/|$)/,          // /form/:token, /form/:token/open|submit
+  /^\/pay(\/|$)/,           // /pay/:token, /pay/:token/stripe-intent|manual
+  /^\/portal(\/|$)/,        // /portal/:token — dashboard de seguimiento del cliente
+  // SSE de notificaciones: se autentica con ?token= en query (EventSource no
+  // permite headers custom), no con el header Authorization habitual —
+  // enforceSubscription() no lo vería nunca, así que se gestiona aparte.
+  /^\/notifications\/stream$/,
 ];
 
 function isExempt(path: string): boolean {
@@ -34,7 +47,15 @@ async function enforceSubscription(
     return;
   }
 
-  if (process.env.NODE_ENV === "test" || req.user?.role === "admin") {
+  // Bypass: entorno de test, administradores y el usuario demo compartido
+  // (createDemoUser() en server/auth.ts lo crea con subscriptionStatus
+  // "active" por defecto, pero se deja explícito aquí para que el modo
+  // demo nunca dependa silenciosamente de ese valor por defecto del schema).
+  if (
+    process.env.NODE_ENV === "test" ||
+    req.user?.role === "admin" ||
+    req.user?.username === "demo"
+  ) {
     return next();
   }
 
