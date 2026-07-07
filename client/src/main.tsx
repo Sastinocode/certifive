@@ -1,6 +1,17 @@
 import { createRoot } from "react-dom/client";
+import * as Sentry from "@sentry/react";
 import App from "./App";
 import "./index.css";
+
+// ── Sentry (monitorización de errores) ────────────────────────────────────────
+// Solo se activa si VITE_SENTRY_DSN está configurado; sin DSN es un no-op.
+if (import.meta.env.VITE_SENTRY_DSN) {
+  Sentry.init({
+    dsn: import.meta.env.VITE_SENTRY_DSN,
+    environment: import.meta.env.MODE,
+    tracesSampleRate: import.meta.env.PROD ? 0.2 : 0,
+  });
+}
 
 createRoot(document.getElementById("root")!).render(<App />);
 
