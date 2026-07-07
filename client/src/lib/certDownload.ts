@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { jsPDF } from "jspdf";
 import {
   Document,
@@ -269,8 +268,8 @@ export async function downloadWord(cert: CertData): Promise<void> {
       bottom: { style: BorderStyle.SINGLE, size: 4, color: TEAL_HEX },
       left: { style: BorderStyle.SINGLE, size: 4, color: TEAL_HEX },
       right: { style: BorderStyle.SINGLE, size: 4, color: TEAL_HEX },
-      insideH: { style: BorderStyle.SINGLE, size: 1, color: "DDDDDD" } as any,
-      insideV: { style: BorderStyle.SINGLE, size: 1, color: "DDDDDD" } as any,
+      insideHorizontal: { style: BorderStyle.SINGLE, size: 1, color: "DDDDDD" },
+      insideVertical: { style: BorderStyle.SINGLE, size: 1, color: "DDDDDD" },
     },
   });
 

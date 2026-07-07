@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { useIsMobile } from "../hooks/useIsMobile";
@@ -8,7 +7,7 @@ import OnboardingFlow from "./OnboardingFlow";
 import Dashboard from "../pages/dashboard";
 import Certifications from "../pages/Certifications";
 import Properties from "../pages/properties";
-import WhatsApp from "../pages/WhatsApp";
+import WhatsApp from "../pages/whatsapp";
 import Invoices from "../pages/Invoices";
 import Marketing from "../pages/marketing";
 import Settings from "../pages/settings";
@@ -39,9 +38,11 @@ export default function Layout() {
     setSidebarOpen(false);
   };
 
+  const navigateFromString = (p: string) => navigate(p as Page);
+
   const renderPage = () => {
     switch (page) {
-      case "dashboard":      return <Dashboard onNavigate={navigate} />;
+      case "dashboard":      return <Dashboard onNavigate={navigateFromString} />;
       case "certifications": return <Certifications />;
       case "properties":     return <Properties />;
       case "whatsapp":       return <WhatsApp />;
@@ -51,7 +52,11 @@ export default function Layout() {
     }
   };
 
-  const initials = (user?.name || user?.username || "U")
+  const displayName = (user?.firstName && user?.lastName)
+    ? `${user.firstName} ${user.lastName}`
+    : (user?.firstName || user?.username || "Usuario");
+
+  const initials = (displayName || "U")
     .split(" ")
     .map((n: string) => n[0])
     .slice(0, 2)
@@ -160,7 +165,7 @@ export default function Layout() {
               <span style={{ color: "#fff", fontWeight: 700, fontSize: 12 }}>{initials}</span>
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: "#0F172A", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user?.name || user?.username}</div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: "#0F172A", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{displayName}</div>
               <div style={{ fontSize: 11, color: "#94A3B8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>Certificador</div>
             </div>
             <button

@@ -1,5 +1,4 @@
-// @ts-nocheck
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -32,13 +31,13 @@ export function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
 
   // Fetch unread count
-  const { data: countData } = useQuery({
+  const { data: countData } = useQuery<{ count: number }>({
     queryKey: ["/api/notifications/count"],
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
   // Fetch all notifications when popover opens
-  const { data: notifications = [], isLoading } = useQuery({
+  const { data: notifications = [], isLoading } = useQuery<Notification[]>({
     queryKey: ["/api/notifications"],
     enabled: isOpen,
   });

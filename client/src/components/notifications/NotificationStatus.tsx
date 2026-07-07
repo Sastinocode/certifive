@@ -1,11 +1,10 @@
-// @ts-nocheck
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Mail, CheckCircle, AlertCircle, Settings } from "lucide-react";
 
 export function NotificationStatus() {
-  const { data: user } = useQuery({
+  const { data: user } = useQuery<{ email?: string }>({
     queryKey: ["/api/auth/user"],
   });
 
