@@ -235,8 +235,11 @@ app.get("/api/subscription/invoices", authenticate, async (req: Request, res: Re
 
 // ──────────────────────────────────────────────────────────────────────────────
 // POST /api/subscription/webhook  —  handle Stripe subscription lifecycle events
-// Also aliased as POST /api/stripe/webhook
-// Configure in Stripe Dashboard → Developers → Webhooks
+// NOTE: this used to also register "/api/stripe/webhook", but payments.ts
+// registers that same path first (for payment_intent.succeeded) and Express
+// only ever reaches the first handler — the alias here was silently dead
+// code. Configure subscription events in Stripe Dashboard pointing at
+// /api/subscription/webhook specifically.
 // Events to subscribe: customer.subscription.created, customer.subscription.updated,
 //   customer.subscription.deleted, invoice.payment_failed
 // ──────────────────────────────────────────────────────────────────────────────
@@ -314,6 +317,5 @@ async function handleWebhook(req: Request, res: Response) {
 }
 
 app.post("/api/subscription/webhook", handleWebhook);
-app.post("/api/stripe/webhook", handleWebhook);
 
 }

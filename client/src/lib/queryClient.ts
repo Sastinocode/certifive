@@ -51,7 +51,7 @@ function redirectToPaywall() {
 }
 
 async function handleSubscriptionError(res: Response): Promise<boolean> {
-  if (res.status !== 403) return false;
+  if (res.status !== 402) return false;
   try {
     const body = await res.clone().json();
     if (body.code === "TRIAL_EXPIRED") {

@@ -82,7 +82,8 @@ async function enforceSubscription(
       const trialAlive = !periodEnd || periodEnd > new Date();
       if (trialAlive) return next();
       // Trial expirado → bloquear con código específico
-      res.status(403).json({
+      res.status(402).json({
+        error: "subscription_required",
         message: "Tu período de prueba ha finalizado. Elige un plan para continuar.",
         code: "TRIAL_EXPIRED",
         trialEndedAt: periodEnd,
@@ -90,7 +91,8 @@ async function enforceSubscription(
       return;
     }
 
-    res.status(403).json({
+    res.status(402).json({
+      error: "subscription_required",
       message: "Suscripción requerida. Elige un plan para acceder.",
       code: "SUBSCRIPTION_REQUIRED",
     });
