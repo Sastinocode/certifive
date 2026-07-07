@@ -3,11 +3,13 @@ import { db } from "../db";
 import { eq } from "drizzle-orm";
 import { users } from "../../shared/schema";
 import { authenticate } from "../auth";
+import { config } from "../config";
+import { logger } from "../logger";
 import Stripe from "stripe";
 
 // Initialise Stripe only when the secret key is available
-const stripe = process.env.STRIPE_SECRET_KEY
-  ? new Stripe(process.env.STRIPE_SECRET_KEY)
+const stripe = config.STRIPE_SECRET_KEY
+  ? new Stripe(config.STRIPE_SECRET_KEY)
   : null;
 
 // Map plan names → Stripe Price IDs
@@ -242,7 +244,7 @@ async function handleWebhook(req: Request, res: Response) {
   if (!stripe) return res.status(503).json({ message: "Stripe no configurado" });
 
   const sig    = req.headers["stripe-signature"] as string;
-  const secret = process.env.STRIPE_WEBHOOK_SECRET ?? process.env.STRIPE_SUBSCRIPTION_WEBHOOK_SECRET;
+  const secret = config.STRIPE_SUBSCRIPTION_WEBHOOK_SECRET || config.STRIPE_WEBHOOK_SECRET;
   let event: any;
 
   try {
@@ -250,7 +252,8 @@ async function handleWebhook(req: Request, res: Response) {
     event = secret
       ? stripe.webhooks.constructEvent(raw, sig, secret)
       : JSON.parse(raw);
-  } catch {
+  } catch (err: any) {
+    logger.warn({ err: err?.message }, "[stripe/webhook] Firma de webhook inválida");
     return res.status(400).json({ message: "Webhook signature inválida" });
   }
 
@@ -264,7 +267,10 @@ async function handleWebhook(req: Request, res: Response) {
     .where(eq(users.stripeCustomerId, customerId))
     .limit(1);
 
-  if (!user) return res.json({ received: true });
+  if (!user) {
+    logger.warn({ event: event.type, customerId }, "[stripe/webhook] Evento recibido sin usuario asociado");
+    return res.json({ received: true });
+  }
 
   const planByPrice =
     Object.entries(PLAN_PRICE_IDS).find(([, pid]) => pid === obj.items?.data?.[0]?.price?.id)?.[0] ?? null;
@@ -303,6 +309,7 @@ async function handleWebhook(req: Request, res: Response) {
       break;
   }
 
+  logger.info({ event: event.type, userId: user.id }, "[stripe/webhook] Evento de suscripción procesado");
   res.json({ received: true });
 }
 

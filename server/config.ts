@@ -94,4 +94,7 @@ export const config = {
   // Si no está configurada, el sistema cae a email como siempre.
   PLATFORM_WA_API_KEY: warnIfDefault("PLATFORM_WA_API_KEY", ""),
   PLATFORM_WA_PHONE:   warnIfDefault("PLATFORM_WA_PHONE",   ""),
+  STRIPE_SECRET_KEY:                 warnIfDefault("STRIPE_SECRET_KEY", ""),
+  STRIPE_WEBHOOK_SECRET:             warnIfDefault("STRIPE_WEBHOOK_SECRET", ""),
+  STRIPE_SUBSCRIPTION_WEBHOOK_SECRET: warnIfDefault("STRIPE_SUBSCRIPTION_WEBHOOK_SECRET", ""),
 } as const;
