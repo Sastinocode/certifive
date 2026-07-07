@@ -14,7 +14,7 @@ import { Express, Request, Response, NextFunction } from "express";
 import { db } from "../db";
 import { users, certifications } from "../../shared/schema";
 import { authenticate } from "../auth";
-import { eq, desc, ilike, or, count } from "drizzle-orm";
+import { eq, desc, ilike, or, count, inArray } from "drizzle-orm";
 
 // ── Middleware: solo admins ───────────────────────────────────────────────────
 
@@ -88,8 +88,22 @@ export function registerAdminRoutes(app: Express) {
         db.select({ count: count() }).from(users).where(whereClause),
       ]);
 
+      // Nº de certificaciones por usuario — solo para los usuarios de esta página.
+      const userIds = rows.map(r => r.id);
+      const certCounts = userIds.length
+        ? await db.select({ userId: certifications.userId, count: count() })
+            .from(certifications)
+            .where(inArray(certifications.userId, userIds))
+            .groupBy(certifications.userId)
+        : [];
+      const certCountByUser = new Map(certCounts.map(c => [c.userId, c.count]));
+      const usersWithCertCount = rows.map(r => ({
+        ...r,
+        certCount: certCountByUser.get(r.id) ?? 0,
+      }));
+
       res.json({
-        users: rows,
+        users: usersWithCertCount,
         pagination: {
           page,
           limit,

@@ -4,8 +4,10 @@
  */
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
+import { Users, CreditCard, FileCheck } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { KpiCard, StatusBadge, SearchInput } from "@/components/ui";
 
 // ── Tipos ─────────────────────────────────────────────────────────────────────
 
@@ -26,6 +28,7 @@ interface AdminUser {
   subscriptionStatus: string | null;
   emailVerifiedAt: string | null;
   createdAt: string | null;
+  certCount: number;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -48,13 +51,6 @@ function planBadge(plan: string | null) {
       {p}
     </span>
   );
-}
-
-function statusDot(status: string | null) {
-  if (status === "active")   return <span className="w-2 h-2 rounded-full bg-green-400 inline-block" title="Activo" />;
-  if (status === "trialing") return <span className="w-2 h-2 rounded-full bg-blue-400 inline-block" title="Trial" />;
-  if (status === "canceled") return <span className="w-2 h-2 rounded-full bg-red-400 inline-block" title="Cancelado" />;
-  return <span className="w-2 h-2 rounded-full bg-gray-300 inline-block" title={status ?? "—"} />;
 }
 
 // ── Componente principal ──────────────────────────────────────────────────────
@@ -143,16 +139,31 @@ export default function AdminPanel() {
         {/* Stats cards */}
         {stats && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <StatCard label="Usuarios totales"      value={stats.totalUsers}  color="blue" />
-            <StatCard label="Suscripciones activas" value={stats.activeUsers} color="green" />
-            <StatCard label="Certificaciones"       value={stats.totalCerts}  color="purple" />
-            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
-              <p className="text-xs text-gray-500 mb-2">Por plan</p>
-              <div className="space-y-1">
+            <KpiCard
+              icon={<Users size={20} />}
+              iconBg="bg-blue-500"
+              label="Usuarios totales"
+              value={stats.totalUsers}
+            />
+            <KpiCard
+              icon={<CreditCard size={20} />}
+              iconBg="bg-emerald-500"
+              label="Suscripciones activas"
+              value={stats.activeUsers}
+            />
+            <KpiCard
+              icon={<FileCheck size={20} />}
+              iconBg="bg-purple-500"
+              label="Certificaciones"
+              value={stats.totalCerts}
+            />
+            <div className="bg-card rounded-2xl border border-border shadow-sm p-5 sm:p-6">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground mb-3">Por plan</p>
+              <div className="space-y-1.5">
                 {stats.planBreakdown.map(p => (
                   <div key={p.plan ?? "null"} className="flex justify-between text-xs">
-                    <span className="capitalize text-gray-600 dark:text-gray-400">{p.plan ?? "free"}</span>
-                    <span className="font-semibold text-gray-900 dark:text-white">{p.count}</span>
+                    <span className="capitalize text-muted-foreground">{p.plan ?? "free"}</span>
+                    <span className="font-semibold text-foreground">{p.count}</span>
                   </div>
                 ))}
               </div>
@@ -167,13 +178,11 @@ export default function AdminPanel() {
               Usuarios <span className="text-gray-400 font-normal text-sm">({pagination.total})</span>
             </h2>
             <div className="flex gap-2">
-              <input
-                type="text"
+              <SearchInput
                 placeholder="Buscar por email, nombre..."
                 value={search}
-                onChange={e => setSearch(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && loadUsers(1, search)}
-                className="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-1.5 bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-200 w-56 focus:outline-none focus:ring-2 focus:ring-green-500"
+                onChange={setSearch}
+                className="w-56"
               />
               <button onClick={() => loadUsers(1, search)} className="text-sm px-3 py-1.5 rounded-lg bg-green-600 text-white hover:bg-green-700">
                 Buscar
@@ -189,6 +198,8 @@ export default function AdminPanel() {
                   <th className="px-4 py-3 font-medium">Email</th>
                   <th className="px-4 py-3 font-medium">Plan</th>
                   <th className="px-4 py-3 font-medium">Estado</th>
+                  <th className="px-4 py-3 font-medium">Registro</th>
+                  <th className="px-4 py-3 font-medium">Certificaciones</th>
                   <th className="px-4 py-3 font-medium">Verificado</th>
                   <th className="px-4 py-3 font-medium">Rol</th>
                   <th className="px-4 py-3 font-medium">Acción</th>
@@ -196,9 +207,9 @@ export default function AdminPanel() {
               </thead>
               <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
                 {loading ? (
-                  <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-400">Cargando...</td></tr>
+                  <tr><td colSpan={9} className="px-4 py-8 text-center text-gray-400">Cargando...</td></tr>
                 ) : users.length === 0 ? (
-                  <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-400">No hay usuarios</td></tr>
+                  <tr><td colSpan={9} className="px-4 py-8 text-center text-gray-400">No hay usuarios</td></tr>
                 ) : users.map(u => (
                   <tr key={u.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                     <td className="px-4 py-3">
@@ -208,11 +219,12 @@ export default function AdminPanel() {
                     <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{u.email ?? "—"}</td>
                     <td className="px-4 py-3">{planBadge(u.subscriptionPlan)}</td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-1.5">
-                        {statusDot(u.subscriptionStatus)}
-                        <span className="text-gray-600 dark:text-gray-400 capitalize">{u.subscriptionStatus ?? "—"}</span>
-                      </div>
+                      <StatusBadge status={u.subscriptionStatus ?? "free"} />
                     </td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
+                      {u.createdAt ? new Date(u.createdAt).toLocaleDateString("es-ES") : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400 text-center">{u.certCount}</td>
                     <td className="px-4 py-3">
                       {u.emailVerifiedAt
                         ? <span className="text-green-600 text-xs">✓ Sí</span>
@@ -253,18 +265,6 @@ export default function AdminPanel() {
           )}
         </div>
       </div>
-    </div>
-  );
-}
-
-// ── Stat card ─────────────────────────────────────────────────────────────────
-
-function StatCard({ label, value, color }: { label: string; value: number; color: string }) {
-  const colors: Record<string, string> = { blue: "text-blue-600", green: "text-green-600", purple: "text-purple-600" };
-  return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
-      <p className="text-xs text-gray-500">{label}</p>
-      <p className={`text-3xl font-bold mt-1 ${colors[color] ?? "text-gray-900"}`}>{value}</p>
     </div>
   );
 }

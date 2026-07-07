@@ -46,6 +46,37 @@ const VARIANTS: Record<string, Variant> = {
     dot:  "bg-emerald-500",
     label: "Pagada",
   },
+  // Estados de suscripción (panel admin) — mismas claves que users.subscriptionStatus
+  active: {
+    pill: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300",
+    dot:  "bg-emerald-500",
+    label: "Activo",
+  },
+  trialing: {
+    pill: "bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300",
+    dot:  "bg-blue-500",
+    label: "Prueba",
+  },
+  canceled: {
+    pill: "bg-red-100 text-red-600 dark:bg-red-950/50 dark:text-red-400",
+    dot:  "bg-red-500",
+    label: "Cancelado",
+  },
+  past_due: {
+    pill: "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300",
+    dot:  "bg-amber-500",
+    label: "Pago pendiente",
+  },
+  incomplete: {
+    pill: "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300",
+    dot:  "bg-amber-400",
+    label: "Incompleto",
+  },
+  free: {
+    pill: "bg-muted text-muted-foreground",
+    dot:  "bg-muted-foreground/50",
+    label: "Gratuito",
+  },
 };
 
 const FALLBACK: Variant = {
